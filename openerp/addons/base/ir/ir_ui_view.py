@@ -123,6 +123,17 @@ class view(osv.osv):
         data_ids = IMD.search_read(cr, uid, [('id', 'in', ids), ('model', '=', 'ir.ui.view')], ['res_id'], context=context)
         return map(itemgetter('res_id'), data_ids)
 
+    @tools.mute_logger(_logger.name)
+    def _inheritance_error_msg(self, cr, uid, ids, fname, args, context=None):
+        context = dict(context or {}, silent_view_errors=False)
+        result = dict.fromkeys(ids, False)
+        for vid in ids:
+            try:
+                self.read_combined(cr, uid, vid, ['id'], context=context)
+            except AttributeError, e:
+                result[vid] = tools.exception_to_unicode(e)
+        return result
+
     _columns = {
         'name': fields.char('View Name', required=True),
         'model': fields.char('Object', select=True),
@@ -172,6 +183,8 @@ class view(osv.osv):
 * if True, the view always extends its parent
 * if False, the view currently does not extend its parent but can be enabled
              """),
+        'inheritance_error_msg': fields.function(_inheritance_error_msg, method=True, type="text",
+                                                 string="Inheritance Error Message")
     }
     _defaults = {
         'mode': 'primary',
@@ -199,6 +212,7 @@ class view(osv.osv):
         if context is None:
             context = {}
         context = dict(context, check_view_ids=ids)
+        context.setdefault('silent_view_errors', bool(self.pool._init))
 
         # Sanity checks: the view should not break anything upon rendering!
         # Any exception raised below will cause a transaction rollback.
@@ -352,19 +366,22 @@ class view(osv.osv):
         view = self.browse(cr, uid, view_id, context)
         not_avail = _('n/a')
         message = ("%(msg)s\n\n" +
-                   _("Error context:\nView `%(view_name)s`") + 
+                   _("Error context:\nView `%(view_name)s`") +
                    "\n[view_id: %(viewid)s, xml_id: %(xmlid)s, "
                    "model: %(model)s, parent_id: %(parent)s]") % \
                         {
-                          'view_name': view.name or not_avail, 
+                          'view_name': view.name or not_avail,
                           'viewid': view_id or not_avail,
                           'xmlid': view.xml_id or not_avail,
                           'model': view.model or not_avail,
                           'parent': view.inherit_id.id or not_avail,
                           'msg': message,
-                        }
-        _logger.error(message)
-        raise AttributeError(message)
+                        }   # noqa
+        if context and context.get('silent_view_errors'):
+            _logger.warning(message)
+        else:
+            _logger.error(message)
+            raise AttributeError(message)
 
     def locate_node(self, arch, spec):
         """ Locate a node in a source (parent) architecture.
@@ -839,7 +856,7 @@ class view(osv.osv):
     #------------------------------------------------------
     # QWeb template views
     #------------------------------------------------------
-    @tools.ormcache_context(accepted_keys=('lang','inherit_branding', 'editable', 'translatable'))
+    @tools.ormcache_context(accepted_keys=('lang', 'inherit_branding', 'editable', 'translatable', 'silent_view_errors'))
     def read_template(self, cr, uid, xml_id, context=None):
         if isinstance(xml_id, (int, long)):
             view_id = xml_id
@@ -974,8 +991,7 @@ class view(osv.osv):
         if isinstance(id_or_xml_id, list):
             id_or_xml_id = id_or_xml_id[0]
 
-        if not context:
-            context = {}
+        context = dict(context or {}, silent_view_errors=True)
 
         if values is None:
             values = dict()
