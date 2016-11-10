@@ -3608,22 +3608,38 @@ class BaseModel(object):
             else:
                 updend.append(name)
 
-        if self._log_access:
-            updates.append(('write_uid', '%s', self._uid))
-            updates.append(('write_date', "(now() at time zone 'UTC')"))
-            direct.append('write_uid')
-            direct.append('write_date')
-
-        if updates:
+        if direct:
             self.check_access_rule('write')
-            query = 'UPDATE "%s" SET %s WHERE id IN %%s' % (
-                self._table, ','.join('"%s"=%s' % (u[0], u[1]) for u in updates),
+
+            if self._log_access:
+                log_updates = [('write_uid', '%s', self._uid),
+                               ('write_date', "(now() at time zone 'UTC')")]
+                log_direct = ['write_uid', 'write_date']
+            else:
+                log_updates = log_direct = []
+
+            def sql_assign(update):
+                return '"%s"=%s' % (update[0], update[1])
+            def sql_test(update):
+                if len(update) > 2 and update[2] is None:
+                    return '"%s" IS NOT NULL' % update[0]
+                return '"%s" IS NULL OR "%s"!=%s' % (update[0], update[0], update[1])
+
+            query = (
+                'UPDATE "{table}" SET {assign} WHERE id IN %s AND ({test}) RETURNING id'
+            ).format(
+                table=self._table,
+                assign=', '.join(map(sql_assign, updates + log_updates)),
+                test=' OR '.join(map(sql_test, updates)) or 'FALSE',
             )
-            params = tuple(u[2] for u in updates if len(u) > 2)
+            params0 = tuple(u[2] for u in updates + log_updates if len(u) > 2)
+            params1 = tuple(u[2] for u in updates if len(u) > 2 and u[2] is not None)
+
+            updated_ids = []
             for sub_ids in cr.split_for_in_conditions(set(self.ids)):
-                cr.execute(query, params + (sub_ids,))
-                if cr.rowcount != len(sub_ids):
-                    raise MissingError(_('One of the records you are trying to modify has already been deleted (Document type: %s).') % self._description)
+                cr.execute(query, params0 + (sub_ids,) + params1)
+                updated_ids += [row[0] for row in cr.fetchall()]
+            updated = self.browse(updated_ids)
 
             # TODO: optimize
             for name in direct:
@@ -3631,7 +3647,7 @@ class BaseModel(object):
                 if callable(field.translate):
                     # The source value of a field has been modified,
                     # synchronize translated terms when possible.
-                    self.env['ir.translation']._sync_terms_translations(self._fields[name], self)
+                    self.env['ir.translation']._sync_terms_translations(self._fields[name], updated)
 
                 elif has_trans and field.translate:
                     # The translated value of a field has been modified.
@@ -3644,11 +3660,12 @@ class BaseModel(object):
                     tname = "%s,%s" % (self._name, name)
                     self.env['ir.translation']._set_ids(
                         tname, 'model', self.env.lang, self.ids, val, src_trans)
+                    updated = self
 
-        # invalidate and mark new-style fields to recompute; do this before
-        # setting other fields, because it can require the value of computed
-        # fields, e.g., a one2many checking constraints on records
-        self.modified(direct)
+            # invalidate and mark new-style fields to recompute; do this before
+            # setting other fields, because it can require the value of computed
+            # fields, e.g., a one2many checking constraints on records
+            updated.modified(direct + log_direct)
 
         # defaults in context must be removed when call a one2many or many2many
         rel_context = {key: val
