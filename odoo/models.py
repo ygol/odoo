@@ -4835,7 +4835,12 @@ class BaseModel(object):
 
         :type env: :class:`~odoo.api.Environment`
         """
-        return self._browse(self._ids, env, self._prefetch)
+        other = self._browse(self._ids, env, self._prefetch)
+        if not all(self._ids):
+            for rec0, rec1 in zip(self, other):
+                if not rec0.id:
+                    rec1._cache.update(rec0._cache)
+        return other
 
     def sudo(self, user=SUPERUSER_ID):
         """ sudo([user=SUPERUSER])
