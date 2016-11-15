@@ -3835,6 +3835,20 @@ class BaseModel(object):
         if self.is_transient():
             self._transient_vacuum()
 
+        # force computation of fields stored in columns
+        record = self.new(vals)
+        pre_computed_fields = []
+        for field in sorted(self._fields.itervalues(), key=self.pool.field_sequence):
+            if field.store and field.column_type:
+                record[field.name]
+                if field.compute:
+                    if field.relational and not all(record[field.name]._ids):
+                        # discard relational fields that refer to new records
+                        record._cache.pop(field.name)
+                        continue
+                    pre_computed_fields.append(field)
+        vals = self._convert_to_write({name: record[name] for name in record._cache})
+
         # data of parent records to create or update, by model
         tocreate = {
             parent_model: {'id': vals.pop(parent_field, None)}
@@ -3959,6 +3973,10 @@ class BaseModel(object):
             # setting other fields, because it can require the value of computed
             # fields, e.g., a one2many checking constraints on records
             self.modified(self._fields)
+
+            # mark computed fields as done on the new record
+            for field in pre_computed_fields:
+                self._recompute_done(field)
 
             # defaults in context must be removed when call a one2many or many2many
             rel_context = {key: val
