@@ -2165,7 +2165,7 @@ class One2many(_RelationalMulti):
                     comodel.browse(act[1]).unlink()
                 elif act[0] == 3:
                     inverse_field = comodel._fields[inverse]
-                    if inverse_field.ondelete == 'cascade':
+                    if getattr(inverse_field, 'ondelete', None) == 'cascade':
                         comodel.browse(act[1]).unlink()
                     else:
                         comodel.browse(act[1]).write({inverse: False})
@@ -2179,7 +2179,7 @@ class One2many(_RelationalMulti):
                     domain = self.domain(records) if callable(self.domain) else self.domain
                     domain = domain + [(inverse, 'in', records.ids)]
                     inverse_field = comodel._fields[inverse]
-                    if inverse_field.ondelete == 'cascade':
+                    if getattr(inverse_field, 'ondelete', None) == 'cascade':
                         comodel.search(domain).unlink()
                     else:
                         comodel.search(domain).write({inverse: False})
@@ -2190,7 +2190,7 @@ class One2many(_RelationalMulti):
                     comodel._cr.execute(query, (record.id, act[2] or [0]))
                     lines = comodel.browse([row[0] for row in comodel._cr.fetchall()])
                     inverse_field = comodel._fields[inverse]
-                    if inverse_field.ondelete == 'cascade':
+                    if getattr(inverse_field, 'ondelete', None) == 'cascade':
                         lines.unlink()
                     else:
                         lines.write({inverse: False})
