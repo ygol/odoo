@@ -3847,7 +3847,7 @@ class BaseModel(object):
                         record._cache.pop(field.name)
                         continue
                     pre_computed_fields.append(field)
-        vals = self._convert_to_write({name: record[name] for name in record._cache})
+        vals = self.browse()._convert_to_write({name: record[name] for name in record._cache})
 
         # data of parent records to create or update, by model
         tocreate = {

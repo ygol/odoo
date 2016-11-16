@@ -2005,7 +2005,13 @@ class _RelationalMulti(_Relational):
 
     def convert_to_write(self, value, record):
         # make result with new and existing records
-        result = [(6, 0, [])]
+        if record:
+            result = [(6, 0, [])]
+            link = result[0][2].append
+        else:
+            result = []
+            link = lambda id: result.append((4, id))
+
         for record in value:
             if not record.id:
                 values = {name: record[name] for name in record._cache}
@@ -2016,7 +2022,7 @@ class _RelationalMulti(_Relational):
                 values = record._convert_to_write(values)
                 result.append((1, record.id, values))
             else:
-                result[0][2].append(record.id)
+                link(record.id)
         return result
 
     def convert_to_onchange(self, value, record, fnames=()):
