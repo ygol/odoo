@@ -34,6 +34,7 @@ class TemplatePreview(models.TransientModel):
 
     res_id = fields.Selection(_get_records, 'Sample Document')
     partner_ids = fields.Many2many('res.partner', string='Recipients')
+    model = fields.Char(store=False)
 
     @api.onchange('res_id')
     @api.multi
