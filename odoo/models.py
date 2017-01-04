@@ -2865,7 +2865,7 @@ class BaseModel(object):
         # transient models should not have stored computed fields
         if cls._transient:
             for name, field in cls._fields.iteritems():
-                if field.compute and field.store:
+                if field.compute and field.store and any('.' in dep for dep in field.depends):
                     _logger.warning("Field %r on transient model %r should not be stored", name, cls._name)
 
     @api.model
