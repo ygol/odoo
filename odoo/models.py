@@ -2862,6 +2862,12 @@ class BaseModel(object):
                 cls._field_computed[field] = group = groups[field.compute]
                 group.append(field)
 
+        # transient models should not have stored computed fields
+        if cls._transient:
+            for name, field in cls._fields.iteritems():
+                if field.compute and field.store:
+                    _logger.warning("Field %r on transient model %r should not be stored", name, cls._name)
+
     @api.model
     def _setup_complete(self):
         """ Setup recomputation triggers, and complete the model setup. """
