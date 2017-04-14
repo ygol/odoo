@@ -205,7 +205,7 @@
                                 <group>
                                     <group string="Localization" name="preferences">
                                         <field name="lang"/>
-                                        <field name="tz" widget="timezone_mismatch" options="{'tz_offset_field': 'tz_offset'}" />
+                                        <field name="tz" widget="browser_timezone" options="{'tz_offset_field': 'tz_offset'}" />
                                         <field name="tz_offset" invisible="1"/>
                                     </group>
                                     <group string="Menus Customization" groups="base.group_no_one">

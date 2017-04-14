@@ -61,6 +61,7 @@ registry
     .add('many2many_checkboxes', relational_fields.FieldMany2ManyCheckBoxes)
     .add('one2many', relational_fields.FieldOne2Many)
     .add('statusbar', relational_fields.FieldStatus)
+    .add('browser_timezone', relational_fields.BrowserTimezone)
     .add('one2many_list', relational_fields.FieldOne2Many);
 
 });

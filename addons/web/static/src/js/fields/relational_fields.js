@@ -1412,6 +1412,18 @@ var FieldSelection = AbstractField.extend({
         }
     },
 });
+var BrowserTimezone = FieldSelection.extend({
+    start: function(){
+        var self = this;
+        this._super.apply(this, arguments).then(function(){
+            self._setValue(self.get_browser_tz());
+        });
+    },
+    get_browser_tz: function(){
+        var tz = jstz.determine();
+        return tz.name();
+    },
+});
 
 var FieldRadio = FieldSelection.extend({
     template: 'FieldRadio',
@@ -1502,6 +1514,7 @@ return {
 
     FieldRadio: FieldRadio,
     FieldSelection: FieldSelection,
+    BrowserTimezone: BrowserTimezone,
     FieldStatus: FieldStatus,
 };
 
