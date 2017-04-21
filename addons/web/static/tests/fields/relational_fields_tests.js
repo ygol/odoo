@@ -4,7 +4,7 @@ odoo.define('web.relational_fields_tests', function (require) {
 var FormView = require('web.FormView');
 var ListView = require('web.ListView');
 var testUtils = require('web.test_utils');
-
+var createAsyncView = testUtils.createAsyncView;
 var createView = testUtils.createView;
 
 QUnit.module('fields', {}, function () {
@@ -125,6 +125,11 @@ QUnit.module('relational_fields', {
             },
             user: {
                 fields: {
+                    tz: {
+                        type: "selection",
+                        default: 'Africa/Bamako',
+                        selection: [['Africa/Algiers', "Africa/Algiers"], ['Asia/Calcutta', "Asia/Calcutta"], ['Africa/Bamako', "Africa/Bamako"]],
+                    },
                     name: {string: "Name", type: "char"}
                 },
                 records: [{
@@ -216,7 +221,23 @@ QUnit.module('relational_fields', {
         assert.strictEqual(form.$('a.o_form_uri').length, 0, "should not have an anchor");
         form.destroy();
     });
+QUnit.test('Default timezone in selection field', function (assert) {
+        assert.expect(1);
+        var done = assert.async();
 
+        var form = createAsyncView({
+            View: FormView,
+            model: 'user',
+            data: this.data,
+            arch:'<form string="Users">' +
+                     '<field name="tz"  widget="browser_timezone"/>'+
+                '</form>',
+        }).then(function (form) {
+            assert.equal(form.$el.find('.o_form_field').val(), "\"Asia/Calcutta\"", "timezone matched");
+            form.destroy();
+            done();
+        });
+    });
     QUnit.test('many2one in edit mode', function (assert) {
         assert.expect(16);
 
