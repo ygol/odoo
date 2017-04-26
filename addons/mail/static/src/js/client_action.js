@@ -150,10 +150,49 @@ var ChatAction = Widget.extend(ControlPanelMixin, {
                 on_reverse_breadcrumb: this.on_reverse_breadcrumb,
             });
         },
+        "click .o_mail_chat_mobile_tab": function(event) {
+            event.preventDefault();
+            var self = this;
+            var tab = this.$(event.currentTarget);
+            var type = tab.data('type');
+            this.active_mobile_tab = type;
+            if (type == 'channel_inbox' || type == 'channel_starred') {
+                this.mail_mobile_inbox_buttons.show();
+                var channel = chat_manager.get_channel(type);
+                this.toggleMobileTab(channel);
+                this.set_channel(channel);
+            } else {
+                this.mail_mobile_inbox_buttons.hide();
+                this.toggleMobileTab(false, type);
+                var typeButton = $(".o_mail_chat_button_" + type);
+                if (typeButton) {
+                    typeButton.off('click');
+                    typeButton.on('click', function(event) {
+                        event.preventDefault();
+                        self.$(".o_mail_add_channel[data-type=" + type + "]").show()
+                            .find("input").focus();
+                    });
+                }
+            }
+        },
+        "click .o_channel_inbox_item": function(event) {
+            event.preventDefault();
+            this.$(".o_channel_inbox_item").toggleClass("btn-primary btn-default");
+            var btn = this.$(event.currentTarget);
+            btn.addClass("btn-primary");
+            var channel = chat_manager.get_channel(btn.data('type'));
+            this.toggleMobileTab(channel);
+            this.set_channel(channel);
+        },
+        "click .o_mail_tab_pane_item": function(event) {
+            event.preventDefault();
+            var channel_id = $(event.currentTarget).data("channel-id");
+            chat_manager.detach_channel(chat_manager.get_channel(channel_id));
+        }
     },
 
     on_attach_callback: function () {
-        chat_manager.bus.trigger('client_action_open', true);
+        chat_manager.bus.trigger('client_action_open', !this.isMobile);
         if (this.channel) {
             this.thread.scroll_to({offset: this.channels_scrolltop[this.channel.id]});
         }
@@ -175,6 +214,7 @@ var ChatAction = Widget.extend(ControlPanelMixin, {
         this.notification_bar = (window.Notification && window.Notification.permission === "default");
         this.selected_message = null;
         this.isMobile = config.isMobile;
+        this.active_mobile_tab = "channel_inbox";
     },
 
     willStart: function () {
@@ -212,14 +252,11 @@ var ChatAction = Widget.extend(ControlPanelMixin, {
             display_help: true,
         });
 
-        this.$buttons = $(QWeb.render("mail.chat.ControlButtons", {'debug': session.debug}));
+        this.$buttons = $(QWeb.render("mail.chat.ControlButtons", {'is_mobile': this.isMobile, 'debug': session.debug}));
         this.$buttons.find('button').css({display:"inline-block"});
         this.$buttons.on('click', '.o_mail_chat_button_invite', this.on_click_button_invite);
         this.$buttons.on('click', '.o_mail_chat_button_unsubscribe', this.on_click_button_unsubscribe);
         this.$buttons.on('click', '.o_mail_chat_button_settings', this.on_click_button_settings);
-        this.$buttons.on('click', '.o_mail_toggle_channels', function () {
-            self.$('.o_mail_chat_sidebar').slideToggle(200);
-        });
         this.$buttons.on('click', '.o_mail_chat_button_mark_read', function () {
             chat_manager.mark_all_as_read(self.channel, self.domain);
         });
@@ -253,6 +290,14 @@ var ChatAction = Widget.extend(ControlPanelMixin, {
             self.$searchview_buttons = self.searchview.$buttons.contents();
         });
 
+        if(this.isMobile){
+            this.mail_mobile_control_panel = $(QWeb.render("mail.chat.MobileControlPanel",{'widget': this}));
+            this.mail_mobile_control_panel.insertAfter(this.$(".o_mail_chat_content"));
+            this.mail_mobile_tabs = $(QWeb.render("mail.chat.MobileTabs",{}));
+            this.mail_mobile_tabs.insertAfter(this.$('.o_mail_chat_content'));
+            this.mail_mobile_inbox_buttons = $(QWeb.render("mail.chat.MobileInboxStarredButtons", {}));
+            this.mail_mobile_inbox_buttons.insertAfter(this.mail_mobile_control_panel);
+        }
         this.renderSidebar();
 
         return $.when(def1, def2, def3, def4)
@@ -304,7 +349,55 @@ var ChatAction = Widget.extend(ControlPanelMixin, {
         this.selected_message = null;
     },
 
+    renderTabPanes: function() {
+        var channels = chat_manager.get_channels();
+        function get_channels(type){
+            return _.filter(channels, function(channel){ return channel.type == type; });
+        }
+        var pane_channels = [
+            {type: "dm", channels: get_channels("dm")},
+            {type: "public", channels: get_channels("public")},
+            {type: "private", channels: get_channels("private")}
+        ];
+        var $tabPanes = $(QWeb.render("mail.chat.MobileTabPanes", {
+            channels: pane_channels,
+            moment: moment,
+            widget: this
+        }));
+        this.$(".o_mail_chat_tab_pane").remove();
+        $tabPanes.insertAfter(this.$(".o_mail_chat_content"));
+        if (this.active_mobile_tab == 'channel_inbox' || this.active_mobile_tab == 'channel_starred') {
+            this.toggleMobileTab(chat_manager.get_channel(this.active_mobile_tab));
+        } else {
+            this.toggleMobileTab(false, this.active_mobile_tab);
+        }
+    },
+
+    toggleMobileTab: function(channel, type) {
+        var title;
+        this.$(".o_mail_chat_tab_pane").hide();
+        this.$(".o_mail_chat_content").hide();
+        this.$(".o_mail_chat_buttons").find("button").hide();
+        if (!type && channel) {
+            type = channel.id == 'channel_starred' ? 'channel_inbox' : channel.id;
+            title = "#" + channel.name;
+            this.$(".o_channel_inbox_item").removeClass("btn-primary").addClass("btn-default");
+            this.$(".o_channel_inbox_item[data-type=" + channel.id + "]").removeClass("btn-default").addClass("btn-primary");
+            this.$(".o_mail_chat_content").show();
+        } else {
+            this.$(".o_mail_chat_tab_pane[data-type=" + type + "]").show();
+            this.$(".o_mail_chat_button_" + type).removeClass("o_hidden").show();
+        }
+        this.$(".o_mail_chat_mobile_tab").removeClass('active');
+        this.$(".o_mail_chat_mobile_tab[data-type=" + type + "]").addClass('active');
+    },
+
     renderSidebar: function () {
+
+        if (this.isMobile) {
+            this.renderTabPanes();
+        }
+
         var self = this;
         var $sidebar = this._renderSidebar({
             active_channel_id: this.channel ? this.channel.id: undefined,
@@ -549,7 +642,22 @@ var ChatAction = Widget.extend(ControlPanelMixin, {
                 $searchview_buttons: this.$searchview_buttons,
             },
             searchview: this.searchview,
+            hidden: this.isMobile
         });
+
+        if (this.isMobile) {
+            var self = this;
+            var $enable_searchview = $('<button/>', {type: 'button'})
+                .addClass('o_enable_searchview btn fa fa-search')
+                .on('click', function() {
+                    self.searchview_displayed = !self.searchview_displayed || false;
+                    self.searchview.$el.toggleClass('o_hidden', !self.searchview_displayed);
+                    self.$buttons.toggleClass('o_hidden', self.searchview_displayed);
+                });
+            this.$buttons.appendTo(this.mail_mobile_control_panel);
+            this.searchview.$el.appendTo(this.mail_mobile_control_panel);
+            $enable_searchview.insertAfter(this.searchview.$el);
+        }
     },
 
     do_show: function () {
@@ -624,7 +732,11 @@ var ChatAction = Widget.extend(ControlPanelMixin, {
     on_new_channel: function (channel) {
         this.renderSidebar();
         if (channel.autoswitch) {
-            this.set_channel(channel);
+            if (this.isMobile) {
+                chat_manager.detach_channel(channel);
+            }else {
+                this.set_channel(channel);
+            }
         }
     },
     on_channel_unsubscribed: function (channel_id) {

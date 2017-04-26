@@ -122,12 +122,13 @@
 
     <!-- Buttons of the Control Panel -->
     <t t-name="mail.chat.ControlButtons">
-        <div>
-            <button type="button" class="btn btn-primary btn-sm o_mail_toggle_channels visible-xs-inline" title="Toggle Channels">Channels</button>
+        <div class="o_mail_chat_buttons">
             <button type="button" class="btn btn-primary btn-sm o_mail_chat_button_invite" title="Invite people">Invite</button>
-            <button type="button" class="btn btn-default btn-sm o_mail_chat_button_mark_read hidden-xs" title="Mark all as read">Mark all read</button>
+            <button type="button" class="btn btn-default btn-sm o_mail_chat_button_mark_read" title="Mark all as read">Mark all read</button>
             <button type="button" class="btn btn-primary btn-sm o_mail_chat_button_unstar_all" title="Unstar all messages">Unstar all</button>
             <button type="button" class="btn btn-default btn-sm o_mail_chat_button_unsubscribe" title="Unsubscribe from channel">Unsubscribe</button>
+            <button t-if="is_mobile" type="button" class="btn btn-default btn-sm o_mail_chat_button_dm o_hidden" title="New Message">New Message</button>
+            <button t-if="!disable_add_channel &amp;&amp; is_mobile" type="button" class="btn btn-default btn-sm o_mail_chat_button_public o_mail_chat_button_private o_hidden" title="New Channel">New Channel</button>
             <button t-if="debug" type="button" class="btn btn-default btn-sm o_mail_chat_button_settings" title="Open channel settings">Settings</button>
         </div>
     </t>
@@ -136,4 +137,69 @@
     <div t-name="mail.PartnerInviteDialog">
         <input type="text" class="o_mail_chat_partner_invite_input" id="mail_search_partners"/>
     </div>
+
+    <t t-name="mail.chat.MobileInboxStarredButtons">
+       <div class="o_mail_chat_inbox_starred_button">
+           <button type="button" class="btn btn-primary btn-sm visible-xs-inline o_channel_inbox_item" title="Inbox" data-type="channel_inbox">Inbox</button><button type="button" class="btn btn-default btn-sm visible-xs-inline o_channel_inbox_item" title="Starred" data-type="channel_starred">Starred</button>
+       </div>
+    </t>
+
+    <t t-name="mail.chat.MobileControlPanel">
+        <div class="o_mail_chat_mobile_control_panel"/>
+    </t>
+
+    <t t-name="mail.chat.MobileTabs">
+        <div class="o_mail_chat_mobile_tabs">
+            <div class="o_mail_chat_mobile_tab" data-channel-id="channel_inbox" data-type="channel_inbox">
+                <span class="fa fa-envelope"/>
+                <span class="o_tab_title">Inbox</span>
+            </div>
+            <div class="o_mail_chat_mobile_tab" data-type="dm">
+                <span class="fa fa-comments"/>
+                <span class="o_tab_title">Conversation</span>
+            </div>
+            <div class="o_mail_chat_mobile_tab" data-type="public">
+                <span class="fa fa-users"/>
+                <span class="o_tab_title">Channels</span>
+            </div>
+            <div class="o_mail_chat_mobile_tab" data-type="private">
+                <span class="fa fa-lock"/>
+                <span class="o_tab_title">Private&amp;nbsp;Channels</span>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="mail.chat.MobileTabPanes">
+        <t t-foreach="channels" t-as="item">
+            <div class="o_mail_chat_tab_pane" t-att-data-type="item.type">
+                <div t-if="!disable_add_channel" class="o_mail_add_channel o_mail_mobile_add_channel" t-att-data-type="type">
+                    <span t-if="type == 'private' || type == 'public'">#</span>
+                    <t t-set="input_placeholder" t-if="type == 'private' || 'public'">Add a channel</t>
+                    <t t-set="input_placeholder" t-if="type == 'dm'">Open chat</t>
+                    <input type="text" t-attf-placeholder="#{input_placeholder}"/>
+                </div>
+                <t t-foreach="item.channels" t-as="channel">
+                    <t t-call="mail.chat.MobileTabPaneItems">
+                        <t t-set="type" t-value="item.type"/>
+                    </t>
+                </t>
+            </div>
+        </t>
+    </t>
+
+    <t t-name="mail.chat.MobileTabPaneItems">
+        <div class="o_mail_tab_pane_item" t-att-data-channel-id="channel.id">
+            <div class="item_avatar_status">
+                <img t-if="type == 'dm'" t-att-src="'/web/image/res.partner/'+ channel.direct_partner_id+'/image_small'"/>
+                <img t-if="type != 'dm'" t-att-src="'/web/image/mail.channel/'+ channel.id+'/image_small'"/>
+                <i t-if="channel.status == 'online'" class="o_mail_user_status o_user_online fa fa-circle" title="Online"/>
+                <i t-if="channel.status == 'away'" class="o_mail_user_status o_user_idle fa fa-circle" title="Idle"/>
+                <i t-if="channel.status == 'offline'" class="o_mail_user_status fa fa-circle" title="Offline"/>
+            </div>
+             <div class="chat_user_detail">
+                <h2><t t-esc="channel.name"/> <small class="o_message_timestamp" t-att-title="channel.seen_message_date"><t t-if="channel.seen_message_date" t-esc="moment(channel.seen_message_date).fromNow()"/></small></h2>
+                <p><t t-if="channel.last_seen_message_preview" t-raw="channel.last_seen_message_preview"/></p>
+            </div>
+        </div>
+    </t>
 </templates>
