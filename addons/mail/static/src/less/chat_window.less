@@ -1,4 +1,4 @@
-@o-chat-window-bg: white;
+@o-chat-window-bg: #f3f3f3;
 @o-chat-window-width: 300px;
 
 .o_chat_window {
@@ -11,13 +11,18 @@
     max-height: 100%;
     font-size: 12px;
     background-color: @o-chat-window-bg;
-    border: 1px solid gray;
-    border-radius: 3px;
+    border-radius: 4px 4px 0px 0px;
     z-index: 3;
+    -moz-box-shadow: 0px 0px 5px #414141;
+    -webkit-box-shadow: 0px 0px 5px #414141;
+    box-shadow: 0px 0px 5px #414141;
 
     @media (max-width: @screen-xs-max) {
         width: 100%;
         height: 100%!important;
+        -moz-box-shadow: none;
+        -webkit-box-shadow: none;
+        box-shadow: none;
         &.o_folded {
             display: none;
         }
@@ -32,19 +37,31 @@
         .o-flex(0, 0, auto);
         color: white;
         background-color: @odoo-brand-primary;
-        padding: 5px;
+        padding: 8px;
+        border-radius: 4px 4px 0px 0px;
 
         @media (max-width: @screen-xs-max) {
             height: @navbar-height;
-            .o_chat_title, .o_chat_window_close {
+            .o_chat_title {
+                font-size: 16px;
+                padding-top: 5px;
+            }
+
+            .o_chat_window_close {
                 font-size: 22px;
             }
         }
 
         .o_chat_title {
             cursor: pointer;
+            font-weight: bold;
             .o-flex(1, 1, auto);
             .o-text-overflow();
+
+            .o_last_seen_on {
+                font-weight: normal;
+                font-size: 10px;
+            }
         }
 
         .o_chat_window_close, .o_chat_window_expand {
@@ -64,7 +81,7 @@
         .o_thread_date_separator {
             margin-top: 0px;
             margin-bottom: 15px;
-            border-color: lightgray;
+            border-bottom: 1px dashed #cccccc;
             .o_thread_date {
                 background-color: @o-chat-window-bg;
             }
