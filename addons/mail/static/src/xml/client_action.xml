@@ -196,9 +196,18 @@
                 <i t-if="channel.status == 'away'" class="o_mail_user_status o_user_idle fa fa-circle" title="Idle"/>
                 <i t-if="channel.status == 'offline'" class="o_mail_user_status fa fa-circle" title="Offline"/>
             </div>
-             <div class="chat_user_detail">
-                <h2><t t-esc="channel.name"/> <small class="o_message_timestamp" t-att-title="channel.seen_message_date"><t t-if="channel.seen_message_date" t-esc="moment(channel.seen_message_date).fromNow()"/></small></h2>
-                <p><t t-if="channel.last_seen_message_preview" t-raw="channel.last_seen_message_preview"/></p>
+            <t t-set="is_author" t-value="channel.last_message &amp;&amp; channel.last_message.author_id[0] == partner_id"/>
+            <t t-set="is_unread" t-value="channel.last_message &amp;&amp; channel.last_seen_message_id &lt; channel.last_message.id &amp;&amp; !is_author"/>
+            <div class="chat_user_detail">
+                <h2 t-attf-class="#{is_unread ? 'unread' : ''}"><t t-esc="channel.name"/><small class="o_message_timestamp" t-attf-title="#{channel.last_message ? channel.last_message.date : ''}"><t t-if="channel.last_message" t-esc="moment(channel.last_message.date).fromNow()"/></small></h2>
+                <t t-if="channel.last_message">
+                    <t t-if="is_author">
+                        <p><span class="fa fa-mail-reply"/></p>
+                    </t>
+                    <p t-attf-class="#{is_unread ? 'unread' : ''}">
+                        <t t-if="channel.last_message" t-raw="get_message_body_preview(channel.last_message.body)"/>
+                    </p>
+                </t>
             </div>
         </div>
     </t>

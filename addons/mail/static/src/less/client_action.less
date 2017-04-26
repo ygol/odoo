@@ -134,10 +134,24 @@
                         small {
                             float: right;
                         }
+
+                        &.unread {
+                            font-weight: 700;
+                        }
                     }
 
                     p {
+                        display: inline-block;
                         color: #b3b3b3;
+                        max-height: 15px;
+                        margin-top: 10px;
+                        overflow: hidden;
+                        line-height: 15px;
+
+                        &.unread{
+                            font-weight: 700;
+                            color: #8f8f8f;
+                        }
                     }
                 }
             }

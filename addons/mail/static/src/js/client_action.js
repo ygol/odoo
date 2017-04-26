@@ -363,7 +363,9 @@ var ChatAction = Widget.extend(ControlPanelMixin, {
         var $tabPanes = $(QWeb.render("mail.chat.MobileTabPanes", {
             channels: pane_channels,
             moment: moment,
-            widget: this
+            widget: this,
+            partner_id: odoo.session_info.partner_id,
+            get_message_body_preview: chat_manager.get_message_body_preview
         }));
         this.$(".o_mail_chat_tab_pane").remove();
         $tabPanes.insertAfter(this.$(".o_mail_chat_content"));

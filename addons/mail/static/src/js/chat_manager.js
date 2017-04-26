@@ -279,6 +279,7 @@ function make_channel (data, options) {
         needaction_counter: data.message_needaction_counter || 0,
         last_seen_on: data.last_seen_on ? moment(time.str_to_datetime(data.last_seen_on)).fromNow() : false,
         unread_counter: 0,
+        last_message: data.last_message,
         last_seen_message_id: data.seen_message_id,
         cache: {'[]': {
             all_history_loaded: false,

@@ -356,6 +356,11 @@ class Channel(models.Model):
                                           .read(['id', 'name', 'im_status']))
                 bus_presence = self.env['bus.presence'].search([('user_id.partner_id', '=', info['direct_partner'][0]['id'])])
                 info['last_seen_on'] = bus_presence.last_presence or False
+
+            last_message = channel.channel_fetch_preview()
+            if last_message:
+                info['last_message'] = last_message[0].get('last_message')
+
             # add user session state, if available and if user is logged
             if partner_channels.ids:
                 partner_channel = partner_channels.filtered(lambda c: channel.id == c.channel_id.id)
