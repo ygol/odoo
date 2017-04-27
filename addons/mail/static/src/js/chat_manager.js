@@ -250,7 +250,7 @@ function add_channel (data, options) {
         channels.push(channel);
         // In case of a static channel (Inbox, Starred), the name is translated thanks to _lt
         // (lazy translate). In this case, channel.name is an object, not a string.
-        channels = _.sortBy(channels, function (channel) { return _.isString(channel.name) ? channel.name.toLowerCase() : '' });
+        channels = _.sortBy(channels, function (channel) { return _.isString(channel.name) ? channel.name.toLowerCase() : '';});
         if (!options.silent) {
             chat_manager.bus.trigger("new_channel", channel);
         }

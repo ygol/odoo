@@ -101,7 +101,9 @@ var Thread = Widget.extend({
             } else {
                 msg.display_author = !options.squash_close_messages;
             }
-            msg.is_self_author = odoo.session_info.partner_id == msg.author_id[0];
+            if (odoo.session_info) {
+                msg.is_author = odoo.session_info.partner_id == msg.author_id[0];
+            }
             prev_msg = msg;
         });
 

@@ -87,8 +87,141 @@
             }
         }
         .o_thread_message {
+            .o_message_attachments {
+                .o-flex(1, 1, auto);
+                -webkit-flex-direction: row;
+                flex-direction: row;
+                position: relative;
+
+                .o_author_info {
+                    display: block;
+                    padding: 5px 5px 0px 5px;
+                    width: 100%;
+
+                    &.o_own_message {
+                        float: right;
+                        text-align: right;
+                    }
+
+                    &.o_sender_message {
+                        float: left;
+                        text-align: left;
+                    }
+                }
+
+                .attachment_message {
+                    color: #414141;
+                    padding: 5px 10px;
+                    text-align: left;
+                    border-radius: 5px;
+                    max-width: 90%;
+
+                    p {
+                        margin: 0px;
+                        padding: 0px;
+                    }
+
+                    &.o_own_message {
+                        background: @odoo-brand-primary;
+                        color: white;
+                        float: right;
+                    }
+
+                    &.o_sender_message {
+                        background: #ccc;
+                        float: left;
+                    }
+                }
+
+                .o_message_attachment {
+                    display: block;
+                    padding: 5px;
+                    padding-bottom: 0px;
+                    border-radius: 4px;
+                    margin: 5px 5px 5px 5px;
+                    position: relative;
+
+                    .download_icon {
+                        position: absolute;
+                        z-index: 1;
+                        top: 40%;
+                        left: 40%;
+                        span {
+                            background: rgba(0, 0, 0, 0.5);
+                            padding: 5px;
+                            border-radius: 30px;
+                            color: #fff;
+                        }
+                    }
+
+                    a.o_image {
+                        width: 80px;
+                        height: 60px;
+                    }
+
+                    img {
+                        height: 60px;
+                        width: 80px;
+                        margin-bottom: 5px;
+                        opacity: 0.5;
+
+                        &.o_image_view {
+                            cursor: pointer;
+                            background-color: #000;
+                            object-fit: none;
+                        }
+                    }
+                    &.o_own_message {
+                        float: right;
+                        background-color:@odoo-brand-primary;
+                    }
+
+                    &.o_sender_message {
+                        float: left;
+                        background-color: #cccccc;
+                    }
+                }
+            }
+
+            .o_thread_message_core {
+                flex: inherit;
+                border-radius: 15px;
+                display: inline-block;
+                width: auto;
+                max-width: 90%;
+                min-width: 40%;
+                padding: 10px 12px;
+                color: white;
+                line-height: 16px;
+                position: relative;
+
+                .o_mail_timestamp {
+                    color: #ebebeb;
+                    float: right;
+                }
+
+                .o_msg_time {
+                    color: #ebebeb;
+                    font-size: 10px;
+                }
+
+                &.o_own_message {
+                    margin-left: auto;
+                    background-color: @odoo-brand-primary;
+                }
+
+                &.o_sender_message {
+                    margin-right: auto;
+                    background-color: #cccccc;
+                    color: #414141;
+                }
+            }
             .o_thread_message_sidebar {
                 margin-right: 5px;
+
+                .o_thread_message_avatar {
+                    border-radius: 30px;
+                }
             }
             padding: 4px 5px;
         }

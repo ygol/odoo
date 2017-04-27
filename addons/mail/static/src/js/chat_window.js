@@ -35,7 +35,6 @@ return Widget.extend({
             display_email_icon: false,
             placeholder: _t("Say something"),
             input_less: false,
-            is_chat_window: true
         });
         this.status = this.options.status;
         this.unread_msgs = unread_msgs || 0;
@@ -51,6 +50,7 @@ return Widget.extend({
             channel_id: this.channel_id,
             display_needactions: false,
             display_stars: this.options.display_stars,
+            is_chat_window: true
         });
         this.thread.on('toggle_star_status', null, this.trigger.bind(this, 'toggle_star_status'));
         this.thread.on('redirect_to_channel', null, this.trigger.bind(this, 'redirect_to_channel'));

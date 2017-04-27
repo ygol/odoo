@@ -40,8 +40,12 @@
                 </span>
                 <t t-set="current_day" t-value="message.day"/>
             </div>
-
-            <t t-call="mail.ChatThread.Message"/>
+            <t t-if="!options.is_chat_window" t-call="mail.ChatThread.Message"/>
+            <t t-if="options.is_chat_window">
+                <t t-set="has_attachments" t-value="message.attachment_ids.length &gt; 0"/>
+                <t t-if="has_attachments" t-call="mail.ChatThread.ChatWindow.Attachments"/>
+                <t t-if="!has_attachments" t-call="mail.ChatThread.ChatWindow.Message"/>
+            </t>
         </t>
     </t>
 
@@ -139,6 +143,62 @@
         <t t-if="options.messages_separator_position == message.id">
             <t t-call="mail.MessagesSeparator"/>
         </t>
+    </t>
+
+    <t t-name="mail.ChatThread.ChatWindow.Message">
+        <div t-att-class="'o_thread_message' + (message.expanded ? ' o_message_expanded '  : ' ') + (message.is_selected ? 'o_thread_selected_message' : '')" t-att-data-message-id="message.id">
+
+            <div t-if="options.display_avatar &amp;&amp; !message.is_author" class="o_thread_message_sidebar">
+                <t t-if="!message.mailto &amp;&amp; message.author_id[0]">
+                    <img t-if="message.avatar_src &amp;&amp; message.display_author"
+                        t-att-src="message.avatar_src"
+                        data-oe-model="res.partner"
+                        t-att-data-oe-id="message.author_redirect ? message.author_id[0] : ''"
+                        t-attf-class="o_thread_message_avatar #{message.author_redirect ? 'o_mail_redirect' : ''}"/>
+                </t>
+                <t t-if="message.mailto || !message.author_id[0]">
+                    <img t-if="message.avatar_src &amp;&amp; message.display_author"
+                        t-att-src="message.avatar_src"
+                        class="o_thread_message_avatar"/>
+                </t>
+            </div>
+
+            <div t-att-class="'o_thread_message_core ' + (message.is_note ? ' o_mail_note' : '') + (message.is_author ? ' o_own_message ' : 'o_sender_message')">
+                <t t-if="!(message.tracking_value_ids &amp;&amp; message.tracking_value_ids.length &gt; 0)">
+                    <t t-raw="message.body"/>
+                </t>
+            </div>
+        </div>
+        <t t-if="options.messages_separator_position == message.id">
+            <t t-call="mail.MessagesSeparator"/>
+        </t>
+    </t>
+
+    <t t-name="mail.ChatThread.ChatWindow.Attachments">
+        <div class="o_thread_message" t-att-data-message-id="message.id">
+            <div class="o_message_attachments">
+                <div t-att-class="'o_author_info ' + (message.is_author ? ' o_own_message ' : 'o_sender_message')">
+                    <t t-if="!message.is_author">
+                        <strong><small><t t-esc="message.displayed_author"/></small></strong>
+                    </t>
+                    <span t-att-title="message.date"><small> <i><t t-esc="message.date.format('hh:mm')"/></i></small></span>
+                    <div>
+                        <div t-if="message.body" t-att-class="'attachment_message ' + (message.is_author ? ' o_own_message ' : 'o_sender_message')">
+                            <t t-raw="message.body"/>
+                        </div>
+                    </div>
+                </div>
+
+                <t t-foreach="message.attachment_ids" t-as="attachment">
+                    <div t-att-class="'o_message_attachment ' +(message.is_author ? ' o_own_message ' : 'o_sender_message')">
+                        <a t-att-href='attachment.url' target="_blank" t-att-data-mimetype="attachment.mimetype" t-attf-data-src="/web/image/#{attachment.id}/80x60" t-att-class="attachment.mimetype.startsWith('image') ? '' : 'o_image'">
+                            <img t-if="attachment.mimetype.startsWith('image')" t-attf-src="/web/image/#{attachment.id}/80x60" class="o_image_view"/>
+                            <span class="download_icon"><span class="fa fa-cloud-download"/></span>
+                        </a>
+                    </div>
+                </t>
+            </div>
+        </div>
     </t>
 
     <t t-name="mail.MessagesSeparator">
