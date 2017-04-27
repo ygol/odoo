@@ -30,16 +30,25 @@
                 width: calc(~"100% - 110px");
                 textarea {
                     display: block;
-                    padding: 15px 10px;
+                    padding: 10px;
                     font-size: 13px;
+
+                    @media (max-width: @screen-xs-max) {
+                        padding: 15px 10px;
+                    }
                 }
             }
 
             .o_composer_buttons {
                 position: absolute;
-                top: 7px;
                 right: 0px;
+                bottom: 2px;
                 padding-top: 5px;
+
+                @media (max-width: @screen-xs-max) {
+                    bottom: 10px;
+                }
+
                 button {
                     &.btn-icon{
                         font-size: 1.3em;

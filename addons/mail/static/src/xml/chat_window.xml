@@ -50,7 +50,6 @@
             <t t-if="status">
                 <small class="o_last_seen_on">
                     <t t-if="status != 'online' &amp;&amp; last_seen_on"> - <t t-esc="last_seen_on"/></t>
-                    <t t-if="status == 'online'">online</t>
                 </small>
             </t>
         </span>
