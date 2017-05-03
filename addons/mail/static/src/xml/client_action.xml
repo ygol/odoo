@@ -201,10 +201,8 @@
             <div class="chat_user_detail">
                 <h2 t-attf-class="#{is_unread ? 'unread' : ''}"><t t-esc="channel.name"/><small class="o_message_timestamp" t-attf-title="#{channel.last_message ? channel.last_message.date : ''}"><t t-if="channel.last_message" t-esc="moment(channel.last_message.date).fromNow()"/></small></h2>
                 <t t-if="channel.last_message">
-                    <t t-if="is_author">
-                        <p><span class="fa fa-mail-reply"/></p>
-                    </t>
                     <p t-attf-class="#{is_unread ? 'unread' : ''}">
+                        <span t-if="is_author" class="fa fa-mail-reply"/>
                         <t t-if="channel.last_message" t-raw="get_message_body_preview(channel.last_message.body)"/>
                     </p>
                 </t>

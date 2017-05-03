@@ -43,6 +43,9 @@
     </t>
 
     <t t-name="mail.ChatWindowHeaderContent">
+        <span t-if="isMobile">
+            <a href="#" class="o_chat_window_close fa fa-1x fa-arrow-left"/>&amp;nbsp;&amp;nbsp;
+        </span>
         <span class="o_chat_title">
             <t t-if="status" t-call="mail.chat.UserStatus"/>
             <t t-esc="title"/>
@@ -53,7 +56,7 @@
                 </small>
             </t>
         </span>
-        <span>
+        <span t-if="!isMobile">
             <a href="#" class="o_chat_window_close fa fa-close"/>
         </span>
     </t>

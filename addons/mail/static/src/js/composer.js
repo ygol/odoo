@@ -552,6 +552,12 @@ var BasicComposer = Widget.extend(chat_mixin, {
     },
 
     on_keyup: function (event) {
+
+        // Toggling send button to green if user typing and have content
+        if (this.options.isMobile && this.options.is_chat_window) {
+            $(".o_composer_button_send").toggleClass("text-success", !this.is_empty());
+        }
+
         switch(event.which) {
             // ESCAPED KEYS: do nothing
             case $.ui.keyCode.END:
