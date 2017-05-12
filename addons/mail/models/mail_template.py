@@ -151,6 +151,9 @@ class MailTemplate(models.Model):
                                      help="Optional preferred server for outgoing mails. If not set, the highest "
                                           "priority one will be used.")
     body_html = fields.Html('Body', translate=True, sanitize=False)
+    layout_view_id = fields.Many2one(
+        'ir.ui.view', 'Layout View',
+        default=lambda self: self.env.ref('mail.mail_template_layout_default').id)
     report_name = fields.Char('Report Filename', translate=True,
                               help="Name to use for the generated report file (may contain placeholders)\n"
                                    "The extension can be omitted and will then come from the report type.")

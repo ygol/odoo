@@ -34,48 +34,42 @@
                             <field name="model" invisible="1"/>
                             <label for="name" class="oe_edit_only"/>
                             <h1><field name="name" required="1"/></h1>
+                        </div>
+                        <group>
                             <group>
                                 <field name="model_id" required="1" options="{'no_create': True}"/>
                                 <field name="subject" placeholder="Subject (placeholders may be used here)"/>
+                                <field name="email_from" placeholder="Override author's email"/>
+                                <field name="reply_to" placeholder="Preferred reply address"/>
                             </group>
-                        </div>
+                            <group string="Recipients">
+                                <field name="use_default_to"/>
+                                <field name="email_to" attrs="{'invisible': [('use_default_to', '=', True)]}"
+                                    placeholder="Comma-separated recipient addresses"/>
+                                <field name="partner_to" attrs="{'invisible': [('use_default_to', '=', True)]}"
+                                    placeholder="Comma-separated ids of recipient partners"/>
+                                <field name="email_cc" attrs="{'invisible': [('use_default_to', '=', True)]}"
+                                    placeholder="Comma-separated carbon copy recipients addresses"/>
+                            </group>
+                        </group>
                         <notebook>
                             <page string="Body">
                                 <field name="body_html" widget="html" options="{'style-inline': true}"/>
                                 <field name="attachment_ids" widget="many2many_binary"/>
                             </page>
-                            <page string="Recipients">
+                            <page string="Mail Settings">
                                 <group>
                                     <group>
-                                        <field name="email_from"
-                                            placeholder="Override author's email"/>
-                                        <field name="reply_to"
-                                            placeholder="Preferred reply address"/>
-                                        <field name="use_default_to"/>
+                                        <field name="user_signature" string="Author Signature (mass mail only)"/>
+                                        <field name="scheduled_date" string="Scheduled Send Date"/>
                                     </group>
                                     <group>
-                                        <field name="email_to" attrs="{'invisible': [('use_default_to', '=', True)]}"
-                                            placeholder="Comma-separated recipient addresses"/>
-                                        <field name="partner_to" attrs="{'invisible': [('use_default_to', '=', True)]}"
-                                            placeholder="Comma-separated ids of recipient partners"/>
-                                        <field name="email_cc" attrs="{'invisible': [('use_default_to', '=', True)]}"
-                                            placeholder="Comma-separated carbon copy recipients addresses"/>
+                                        <field name="lang"/>
+                                        <field name="mail_server_id"/>
+                                        <field name="auto_delete"/>
+                                        <field name="report_template" domain="[('model','=',model)]"/>
+                                        <field name="report_name" attrs="{'invisible':[('report_template','=',False)]}"/>
                                     </group>
-                                </group>
-                            </page>
-                            <page string="Email">
-                                <group>
-                                    <field name="user_signature" string="Author Signature (mass mail only)"/>
-                                    <field name="scheduled_date" string="Scheduled Send Date"/>
-                                </group>
-                            </page>
-                            <page string="Advanced Settings">
-                                <group>
-                                    <field name="lang"/>
-                                    <field name="mail_server_id"/>
-                                    <field name="auto_delete"/>
-                                    <field name="report_template" domain="[('model','=',model)]"/>
-                                    <field name="report_name" attrs="{'invisible':[('report_template','=',False)]}"/>
                                 </group>
                             </page>
                             <page string="Dynamic Placeholder Generator">
