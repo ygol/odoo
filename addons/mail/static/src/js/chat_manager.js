@@ -81,6 +81,8 @@ function add_message (data, options) {
         _.each(msg.channel_ids, function (channel_id) {
             var channel = chat_manager.get_channel(channel_id);
             if (channel) {
+                // For mobile tabs view, we show recent message for channel.
+                channel.last_message = msg;
                 add_to_cache(msg, []);
                 if (options.domain && options.domain !== []) {
                     add_to_cache(msg, options.domain);
@@ -279,6 +281,8 @@ function make_channel (data, options) {
         needaction_counter: data.message_needaction_counter || 0,
         unread_counter: 0,
         last_seen_message_id: data.seen_message_id,
+        last_seen_on: false,
+        last_message: data.last_message,
         cache: {'[]': {
             all_history_loaded: false,
             loaded: false,
@@ -289,10 +293,12 @@ function make_channel (data, options) {
         channel.type = data.public !== "private" ? "public" : "private";
     }
     if (_.size(data.direct_partner) > 0) {
+        var last_seen_on = data.direct_partner[0].last_seen;
         channel.type = "dm";
         channel.name = data.direct_partner[0].name;
         channel.direct_partner_id = data.direct_partner[0].id;
         channel.status = data.direct_partner[0].im_status;
+        channel.last_seen_on = last_seen_on ?  moment(time.str_to_datetime(last_seen_on)).fromNow() : false;
         pinned_dm_partners.push(channel.direct_partner_id);
         bus.update_option('bus_presence_partner_ids', pinned_dm_partners);
     } else if ('anonymous_name' in data) {

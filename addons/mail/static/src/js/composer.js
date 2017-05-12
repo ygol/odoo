@@ -9,6 +9,7 @@ var data = require('web.data');
 var dom = require('web.dom');
 var session = require('web.session');
 var Widget = require('web.Widget');
+var config = require('web.config');
 
 var QWeb = core.qweb;
 var _t = core._t;
@@ -370,6 +371,7 @@ var BasicComposer = Widget.extend(chat_mixin, {
             send_text: _t('Send'),
             default_body: '',
             default_mention_selections: {},
+            isMobile: config.isMobile
         });
         this.context = this.options.context;
 
