@@ -32,5 +32,17 @@
             </xpath>
         </field>
     </record>
+    <record id="account_view_inherit" model="ir.ui.view">
+        <field name="name">account.invoice.inherit.form</field>
+        <field name="model">account.invoice</field>
+        <field name="inherit_id" ref="account.invoice_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='technical']" position="inside">
+                <field name="campaign_id" groups="base.group_no_one" />
+                <field name="medium_id" groups="base.group_no_one"/>
+                <field name="source_id" groups="base.group_no_one"/>
+            </xpath>
+        </field>
+    </record>
 
 </odoo>
