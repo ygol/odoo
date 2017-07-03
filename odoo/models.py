@@ -4782,13 +4782,21 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
             ns = [f.name for f in fs if f.store]
             # evaluate fields, and group record ids by update
             updates = defaultdict(set)
-            for rec in recs.exists():
-                vals = rec._convert_to_write({n: rec[n] for n in ns})
+            for rec in recs:
+                try:
+                    vals = {n: rec[n] for n in ns}
+                except MissingError:
+                    continue
+                vals = rec._convert_to_write(vals)
                 updates[frozendict(vals)].add(rec.id)
             # update records in batch when possible
             with recs.env.norecompute():
                 for vals, ids in pycompat.items(updates):
-                    recs.browse(ids)._write(dict(vals))
+                    try:
+                        recs.browse(ids)._write(dict(vals))
+                    except MissingError:
+                        # retry after skipping missing records
+                        recs.browse(ids).exists()._write(dict(vals))
             # mark computed fields as done
             for f in fs:
                 recs._recompute_done(f)
