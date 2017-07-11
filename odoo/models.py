@@ -4728,6 +4728,9 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
             for field, path in self._field_triggers[mfield]:
                 triggers[(field.model_name, path)].add(field)
 
+        target_env = self.env(user=SUPERUSER_ID, context={})
+        search_env = target_env(context={'active_test': False})
+
         # process triggers, mark fields to be invalidated/recomputed
         for model_path, fields in triggers.items():
             model_name, path = model_path
@@ -4738,20 +4741,16 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                 if path == 'id':
                     target0 = self
                 else:
-                    env = self.env(user=SUPERUSER_ID, context={'active_test': False})
-                    target0 = env[model_name].search([(path, 'in', self.ids)])
-                    target0 = target0.with_env(self.env)
+                    target0 = search_env[model_name].search([(path, 'in', self.ids)])
                 # prepare recomputation for each field on linked records
                 for field in stored:
                     # discard records to not recompute for field
-                    target = target0 - self.env.protected(field)
+                    target = target0 - target_env.protected(field)
                     if not target:
                         continue
                     invalids.append((field, target._ids))
                     # mark field to be recomputed on target
-                    if field.compute_sudo:
-                        target = target.sudo()
-                    target._recompute_todo(field)
+                    target.with_env(target_env)._recompute_todo(field)
             # process non-stored fields
             for field in (fields - stored):
                 invalids.append((field, None))
