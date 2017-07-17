@@ -3028,6 +3028,8 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
     @api.multi
     def _write(self, vals):
         # low-level implementation of write()
+        if not self:
+            return True
         self.check_field_access_rights('write', list(vals))
 
         cr = self._cr
