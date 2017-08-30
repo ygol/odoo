@@ -63,9 +63,7 @@ class Followers(models.Model):
                 if follower.channel_id:
                     c_exist.setdefault(follower.channel_id.id, list()).append(follower.res_id)
 
-        default_subtypes = self.env['mail.message.subtype'].search([
-            ('default', '=', True),
-            '|', ('res_model', '=', res_model), ('res_model', '=', False)])
+        default_subtypes = self.env['mail.message.subtype'].default_subtypes(res_model)
         external_default_subtypes = default_subtypes.filtered(lambda subtype: not subtype.internal)
 
         if force_mode:

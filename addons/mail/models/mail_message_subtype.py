@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import fields, models
+from odoo import api, fields, models, tools
 
 
 class MailMessageSubtype(models.Model):
@@ -40,3 +40,45 @@ class MailMessageSubtype(models.Model):
     default = fields.Boolean('Default', default=True, help="Activated by default when subscribing.")
     sequence = fields.Integer('Sequence', default=1, help="Used to order subtypes.")
     hidden = fields.Boolean('Hidden', help="Hide the subtype in the follower options")
+
+    @api.model
+    def create(self, vals):
+        self.clear_caches()
+        return super(MailMessageSubtype, self).create(vals)
+
+    def write(self, vals):
+        self.clear_caches()
+        return super(MailMessageSubtype, self).write(vals)
+
+    def unlink(self):
+        self.clear_caches()
+        return super(MailMessageSubtype, self).unlink()
+
+    def auto_subscribe_subtypes(self, model_name):
+        """ Retrieve the header subtypes for the given model. """
+        return self.browse(self._auto_subscribe_subtypes(model_name))
+
+    @tools.ormcache('frozenset(self.env.user.groups_id.ids)', 'model_name')
+    def _auto_subscribe_subtypes(self, model_name):
+        domain = ['|', ('res_model', '=', False), ('parent_id.res_model', '=', model_name)]
+        return self.search(domain).ids
+
+    def default_subtypes(self, model_name):
+        """ Retrieve the default subtypes for the given model. """
+        return self.browse(self._default_subtypes(model_name))
+
+    @tools.ormcache('frozenset(self.env.user.groups_id.ids)', 'model_name')
+    def _default_subtypes(self, model_name):
+        domain = [('default', '=', True),
+                  '|', ('res_model', '=', model_name), ('res_model', '=', False)]
+        return self.search(domain).ids
+
+    def visible_subtypes(self, model_name):
+        """ Retrieve the model subtypes for the given model. """
+        return self.browse(self._visible_subtypes(model_name))
+
+    @tools.ormcache('frozenset(self.env.user.groups_id.ids)', 'model_name')
+    def _visible_subtypes(self, model_name):
+        domain = [('hidden', '=', False),
+                  '|', ('res_model', '=', model_name), ('res_model', '=', False)]
+        return self.search(domain).ids

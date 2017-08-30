@@ -2118,7 +2118,7 @@ class MailThread(models.AbstractModel):
         user_field_lst = self._message_get_auto_subscribe_fields(updated_fields)
 
         # fetch header subtypes
-        subtypes = self.env['mail.message.subtype'].search(['|', ('res_model', '=', False), ('parent_id.res_model', '=', self._name)])
+        subtypes = self.env['mail.message.subtype'].auto_subscribe_subtypes(self._name)
 
         # if no change in tracked field or no change in tracked relational field: quit
         relation_fields = set([subtype.relation_field for subtype in subtypes if subtype.relation_field is not False])

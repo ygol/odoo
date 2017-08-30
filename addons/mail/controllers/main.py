@@ -147,7 +147,7 @@ class MailController(http.Controller):
         followers = request.env['mail.followers'].browse(follower_id)
 
         # find current model subtypes, add them to a dictionary
-        subtypes = request.env['mail.message.subtype'].search(['&', ('hidden', '=', False), '|', ('res_model', '=', res_model), ('res_model', '=', False)])
+        subtypes = request.env['mail.message.subtype'].visible_subtypes(res_model)
         subtypes_list = [{
             'name': subtype.name,
             'res_model': subtype.res_model,
