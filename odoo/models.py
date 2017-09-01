@@ -5161,8 +5161,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                         continue
                     invalids.append((field, target._ids))
                     # mark field to be recomputed on target
-                    if field.compute_sudo:
-                        target = target.sudo()
                     target._recompute_todo(field)
             # process non-stored fields
             for field in (fields - stored):
