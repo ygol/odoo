@@ -303,37 +303,36 @@ class TestFields(common.TransactionCase):
         self.assertEqual(foo1.name, 'Bar')
         self.assertEqual(foo2.name, 'Bar')
 
-
         # create/write on 'foo' should only invoke the compute method
-        log = []
-        model = self.env['test_new_api.compute.inverse'].with_context(log=log)
+        model = self.env['test_new_api.compute.inverse']
+        model.LOG.clear()
         record = model.create({'foo': 'Hi'})
         self.assertEqual(record.foo, 'Hi')
         self.assertEqual(record.bar, 'Hi')
-        self.assertCountEqual(log, ['compute'])
+        self.assertCountEqual(model.LOG, ['compute'])
 
-        log.clear()
+        model.LOG.clear()
         record.write({'foo': 'Ho'})
         self.assertEqual(record.foo, 'Ho')
         self.assertEqual(record.bar, 'Ho')
-        self.assertCountEqual(log, ['compute'])
+        self.assertCountEqual(model.LOG, ['compute'])
 
         # create/write on 'bar' should only invoke the inverse method
-        log.clear()
+        model.LOG.clear()
         record = model.create({'bar': 'Hi'})
         self.assertEqual(record.foo, 'Hi')
         self.assertEqual(record.bar, 'Hi')
-        self.assertCountEqual(log, ['inverse'])
+        self.assertCountEqual(model.LOG, ['inverse'])
 
-        log.clear()
+        model.LOG.clear()
         record.write({'bar': 'Ho'})
         self.assertEqual(record.foo, 'Ho')
         self.assertEqual(record.bar, 'Ho')
-        self.assertCountEqual(log, ['inverse'])
+        self.assertCountEqual(model.LOG, ['inverse'])
 
         # Test compatibility multiple compute/inverse fields
-        log = []
-        model = self.env['test_new_api.multi_compute_inverse'].with_context(log=log)
+        model = self.env['test_new_api.multi_compute_inverse']
+        model.LOG.clear()
         record = model.create({
             'bar1': '1',
             'bar2': '2',
@@ -343,31 +342,80 @@ class TestFields(common.TransactionCase):
         self.assertEqual(record.bar1, '1')
         self.assertEqual(record.bar2, '2')
         self.assertEqual(record.bar3, '3')
-        self.assertCountEqual(log, ['inverse1', 'inverse23'])
+        self.assertCountEqual(model.LOG, ['inverse1', 'inverse23'])
 
-        log.clear()
+        model.LOG.clear()
         record.write({'bar2': '4', 'bar3': '5'})
         self.assertEqual(record.foo, '1/4/5')
         self.assertEqual(record.bar1, '1')
         self.assertEqual(record.bar2, '4')
         self.assertEqual(record.bar3, '5')
-        self.assertCountEqual(log, ['inverse23'])
+        self.assertCountEqual(model.LOG, ['inverse23'])
 
-        log.clear()
+        model.LOG.clear()
         record.write({'bar1': '6', 'bar2': '7'})
         self.assertEqual(record.foo, '6/7/5')
         self.assertEqual(record.bar1, '6')
         self.assertEqual(record.bar2, '7')
         self.assertEqual(record.bar3, '5')
-        self.assertCountEqual(log, ['inverse1', 'inverse23'])
+        self.assertCountEqual(model.LOG, ['inverse1', 'inverse23'])
 
-        log.clear()
+        model.LOG.clear()
         record.write({'foo': 'A/B/C'})
         self.assertEqual(record.foo, 'A/B/C')
         self.assertEqual(record.bar1, 'A')
         self.assertEqual(record.bar2, 'B')
         self.assertEqual(record.bar3, 'C')
-        self.assertCountEqual(log, ['compute'])
+        self.assertCountEqual(model.LOG, ['compute'])
+
+        # counting how many times fields are computed/inversed
+        base = self.env['test_new_api.inverse']
+        LOG = base.line_ids.LOG
+
+        # create on base.name should compute both lines once
+        LOG.clear()
+        base = base.create({'name': 'Foo', 'line_ids': [(0, 0, {}), (0, 0, {})]})
+        self.assertEqual(base.name, 'Foo')
+        self.assertEqual(base.line_ids[0].name, 'Foo')
+        self.assertEqual(base.line_ids[1].name, 'Foo')
+        self.assertEqual(LOG, [('compute', base.line_ids)])
+
+        # write on base.name should compute both lines once
+        LOG.clear()
+        base.write({'name': 'Bar'})
+        self.assertEqual(base.name, 'Bar')
+        self.assertEqual(base.line_ids[0].name, 'Bar')
+        self.assertEqual(base.line_ids[1].name, 'Bar')
+        self.assertEqual(LOG, [('compute', base.line_ids)])
+
+        # create on a single line.name should inverse it and compute the other one
+        LOG.clear()
+        base = base.create({'line_ids': [(0, 0, {}), (0, 0, {'name': 'Foo'})]})
+        self.assertEqual(base.name, 'Foo')
+        self.assertEqual(base.line_ids[0].name, 'Foo')
+        self.assertEqual(base.line_ids[1].name, 'Foo')
+        self.assertEqual(LOG, [('inverse', base.line_ids[1]), ('compute', base.line_ids)])
+
+        # write on a single line.name should inverse it and compute the other one
+        LOG.clear()
+        base.write({'line_ids': [(1, base.line_ids[1].id, {'name': 'Bar'})]})
+        self.assertEqual(base.name, 'Bar')
+        self.assertEqual(base.line_ids[0].name, 'Bar')
+        self.assertEqual(base.line_ids[1].name, 'Bar')
+        self.assertEqual(LOG, [('inverse', base.line_ids[1]), ('compute', base.line_ids)])
+
+        # write on both line.name should inverse and recompute both
+        LOG.clear()
+        base.write({'line_ids': [(1, base.line_ids[0].id, {'name': 'Foo'}),
+                                 (1, base.line_ids[1].id, {'name': 'Bar'})]})
+        self.assertEqual(base.name, 'Bar')
+        self.assertEqual(base.line_ids[0].name, 'Bar')
+        self.assertEqual(base.line_ids[1].name, 'Bar')
+        self.assertEqual(LOG, [
+            ('inverse', base.line_ids[0]),
+            ('inverse', base.line_ids[1]),
+            ('compute', base.line_ids),
+        ])
 
     def test_14_search(self):
         """ test search on computed fields """

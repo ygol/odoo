@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+from collections import defaultdict
 import datetime
 
 from odoo import models, fields, api, _
@@ -343,6 +344,7 @@ class Related(models.Model):
     message_name = fields.Text(related="message.body", related_sudo=False, string='Message Body', readonly=False)
     message_currency = fields.Many2one(related="message.author", string='Message Author', readonly=False)
 
+
 class ComputeProtected(models.Model):
     _name = 'test_new_api.compute.protected'
     _description = 'Test New API Compute Protected'
@@ -355,29 +357,63 @@ class ComputeProtected(models.Model):
         for record in self:
             record.bar = record.foo
 
+
 class ComputeInverse(models.Model):
     _name = 'test_new_api.compute.inverse'
-    _description = 'Test New API Compute Inversse'
+    _description = 'Test New API Compute Inverse'
+
+    LOG = []
 
     foo = fields.Char()
     bar = fields.Char(compute='_compute_bar', inverse='_inverse_bar', store=True)
 
     @api.depends('foo')
     def _compute_bar(self):
-        self._context.get('log', []).append('compute')
+        self.LOG.append('compute')
         for record in self:
             record.bar = record.foo
 
     def _inverse_bar(self):
-        self._context.get('log', []).append('inverse')
+        self.LOG.append('inverse')
         for record in self:
             record.foo = record.bar
+
+
+class ComputeInverseBase(models.Model):
+    _name = 'test_new_api.inverse'
+    _description = 'Test New API Inverse'
+
+    name = fields.Char()
+    line_ids = fields.One2many('test_new_api.inverse.line', 'base_id')
+
+
+class ComputeInverseLine(models.Model):
+    _name = 'test_new_api.inverse.line'
+    _description = 'Test New API Inverse Line'
+
+    LOG = []
+
+    name = fields.Char(compute='_compute_name', inverse='_inverse_name', store=True)
+    base_id = fields.Many2one('test_new_api.inverse')
+
+    @api.depends('base_id.name')
+    def _compute_name(self):
+        self.LOG.append(('compute', self))
+        for line in self:
+            line.name = line.base_id.name
+
+    def _inverse_name(self):
+        self.LOG.append(('inverse', self))
+        for line in self:
+            line.base_id.name = line.name
 
 
 class MultiComputeInverse(models.Model):
     """ Model with the same inverse method for several fields. """
     _name = 'test_new_api.multi_compute_inverse'
     _description = 'Test New API Multi Compute Inverse'
+
+    LOG = []
 
     foo = fields.Char(default='', required=True)
     bar1 = fields.Char(compute='_compute_bars', inverse='_inverse_bar1', store=True)
@@ -386,18 +422,18 @@ class MultiComputeInverse(models.Model):
 
     @api.depends('foo')
     def _compute_bars(self):
-        self._context.get('log', []).append('compute')
+        self.LOG.append('compute')
         for record in self:
             substrs = record.foo.split('/') + ['', '', '']
             record.bar1, record.bar2, record.bar3 = substrs[:3]
 
     def _inverse_bar1(self):
-        self._context.get('log', []).append('inverse1')
+        self.LOG.append('inverse1')
         for record in self:
             record.write({'foo': '/'.join([record.bar1, record.bar2, record.bar3])})
 
     def _inverse_bar23(self):
-        self._context.get('log', []).append('inverse23')
+        self.LOG.append('inverse23')
         for record in self:
             record.write({'foo': '/'.join([record.bar1, record.bar2, record.bar3])})
 
