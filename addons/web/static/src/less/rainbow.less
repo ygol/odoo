@@ -1,7 +1,7 @@
 /**************  rainbow  *****************/
 
 // Variables
-@reward-size: 310px;
+@reward-size: 400px;
 @reward-text-color: #727880;
 @reward-base-time: 1.4s;
 
@@ -9,7 +9,7 @@
 .o_reward {
     will-change: transform;
     z-index: @zindex-modal + 1;
-    padding: 30px;
+    padding: 50px;
     margin: -5% auto 0 -(@reward-size / 2);
     background-image: -webkit-radial-gradient(#EDEFF4 30%, transparent 70%, transparent);
     background-image: -o-radial-gradient(#EDEFF4 30%, transparent 70%, transparent);
@@ -18,6 +18,9 @@
     .o-animation(reward-fading, @reward-base-time * 0.5, ease-in-out, 0s, 1, normal, forwards);
     .o-position-absolute(20%, auto, auto, 50%);
     .size(@reward-size, @reward-size);
+    @media (max-width: @screen-xs-max) {
+        transform: scale(0.7);
+    }
 
     &.o_reward_fading {
         display: block;
@@ -125,9 +128,6 @@
         }
 
         .o_reward_msg {
-              @media (min-width: @screen-sm-min){
-                margin-left: 7%;
-            }
             margin-left: 7%;
             margin-top: -9.5%;
             padding: 25px 15px 20px;
