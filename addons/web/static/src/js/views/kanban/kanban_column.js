@@ -97,10 +97,7 @@ var KanbanColumn = Widget.extend({
         }
         this.$header.find('.o_kanban_header_title').tooltip();
 
-        if (!config.device.isMobile && this.draggable !== false) {
-            // deactivate sortable in mobile mode.  It does not work anyway,
-            // and it breaks horizontal scrolling in kanban views.  Someday, we
-            // should find a way to use the touch events to make sortable work.
+        if (this.draggable !== false) {
             this.$el.sortable({
                 connectWith: '.o_kanban_group',
                 revert: 0,
@@ -108,8 +105,12 @@ var KanbanColumn = Widget.extend({
                 items: '> .o_kanban_record:not(.o_updating)',
                 helper: 'clone',
                 cursor: 'move',
-                over: function () {
+                over: function (event, ui) {
                     self.$el.addClass('o_kanban_hover');
+                    if (config.device.isMobile && self.data.res_id !== ui.item.data('record').recordData.stage_id.res_id) { //Math.abs(ui.offset.left) > 100
+                        var swipeTo = ui.offset.left < 0 ? "right" : "left";
+                        self.trigger_up("kanban_column_swipe_" + swipeTo);
+                    }
                 },
                 out: function () {
                     self.$el.removeClass('o_kanban_hover');

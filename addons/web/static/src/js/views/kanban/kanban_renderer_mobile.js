@@ -19,6 +19,10 @@ if (!config.device.isMobile) {
 }
 
 KanbanRenderer.include({
+    custom_events:  _.extend({}, KanbanRenderer.prototype.events, {
+        'kanban_column_swipe_left': '_onMobileSwipeLeft',
+        'kanban_column_swipe_right': '_onMobileSwipeRight'
+    }),
     events: _.extend({}, KanbanRenderer.prototype.events, {
         'click .o_kanban_mobile_tab': '_onMobileTabClicked',
     }),
@@ -166,6 +170,12 @@ KanbanRenderer.include({
      */
     _onMobileTabClicked: function (event) {
         this._moveToGroup($(event.currentTarget).index(), true);
+    },
+    _onMobileSwipeLeft: function (event) {
+        this._moveToGroup(this.activeColumnIndex + 1, this.ANIMATE);
+    },
+    _onMobileSwipeRight: function (event) {
+        this._moveToGroup(this.activeColumnIndex - 1, this.ANIMATE);
     },
 });
 
