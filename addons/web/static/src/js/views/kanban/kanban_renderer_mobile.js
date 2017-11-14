@@ -104,36 +104,46 @@ KanbanRenderer.include({
         var def = $.Deferred();
         this.activeColumnIndex = moveToIndex;
         var column = this.widgets[this.activeColumnIndex];
-        this.trigger_up('kanban_load_records', {
-            columnID: column.db_id,
-            onSuccess: function () {
-                // update the columns and tabs positions (optionally with an animation)
-                var updateFunc = animate ? 'animate' : 'css';
-                self.$('.o_kanban_mobile_tab').removeClass('o_current');
-                _.each(self.widgets, function (column, index) {
-                    var $column = self.$('.o_kanban_group[data-id=' + column.id + ']');
-                    var $tab = self.$('.o_kanban_mobile_tab[data-id=' + column.id + ']');
-                    if (index === moveToIndex - 1) {
-                        $column[updateFunc]({left: '-100%'});
-                        $tab[updateFunc]({left: '0%'});
-                    } else if (index === moveToIndex + 1) {
-                        $column[updateFunc]({left: '100%'});
-                        $tab[updateFunc]({left: '100%'});
-                    } else if (index === moveToIndex) {
-                        $column[updateFunc]({left: '0%'});
-                        $tab[updateFunc]({left: '50%'});
-                        $tab.addClass('o_current');
-                    } else if (index < moveToIndex) {
-                        $column.css({left: '-100%'});
-                        $tab[updateFunc]({left: '-100%'});
-                    } else if (index > moveToIndex) {
-                        $column.css({left: '100%'});
-                        $tab[updateFunc]({left: '200%'});
+        // update the columns and tabs positions (optionally with an animation)
+        var updateFunc = animate ? 'animate' : 'css';
+        self.$('.o_kanban_mobile_tab').removeClass('o_current');
+        _.each(self.widgets, function (column, index) {
+            var $column = self.$('.o_kanban_group[data-id=' + column.id + ']');
+            var $tab = self.$('.o_kanban_mobile_tab[data-id=' + column.id + ']');
+            if (index === moveToIndex - 1) {
+                $column[updateFunc]({left: '-100%'});
+                _.each($column.find('.o_kanban_record'), function (rec) {
+                    if(rec.style.zIndex){
+                        var clientWidth = (rec).clientWidth;
+                        var left = (rec).offsetLeft + clientWidth;
+                        $(rec)[updateFunc]({left: left + 'px'});
+                        $(rec).css({"left": left + 'px'});
                     }
                 });
-                def.resolve();
-            },
+                $tab[updateFunc]({left: '0%'});
+            } else if (index === moveToIndex + 1) {
+                $column[updateFunc]({left: '100%'});
+                _.each($column.find('.o_kanban_record'), function (rec) {
+                    if(rec.style.zIndex){
+                        var clientWidth = (rec).clientWidth;
+                        var left = ((rec).offsetLeft - clientWidth);
+                        $(rec)[updateFunc]({left: left + 'px', offsetLeft: left});
+                    }
+                });
+                $tab[updateFunc]({left: '100%'});
+            } else if (index === moveToIndex) {
+                $column[updateFunc]({left: '0%',});
+                $tab[updateFunc]({left: '50%'});
+                $tab.addClass('o_current');
+            } else if (index < moveToIndex) {
+                $column.css({left: '-100%'});
+                $tab[updateFunc]({left: '-100%'});
+            } else if (index > moveToIndex) {
+                $column.css({left: (index - moveToIndex) * 100 + '%'});
+                $tab[updateFunc]({left: '200%'});
+            }
         });
+        def.resolve();
         return def;
     },
     /**
