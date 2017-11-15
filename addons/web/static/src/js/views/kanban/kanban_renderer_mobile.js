@@ -117,7 +117,6 @@ KanbanRenderer.include({
                         var clientWidth = (rec).clientWidth;
                         var left = (rec).offsetLeft + clientWidth;
                         $(rec)[updateFunc]({left: left + 'px'});
-                        $(rec).css({"left": left + 'px'});
                     }
                 });
                 $tab[updateFunc]({left: '0%'});
@@ -136,7 +135,7 @@ KanbanRenderer.include({
                 $tab[updateFunc]({left: '50%'});
                 $tab.addClass('o_current');
             } else if (index < moveToIndex) {
-                $column.css({left: '-100%'});
+                $column.css({left: (index - moveToIndex) * 100 + '%'});
                 $tab[updateFunc]({left: '-100%'});
             } else if (index > moveToIndex) {
                 $column.css({left: (index - moveToIndex) * 100 + '%'});
