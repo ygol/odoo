@@ -108,9 +108,13 @@ var KanbanColumn = Widget.extend({
                 over: function (event, ui) {
                     self.$el.addClass('o_kanban_hover');
                     if (config.device.isMobile && self.data.res_id !== ui.item.data('record').recordData.stage_id.res_id && parseInt(self.el.style.left) !== 0) { //Math.abs(ui.offset.left) > 100
-                        console.log("$(event.currentTarget).index()>>>>>>",$(event.currentTarget).index());
                         var swipeTo = parseInt(self.el.style.left) < 0 ? "right" : "left";
                         self.trigger_up("kanban_column_swipe_" + swipeTo);
+                        _.each($('.o_kanban_record'), function (rec) {
+                            if (rec.style.zIndex) {
+                                $(rec).parent('div').css({left: '0%'});
+                            }
+                        });
                     }
                 },
                 out: function () {

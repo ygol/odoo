@@ -116,7 +116,7 @@ KanbanRenderer.include({
                     if(rec.style.zIndex){
                         var clientWidth = (rec).clientWidth;
                         var left = (rec).offsetLeft + clientWidth;
-                        $(rec)[updateFunc]({left: left + 'px'});
+                        rec.style.left = left + 'px'
                     }
                 });
                 $tab[updateFunc]({left: '0%'});
