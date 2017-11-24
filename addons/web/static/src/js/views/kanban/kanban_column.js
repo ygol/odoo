@@ -110,17 +110,17 @@ var KanbanColumn = Widget.extend({
                     if (config.device.isMobile && self.data.res_id !== ui.item.data('record').recordData.stage_id.res_id && parseInt(self.el.style.left) !== 0) { //Math.abs(ui.offset.left) > 100
                         var swipeTo = parseInt(self.el.style.left) < 0 ? "right" : "left";
                         self.trigger_up("kanban_column_swipe_" + swipeTo);
-                        _.each($('.o_kanban_record'), function (rec) {
-                            if (rec.style.zIndex) {
-                                $(rec).parent('div').css({left: '0%'});
-                            }
-                        });
                     }
                 },
                 out: function () {
                     self.$el.removeClass('o_kanban_hover');
                 },
                 update: function (event, ui) {
+                    _.each($('.o_kanban_group'), function (rec) {
+                        if (rec.style.left === '0%' && rec.style.visibility === 'hidden') {
+                            $(rec).css({left: '-100%',visibility: 'visible'});
+                        }
+                    });
                     var record = ui.item.data('record');
                     var index = self.records.indexOf(record);
                     record.$el.removeAttr('style');  // jqueryui sortable add display:block inline

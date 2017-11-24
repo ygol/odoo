@@ -96,7 +96,7 @@ KanbanRenderer.include({
      * @returns {Deferred} resolved when the new current group has been loaded
      *   and displayed
      */
-    _moveToGroup: function (moveToIndex, animate) {
+    _moveToGroup: function (moveToIndex, animate, leftDrag=false, rightDrag=false) {
         var self = this;
         if (moveToIndex < 0 || moveToIndex >= this.widgets.length) {
             return $.when();
@@ -111,33 +111,48 @@ KanbanRenderer.include({
             var $column = self.$('.o_kanban_group[data-id=' + column.id + ']');
             var $tab = self.$('.o_kanban_mobile_tab[data-id=' + column.id + ']');
             if (index === moveToIndex - 1) {
-                $column[updateFunc]({left: '-100%'});
+                if(leftDrag){
+                    $column[updateFunc]({left: '0%'});
+                    $column.css({visibility: 'hidden'});
+                }
+                else{
+                    $column[updateFunc]({left: '-100%'});
+                }
                 _.each($column.find('.o_kanban_record'), function (rec) {
                     if(rec.style.zIndex){
                         var clientWidth = (rec).clientWidth;
                         var left = (rec).offsetLeft + clientWidth;
-                        rec.style.left = left + 'px'
+                        $(rec).css({visibility: 'visible'});
                     }
                 });
                 $tab[updateFunc]({left: '0%'});
             } else if (index === moveToIndex + 1) {
-                $column[updateFunc]({left: '100%'});
+                if(rightDrag){
+                    $column[updateFunc]({left: '0%'});
+                    $column.css({visibility: 'hidden'});
+                }
+                else{
+                    $column[updateFunc]({left: '100%'});
+                }
                 _.each($column.find('.o_kanban_record'), function (rec) {
                     if(rec.style.zIndex){
                         var clientWidth = (rec).clientWidth;
                         var left = ((rec).offsetLeft - clientWidth);
-                        $(rec)[updateFunc]({left: left + 'px', offsetLeft: left});
+                        $(rec).css({visibility: 'visible'});
                     }
                 });
                 $tab[updateFunc]({left: '100%'});
             } else if (index === moveToIndex) {
+                $column.css({visibility: 'visible'});
                 $column[updateFunc]({left: '0%',});
                 $tab[updateFunc]({left: '50%'});
                 $tab.addClass('o_current');
             } else if (index < moveToIndex) {
+                $column.css({visibility: 'visible'});
                 $column.css({left: (index - moveToIndex) * 100 + '%'});
                 $tab[updateFunc]({left: '-100%'});
             } else if (index > moveToIndex) {
+                $column.css({visibility: 'visible'});
                 $column.css({left: (index - moveToIndex) * 100 + '%'});
                 $tab[updateFunc]({left: '200%'});
             }
@@ -178,13 +193,13 @@ KanbanRenderer.include({
      * @param {MouseEvent} event
      */
     _onMobileTabClicked: function (event) {
-        this._moveToGroup($(event.currentTarget).index(), true);
+        this._moveToGroup($(event.currentTarget).index(), this.ANIMATE);
     },
     _onMobileSwipeLeft: function (event) {
-        this._moveToGroup(this.activeColumnIndex + 1, this.ANIMATE);
+        this._moveToGroup(this.activeColumnIndex + 1, this.ANIMATE, true, false);
     },
     _onMobileSwipeRight: function (event) {
-        this._moveToGroup(this.activeColumnIndex - 1, this.ANIMATE);
+        this._moveToGroup(this.activeColumnIndex - 1, this.ANIMATE, false, true);
     },
 });
 
