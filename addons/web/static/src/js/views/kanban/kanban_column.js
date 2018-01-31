@@ -99,21 +99,26 @@ var KanbanColumn = Widget.extend({
             connectWith: '.o_kanban_group',
             containment: this.draggable ? '.o_kanban_view' : 'parent',
             revert: 0,
-            delay: 0,
             items: '> .o_kanban_record:not(.o_updating)',
             helper: 'clone',
             cursor: 'move',
-            over: function (event, ui) {
+            activate: function () {
+                self.$el.parent().css("overflow-x","scroll");
+            },
+            start: function (event, ui) {
                 self.$el.addClass('o_kanban_hover');
-                 if (config.device.isMobile && self.data.res_id !== ui.item.data('record').recordData.stage_id.res_id && parseInt(self.el.style.left) !== 0) { //Math.abs(ui.offset.left) > 100
-                    var swipeTo = parseInt(self.el.style.left) < 0 ? "right" : "left";
+                if (config.device.isMobile && self.$el.offset().left !== ui.item.data('record').$el.offset().left) { //Math.abs(ui.offset.left) > 100
+                    var swipeTo = "left";
                     self.trigger_up("kanban_column_swipe_" + swipeTo);
                 }
             },
             out: function () {
                 self.$el.removeClass('o_kanban_hover');
             },
-            update: function (event, ui) {
+            beforeStop: function () {
+                self.$el.parent().css("overflow-x","");
+            },
+            update: function (event,ui) {
                 var record = ui.item.data('record');
                 var index = self.records.indexOf(record);
                 record.$el.removeAttr('style');  // jqueryui sortable add display:block inline
