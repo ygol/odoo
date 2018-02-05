@@ -82,6 +82,12 @@ var KanbanView = BasicView.extend({
 
         if (config.device.isMobile) {
             this.jsLibs.push('/web/static/lib/jquery.touchSwipe/jquery.touchSwipe.js');
+
+            // Unfortunatly, jQuery sortable not working on mobile browsers as issue
+            // mobile browsers not supporting mouse event instead they support touch events
+            // By this extension of jQuery sortable, now mobile browsers support sortable
+            // with touch. see: https://stackoverflow.com/a/10569457/8765227
+            this.jsLibs.push('/web/static/lib/jquery.touchPunch/jquery.touchPunch.js');
         }
     },
 

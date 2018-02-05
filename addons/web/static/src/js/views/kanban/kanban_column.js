@@ -97,28 +97,28 @@ var KanbanColumn = Widget.extend({
         this.$header.find('.o_kanban_header_title').tooltip();
         this.$el.sortable({
             connectWith: '.o_kanban_group',
-            containment: this.draggable ? '.o_kanban_view' : 'parent',
             revert: 0,
+            delay: 0,
             items: '> .o_kanban_record:not(.o_updating)',
             helper: 'clone',
             cursor: 'move',
-            activate: function () {
-                self.$el.parent().css("overflow-x","scroll");
-            },
-            start: function (event, ui) {
+            over: function (event,ui) {
                 self.$el.addClass('o_kanban_hover');
                 if (config.device.isMobile && self.$el.offset().left !== ui.item.data('record').$el.offset().left) { //Math.abs(ui.offset.left) > 100
                     var swipeTo = "left";
-                    self.trigger_up("kanban_column_swipe_" + swipeTo);
+                    var swipeTo = self.$el.offset().left < ui.item.data('record').$el.offset().left ? "right" : "left";
+                    var left = (ui.helper.offset().left + ui.helper.outerWidth());
+                    self.trigger_up("kanban_column_swipe_" + swipeTo, {
+                        callback: function () {
+                            ui.helper.css("left", left + "px")
+                        },
+                    });
                 }
             },
             out: function () {
                 self.$el.removeClass('o_kanban_hover');
             },
-            beforeStop: function () {
-                self.$el.parent().css("overflow-x","");
-            },
-            update: function (event,ui) {
+            update: function (event, ui) {
                 var record = ui.item.data('record');
                 var index = self.records.indexOf(record);
                 record.$el.removeAttr('style');  // jqueryui sortable add display:block inline

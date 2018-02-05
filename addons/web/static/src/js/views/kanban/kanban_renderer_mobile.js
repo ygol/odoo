@@ -104,6 +104,7 @@ KanbanRenderer.include({
         if (moveToIndex < 0 || moveToIndex >= this.widgets.length) {
             return $.when();
         }
+        var def = $.Deferred();
         this.activeColumnIndex = moveToIndex;
         var column = this.widgets[this.activeColumnIndex];
         // update the columns and tabs positions (optionally with an animation)
@@ -112,24 +113,26 @@ KanbanRenderer.include({
         _.each(self.widgets, function (column, index) {
             var columnID = column.id || column.db_id;
             var $column = self.$('.o_kanban_group[data-id="' + columnID + '"]');
-            self._enableSwipe(index);
             var $tab = self.$('.o_kanban_mobile_tab[data-id="' + columnID + '"]');
             if (index === moveToIndex - 1) {
+                $column[updateFunc]({left: '-100%'}, function() {def.resolve()});
                 $tab[updateFunc]({left: '0%'});
             } else if (index === moveToIndex + 1) {
+                $column[updateFunc]({left: '100%'}, function() {def.resolve()});
                 $tab[updateFunc]({left: '100%'});
             } else if (index === moveToIndex) {
+                $column[updateFunc]({left: '0%'}, function() {def.resolve()});
                 $tab[updateFunc]({left: '50%'});
                 $tab.addClass('o_current');
             } else if (index < moveToIndex) {
+                $column.css({left: ((index - moveToIndex) * 100) +"%"}, function() {def.resolve()});
                 $tab[updateFunc]({left: '-100%'});
             } else if (index > moveToIndex) {
+                $column.css({left: ((index - moveToIndex) * 100) +"%"}, function() {def.resolve()});
                 $tab[updateFunc]({left: '200%'});
             }
         });
-        var t = self.$el.width()*(moveToIndex) * -1;
-        self.$el.css({'transform': 'translateX(' + t + 'px)'});
-        return true;
+        return def;
     },
     /**
      * @override
@@ -178,12 +181,13 @@ KanbanRenderer.include({
         this._moveToGroup($(event.currentTarget).index(), true);
     },
     _onMobileSwipeLeft: function (event) {
-        console.log("this.activeColumnIndex>>>>>>",this.activeColumnIndex);
-        this._moveToGroup(this.activeColumnIndex + 1, this.ANIMATE);
+        this._moveToGroup(this.activeColumnIndex + 1, this.ANIMATE).then(function () {
+            event.data.callback();
+        });
     },
     _onMobileSwipeRight: function (event) {
         this._moveToGroup(this.activeColumnIndex - 1, this.ANIMATE);
-     },
+    },
 });
 
 });
