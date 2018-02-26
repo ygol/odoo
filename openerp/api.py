@@ -50,7 +50,7 @@ from pprint import pformat
 from weakref import WeakSet
 from werkzeug.local import Local, release_local
 
-from openerp.tools import frozendict, classproperty
+from openerp.tools import frozendict, classproperty, ustr
 
 _logger = logging.getLogger(__name__)
 
@@ -870,6 +870,7 @@ class Environment(object):
         """
         self.invalidate_all()
         self.all.todo.clear()
+        self.all.constraints.clear()
 
     @contextmanager
     def clear_upon_failure(self):
@@ -970,12 +971,42 @@ class Environment(object):
     def clear_recompute_old(self):
         del self.all.recompute_old[:]
 
+    def add_constraints(self, func, records):
+        """ Add a constraint function to execute on ``records``. """
+        recs_list = self.all.constraints.setdefault(func, [])
+        for i, recs in enumerate(recs_list):
+            if recs.env == records.env:
+                recs_list[i] |= records
+                break
+        else:
+            recs_list.append(records)
+
+    def clear_constraints(self):
+        """ Clear all constraints delayed so far. """
+        self.all.constraints.clear()
+
+    def run_constraints(self):
+        """ Run all the constraints delayed so far. """
+        constraints = self.all.constraints
+        while constraints:
+            func = next(iter(constraints))
+            for recs in constraints.pop(func):
+                try:
+                    func(recs)
+                except ValidationError as e:
+                    raise
+                except Exception as e:
+                    from openerp import _
+                    msg = _("Error while validating constraint")
+                    raise ValidationError("%s\n\n%s" % (msg, ustr(e)))
+
 
 class Environments(object):
     """ A common object for all environments in a request. """
     def __init__(self):
         self.envs = WeakSet()           # weak set of environments
         self.todo = {}                  # recomputations {field: [records]}
+        self.constraints = {}           # constraints {func: [records]}
         self.mode = False               # flag for draft/onchange
         self.recompute = True
         self.recompute_old = []        # list of old api compute fields to recompute
@@ -991,5 +1022,5 @@ class Environments(object):
 
 # keep those imports here in order to handle cyclic dependencies correctly
 from openerp import SUPERUSER_ID
-from openerp.exceptions import UserError, AccessError, MissingError
+from openerp.exceptions import UserError, AccessError, MissingError, ValidationError
 from openerp.modules.registry import RegistryManager

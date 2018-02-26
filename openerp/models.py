@@ -1252,15 +1252,11 @@ class BaseModel(object):
         field_names = set(field_names)
 
         # old-style constraint methods
-        trans = self.env['ir.translation']
-        cr, uid, context = self.env.args
-        ids = self.ids
-        errors = []
-        for fun, msg, names in self._constraints:
+        def validate(fun, msg, self):
+            cr, uid, context = self.env.args
             try:
                 # validation must be context-independent; call ``fun`` without context
-                valid = names and not (set(names) & field_names)
-                valid = valid or fun(self._model, cr, uid, ids)
+                valid = fun(self._model, cr, uid, self.ids)
                 extra_error = None
             except Exception, e:
                 _logger.debug('Exception while validating constraint', exc_info=True)
@@ -1268,27 +1264,25 @@ class BaseModel(object):
                 extra_error = tools.ustr(e)
             if not valid:
                 if callable(msg):
-                    res_msg = msg(self._model, cr, uid, ids, context=context)
+                    res_msg = msg(self._model, cr, uid, self.ids, context=context)
                     if isinstance(res_msg, tuple):
                         template, params = res_msg
                         res_msg = template % params
                 else:
+                    trans = self.env['ir.translation']
                     res_msg = trans._get_source(self._name, 'constraint', self.env.lang, msg)
                 if extra_error:
                     res_msg += "\n\n%s\n%s" % (_('Error details:'), extra_error)
-                errors.append(res_msg)
-        if errors:
-            raise ValidationError('\n'.join(errors))
+                raise ValidationError(res_msg)
+
+        for fun, msg, names in self._constraints:
+            if not names or set(names) & field_names:
+                self.env.add_constraints(functools.partial(validate, fun, msg), self)
 
         # new-style constraint methods
         for check in self._constraint_methods:
             if set(check._constrains) & field_names:
-                try:
-                    check(self)
-                except ValidationError, e:
-                    raise
-                except Exception, e:
-                    raise ValidationError("%s\n\n%s" % (_("Error while validating constraint"), tools.ustr(e)))
+                self.env.add_constraints(check, self)
 
     @api.model
     def default_get(self, fields_list):
@@ -5872,9 +5866,12 @@ class BaseModel(object):
 
     @api.model
     def recompute(self):
-        """ Recompute stored function fields. The fields and records to
-            recompute have been determined by method :meth:`modified`.
+        """ Recompute stored function fields and check Python constraints, as
+            determined by methods :meth:`modified` and :meth:`_validate_fields`,
+            respectively.
         """
+        self.env.run_constraints()
+
         while self.env.has_todo():
             field, recs = self.env.get_todo()
             # determine the fields to recompute
