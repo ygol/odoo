@@ -255,12 +255,7 @@ class IrModel(models.Model):
         if model._module == self._context.get('module'):
             # self._module is the name of the module that last extended self
             xmlid = 'model_' + model._name.replace('.', '_')
-            cr.execute("SELECT * FROM ir_model_data WHERE name=%s AND module=%s",
-                       (xmlid, self._context['module']))
-            if not cr.rowcount:
-                cr.execute(""" INSERT INTO ir_model_data (module, name, model, res_id, date_init, date_update)
-                               VALUES (%s, %s, %s, %s, (now() at time zone 'UTC'), (now() at time zone 'UTC')) """,
-                           (self._context['module'], xmlid, record._name, record.id))
+            self.env['ir.model.data']._update(record._name, self._context['module'], {}, xmlid, res_id=record.id)
 
         return record
 
@@ -793,13 +788,7 @@ class IrModelFields(models.Model):
         if module and (created or module in field._modules):
             model_name = field.model_name.replace('.', '_')
             xmlid = 'field_%s__%s' % (model_name, field.name)
-            cr.execute(
-                """
-                INSERT INTO ir_model_data (module, name, model, res_id, date_init, date_update)
-                SELECT %s, %s, %s, %s, (now() at time zone 'UTC'), (now() at time zone 'UTC')
-                WHERE NOT EXISTS (SELECT id FROM ir_model_data WHERE module=%s AND name=%s)
-                """, (module, xmlid, record._name, record.id, module, xmlid)
-            )
+            self.env['ir.model.data']._update(record._name, module, {}, xmlid, res_id=record.id)
 
         return record
 
@@ -1290,6 +1279,12 @@ class IrModelData(models.Model):
             self.pool.model_data_reference_ids = {}
         # put loads on the class, in order to share it among all instances
         type(self).loads = self.pool.model_data_reference_ids
+        type(self)._xmlid_cache = {}
+
+    @classmethod
+    def clear_caches(cls):
+        cls._xmlid_cache.clear()
+        return super(IrModelData, cls).clear_caches()
 
     @api.model_cr_context
     def _auto_init(self):
@@ -1320,20 +1315,24 @@ class IrModelData(models.Model):
 
     # NEW V8 API
     @api.model
-    @tools.ormcache('xmlid')
     def xmlid_lookup(self, xmlid):
         """Low level xmlid lookup
         Return (id, res_model, res_id) or raise ValueError if not found
         """
         module, name = xmlid.split('.', 1)
-        xid = self.sudo().search([('module', '=', module), ('name', '=', name)])
-        if not xid:
+        module_xmlids = self._xmlid_cache.get(module)
+        if module_xmlids is None:
+            cr = self.env.cr
+            query = "SELECT id, name, model, res_id FROM ir_model_data WHERE module=%s"
+            cr.execute(query, [module])
+            module_xmlids = self._xmlid_cache[module] = {
+                name: (id, model, res_id)
+                for id, name, model, res_id in cr.fetchall()
+            }
+        res = module_xmlids.get(name)
+        if not res or not res[2]:
             raise ValueError('External ID not found in the system: %s' % xmlid)
-        # the sql constraints ensure us we have only one result
-        res = xid.read(['model', 'res_id'])[0]
-        if not res['res_id']:
-            raise ValueError('External ID not found in the system: %s' % xmlid)
-        return res['id'], res['model'], res['res_id']
+        return res
 
     @api.model
     def xmlid_to_res_model_res_id(self, xmlid, raise_if_not_found=False):
@@ -1412,6 +1411,13 @@ class IrModelData(models.Model):
             except Exception:
                 pass
         return False
+
+    @api.model
+    def create(self, vals):
+        xid = super(IrModelData, self).create(vals)
+        module = vals.get('module', '')
+        if module in self._xmlid_cache:
+            self._xmlid_cache[module][vals['name']] = (xid.id, vals['model'], vals.get('res_id'))
 
     @api.multi
     def unlink(self):

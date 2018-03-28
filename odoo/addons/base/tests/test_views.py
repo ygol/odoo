@@ -1797,10 +1797,8 @@ class TestQWebRender(ViewCase):
         self.assertEqual(content1, content2)
 
         # render view and child view with an xmlid
-        self.env.cr.execute("INSERT INTO ir_model_data(name, model, res_id, module)"
-                            "VALUES ('dummy', 'ir.ui.view', %s, 'base')" % view1.id)
-        self.env.cr.execute("INSERT INTO ir_model_data(name, model, res_id, module)"
-                            "VALUES ('dummy_ext', 'ir.ui.view', %s, 'base')" % view2.id)
+        self.env['ir.model.data']._update('ir.ui.view', 'base', {}, 'dummy', res_id=view1.id)
+        self.env['ir.model.data']._update('ir.ui.view', 'base', {}, 'dummy_ext', res_id=view2.id)
 
         content1 = self.env['ir.qweb'].with_context(check_view_ids=[view1.id, view2.id]).render('base.dummy')
         content2 = self.env['ir.qweb'].with_context(check_view_ids=[view1.id, view2.id]).render('base.dummy_ext')
@@ -1814,8 +1812,7 @@ class TestQWebRender(ViewCase):
         self.assertNotEqual(content1, content3)
 
         # render view and primary extension with an xmlid
-        self.env.cr.execute("INSERT INTO ir_model_data(name, model, res_id, module)"
-                            "VALUES ('dummy_primary_ext', 'ir.ui.view', %s, 'base')" % view3.id)
+        self.env['ir.model.data']._update('ir.ui.view', 'base', {}, 'dummy_primary_ext', res_id=view3.id)
 
         content1 = self.env['ir.qweb'].with_context(check_view_ids=[view1.id, view2.id, view3.id]).render('base.dummy')
         content3 = self.env['ir.qweb'].with_context(check_view_ids=[view1.id, view2.id, view3.id]).render('base.dummy_primary_ext')

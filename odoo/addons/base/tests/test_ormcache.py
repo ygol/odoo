@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+import unittest
+
 from odoo.tests.common import TransactionCase
 from odoo.tools import get_cache_key_counter
 
 
 class TestOrmcache(TransactionCase):
+    @unittest.skip("no longer makes sense")
     def test_ormcache(self):
         """ Test the effectiveness of the ormcache() decorator. """
         IMD = self.env['ir.model.data']
@@ -17,7 +20,7 @@ class TestOrmcache(TransactionCase):
         miss = counter.miss
 
         # clear the cache of ir.model.data.xmlid_lookup, retrieve its key and
-        IMD.xmlid_lookup.clear_cache(IMD)
+        IMD.clear_caches()
         self.assertNotIn(key, cache)
 
         # lookup some reference

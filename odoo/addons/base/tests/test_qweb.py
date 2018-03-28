@@ -381,8 +381,7 @@ class TestQWebNS(TransactionCase):
                 </t>
             """
         })
-        self.env.cr.execute("INSERT INTO ir_model_data(name, model, res_id, module)"
-                            "VALUES ('dummy', 'ir.ui.view', %s, 'base')", [view1.id])
+        self.env['ir.model.data']._update('ir.ui.view', 'base', {}, 'dummy', res_id=view1.id)
 
         # view2 will t-call view1
         view2 = self.env['ir.ui.view'].create({
