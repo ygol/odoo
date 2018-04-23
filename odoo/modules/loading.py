@@ -217,11 +217,7 @@ def _check_module_names(cr, module_names):
             incorrect_names = mod_names.difference([x['name'] for x in cr.dictfetchall()])
             _logger.warning('invalid module names, ignored: %s', ", ".join(incorrect_names))
 
-def load_marked_modules(cr, graph, states, force, report, perform_checks):
-    """Loads modules marked with ``states``, adding them to ``graph`` and
-       ``loaded_modules`` and returns a list of installed/upgraded modules."""
-    cr.execute("SELECT name from ir_module_module WHERE state IN %s" ,(tuple(states),))
-    module_list = [name for (name,) in cr.fetchall() if name not in graph]
+def load_listed_modules(cr, graph, module_list, force, report, perform_checks):
     if not module_list:
         return
 
@@ -323,16 +319,18 @@ def load_modules(db, force_demo=False, update_module=False):
         processed_modules = []
         loaded = -1
         while loaded < len(graph):
-            cr.execute("select name from ir_module_module where state in ('to install', 'to upgrade')")
-            processed_modules.extend(n for [n] in cr.fetchall())
-
             loaded = len(graph)
-            load_marked_modules(cr, graph,
-                ['installed', 'to upgrade', 'to remove'],
-                force, report, update_module)
+
+            cr.execute("SELECT name, state = 'to upgrade' FROM ir_module_module WHERE state in ('installed', 'to upgrade', 'to remove')")
+            mods = cr.fetchall()
+            processed_modules.extend(name for name, to_upgrade in mods if to_upgrade)
+            load_listed_modules(cr, graph, [name for name, _ in mods], force, report, update_module)
+
             if update_module:
-                load_marked_modules(cr, graph,
-                    ['to install'], force, report, update_module)
+                cr.execute("SELECT name FROM ir_module_module WHERE state = 'to install'")
+                mods = [n for [n] in cr.fetchall()]
+                processed_modules.extend(mods)
+                load_listed_modules(cr, graph, mods, force, report, update_module)
 
         registry.loaded = True
         registry.setup_models(cr)
