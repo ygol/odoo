@@ -13,6 +13,7 @@ odoo.define('web.test_utils', function (require) {
 var ActionManager = require('web.ActionManager');
 var ajax = require('web.ajax');
 var basic_fields = require('web.basic_fields');
+var concurrency = require('web.concurrency');
 var config = require('web.config');
 var ControlPanel = require('web.ControlPanel');
 var core = require('web.core');
@@ -583,6 +584,66 @@ function dragAndDrop($el, $to, options) {
     }
 }
 
+function dragAndDropMouseEvent($el, $to, options) {
+    var def = $.Deferred();
+    var position = (options && options.position) || 'center';
+    var stage = (options && options.stage) || false;
+
+    var elementCenter = $el.offset();
+    elementCenter.left += $el.outerWidth()/2;
+    elementCenter.top += $el.outerHeight()/2;
+
+    var toOffset = $to.offset();
+    toOffset.top += $to.outerHeight()/2;
+    toOffset.left += $to.outerWidth()/2;
+
+    if (position === 'top') {
+        toOffset.top -= $to.outerHeight()/2;
+    } else if (position === 'bottom') {
+        toOffset.top += $to.outerHeight()/4 - 5;
+    } else if (position === 'left') {
+        toOffset.left -= $to.outerWidth()/2;
+    } else if (position === 'right') {
+        toOffset.left += $to.outerWidth()/2;
+    }
+
+    triggerElementMouseEvent(elementCenter.left, elementCenter.top, 'mousedown', $el[0]);
+    var left = (stage === true) ? toOffset.left - 100 : toOffset.left;
+
+    triggerElementMouseEvent(left, toOffset.top , 'mousemove', $el[0]);
+    if (stage) {
+        concurrency.delay(50).then(function () {
+            triggerElementMouseEvent(toOffset.left, toOffset.top, 'mousemove', $el[0]);
+            return concurrency.delay(50);
+        }).then(function () {
+            triggerElementMouseEvent(toOffset.left, toOffset.top, 'mouseup', $el[0]);
+            def.resolve();
+        });
+    }
+    else {
+        concurrency.delay(50).then(function () {
+            triggerElementMouseEvent(toOffset.left, toOffset.top, 'mouseup', $el[0]);
+            def.resolve();
+        });
+    }
+    return def;
+}
+
+function triggerElementMouseEvent(x, y, type, el){
+    var ev = document.createEvent("MouseEvent");
+    ev.initMouseEvent(
+        type,
+        true /* bubble */,
+        true /* cancelable */,
+        window, null,
+        x, y, x, y, /* coordinates */
+        false, false, false, false, /* modifier keys */
+        0 /*left button*/, null
+    );
+    el.dispatchEvent(ev);
+    return el;
+}
+
 /**
  * simulate a mouse event with a custom event who add the item position. This is
  * sometimes necessary because the basic way to trigger an event (such as
@@ -834,6 +895,8 @@ return $.when(
         triggerMouseEvent: triggerMouseEvent,
         triggerPositionalMouseEvent: triggerPositionalMouseEvent,
         unpatch: unpatch,
+        triggerElementMouseEvent: triggerElementMouseEvent,
+        dragAndDropMouseEvent: dragAndDropMouseEvent,
     };
 });
 

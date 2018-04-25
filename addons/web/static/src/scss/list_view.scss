@@ -89,6 +89,13 @@
     .text-muted {
         color: lighten($text-muted, 10%);
     }
+    .o_data_row_ghost {
+        opacity: 0;
+    }
+    .o_data_row_clone {
+        background-color: $table-bg-hover !important;
+        opacity: 1 !important;
+    }
 
     // Grouped list views
     tbody > tr.o_group_header {
