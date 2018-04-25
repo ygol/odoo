@@ -52,30 +52,14 @@ def _check_value(value):
     return value.get() if isinstance(value, SpecialValue) else value
 
 def copy_cache(records, env):
-    """ Recursively copy the cache of ``records`` to the environment ``env``. """
-    src = records.env
-    todo = defaultdict(set)             # {model_name: ids}
-    done = defaultdict(set)             # {model_name: ids}
-    todo[records._name].update(records._ids)
-    while todo:
-        model_name = next(iter(todo))
-        record_ids = todo.pop(model_name) - done[model_name]
-        if not record_ids:
-            continue
-        done[model_name].update(record_ids)
-        for name, field in src[model_name]._fields.items():
-            src_cache = src.cache[field]
-            dst_cache = env.cache[field]
-            for record_id in record_ids:
-                if record_id in src_cache:
-                    # copy the cached value as such
-                    if isinstance(src_cache[record_id], FailedValue):
-                        # But not if it's a FailedValue, which often is an access error
-                        # because the other environment (eg. sudo()) is well expected to have access.
-                        continue
-                    value = dst_cache[record_id] = src_cache[record_id]
-                    if field.relational and isinstance(value, tuple):
-                        todo[field.comodel_name].update(value)
+    """ Brutally copy the cache of ``records`` to the environment ``env``. """
+    src_cache = records.env.cache
+    dst_cache = env.cache
+    for field, src_field_cache in src_cache.iteritems():
+        dst_field_cache = dst_cache[field]
+        for record_id, record_value in src_field_cache.iteritems():
+            if not isinstance(record_value, SpecialValue):
+                dst_field_cache[record_id] = record_value
 
 def first(records):
     """ Return the first record in ``records``, with the same prefetching. """
@@ -589,8 +573,8 @@ class Field(object):
         # when related_sudo, bypass access rights checks when reading values
         others = records.sudo() if self.related_sudo else records
         # copy the cache of draft records into others' cache
-        if records.env != others.env:
-            copy_cache(records - records.filtered('id'), others.env)
+        if records.env.in_onchange and records.env != others.env:
+            copy_cache(records, others.env)
         #
         # Traverse fields one by one for all records, in order to take advantage
         # of prefetching for each field access. In order to clarify the impact
