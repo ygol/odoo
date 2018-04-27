@@ -114,8 +114,7 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
         migrations.migrate_module(package, 'pre')
         load_openerp_module(package.name)
 
-        new_install = package.state == 'to install'
-        if new_install:
+        if package.init:
             py_module = sys.modules['odoo.addons.%s' % (module_name,)]
             pre_init = package.info.get('pre_init_hook')
             if pre_init:
@@ -123,7 +122,7 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
 
         model_names = registry.load(cr, package)
 
-        if hasattr(package, 'init') or hasattr(package, 'update') or package.state in ('to install', 'to upgrade'):
+        if package.init or package.update:
             registry.setup_models(cr)
             registry.init_models(cr, model_names, {'module': package.name})
             cr.commit()
@@ -131,10 +130,10 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
         idref = {}
 
         mode = 'update'
-        if hasattr(package, 'init') or package.state == 'to install':
+        if package.init:
             mode = 'init'
 
-        if hasattr(package, 'init') or hasattr(package, 'update') or package.state in ('to install', 'to upgrade'):
+        if package.init or package.update:
             env = api.Environment(cr, SUPERUSER_ID, {})
             # Can't put this line out of the loop: ir.module.module will be
             # registered by init_models() above.
@@ -143,12 +142,11 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
             if perform_checks:
                 module._check()
 
-            if package.state=='to upgrade':
+            if package.update:
                 # upgrading the module information
                 module.write(module.get_values_from_terp(package.data))
             _load_data(cr, module_name, idref, mode, kind='data')
-            has_demo = hasattr(package, 'demo') or (package.dbdemo and package.state != 'installed')
-            if has_demo:
+            if package.demo:
                 _load_data(cr, module_name, idref, mode, kind='demo')
                 cr.execute('update ir_module_module set demo=%s where id=%s', (True, module_id))
                 module.invalidate_cache(['demo'])
@@ -162,7 +160,7 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
             if package.name is not None:
                 registry._init_modules.add(package.name)
 
-            if new_install:
+            if package.init:
                 post_init = package.info.get('post_init_hook')
                 if post_init:
                     getattr(py_module, post_init)(cr, registry)
@@ -170,7 +168,7 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
             # validate all the views at a whole
             env['ir.ui.view']._validate_module_views(module_name)
 
-            if has_demo:
+            if package.demo:
                 # launch tests only in demo mode, allowing tests to use demo data.
                 if tools.config.options['test_enable']:
                     # Yamel test
@@ -186,12 +184,10 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
             # Set new modules and dependencies
             module.write({'state': 'installed', 'latest_version': ver})
 
-            package.load_state = package.state
             package.load_version = package.installed_version
-            package.state = 'installed'
-            for kind in ('init', 'demo', 'update'):
-                if hasattr(package, kind):
-                    delattr(package, kind)
+            package.init = False
+            package.update = False
+            package.demo = False
 
         if package.name is not None:
             registry._init_modules.add(package.name)
