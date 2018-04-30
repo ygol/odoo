@@ -122,10 +122,12 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
 
         model_names = registry.load(cr, package)
 
+        demo = False
         if package.init or package.update:
             registry.setup_models(cr)
             registry.init_models(cr, model_names, {'module': package.name})
             cr.commit()
+            demo = package.demo
 
         idref = {}
 
@@ -146,7 +148,7 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
                 # upgrading the module information
                 module.write(module.get_values_from_terp(package.data))
             _load_data(cr, module_name, idref, mode, kind='data')
-            if package.demo:
+            if demo:
                 _load_data(cr, module_name, idref, mode, kind='demo')
                 cr.execute('update ir_module_module set demo=%s where id=%s', (True, module_id))
                 module.invalidate_cache(['demo'])
@@ -168,7 +170,7 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
             # validate all the views at a whole
             env['ir.ui.view']._validate_module_views(module_name)
 
-            if package.demo:
+            if demo:
                 # launch tests only in demo mode, allowing tests to use demo data.
                 if tools.config.options['test_enable']:
                     # Yamel test
@@ -257,7 +259,7 @@ def load_modules(db, force_demo=False, update_module=False):
             base_module.init = True
         if {'base', 'all'} & to_update.keys():
             base_module.update = True
-        if force_demo or {'name', 'all'} & to_demo.keys() or (bdemo and (base_module.init or base_module.update)):
+        if bdemo or force_demo or {'name', 'all'} & to_demo.keys():
             base_module.demo = True
 
         # processed_modules: for cleanup step after install
@@ -346,7 +348,7 @@ WHERE state not in ('uninstalled', 'uninstallable')
                     p.installed_version = version
                     if to_upgrade or {name, 'all'} & to_update.keys():
                         p.update = True
-                    if force_demo or {name, 'all'} & to_demo.keys() or (demo and to_upgrade):
+                    if demo or force_demo or {name, 'all'} & to_demo.keys():
                         p.demo = True
                 load_module_graph(cr, graph, report=report, skip_modules=already_loaded, perform_checks=update_module)
 
