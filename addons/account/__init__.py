@@ -52,5 +52,5 @@ def _auto_install_l10n(cr, registry):
             europe_country_codes = [x.code for x in europe.country_ids]
             if country_code in europe_country_codes:
                 module_list.append('account_sepa')
-        module_ids = env['ir.module.module'].search([('name', 'in', module_list), ('state', '=', 'uninstalled')])
-        module_ids.sudo().button_install()
+
+        return module_list

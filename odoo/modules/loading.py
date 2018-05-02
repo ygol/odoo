@@ -103,6 +103,7 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
     t0 = time.time()
     t0_sql = odoo.sql_db.sql_counter
 
+    install_next = set()
     for index, package in enumerate(graph, 1):
         module_name = package.name
         module_id = package.id
@@ -165,7 +166,7 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
             if package.init:
                 post_init = package.info.get('post_init_hook')
                 if post_init:
-                    getattr(py_module, post_init)(cr, registry)
+                    install_next.update(getattr(py_module, post_init)(cr, registry) or ())
 
             # validate all the views at a whole
             env['ir.ui.view']._validate_module_views(module_name)
@@ -201,6 +202,8 @@ def load_module_graph(cr, graph, perform_checks=True, skip_modules=None, report=
 
     cr.commit()
 
+    return install_next
+
 def _check_module_names(cr, module_names):
     mod_names = set(module_names)
     if 'base' in mod_names:
@@ -231,7 +234,9 @@ def load_modules(db, force_demo=False, update_module=False):
             _logger.info("init db")
             odoo.modules.db.initialize(cr)
             update_module = True # process auto-installed modules
+            to_init["base"] = 1
             to_init["all"] = 1
+            to_update['base'] = 1
             to_update['all'] = 1
             if not tools.config['without_demo']:
                 to_demo['all'] = 1
@@ -285,12 +290,6 @@ def load_modules(db, force_demo=False, update_module=False):
 
             _check_module_names(cr, itertools.chain(to_init, to_update))
 
-            module_names = [k for k, v in to_init.items() if v]
-            if module_names:
-                modules = Module.search([('state', '=', 'uninstalled'), ('name', 'in', module_names)])
-                if modules:
-                    modules.button_install()
-
             module_names = [k for k, v in to_update.items() if v]
             if module_names:
                 modules = Module.search([('state', '=', 'installed'), ('name', 'in', module_names)])
@@ -299,6 +298,10 @@ def load_modules(db, force_demo=False, update_module=False):
 
             cr.execute("update ir_module_module set state=%s where name=%s", ('installed', 'base'))
             Module.invalidate_cache(['state'])
+
+        cr.execute("select name from ir_module_module where state = 'to install'")
+        to_install_names = odoo.modules.db.expand_install(
+            cr, {n for [n] in cr.fetchall()} | to_init.keys())
 
 
         # STEP 3: Load marked modules (skipping base which was done in STEP 1)
@@ -324,16 +327,19 @@ def load_modules(db, force_demo=False, update_module=False):
             loaded = len(graph)
 
             cr.execute("""
-SELECT name, state='to install', state='to upgrade', id, demo, latest_version
+SELECT name, state in ('uninstalled', 'to install'), state='to upgrade', id, demo, latest_version
 FROM ir_module_module
-WHERE state not in ('uninstalled', 'uninstallable')
+WHERE state != 'uninstallable'
 """)
             all_load = cr.fetchall()
 
-            # note: excludes both state-related values
-            to_install = [(name, *rest) for name, install, _, *rest in all_load if install]
             # note: only excludes to_install-related value
-            to_load = [(name, *rest) for name, install, *rest in all_load if not install]
+            to_load = [
+                (name, *rest)
+                for name, uninstalled, *rest in all_load
+                if not uninstalled
+                if name not in to_install_names
+            ]
 
             if to_load:
                 to_load_names = [name for name, *_ in to_load]
@@ -352,9 +358,13 @@ WHERE state not in ('uninstalled', 'uninstallable')
                         p.demo = True
                 load_module_graph(cr, graph, report=report, skip_modules=already_loaded, perform_checks=update_module)
 
-            if update_module and to_install:
+            if update_module and to_install_names:
                 already_loaded = set(graph.keys())
-                to_install_names = [n for n, *_ in to_install]
+                to_install = [
+                    (name, *rest)
+                    for name, _, _, *rest in all_load
+                    if name in to_install_names
+                ]
                 processed_modules.extend(to_install_names)
                 graph.add_modules(to_install_names)
                 for name, id_, demo, version in to_install:
@@ -366,7 +376,9 @@ WHERE state not in ('uninstalled', 'uninstallable')
                     p.init = True
                     if force_demo or demo or {name, 'all'} & to_demo.keys():
                         p.demo = True
-                load_module_graph(cr, graph, report=report, skip_modules=already_loaded, perform_checks=update_module)
+                additional = load_module_graph(cr, graph, report=report, skip_modules=already_loaded, perform_checks=update_module)
+                if additional:
+                    to_install_names = odoo.modules.db.expand_install(cr, additional)
 
         registry.loaded = True
         registry.setup_models(cr)
