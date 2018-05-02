@@ -218,28 +218,32 @@ def _check_module_names(cr, module_names):
             incorrect_names = mod_names.difference([x['name'] for x in cr.dictfetchall()])
             _logger.warning('invalid module names, ignored: %s', ", ".join(incorrect_names))
 
-def load_modules(db, force_demo=False, update_module=False):
+def load_modules(db, force_demo=False, update_module=False, *,
+                 to_install=()):
     initialize_sys_path()
 
     force = []
     if force_demo:
         force.append('demo')
 
-    to_init = tools.config['init']
     to_update = tools.config['update']
     to_demo = tools.config['demo']
     cr = db.cursor()
     try:
-        if not odoo.modules.db.is_initialized(cr):
+        if odoo.modules.db.is_initialized(cr):
+            modules_to_install = set()
+        else:
             _logger.info("init db")
-            odoo.modules.db.initialize(cr)
+            modules_to_install = odoo.modules.db.initialize(cr)
             update_module = True # process auto-installed modules
-            to_init["base"] = 1
-            to_init["all"] = 1
-            to_update['base'] = 1
-            to_update['all'] = 1
             if not tools.config['without_demo']:
                 to_demo['all'] = 1
+
+        if to_install:
+            modules_to_install.update(odoo.modules.db.expand_install(cr, to_install))
+
+        if modules_to_install:
+            _logger.info("Install modules %s", ', '.join(modules_to_install))
 
         # This is a brand new registry, just created in
         # odoo.modules.registry.Registry.new().
@@ -260,7 +264,7 @@ def load_modules(db, force_demo=False, update_module=False):
         base_module = graph['base']
         base_module.id = bid
         base_module.installed_version = bversion
-        if {'base', 'all'} & to_init.keys():
+        if {'base', 'all'} & modules_to_install:
             base_module.init = True
         if {'base', 'all'} & to_update.keys():
             base_module.update = True
@@ -288,7 +292,7 @@ def load_modules(db, force_demo=False, update_module=False):
             _logger.info('updating modules list')
             Module.update_list()
 
-            _check_module_names(cr, itertools.chain(to_init, to_update))
+            _check_module_names(cr, itertools.chain(modules_to_install, to_update))
 
             module_names = [k for k, v in to_update.items() if v]
             if module_names:
@@ -298,11 +302,6 @@ def load_modules(db, force_demo=False, update_module=False):
 
             cr.execute("update ir_module_module set state=%s where name=%s", ('installed', 'base'))
             Module.invalidate_cache(['state'])
-
-        cr.execute("select name from ir_module_module where state = 'to install'")
-        to_install_names = odoo.modules.db.expand_install(
-            cr, {n for [n] in cr.fetchall()} | to_init.keys())
-
 
         # STEP 3: Load marked modules (skipping base which was done in STEP 1)
         # IMPORTANT: this is done in two parts, first loading all installed or
@@ -327,7 +326,7 @@ def load_modules(db, force_demo=False, update_module=False):
             loaded = len(graph)
 
             cr.execute("""
-SELECT name, state in ('uninstalled', 'to install'), state='to upgrade', id, demo, latest_version
+SELECT name, state='uninstalled', state='to upgrade', id, demo, latest_version
 FROM ir_module_module
 WHERE state != 'uninstallable'
 """)
@@ -338,7 +337,7 @@ WHERE state != 'uninstallable'
                 (name, *rest)
                 for name, uninstalled, *rest in all_load
                 if not uninstalled
-                if name not in to_install_names
+                if name not in modules_to_install
             ]
 
             if to_load:
@@ -348,7 +347,8 @@ WHERE state != 'uninstallable'
                 graph.add_modules(to_load_names)
                 for name, to_upgrade, id_, demo, version in to_load:
                     p = graph.get(name)
-                    if p is None: continue # missing deps => mod may be not loaded
+                    if p is None or p in already_loaded:
+                        continue # missing deps => mod may be not loaded
 
                     p.id = id_
                     p.installed_version = version
@@ -358,18 +358,19 @@ WHERE state != 'uninstallable'
                         p.demo = True
                 load_module_graph(cr, graph, report=report, skip_modules=already_loaded, perform_checks=update_module)
 
-            if update_module and to_install_names:
+            if update_module and modules_to_install:
                 already_loaded = set(graph.keys())
                 to_install = [
                     (name, *rest)
                     for name, _, _, *rest in all_load
-                    if name in to_install_names
+                    if name in modules_to_install
                 ]
-                processed_modules.extend(to_install_names)
-                graph.add_modules(to_install_names)
+                processed_modules.extend(modules_to_install)
+                graph.add_modules(modules_to_install)
                 for name, id_, demo, version in to_install:
                     p = graph.get(name)
-                    if p is None: continue
+                    if p is None or p in already_loaded:
+                        continue
 
                     p.id = id_
                     p.installed_version = version
@@ -378,7 +379,7 @@ WHERE state != 'uninstallable'
                         p.demo = True
                 additional = load_module_graph(cr, graph, report=report, skip_modules=already_loaded, perform_checks=update_module)
                 if additional:
-                    to_install_names = odoo.modules.db.expand_install(cr, additional)
+                    modules_to_install.update(odoo.modules.db.expand_install(cr, additional))
 
         registry.loaded = True
         registry.setup_models(cr)
