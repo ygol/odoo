@@ -394,7 +394,7 @@ class PosConfig(models.Model):
             for field_name in [f for f in pos_config.fields_get_keys() if f.startswith('module_')]:
                 module_name = field_name.split('module_')[1]
                 module_to_install = self.env['ir.module.module'].sudo().search([('name', '=', module_name)])
-                if getattr(pos_config, field_name) and module_to_install.state not in ('installed', 'to install', 'to upgrade'):
+                if getattr(pos_config, field_name) and module_to_install.state not in ('installed', 'to upgrade'):
                     module_to_install.button_immediate_install()
                     module_installed = True
         # just in case we want to do something if we install a module. (like a refresh ...)
