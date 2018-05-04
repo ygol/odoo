@@ -218,15 +218,14 @@ def _check_module_names(cr, module_names):
             incorrect_names = mod_names.difference([x['name'] for x in cr.dictfetchall()])
             _logger.warning('invalid module names, ignored: %s', ", ".join(incorrect_names))
 
-def load_modules(db, force_demo=False, update_module=False, *,
-                 to_install=()):
+def load_modules(db, force_demo=False, *,
+                 to_install=(), to_upgrade=()):
     initialize_sys_path()
 
     force = []
     if force_demo:
         force.append('demo')
 
-    to_update = tools.config['update']
     to_demo = tools.config['demo']
     cr = db.cursor()
     try:
@@ -235,12 +234,15 @@ def load_modules(db, force_demo=False, update_module=False, *,
         else:
             _logger.info("init db")
             modules_to_install = odoo.modules.db.initialize(cr)
-            update_module = True # process auto-installed modules
             if not tools.config['without_demo']:
                 to_demo['all'] = 1
 
         if to_install:
             modules_to_install.update(odoo.modules.db.expand_install(cr, to_install))
+
+        modules_to_upgrade = set(to_upgrade)
+
+        update_module = bool(modules_to_install or modules_to_upgrade)
 
         if modules_to_install:
             _logger.info("Install modules %s", ', '.join(modules_to_install))
@@ -248,9 +250,6 @@ def load_modules(db, force_demo=False, update_module=False, *,
         # This is a brand new registry, just created in
         # odoo.modules.registry.Registry.new().
         registry = odoo.registry(cr.dbname)
-
-        if {'base', 'all'} & to_update.keys():
-            cr.execute("update ir_module_module set state=%s where name=%s and state=%s", ('to upgrade', 'base', 'installed'))
 
         # STEP 1: LOAD BASE (must be done before module dependencies can be computed for later steps)
         graph = odoo.modules.graph.Graph()
@@ -266,7 +265,7 @@ def load_modules(db, force_demo=False, update_module=False, *,
         base_module.installed_version = bversion
         if {'base', 'all'} & modules_to_install:
             base_module.init = True
-        if {'base', 'all'} & to_update.keys():
+        if {'base', 'all'} & modules_to_upgrade:
             base_module.update = True
         if bdemo or force_demo or {'name', 'all'} & to_demo.keys():
             base_module.demo = True
@@ -292,16 +291,7 @@ def load_modules(db, force_demo=False, update_module=False, *,
             _logger.info('updating modules list')
             Module.update_list()
 
-            _check_module_names(cr, itertools.chain(modules_to_install, to_update))
-
-            module_names = [k for k, v in to_update.items() if v]
-            if module_names:
-                modules = Module.search([('state', '=', 'installed'), ('name', 'in', module_names)])
-                if modules:
-                    modules.button_upgrade()
-
-            cr.execute("update ir_module_module set state=%s where name=%s", ('installed', 'base'))
-            Module.invalidate_cache(['state'])
+            _check_module_names(cr, modules_to_install | modules_to_upgrade)
 
         # STEP 3: Load marked modules (skipping base which was done in STEP 1)
         # IMPORTANT: this is done in two parts, first loading all installed or
@@ -326,7 +316,7 @@ def load_modules(db, force_demo=False, update_module=False, *,
             loaded = len(graph)
 
             cr.execute("""
-SELECT name, state='uninstalled', state='to upgrade', id, demo, latest_version
+SELECT name, state='uninstalled', id, demo, latest_version
 FROM ir_module_module
 WHERE state != 'uninstallable'
 """)
@@ -342,17 +332,17 @@ WHERE state != 'uninstallable'
 
             if to_load:
                 to_load_names = [name for name, *_ in to_load]
-                processed_modules.extend(name for name, to_upgrade, *_ in to_load if to_upgrade)
+                processed_modules.extend(name for name, *_ in to_load if name in modules_to_upgrade)
                 already_loaded = set(graph.keys())
                 graph.add_modules(to_load_names)
-                for name, to_upgrade, id_, demo, version in to_load:
+                for name, id_, demo, version in to_load:
                     p = graph.get(name)
                     if p is None or p in already_loaded:
                         continue # missing deps => mod may be not loaded
 
                     p.id = id_
                     p.installed_version = version
-                    if to_upgrade or {name, 'all'} & to_update.keys():
+                    if {name, 'all'} & modules_to_upgrade:
                         p.update = True
                     if demo or force_demo or {name, 'all'} & to_demo.keys():
                         p.demo = True
@@ -362,7 +352,7 @@ WHERE state != 'uninstallable'
                 already_loaded = set(graph.keys())
                 to_install = [
                     (name, *rest)
-                    for name, _, _, *rest in all_load
+                    for name, _, *rest in all_load
                     if name in modules_to_install
                 ]
                 processed_modules.extend(modules_to_install)
@@ -490,9 +480,6 @@ def reset_modules_state(db_name):
     db = odoo.sql_db.db_connect(db_name)
     with db.cursor() as cr:
         cr.execute(
-            "UPDATE ir_module_module SET state='installed' WHERE state IN ('to remove', 'to upgrade')"
-        )
-        cr.execute(
-            "UPDATE ir_module_module SET state='uninstalled' WHERE state='to install'"
+            "UPDATE ir_module_module SET state='installed' WHERE state = 'to remove'"
         )
         _logger.warning("Transient module states were reset")

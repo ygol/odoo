@@ -243,8 +243,8 @@ class ResConfigInstaller(models.TransientModel, ResConfigModuleInstallationMixin
 
     def _already_installed(self):
         """ For each module (boolean fields in a res.config.installer),
-        check if it's already installed (either 'to install', 'to upgrade'
-        or 'installed') and if it is return the module's record
+        check if it's already installed and if it is return the module's
+        record
 
         :returns: a list of all installed modules in this installer
         :rtype: recordset (collection of Record)
@@ -252,7 +252,7 @@ class ResConfigInstaller(models.TransientModel, ResConfigModuleInstallationMixin
         selectable = [name for name, field in self._fields.items()
                       if field.type == 'boolean']
         return self.env['ir.module.module'].search([('name', 'in', selectable),
-                            ('state', 'in', ['installed', 'to upgrade'])])
+                            ('state', '=', 'installed')])
 
     def modules_to_install(self):
         """ selects all modules to install:
@@ -419,7 +419,7 @@ class ResConfigSettings(models.TransientModel, ResConfigModuleInstallationMixin)
         ModuleSudo = self.env['ir.module.module'].sudo()
         modules = ModuleSudo.search(
             [('name', '=', module_name.replace("module_", '')),
-            ('state', 'in', ['installed', 'to upgrade'])])
+            ('state', '=', 'installed')])
 
         if modules and not field_value:
             deps = modules.sudo().downstream_dependencies()
@@ -504,7 +504,7 @@ class ResConfigSettings(models.TransientModel, ResConfigModuleInstallationMixin)
 
         # modules: which modules are installed/to install
         for name, module in classified['module']:
-            res[name] = module.state in ('installed', 'to upgrade')
+            res[name] = module.state == 'installed'
             if self._fields[name].type == 'selection':
                 res[name] = int(res[name])
 
@@ -615,7 +615,7 @@ class ResConfigSettings(models.TransientModel, ResConfigModuleInstallationMixin)
             if self[name]:
                 to_install.append((name[lm:], module))
             else:
-                if module and module.state in ('installed', 'to upgrade'):
+                if module and module.state == 'installed':
                     to_uninstall_modules += module
 
         if to_uninstall_modules:

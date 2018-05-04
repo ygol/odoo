@@ -142,7 +142,6 @@ STATES = [
     ('uninstallable', 'Uninstallable'),
     ('uninstalled', 'Not Installed'),
     ('installed', 'Installed'),
-    ('to upgrade', 'To be upgraded'),
     ('to remove', 'To be removed'),
 ]
 
@@ -204,7 +203,7 @@ class Module(models.Model):
 
         for module in self:
             # Skip uninstalled modules below, no data to find anyway.
-            if module.state not in ('installed', 'to upgrade', 'to remove'):
+            if module.state not in ('installed', 'to remove'):
                 module.views_by_module = ""
                 module.reports_by_module = ""
                 module.menus_by_module = ""
@@ -301,7 +300,7 @@ class Module(models.Model):
         if not self:
             return True
         for module in self:
-            if module.state in ('installed', 'to upgrade', 'to remove'):
+            if module.state in ('installed', 'to remove'):
                 raise UserError(_('You try to remove a module that is installed or will be installed'))
         self.clear_caches()
         return super(Module, self).unlink()
@@ -376,7 +375,7 @@ class Module(models.Model):
         #  - at least one dependency is 'to install'
         to_install = odoo.modules.db.expand_install(self.env.cr, self.mapped('name'))
 
-        install_mods = self.search([('state', 'in', ['installed', 'to upgrade'])])
+        install_mods = self.search([('state', '=', 'installed')])
 
         # check individual exclusions
         install_names = {module.name for module in install_mods} | to_install
@@ -579,41 +578,45 @@ class Module(models.Model):
 
     @assert_log_admin_access
     @api.multi
-    def button_immediate_upgrade(self):
-        """
-        Upgrade the selected module(s) immediately and fully,
-        return the next res.config action to execute
-        """
-        return self._button_immediate_function(type(self).button_upgrade)
-
-    @assert_log_admin_access
-    @api.multi
     def button_upgrade(self):
-        Dependency = self.env['ir.module.module.dependency']
         self.update_list()
 
-        todo = list(self)
-        i = 0
-        while i < len(todo):
-            module = todo[i]
-            i += 1
-            if module.state not in ('installed', 'to upgrade'):
-                raise UserError(_("Can not upgrade module '%s'. It is not installed.") % (module.name,))
-            self.check_external_dependencies(module.name, 'to upgrade')
-            for dep in Dependency.search([('name', '=', module.name)]):
-                if dep.module_id.state == 'installed' and dep.module_id not in todo:
-                    todo.append(dep.module_id)
+        uninstalled = self.filtered(lambda m: m.state != 'installed')
+        if uninstalled:
+            raise UserError(_("Can not upgrade module '%s'. It is not installed.") % (uninstalled[0],))
 
-        self.browse(module.id for module in todo).write({'state': 'to upgrade'})
+        mods = odoo.modules.db.expand_dependents(self.env.cr, self.mapped('name'))
+        for name in mods:
+            self.check_external_dependencies(name, 'to upgrade')
 
-        to_install = []
-        for module in todo:
+        for module in self.search([('name', 'in', list(mods))]):
             for dep in module.dependencies_id:
                 if dep.state == 'unknown':
                     raise UserError(_('You try to upgrade the module %s that depends on the module: %s.\nBut this module is not available in your system.') % (module.name, dep.name,))
                 assert dep.state != 'uninstalled', "trying to update %s which depends on non-installed module %s" % (module.name, dep.name)
 
-        return dict(ACTION_DICT, name=_('Apply Schedule Upgrade'))
+        self._cr.commit()
+        api.Environment.reset()
+        modules.registry.Registry.new(
+            self._cr.dbname, update_module=True,
+            to_upgrade=mods,
+        )
+
+        self._cr.commit()
+        env = api.Environment(self._cr, self._uid, self._context)
+        # pylint: disable=next-method-called
+        config = env['ir.module.module'].next() or {}
+        if config.get('type') not in ('ir.actions.act_window_close',):
+            return config
+
+        # reload the client; open the first available root menu
+        menu = env['ir.ui.menu'].search([('parent_id', '=', False)])[:1]
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+            'params': {'menu_id': menu.id},
+        }
+    button_immediate_upgrade = button_upgrade
 
     @assert_log_admin_access
     @api.multi
@@ -839,7 +842,7 @@ class Module(models.Model):
         elif not isinstance(filter_lang, (list, tuple)):
             filter_lang = [filter_lang]
 
-        update_mods = self.filtered(lambda r: r.state in ('installed', 'to upgrade'))
+        update_mods = self.filtered(lambda r: r.state == 'installed')
         mod_dict = {
             mod.name: mod.dependencies_id.mapped('name')
             for mod in update_mods

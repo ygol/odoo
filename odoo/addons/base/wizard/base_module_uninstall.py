@@ -11,7 +11,7 @@ class BaseModuleUninstall(models.TransientModel):
     show_all = fields.Boolean()
     module_id = fields.Many2one(
         'ir.module.module', string="Module", required=True,
-        domain=[('state', 'in', ['installed', 'to upgrade'])],
+        domain=[('state', '=', 'installed')],
         ondelete='cascade'
     )
     module_ids = fields.Many2many('ir.module.module', string="Impacted modules",

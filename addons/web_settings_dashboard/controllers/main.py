@@ -17,7 +17,7 @@ class WebSettingsDashboard(http.Controller):
 
         installed_apps = request.env['ir.module.module'].search_count([
             ('application', '=', True),
-            ('state', 'in', ['installed', 'to upgrade', 'to remove'])
+            ('state', 'in', ['installed', 'to remove'])
         ])
         cr = request.cr
         cr.execute("""

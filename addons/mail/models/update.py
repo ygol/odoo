@@ -39,7 +39,7 @@ class PublisherWarrantyContract(AbstractModel):
             nbr_share_users = Users.search_count([("share", "=", True), ('active', '=', True)])
             nbr_active_share_users = Users.search_count([("share", "=", True), ("login_date", ">=", limit_date_str), ('active', '=', True)])
         user = self.env.user
-        domain = [('application', '=', True), ('state', 'in', ['installed', 'to upgrade', 'to remove'])]
+        domain = [('application', '=', True), ('state', 'in', ['installed', 'to remove'])]
         apps = self.env['ir.module.module'].sudo().search_read(domain, ['name'])
 
         enterprise_code = IrParamSudo.get_param('database.enterprise_code')

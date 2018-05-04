@@ -90,8 +90,7 @@ class MigrationManager(object):
             }
 
         for pkg in self.graph:
-            if not (pkg.update or
-                    getattr(pkg, 'load_state', None) == 'to upgrade'):
+            if not pkg.update:
                 continue
 
             self.migrations[pkg.name] = {

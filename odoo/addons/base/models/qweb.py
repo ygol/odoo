@@ -655,7 +655,7 @@ class QWeb(object):
         options['iter_directives'] = iter(self._directives_eval_order() + [None])
 
         el.set('t-tag', el.tag)
-        if not (set(['t-esc', 't-raw', 't-field']) & set(el.attrib)):
+        if not ({'t-esc', 't-raw', 't-field'} & set(el.attrib)):
             el.set('t-content', 'True')
 
         return body + self._compile_directives(el, options)

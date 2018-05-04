@@ -9,7 +9,7 @@ class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
     def _default_order_mail_template(self):
-        if self.env['ir.module.module'].search([('name', '=', 'website_quote')]).state in ('installed', 'to upgrade'):
+        if self.env['ir.module.module'].search([('name', '=', 'website_quote'), ('state', '=', 'installed')]):
             return self.env.ref('website_quote.confirmation_mail').id
         else:
             return self.env.ref('sale.email_template_edi_sale').id
@@ -64,9 +64,9 @@ class ResConfigSettings(models.TransientModel):
         params = self.env['ir.config_parameter'].sudo()
 
         sale_delivery_settings = 'none'
-        if self.env['ir.module.module'].search([('name', '=', 'delivery')], limit=1).state in ('installed', 'to upgrade'):
+        if self.env['ir.module.module'].search([('name', '=', 'delivery'), ('state', '=', 'installed')], limit=1):
             sale_delivery_settings = 'internal'
-            if self.env['ir.module.module'].search([('name', '=', 'website_sale_delivery')], limit=1).state in ('installed', 'to upgrade'):
+            if self.env['ir.module.module'].search([('name', '=', 'website_sale_delivery'), ('state', '=', 'installed')], limit=1):
                 sale_delivery_settings = 'website'
 
         res.update(
