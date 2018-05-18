@@ -195,6 +195,7 @@ define([
       var options = hasInitOptions ? list.head(arguments) : {};
 
       options = $.extend({}, $.summernote.options, options);
+      options.toolbar[options.toolbar.length] = ["checkbox", ["checkbox"]];
       options.icons = $.extend({}, $.summernote.options.icons, options.icons);
 
       // Include langInfo in options for later use, e.g. for image drag-n-drop

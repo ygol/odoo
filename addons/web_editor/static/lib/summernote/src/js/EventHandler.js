@@ -154,6 +154,18 @@ define([
         modules.helpDialog.show(layoutInfo);
       },
 
+      appendChecklist: function (layoutInfo) {
+        var $editable = layoutInfo.editable();
+        var $div = $editable.find('.o_summarnote_checkbox');
+        var $checkbox_div = $div.length > 0 ? $div : $("<div class='o_summarnote_checkbox'></div>");
+        $('<div><span class="summarnote_checkbox"></span><p style="margin-left: 9px;vertical-align: top;display: inline-block;"><br></p></div>').appendTo($checkbox_div);
+        if ($div.length === 0) {
+          $checkbox_div.prependTo($editable);
+        }
+        var $p = !$editable.find('p') ? $checkbox_div.find('p') : $editable.find('p');
+        $($p[$p.length - 1]).focus();
+      },
+
       /**
        * @param {Object} layoutInfo
        */

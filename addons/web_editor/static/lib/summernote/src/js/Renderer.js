@@ -130,6 +130,13 @@ define([
     };
 
     var tplButtonInfo = {
+      checkbox: function (lang, options) {
+        return tplIconButton("fa fa-list", {
+          event: 'appendChecklist',
+          title: "checklist"
+        });
+      },
+
       picture: function (lang, options) {
         return tplIconButton(options.iconPrefix + options.icons.image.image, {
           event: 'showImageDialog',
