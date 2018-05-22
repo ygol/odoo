@@ -145,6 +145,9 @@ define([
       btnState('button[data-event="insertOrderedList"]', function () {
         return styleInfo['list-style'] === 'ordered';
       });
+      btnState('button[data-event="appendChecklist"]', function () {
+        return styleInfo['checklist-style'] === true;
+      });
     };
 
     /**

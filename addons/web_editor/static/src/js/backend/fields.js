@@ -217,8 +217,8 @@ var FieldTextHtmlSimple = basic_fields.DebouncedField.extend(TranslatableFieldMi
      * @private
      */
     _renderEdit: function () {
-        $(document).on("click", ".summarnote_checkbox" , this._checkBoxClick);
 
+        $(document).on("click", ".checkbox" , this._checkBoxClick);
         this.$textarea = $('<textarea>');
         this.$textarea.appendTo(this.$el);
         this.$textarea.summernote(this._getSummernoteConfig());
@@ -246,7 +246,7 @@ var FieldTextHtmlSimple = basic_fields.DebouncedField.extend(TranslatableFieldMi
      * @private
      */
     _renderReadonly: function () {
-        $(document).off("click", ".summarnote_checkbox", this._checkBoxClick);
+        $(document).off("click", ".checkbox", this._checkBoxClick);
         var self = this;
         this.$el.empty();
         if (this.nodeOptions['style-inline']) {

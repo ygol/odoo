@@ -1212,6 +1212,9 @@ $.summernote.pluginEvents.enter = function (event, editor, layoutInfo) {
             $(dom.node( dom.isBR(node) ? node.parentNode : node )).html(br);
             node = br;
         }
+        if ($(node.parentElement.parentElement.parentElement).hasClass('o_summarnote_checkbox')) {
+            $('<span class="checkbox"></span>').prependTo($(node.parentElement.parentElement));
+        }
     }
 
     if (node) {
@@ -1589,6 +1592,79 @@ function isFormatNode(node) {
     return node.tagName && options.styleTags.indexOf(node.tagName.toLowerCase()) !== -1;
 }
 
+$.summernote.pluginEvents.appendChecklist = function (event, editor, layoutInfo, sorted) {
+    var range = $.summernote.core.range;
+    var $editable = layoutInfo.editable();
+    var parent;
+    var r = range.create();
+    if (!r) return;
+    var node = r.sc;
+    var $editable = layoutInfo.editable();
+    while (node && node !== $editable[0]) {
+        parent = node.parentNode;
+        if (node.tagName === (sorted ? "OL" : "UL")) {
+            parent.removeChild(node);
+            var p = document.createElement("p");
+            p.appendChild(document.createElement("br"));
+            parent.appendChild(p);
+            r.select();
+            return;
+        }
+        node = parent;
+    }
+    var p0 = r.sc;
+    while (p0 && p0.parentNode && p0.parentNode !== $editable[0] && !isFormatNode(p0)) {
+        p0 = p0.parentNode;
+    }
+    if (!p0) return;
+    var p1 = r.ec;
+    while (p1 && p1.parentNode && p1.parentNode !== $editable[0] && !isFormatNode(p1)) {
+        p1 = p1.parentNode;
+    }
+    if (!p0.parentNode || p0.parentNode !== p1.parentNode) {
+        return;
+    }
+    parent = p0.parentNode;
+    var ul = document.createElement("ul");
+    ul.classList.add("o_summarnote_checkbox");
+    parent.insertBefore(ul, p0);
+    var childNodes = parent.childNodes;
+    var brs = [];
+    var begin = false;
+    for (var i = 0; i < childNodes.length; i++) {
+        if (begin && dom.isBR(childNodes[i])) {
+            parent.removeChild(childNodes[i]);
+            i--;
+        }
+        if ((!dom.isText(childNodes[i]) && !isFormatNode(childNodes[i])) || (!ul.firstChild && childNodes[i] !== p0) ||
+            $.contains(ul, childNodes[i]) || (dom.isText(childNodes[i]) && !childNodes[i].textContent.match(/\S|u00A0/))) {
+            continue;
+        }
+        begin = true;
+        var li = document.createElement('li');
+        var checkbox = document.createElement('span');
+        checkbox.classList.add("checkbox");
+        li.appendChild(checkbox);
+        li.classList.add("o_summarnote_checkbox_list");
+        ul.appendChild(li);
+        childNodes[i].classList.add("summarnote_checkbox_text")
+        li.appendChild(childNodes[i]);
+        if (li.firstChild === p1) {
+            break;
+        }
+        i--;
+    }
+    if (dom.isBR(childNodes[i])) {
+        parent.removeChild(childNodes[i]);
+    }
+
+    for (i = 0; i < brs.length ; i++) {
+        parent.removeChild(brs[i]);
+    }
+    r.clean().select();
+    event.preventDefault();
+    return false;
+};
 $.summernote.pluginEvents.insertUnorderedList = function (event, editor, layoutInfo, sorted) {
     var $editable = layoutInfo.editable();
     $editable.data('NoteHistory').recordUndo($editable);

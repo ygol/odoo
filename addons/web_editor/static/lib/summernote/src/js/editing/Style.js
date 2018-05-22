@@ -133,7 +133,9 @@ define([
       styleInfo['font-subscript'] = document.queryCommandState('subscript') ? 'subscript' : 'normal';
 
       // list-style-type to list-style(unordered, ordered)
-      if (!rng.isOnList()) {
+      var checkList = $(rng.sc.parentElement).hasClass("o_summarnote_checkbox_list") || $(rng.sc.parentElement).hasClass("summarnote_checkbox_text");
+      styleInfo['checklist-style'] = checkList;
+      if (!rng.isOnList() || checkList) {
         styleInfo['list-style'] = 'none';
       } else {
         var aOrderedType = ['circle', 'disc', 'disc-leading-zero', 'square'];
