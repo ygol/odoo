@@ -217,8 +217,6 @@ var FieldTextHtmlSimple = basic_fields.DebouncedField.extend(TranslatableFieldMi
      * @private
      */
     _renderEdit: function () {
-
-        $(document).on("click", ".checkbox" , this._checkBoxClick);
         this.$textarea = $('<textarea>');
         this.$textarea.appendTo(this.$el);
         this.$textarea.summernote(this._getSummernoteConfig());
@@ -237,16 +235,11 @@ var FieldTextHtmlSimple = basic_fields.DebouncedField.extend(TranslatableFieldMi
         }
         this.$('.note-toolbar').append(this._renderTranslateButton());
     },
-    _checkBoxClick: function () {
-        var div = this.parentElement;
-        this.parentElement.classList.toggle("checked");
-    },
     /**
      * @override
      * @private
      */
     _renderReadonly: function () {
-        $(document).off("click", ".checkbox", this._checkBoxClick);
         var self = this;
         this.$el.empty();
         if (this.nodeOptions['style-inline']) {

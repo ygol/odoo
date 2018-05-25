@@ -349,9 +349,48 @@ define([
         var keyString = keys.join('+');
         var eventName = keyMap[keyString];
 
+        var keycode = event.keyCode;
+        var range = $.summernote.core.range;
+        var r = range.create();
+        var el = r.sc;
+        while (el !== $editable[0]) {
+          if (el.classList && el.classList.contains("summarnote_checkbox_text")) {
+            el = el.parentNode;
+            break;
+          }
+          el = el.parentNode;
+        }
+        if (el.classList && el.classList.contains("o_summarnote_checkbox_list")) {
+          if (keycode === 37 && r.eo < 1) {
+            return false;
+          } else if (keycode === 8 && r.eo < 2) {
+            var li = el;
+            var $lis = $(li).closest('ul').find('li');
+            li = $lis.length <= 1 ? li.parentNode : li;
+            var parent = $lis.length <= 1 ? $editable[0] : $(li).closest('ul')[0];
+
+            if ($lis.length <= 1) {
+              var p = document.createElement("p");
+              p.appendChild(document.createElement("br"));
+              parent.appendChild(p);
+              var rp = range.createFromNode(p);
+              rp.select();
+
+            }
+            else {
+              var selectElem = $(li.previousElementSibling).find('p')[0];
+              var r = range.createFromNode(selectElem);
+              r.select();
+              var txt = selectElem.innerText;
+              selectElem.innerText = "";
+              selectElem.innerText = txt;
+            }
+            parent.removeChild(li);
+            return false;
+          }
+        }
         // ODOO: (start_modification
         // odoo change: add visible event to overwrite the browser comportment
-        var keycode = event.keyCode;
         if (!eventName &&
             !event.ctrlKey && !event.metaKey && ( // special code/command
             (keycode > 47 && keycode < 58)   || // number keys

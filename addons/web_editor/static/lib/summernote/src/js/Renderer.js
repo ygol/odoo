@@ -131,7 +131,7 @@ define([
 
     var tplButtonInfo = {
       checkbox: function (lang, options) {
-        return tplIconButton("fa fa-list", {
+        return tplIconButton("fa fa-check-square", {
           event: 'appendChecklist',
           title: "checklist"
         });

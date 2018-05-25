@@ -1213,7 +1213,11 @@ $.summernote.pluginEvents.enter = function (event, editor, layoutInfo) {
             node = br;
         }
         if ($(node.parentElement.parentElement.parentElement).hasClass('o_summarnote_checkbox')) {
-            $('<span class="checkbox"></span>').prependTo($(node.parentElement.parentElement));
+            var checkbox = document.createElement('span');
+            var li = node.parentElement.parentElement;
+            checkbox.classList.add("checkbox");
+            li.classList.remove("checked");
+            li.prepend(checkbox);
         }
     }
 
@@ -1599,15 +1603,15 @@ $.summernote.pluginEvents.appendChecklist = function (event, editor, layoutInfo,
     var r = range.create();
     if (!r) return;
     var node = r.sc;
-    var $editable = layoutInfo.editable();
     while (node && node !== $editable[0]) {
         parent = node.parentNode;
-        if (node.tagName === (sorted ? "OL" : "UL")) {
+        if (node.classList && node.classList.contains("o_summarnote_checkbox")) {
             parent.removeChild(node);
             var p = document.createElement("p");
             p.appendChild(document.createElement("br"));
             parent.appendChild(p);
-            r.select();
+            var rp = range.createFromNode(p);
+            rp.select();
             return;
         }
         node = parent;
@@ -1628,11 +1632,11 @@ $.summernote.pluginEvents.appendChecklist = function (event, editor, layoutInfo,
     var ul = document.createElement("ul");
     ul.classList.add("o_summarnote_checkbox");
     parent.insertBefore(ul, p0);
-    var childNodes = parent.childNodes;
+    var childNodes = [p0];
     var brs = [];
     var begin = false;
     for (var i = 0; i < childNodes.length; i++) {
-        if (begin && dom.isBR(childNodes[i])) {
+        if (begin && dom.isBR(p0)) {
             parent.removeChild(childNodes[i]);
             i--;
         }
@@ -1644,6 +1648,14 @@ $.summernote.pluginEvents.appendChecklist = function (event, editor, layoutInfo,
         var li = document.createElement('li');
         var checkbox = document.createElement('span');
         checkbox.classList.add("checkbox");
+        /*
+            Have to add custom checkbox because while sanitizing HTML elements it sanitizes forms elements
+            such as button, input, select, textarea, so <input type='checkbox'> is not appearing while saving
+            summernote element.
+            See here :-
+                        https://github.com/odoo/odoo/blob/master/odoo/tools/mail.py#L190
+                        https://github.com/lxml/lxml/blob/master/src/lxml/html/clean.py#L362
+        */
         li.appendChild(checkbox);
         li.classList.add("o_summarnote_checkbox_list");
         ul.appendChild(li);
@@ -2347,6 +2359,23 @@ function summernote_table_scroll(event) {
         $('.o_table_handler').remove();
     }
 }
+function summernote_table_click(event) {
+    var range = $.summernote.core.range;
+    var checkbox = range.create().sc;
+    if (checkbox.classList && checkbox.classList.contains("checkbox")) {
+        var el = checkbox.nextElementSibling;
+        var r = range.createFromNode(checkbox.nextElementSibling);
+        r.select();
+        var txt = el.innerText;
+        el.innerText = "";
+        el.innerText = txt;
+        return false;
+    }
+}
+function check_box_click(event) {
+    var div = this.parentElement;
+    this.parentElement.classList.toggle("checked");
+}
 function summernote_table_update(oStyle) {
     var r = range.create();
     if (!oStyle.range || !r || !r.isOnCell() || !r.isOnCellFirst()) {
@@ -2469,12 +2498,18 @@ eventHandler.attach = function (oLayoutInfo, options) {
     var $editable = oLayoutInfo.editor().hasClass('note-editable') ? oLayoutInfo.editor() : oLayoutInfo.editor().find('.note-editable');
     fn_attach.call(this, oLayoutInfo, options);
     $editable.on("scroll", summernote_table_scroll);
+    $editable.on("click", summernote_table_click);
+    $editable.on("focus", summernote_table_click);
+    $editable.on("click", ".checkbox" , check_box_click);
 };
 var fn_detach = eventHandler.detach;
 eventHandler.detach = function (oLayoutInfo, options) {
     var $editable = oLayoutInfo.editor().hasClass('note-editable') ? oLayoutInfo.editor() : oLayoutInfo.editor().find('.note-editable');
     fn_detach.call(this, oLayoutInfo, options);
     $editable.off("scroll", summernote_table_scroll);
+    $editable.off("click", summernote_table_click);
+    $editable.off("focus", summernote_table_click);
+    $editable.off("click", ".checkbox" , check_box_click);
     $('.o_table_handler').remove();
 };
 
