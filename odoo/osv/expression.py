@@ -843,6 +843,16 @@ class expression(object):
             elif not field:
                 raise ValueError("Invalid field %r in leaf %r" % (left, str(leaf)))
 
+            elif operator == 'in' and not right:
+                # optimization: field in [] == False
+                leaf.leaf = FALSE_LEAF
+                push(leaf)
+
+            elif operator == 'not in' and not right:
+                # optimization: field not in [] == True
+                leaf.leaf = TRUE_LEAF
+                push(leaf)
+
             elif field.inherited:
                 # comments about inherits'd fields
                 #  { 'field_name': ('parent_model', 'm2o_field_to_reach_parent',
