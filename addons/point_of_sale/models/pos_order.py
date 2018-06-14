@@ -368,21 +368,34 @@ class PosOrder(models.Model):
 
                 # Create the tax lines
                 taxes = line.tax_ids_after_fiscal_position.filtered(lambda t: t.company_id.id == current_company.id)
-                if not taxes:
-                    continue
                 price = line.price_unit * (1 - (line.discount or 0.0) / 100.0)
+                total_tax = 0
                 for tax in taxes.compute_all(price, cur, line.qty)['taxes']:
+                    tax_rounded = cur.round(tax['amount'])
                     insert_data('tax', {
                         'name': _('Tax') + ' ' + tax['name'],
                         'product_id': line.product_id.id,
                         'quantity': line.qty,
                         'account_id': tax['account_id'] or income_account,
-                        'credit': ((tax['amount'] > 0) and tax['amount']) or 0.0,
-                        'debit': ((tax['amount'] < 0) and -tax['amount']) or 0.0,
+                        'credit': ((tax_rounded > 0) and tax_rounded) or 0.0,
+                        'debit': ((tax_rounded < 0) and -tax_rounded) or 0.0,
                         'tax_line_id': tax['id'],
                         'partner_id': partner_id
                     })
+                    total_tax += tax_rounded
 
+                amount_included = amount + total_tax
+                # counterpart
+                insert_data('counter_part', {
+                    'name': _("Trade Receivables"),  # order.name,
+                    'account_id': order_account,
+                    'credit': ((amount_included < 0) and -amount_included) or 0.0,
+                    'debit': ((amount_included > 0) and amount_included) or 0.0,
+                    'partner_id': partner_id
+                })
+
+            if not taxes:
+                continue
             # round tax lines per order
             if rounding_method == 'round_globally':
                 for group_key, group_value in grouped_data.items():
@@ -390,15 +403,6 @@ class PosOrder(models.Model):
                         for line in group_value:
                             line['credit'] = cur.round(line['credit'])
                             line['debit'] = cur.round(line['debit'])
-
-            # counterpart
-            insert_data('counter_part', {
-                'name': _("Trade Receivables"),  # order.name,
-                'account_id': order_account,
-                'credit': ((order.amount_total < 0) and -order.amount_total) or 0.0,
-                'debit': ((order.amount_total > 0) and order.amount_total) or 0.0,
-                'partner_id': partner_id
-            })
 
             order.write({'state': 'done', 'account_move': move.id})
 
