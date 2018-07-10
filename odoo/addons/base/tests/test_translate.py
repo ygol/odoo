@@ -4,7 +4,7 @@
 import unittest
 
 from odoo.tools import pycompat
-from odoo.tools.translate import quote, unquote, xml_translate, html_translate
+from odoo.tools.translate import _, quote, unquote, xml_translate, html_translate
 from odoo.tests.common import TransactionCase, tagged
 
 
@@ -275,6 +275,21 @@ class TestTranslation(TransactionCase):
         self.assertEqual(categories.ids, [padawans.id, self.customers.id],
             "Search ordered by translated name should return Padawans (Apprentis) before Customers (Clients)")
 
+    def test_format_fallback(self):
+        self.env['ir.translation'].create({
+            'name': 'what?',
+            'type': 'code',
+            'src': 'foo%sbar',
+            'value': 'bliblibli',
+            'module': 'base',
+            'state': 'translated',
+            'lang': 'fr_FR',
+        })
+        context = {'lang': 'fr_FR'}
+        s = _('foo%sbar')
+        print(self.env['ir.translation']._get_source(None, ('code',), 'fr_FR', 'foo%sbar'))
+        self.assertEqual(s, 'bliblibli')
+        self.assertEqual(s % '', 'foobar')
 
 class TestXMLTranslation(TransactionCase):
     def setUp(self):

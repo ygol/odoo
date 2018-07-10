@@ -346,6 +346,29 @@ def translate(cr, name, source_type, lang, source=None):
     res = res_trans and res_trans[0] or False
     return res
 
+class SafeTranslator(str):
+    __slots__ = ['_source']
+    def __new__(cls, translated, source):
+        o = str.__new__(cls, translated)
+        o._source = source
+        return o
+
+    def __mod__(self, other):
+        try:
+            return super().__mod__(other)
+        except Exception:
+            # TypeError: not enough args ('%s %s %s' % 'a')
+            # ValueError: incomplete format ('%' % a)
+            # others?
+            return self._source % other
+
+    def format(self, *args, **kwargs):
+        try:
+            return super().format(*args, **kwargs)
+        except Exception:
+            # seen ValueError, IndexError and KeyError, possibly others?
+            return self._source.format(*args, **kwargs)
+
 class GettextAlias(object):
 
     def _get_db(self):
@@ -439,7 +462,7 @@ class GettextAlias(object):
                 if cr:
                     # Try to use ir.translation to benefit from global cache if possible
                     env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
-                    res = env['ir.translation']._get_source(None, ('code','sql_constraint'), lang, source)
+                    res = SafeTranslator(env['ir.translation']._get_source(None, ('code','sql_constraint'), lang, source), source)
                 else:
                     _logger.debug('no context cursor detected, skipping translation for "%r"', source)
             else:
