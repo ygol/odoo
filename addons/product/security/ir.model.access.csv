@@ -12,3 +12,4 @@ access_product_attribute,product.attribute,model_product_attribute,base.group_us
 access_product_attribute_value,product.attribute value,model_product_attribute_value,base.group_user,1,0,0,0
 access_product_attribute_price,product.attribute price,model_product_attribute_price,base.group_user,1,0,0,0
 access_product_attribute_line,product.attribute line,model_product_attribute_line,base.group_user,1,0,0,0
+access_product_price_list,access_product_price_list,model_product_price_list,base.group_user,1,1,1,1

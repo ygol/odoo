@@ -39,3 +39,8 @@ access_mail_activity_user,mail.activity.user,model_mail_activity,base.group_user
 access_mail_activity_type_all,mail.activity.type.all,model_mail_activity_type,,0,0,0,0
 access_mail_activity_type_user,mail.activity.type.user,model_mail_activity_type,base.group_user,1,0,0,0
 access_mail_activity_type_system,mail.activity.type.system,model_mail_activity_type,base.group_system,1,1,1,1
+access_mail_compose_message,access_mail_compose_message,model_mail_compose_message,base.group_user,1,1,1,1
+access_mail_resend_message,access_mail_resend_message,model_mail_resend_message,base.group_user,1,1,1,1
+access_mail_resend_partner,access_mail_resend_partner,model_mail_resend_partner,base.group_user,1,1,1,1
+access_email_template_preview,access_email_template_preview,model_email_template_preview,base.group_user,1,1,1,1
+access_mail_wizard_invite,access_mail_wizard_invite,model_mail_wizard_invite,base.group_user,1,1,1,1

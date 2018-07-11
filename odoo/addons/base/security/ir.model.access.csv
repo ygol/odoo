@@ -96,3 +96,18 @@
 "access_ir_logging","ir_logging admin","model_ir_logging","group_erp_manager",1,1,1,1
 "paperformat_access_portal","ir_actions_report_paperformat group_portal","model_report_paperformat",,1,0,0,0
 "paperformat_access_employee","ir_actions_report_paperformat group_hr_user","model_report_paperformat",,1,0,1,0
+access_res_config,access_res_config,model_res_config,base.group_user,1,1,1,1
+access_res_config_installer,access_res_config_installer,model_res_config_installer,base.group_user,1,1,1,1
+access_change_password_wizard,access_change_password_wizard,model_change_password_wizard,base.group_user,1,1,1,1
+access_change_password_user,access_change_password_user,model_change_password_user,base.group_user,1,1,1,1
+access_base_language_import,access_base_language_import,model_base_language_import,base.group_user,1,1,1,1
+access_base_module_upgrade,access_base_module_upgrade,model_base_module_upgrade,base.group_user,1,1,1,1
+access_base_language_export,access_base_language_export,model_base_language_export,base.group_user,1,1,1,1
+access_base_update_translations,access_base_update_translations,model_base_update_translations,base.group_user,1,1,1,1
+access_base_partner_merge_line,access_base_partner_merge_line,model_base_partner_merge_line,base.group_user,1,1,1,1
+access_wizard_ir_model_menu_create,access_wizard_ir_model_menu_create,model_wizard_ir_model_menu_create,base.group_user,1,1,1,1
+access_base_language_install,access_base_language_install,model_base_language_install,base.group_user,1,1,1,1
+access_base_module_update,access_base_module_update,model_base_module_update,base.group_user,1,1,1,1
+access_res_config_settings,access_res_config_settings,model_res_config_settings,base.group_user,1,1,1,1
+access_base_module_uninstall,access_base_module_uninstall,model_base_module_uninstall,base.group_user,1,1,1,1
+access_base_partner_merge_automatic_wizard,access_base_partner_merge_automatic_wizard,model_base_partner_merge_automatic_wizard,base.group_user,1,1,1,1

@@ -58,3 +58,7 @@ access_mrp_message_mrp_user,mrp.message,model_mrp_message,group_mrp_user,1,0,0,0
 access_mrp_message_mrp_manager,mrp.message,model_mrp_message,group_mrp_manager,1,1,1,1
 access_mrp_document_mrp_manager,mrp.document group_user,model_mrp_document,group_mrp_manager,1,1,1,1
 access_mrp_document_mrp_user,mrp.document group_user,model_mrp_document,group_mrp_user,1,1,1,1
+access_mrp_product_produce,access_mrp_product_produce,model_mrp_product_produce,base.group_user,1,1,1,1
+access_mrp_product_produce_line,access_mrp_product_produce_line,model_mrp_product_produce_line,base.group_user,1,1,1,1
+access_change_production_qty,access_change_production_qty,model_change_production_qty,base.group_user,1,1,1,1
+access_stock_warn_insufficient_qty_unbuild,access_stock_warn_insufficient_qty_unbuild,model_stock_warn_insufficient_qty_unbuild,base.group_user,1,1,1,1

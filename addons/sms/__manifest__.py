@@ -12,6 +12,7 @@ The service is provided by the In App Purchase Odoo platform.
 """,
     'depends': ['base', 'iap', 'mail'],
     'data': [
+        'security/ir.model.access.csv',
         'wizard/send_sms_views.xml',
         'views/res_partner_views.xml',
         'views/templates.xml',
