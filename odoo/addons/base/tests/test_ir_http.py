@@ -159,4 +159,4 @@ class test_ir_http_mimetype(common.TransactionCase):
             force_ext=True,
         )
         disposition = dict(headers).get('Content-Disposition')
-        self.assertTrue(disposition.endswith('file.exe'))
+        self.assertTrue(disposition.endswith('file.txt'))
