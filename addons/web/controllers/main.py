@@ -424,11 +424,11 @@ def xml2json_from_elementtree(el, preserve_whitespaces=False):
 
 def binary_content(xmlid=None, model='ir.attachment', id=None, field='datas', unique=False,
                    filename=None, filename_field='datas_fname', download=False, mimetype=None,
-                   default_mimetype='application/octet-stream', access_token=None, force_type=False, env=None):
+                   default_mimetype='application/octet-stream', access_token=None, force_ext=False, env=None):
     return request.registry['ir.http'].binary_content(
         xmlid=xmlid, model=model, id=id, field=field, unique=unique, filename=filename,
         filename_field=filename_field, download=download, mimetype=mimetype,
-        default_mimetype=default_mimetype, access_token=access_token, force_type=force_type, env=env)
+        default_mimetype=default_mimetype, access_token=access_token, force_ext=force_ext, env=env)
 
 #----------------------------------------------------------
 # Odoo Web web Controllers
@@ -1001,11 +1001,11 @@ class Binary(http.Controller):
         '/web/content/<string:model>/<int:id>/<string:field>/<string:filename>'], type='http', auth="public")
     def content_common(self, xmlid=None, model='ir.attachment', id=None, field='datas',
                        filename=None, filename_field='datas_fname', unique=None, mimetype=None,
-                       download=None, data=None, token=None, access_token=None, force_type=False, **kw):
+                       download=None, data=None, token=None, access_token=None, force_ext=False, **kw):
         status, headers, content = binary_content(
             xmlid=xmlid, model=model, id=id, field=field, unique=unique, filename=filename,
             filename_field=filename_field, download=download, mimetype=mimetype,
-            access_token=access_token, force_type=force_type)
+            access_token=access_token, force_ext=force_ext)
         if status == 304:
             response = werkzeug.wrappers.Response(status=status, headers=headers)
         elif status == 301:
