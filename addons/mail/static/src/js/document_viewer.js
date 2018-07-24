@@ -44,7 +44,7 @@ var DocumentViewer = Widget.extend({
     init: function (parent, attachments, activeAttachmentID) {
         this._super.apply(this, arguments);
         this.attachment = _.filter(attachments, function (attachment) {
-            var match = attachment.mimetype.match("(image|video|application/pdf|text/plain)");
+            var match = attachment.mimetype.match("(image|video|application/pdf|text)");
 
             if (match) {
                 attachment.type = match[1];

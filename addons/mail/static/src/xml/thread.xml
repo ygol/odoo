@@ -51,7 +51,7 @@
                     </div>
                     <img t-if="widget.activeAttachment.type == 'image'" class="o_viewer_img" t-attf-src="/web/image/#{widget.activeAttachment.id}?unique=1" alt="Viewer"/>
                     <iframe class="mt32 o_viewer_pdf" t-if="widget.activeAttachment.type == 'application/pdf'" t-attf-src="/web/static/lib/pdfjs/web/viewer.html?file=/web/content/#{widget.activeAttachment.id}" />
-                    <iframe class="mt32 o_viewer_text" t-if="widget.activeAttachment.type == 'text/plain'" t-attf-src="/web/content/#{widget.activeAttachment.id}" />
+                    <iframe class="mt32 o_viewer_text" t-if="widget.activeAttachment.type.includes('text')" t-attf-src="/web/content/#{widget.activeAttachment.id}" />
                     <video t-if="widget.activeAttachment.type == 'video'" class="o_viewer_video" controls="controls">
                         <source t-attf-src="/web/image/#{widget.activeAttachment.id}" t-att-data-type="widget.activeAttachment.mimetype"/>
                     </video>
