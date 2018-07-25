@@ -251,7 +251,7 @@ class IrHttp(models.AbstractModel):
     def binary_content(cls, xmlid=None, model='ir.attachment', id=None, field='datas',
                        unique=False, filename=None, filename_field='datas_fname', download=False,
                        mimetype=None, default_mimetype='application/octet-stream',
-                       access_token=None, force_ext=False, env=None):
+                       access_token=None, folder_id=None, folder_token=None, force_ext=False, env=None):
         """ Get file, attachment or downloadable content
 
         If the ``xmlid`` and ``id`` parameter is omitted, fetches the default value for the
@@ -284,6 +284,12 @@ class IrHttp(models.AbstractModel):
             obj = env[model].sudo().browse(int(id))
             if not consteq(obj.access_token, access_token):
                 return (403, [], None)
+        elif id and folder_id and folder_token:
+            folder = env['documents.share'].sudo().browse(int(folder_id))
+            if not consteq(folder.access_token, folder_token):
+                return (403, [], None)
+            else:
+                obj = env[model].sudo().browse(int(id))
         elif id and model in env.registry:
             obj = env[model].browse(int(id))
 
