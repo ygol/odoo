@@ -286,10 +286,11 @@ class IrHttp(models.AbstractModel):
                 return (403, [], None)
         elif id and folder_id and folder_token:
             folder = env['documents.share'].sudo().browse(int(folder_id))
-            if not consteq(folder.access_token, folder_token):
-                return (403, [], None)
-            else:
-                obj = env[model].sudo().browse(int(id))
+            if folder:
+                if not consteq(folder.access_token, folder_token):
+                    return (403, [], None)
+                else:
+                    obj = env[model].sudo().browse(int(id))
         elif id and model in env.registry:
             obj = env[model].browse(int(id))
 
