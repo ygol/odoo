@@ -289,7 +289,7 @@ class IrHttp(models.AbstractModel):
             if folder:
                 if not consteq(folder.access_token, folder_token):
                     return (403, [], None)
-                else:
+                elif (id in folder.attachment_ids.ids) or (id in folder.folder_id.attachment_ids.ids):
                     obj = env[model].sudo().browse(int(id))
         elif id and model in env.registry:
             obj = env[model].browse(int(id))
