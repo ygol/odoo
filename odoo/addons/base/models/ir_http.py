@@ -23,6 +23,7 @@ from odoo.exceptions import AccessDenied, AccessError
 from odoo.http import request, STATIC_CACHE, content_disposition
 from odoo.tools import pycompat, consteq
 from odoo.tools.mimetypes import guess_mimetype
+from ast import literal_eval
 from odoo.modules.module import get_resource_path, get_module_path
 
 _logger = logging.getLogger(__name__)
@@ -251,7 +252,7 @@ class IrHttp(models.AbstractModel):
     def binary_content(cls, xmlid=None, model='ir.attachment', id=None, field='datas',
                        unique=False, filename=None, filename_field='datas_fname', download=False,
                        mimetype=None, default_mimetype='application/octet-stream',
-                       access_token=None, folder_id=None, folder_token=None, force_ext=False, env=None):
+                       access_token=None, share_id=None, share_token=None, force_ext=False, env=None):
         """ Get file, attachment or downloadable content
 
         If the ``xmlid`` and ``id`` parameter is omitted, fetches the default value for the
@@ -284,13 +285,19 @@ class IrHttp(models.AbstractModel):
             obj = env[model].sudo().browse(int(id))
             if not consteq(obj.access_token, access_token):
                 return (403, [], None)
-        elif id and folder_id and folder_token:
-            folder = env['documents.share'].sudo().browse(int(folder_id))
-            if folder:
-                if not consteq(folder.access_token, folder_token):
+        elif id and share_id and share_token:
+            share = env['documents.share'].sudo().browse(int(share_id))
+            if share:
+                if not consteq(share.access_token, share_token):
                     return (403, [], None)
-                elif (id in folder.attachment_ids.ids) or (id in folder.folder_id.attachment_ids.ids):
+                elif share.type == 'ids' and (id in share.attachment_ids.ids):
                     obj = env[model].sudo().browse(int(id))
+                elif share.type == 'domain':
+                    obj = env[model].sudo().browse(int(id))
+                    domain = [['folder_id', '=', share.folder_id.id]] + literal_eval(share.domain)
+                    attachments_check = http.request.env['ir.attachment'].sudo().search(domain)
+                    if obj not in attachments_check:
+                        return (403, [], None)
         elif id and model in env.registry:
             obj = env[model].browse(int(id))
 
