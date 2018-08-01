@@ -288,13 +288,18 @@ class IrHttp(models.AbstractModel):
         elif id and share_id and share_token:
             share = env['documents.share'].sudo().browse(int(share_id))
             if share:
+                if share.state == 'expired':
+                    return (403, [], None)
                 if not consteq(share.access_token, share_token):
                     return (403, [], None)
                 elif share.type == 'ids' and (id in share.attachment_ids.ids):
                     obj = env[model].sudo().browse(int(id))
                 elif share.type == 'domain':
                     obj = env[model].sudo().browse(int(id))
-                    domain = [['folder_id', '=', share.folder_id.id]] + literal_eval(share.domain)
+                    share_domain = []
+                    if share.domain:
+                        share_domain = literal_eval(share.domain)
+                    domain = [['folder_id', '=', share.folder_id.id]] + share_domain
                     attachments_check = http.request.env['ir.attachment'].sudo().search(domain)
                     if obj not in attachments_check:
                         return (403, [], None)
