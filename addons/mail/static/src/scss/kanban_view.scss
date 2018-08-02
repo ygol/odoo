@@ -1,7 +1,7 @@
 $o-kanban-attachement-image-size: 80px;
 
 .o_kanban_view {
-    @include o-align-items(flex-start);
+    align-items: flex-start;
 
     .o_kanban_record.o_kanban_attachment {
         padding: 0;
@@ -11,31 +11,33 @@ $o-kanban-attachement-image-size: 80px;
 
             + div {
                 padding-left: $o-kanban-attachement-image-size + $o-kanban-inside-hgutter;
-                @media (max-width: $screen-xs-max) {
+                // @media (max-width: $screen-xs-max) {
                     padding-left:  $o-kanban-attachement-image-size + $o-kanban-inside-hgutter-mobile;
-                }
+                // }
             }
 
             .o_kanban_image_wrapper {
                 min-height: $o-kanban-attachement-image-size;
-                @include o-flex-display;
-                @include o-align-items(center);
-                @include o-justify-content(center);
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .o_attachment_image {
-                @include square($o-kanban-attachement-image-size);
+                height: $o-kanban-attachement-image-size;
+                width: $o-kanban-attachement-image-size;
             }
 
             .o_image {
-                @include square($o-kanban-attachement-image-size - 14px);
+                height: $o-kanban-attachement-image-size - 14px;
+                width: $o-kanban-attachement-image-size - 14px;
             }
         }
 
         .o_kanban_details {
             .o_kanban_details_wrapper {
-                @include o-flex-display;
-                @include o-flex-direction(column);
+                display: flex;
+                flex-direction: column;
                 min-height: $o-kanban-attachement-image-size;
                 padding: $o-kanban-inside-vgutter $o-kanban-inside-hgutter;
 
@@ -48,7 +50,7 @@ $o-kanban-attachement-image-size: 80px;
                 }
 
                 .o_kanban_record_body {
-                    @include o-flex(1, 1, auto);
+                    flex: 1 1 auto;
                     white-space: nowrap;
                     text-overflow: ellipsis;
                     overflow: hidden;
@@ -57,7 +59,7 @@ $o-kanban-attachement-image-size: 80px;
 
                 .oe_kanban_avatar {
                     border-radius: 4px;
-                    border: 1px solid $gray-lighter-darker;
+                    border: 1px solid $component-active-color;
                 }
             }
         }
