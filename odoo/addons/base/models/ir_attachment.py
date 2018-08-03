@@ -6,11 +6,13 @@ import itertools
 import logging
 import mimetypes
 import os
+import io
 import re
 from collections import defaultdict
 import uuid
+from PyPDF2 import PdfFileWriter, PdfFileReader
 
-from odoo import api, fields, models, tools, SUPERUSER_ID, _
+from odoo import api, fields, models, tools, SUPERUSER_ID, exceptions, _
 from odoo.exceptions import AccessError
 from odoo.tools import config, human_size, ustr, html_escape
 from odoo.tools.mimetypes import guess_mimetype
@@ -474,3 +476,57 @@ class IrAttachment(models.Model):
     @api.model
     def action_get(self):
         return self.env['ir.actions.act_window'].for_xml_id('base', 'action_attachment')
+
+    @api.model
+    def _make_pdf(self, output, attachment, name):
+        stream = io.BytesIO()
+        output.write(stream)
+        attachment.copy({
+            'name': name,
+            'datas_fname': name,
+            'datas': base64.b64encode(stream.getvalue()),
+        })
+        return True
+
+    @api.model
+    def split_pdf(self, pdf_id, start_page_number=None, end_page_number=None):
+        """called by the Document Viewer's Split PDF button"""
+        start_page_number = int(start_page_number)
+        end_page_number = int(end_page_number)
+        if start_page_number == end_page_number:
+            return False
+        if start_page_number > end_page_number:
+            start_page_number, end_page_number = end_page_number, start_page_number
+
+        attachment = self.browse(pdf_id)
+        if 'pdf' not in attachment.mimetype:
+            raise exceptions.ValidationError("ERROR: the file must be a PDF")
+        try:
+            data = base64.b64decode(attachment.datas)
+            with io.BytesIO(data) as stream:
+                input_pdf = PdfFileReader(stream)
+                max_page = input_pdf.getNumPages()
+                if not start_page_number and not end_page_number:
+                    start_page_index = 0
+                    for i in range(start_page_index, max_page):
+                        output_page = PdfFileWriter()
+                        name = "%s-page:%s.pdf" % (attachment.name, i+1)
+                        output_page.addPage(input_pdf.getPage(i))
+                        self._make_pdf(output_page, attachment, name)
+
+                else:
+                    if not end_page_number or end_page_number > (max_page + 1):
+                        end_page_index = max_page
+                    else:
+                        end_page_index = end_page_number - 1
+                    if not start_page_number or start_page_number < 1:
+                        start_page_index = 0
+                    else:
+                        start_page_index = start_page_number - 1
+                    name = "%s:%s-%s.pdf" % (attachment.name, start_page_index + 1, end_page_number)
+                    output = PdfFileWriter()
+                    for i in range(start_page_index, end_page_index):
+                        output.addPage(input_pdf.getPage(i))
+                    self._make_pdf(output, attachment, name)
+        except Exception:
+            raise Exception
