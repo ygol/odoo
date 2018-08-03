@@ -57,7 +57,7 @@
             position: relative; // to allow absolute positionning inside the items
         }
         
-        .dropdown-item {
+        a.dropdown-item {
             &:focus, &:active, &:focus:active {
                 outline: none;
             }
