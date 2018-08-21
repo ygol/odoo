@@ -28,13 +28,14 @@ odoo.define("website_sale.tour_shop", function (require) {
         content: _t("Click on <em>Continue</em> to create the product."),
         position: "right",
     }, {
-        trigger: ".product_price .o_is_inline_editable .oe_currency_value",
+        trigger: ".product_price .oe_currency_value:visible",
+        extra_trigger: ".note-editable",
         content: _t("Edit the price of this product by clicking on the amount."),
         position: "bottom",
         run: "text 1.99",
     }, {
         trigger: "#wrap img.product_detail_img",
-        extra_trigger: ".product_price .o_is_inline_editable .oe_currency_value:not(:containsExact(1.00))",
+        extra_trigger: ".product_price .o_dirty .oe_currency_value:not(:containsExact(1.00))",
         content: _t("Double click here to set an image describing your product."),
         position: "top",
         run: function (actions) {
