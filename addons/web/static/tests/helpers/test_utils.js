@@ -490,6 +490,7 @@ function addMockEnvironment(widget, params) {
         }
 
         $('body').off('DOMNodeInserted.removeSRC');
+        $('body').removeClass('debug');
         $('.blockUI').remove();
 
         widgetDestroy.call(this);
@@ -802,6 +803,7 @@ function removeSrcAttribute(el, widget) {
             if (widget) {
                 widget._rpc({route: src});
             }
+            $(node).trigger('load');
         }
     }
 }

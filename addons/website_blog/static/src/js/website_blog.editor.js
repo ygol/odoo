@@ -58,15 +58,15 @@ odoo.define('website_blog.editor', function (require) {
 'use strict';
 
 require('web.dom_ready');
-var weWidgets = require('web_editor.widget');
+var weWidgets = require('wysiwyg.widgets');
 var options = require('web_editor.snippets.options');
-var rte = require('web_editor.rte');
+var WysiwygMultizone = require('web_editor.wysiwyg.multizone');
 
 if (!$('.website_blog').length) {
     return $.Deferred().reject("DOM doesn't contain '.website_blog'");
 }
 
-rte.Class.include({
+WysiwygMultizone.include({
     /**
      * @override
      */
@@ -82,14 +82,14 @@ rte.Class.include({
     /**
      * @override
      */
-    _saveElement: function ($el, context) {
+    _saveElement: function (outerHTML, recordInfo, editable) {
         var defs = [this._super.apply(this, arguments)];
         // TODO the o_dirty class is not put on the right element for blog cover
         // edition. For some strange reason, it was forcly put (even if not
         // dirty) in <= saas-16 but this is not the case anymore.
-        var $blogContainer = $el.closest('.o_blog_cover_container');
+        var $blogContainer = $(editable).closest('.o_blog_cover_container');
         if (!this.__blogCoverSaved && $blogContainer.length) {
-            $el = $blogContainer;
+            var $el = $blogContainer;
             this.__blogCoverSaved = true;
             defs.push(this._rpc({
                 route: '/blog/post_change_background',
@@ -117,16 +117,16 @@ options.registry.many2one.include({
     /**
      * @override
      */
-    _selectRecord: function ($opt) {
+    _selectRecord: function ($li) {
         var self = this;
         this._super.apply(this, arguments);
-        if (this.$target.data('oe-field') === 'author_id') {
+        if (this.$target.data('oe-field') === "author_id") {
             var $nodes = $('[data-oe-model="blog.post"][data-oe-id="'+this.$target.data('oe-id')+'"][data-oe-field="author_avatar"]');
             $nodes.each(function () {
-                var $img = $(this).find('img');
+                var $img = $(this).find("img");
                 var css = window.getComputedStyle($img[0]);
                 $img.css({ width: css.width, height: css.height });
-                $img.attr('src', '/web/image/res.partner/'+self.ID+'/image');
+                $img.attr("src", "/web/image/res.partner/"+self.ID+"/image");
             });
             setTimeout(function () { $nodes.removeClass('o_dirty'); },0);
         }
@@ -134,46 +134,29 @@ options.registry.many2one.include({
 });
 
 options.registry.blog_cover = options.Class.extend({
-    /**
-     * @constructor
-     */
     init: function () {
         this._super.apply(this, arguments);
 
-        this.$image = this.$target.children('.o_blog_cover_image');
-        this.$filter = this.$target.children('.o_blog_cover_filter');
+        this.$image = this.$target.children(".o_blog_cover_image");
+        this.$filter = this.$target.children(".o_blog_cover_filter");
     },
-    /**
-     * @override
-     */
     start: function () {
-        this.$filterValueOpts = this.$el.find('[data-filter-value]');
-        this.$filterColorOpts = this.$el.find('[data-filter-color]');
-        this.filterColorClasses = this.$filterColorOpts.map(function () {
-            return $(this).data('filterColor');
-        }).get().join(' ');
+        this.$filter_value_options = this.$el.find('li[data-filter_value]');
+        this.$filter_color_options = this.$el.find('li[data-filter_color]');
+        this.filter_color_classes = this.$filter_color_options.map(function () {
+            return $(this).data("filter_color");
+        }).get().join(" ");
 
         return this._super.apply(this, arguments);
     },
-
-    //--------------------------------------------------------------------------
-    // Options
-    //--------------------------------------------------------------------------
-
-    /**
-     * @see this.selectClass for parameters
-     */
-    clear: function (previewMode, value, $opt) {
-        this.selectClass(previewMode, '', $());
-        this.$image.css('background-image', '');
+    clear: function (previewMode, value, $li) {
+        this.selectClass(previewMode, "", $());
+        this.$image.css("background-image", "");
     },
-    /**
-     * @see this.selectClass for parameters
-     */
-    change: function (previewMode, value, $opt) {
-        var $image = $('<img/>');
-        var background = this.$image.css('background-image');
-        if (background && background !== 'none') {
+    change: function (previewMode, value, $li) {
+        var $image = $("<img/>");
+        var background = this.$image.css("background-image");
+        if (background && background !== "none") {
             $image.attr('src', background.match(/^url\(["']?(.+?)["']?\)$/)[1]);
         }
 
@@ -181,72 +164,53 @@ options.registry.blog_cover = options.Class.extend({
             onlyImages: true,
             firstFilters: ['background']
         }, $image, $image[0]).open();
-        editor.on('save', this, function (event, img) {
-            var src = $image.attr('src');
-            this.$image.css('background-image', src ? ('url(' + src + ')') : '');
-            if (!this.$target.hasClass('cover')) {
-                var $opt = this.$el.find('[data-select-class]').first();
-                this.selectClass(previewMode, $opt.data('selectClass'), $opt);
+        editor.on("save", this, function (event, img) {
+            var src = $image.attr("src");
+            this.$image.css("background-image", src ? ("url(" + src + ")") : "");
+            if (!this.$target.hasClass("cover")) {
+                var $li = this.$el.find("[data-select-class]").first();
+                this.selectClass(previewMode, $li.data("selectClass"), $li);
             }
             this._setActive();
         });
     },
-    /**
-     * @see this.selectClass for parameters
-     */
-    filterValue: function (previewMode, value, $opt) {
-        this.$filter.css('opacity', value);
+    filter_value: function (previewMode, value, $li) {
+        this.$filter.css("opacity", value);
     },
-    /**
-     * @see this.selectClass for parameters
-     */
-    filterColor: function (previewMode, value, $opt) {
-        this.$filter.removeClass(this.filterColorClasses);
+    filter_color: function (previewMode, value, $li) {
+        this.$filter.removeClass(this.filter_color_classes);
         if (value) {
             this.$filter.addClass(value);
         }
 
-        var $firstVisibleFilterOpt = this.$filterValueOpts.eq(1);
-        if (parseFloat(this.$filter.css('opacity')) < parseFloat($firstVisibleFilterOpt.data('filterValue'))) {
-            this.filterValue(previewMode, $firstVisibleFilterOpt.data('filterValue'), $firstVisibleFilterOpt);
+        var $first_visible_filter_option = this.$filter_value_options.eq(1);
+        if (parseFloat(this.$filter.css('opacity')) < parseFloat($first_visible_filter_option.data("filter_value"))) {
+            this.filter_value(previewMode, $first_visible_filter_option.data("filter_value"), $first_visible_filter_option);
         }
     },
-
-    //--------------------------------------------------------------------------
-    // Private
-    //--------------------------------------------------------------------------
-
-    /**
-     * @private
-     * @override
-     */
     _setActive: function () {
         this._super.apply(this, arguments);
         var self = this;
 
-        _.each(this.$el, function (el) {
-            var $el = $(el);
-            $el.toggleClass('d-none',
-                $el.is(':not([data-change])') && !self.$target.hasClass('cover')
-                || $el.is(':has([data-select-class])') && self.$target.hasClass('o_list_cover'));
-        });
+        this.$el.filter(":not([data-change])").toggleClass('d-none', !this.$target.hasClass("cover"));
+        this.$el.filter("li:has(li[data-select-class])").toggleClass('d-none', this.$target.hasClass("o_list_cover"));
 
-        this.$filterValueOpts.removeClass('active');
-        this.$filterColorOpts.removeClass('active');
+        this.$filter_value_options.removeClass("active");
+        this.$filter_color_options.removeClass("active");
 
-        var activeFilterValue = this.$filterValueOpts
+        var active_filter_value = this.$filter_value_options
             .filter(function () {
-                return (parseFloat($(this).data('filterValue')).toFixed(1) === parseFloat(self.$filter.css('opacity')).toFixed(1));
-            }).addClass('active').data('filterValue');
+                return (parseFloat($(this).data('filter_value')).toFixed(1) === parseFloat(self.$filter.css('opacity')).toFixed(1));
+            }).addClass("active").data("filter_value");
 
-        var activeFilterColor = this.$filterColorOpts
+        var active_filter_color = this.$filter_color_options
             .filter(function () {
-                return self.$filter.hasClass($(this).data('filterColor'));
-            }).addClass('active').data('filterColor');
+                return self.$filter.hasClass($(this).data("filter_color"));
+            }).addClass("active").data("filter_color");
 
-        this.$target.data('coverClass', this.$el.find('.active[data-select-class]').data('selectClass') || '');
-        this.$target.data('filterValue', activeFilterValue || 0.0);
-        this.$target.data('filterColor', activeFilterColor || '');
+        this.$target.data("cover_class", this.$el.find(".active[data-select-class]").data("selectClass") || "");
+        this.$target.data("filter_value", active_filter_value || 0.0);
+        this.$target.data("filter_color", active_filter_color || "");
     },
 });
 });

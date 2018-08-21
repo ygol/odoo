@@ -3,8 +3,8 @@ odoo.define('website_forum.editor', function (require) {
 
 var core = require('web.core');
 var Widget = require('web.Widget');
-var SummernoteManager = require('web_editor.rte.summernote');
-var WebsiteNewMenu = require('website.newMenu');
+var Wysiwyg = require('web_editor.wysiwyg');
+var WebsiteNewMenu = require("website.newMenu");
 var wUtils = require('website.utils');
 var websiteRootData = require('website.WebsiteRoot');
 
@@ -64,14 +64,4 @@ WebsiteNewMenu.include({
     },
 });
 
-var WebsiteForumManager = Widget.extend({
-    /**
-     * @override
-     */
-    init: function () {
-        this._super.apply(this, arguments);
-        new SummernoteManager(this);
-    },
-});
-websiteRootData.websiteRootRegistry.add(WebsiteForumManager, '#wrapwrap');
 });
