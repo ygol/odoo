@@ -37,6 +37,7 @@
     }
 
     .o_mail_discuss_sidebar {
+        position: relative;
         width: $o-mail-chat-sidebar-width;
         height: 100%;
         float: left;
@@ -107,6 +108,31 @@
             }
             > span {
                 @include o-position-absolute(7px, $left: 27px);
+            }
+        }
+
+        .o_status_bar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 8px;
+            background-color: darken(gray('900'),2%);
+
+            .oe_avatar {
+                height: 30px;
+            }
+
+            .oe_user_name {
+                vertical-align: middle;
+                margin-left: 6px;
+            }
+
+            .statusButton{
+                padding: 5px 10px;
+                color: #fff;
+                &:hover {
+                    background-color: gray('900');
+                }
             }
         }
     }
@@ -250,6 +276,9 @@
     }
     &.o_user_idle {
         color: theme-color('warning');
+    }
+    &.o_user_offline {
+        color: #666666;
     }
 }
 

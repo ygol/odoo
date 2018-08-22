@@ -191,6 +191,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
         'click .o_mail_open_channels': '_onPublicChannelsClick',
         'click .o_mail_request_permission': '_onRequestNotificationPermission',
         'click .o_mail_partner_unpin': '_onUnpinChannel',
+        'click .o_status_bar .status': '_onStatusClick',
     },
 
     /**
@@ -233,7 +234,18 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
             .then(function (fieldsView) {
                 self.fields_view = fieldsView;
             });
-        return $.when(this._super(), this.call('mail_service', 'isReady'), def);
+
+        var self = this;
+        var session = this.getSession();
+        var def2 = this._rpc({
+            model: 'res.partner',
+            method: 'read',
+            args: [[session.partner_id], ['im_status_set']],
+        }).then(function (res) {
+            var user = res && res[0];
+            self.im_livechat_status = user.im_status_set;
+        });
+        return $.when(this._super(), this.call('mail_service', 'isReady'), def, def2);
     },
     /**
      * @override
@@ -272,6 +284,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
             .then(function () {
                 self._updateThreads();
                 self._startListening();
+                self._updateUserInfo();
                 self._threadWidget.$el.on('scroll', null, _.debounce(function () {
                     if (
                         self._threadWidget.getScrolltop() < 20 &&
@@ -690,6 +703,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
             starredCounter: starred.getMailboxCounter(),
             moderationCounter: moderation ? moderation.getMailboxCounter() : 0,
             isMyselfModerator: this.call('mail_service', 'isMyselfModerator'),
+            IMLivechatStatus: this.im_livechat_status,
         }));
         return $sidebar;
     },
@@ -1095,6 +1109,21 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
             buttonUnselect.toggleClass('disabled', true);
         }
     },
+    _updateUserInfo: function () {
+        var session = this.getSession();
+        var $avatar = this.$('.o_status_bar .oe_avatar');
+        if (!session.uid) {
+            $avatar.attr('src', $avatar.data('default-src'));
+            return $.when();
+        }
+        this.$('.o_status_bar .oe_user_name').text(session.name);
+        var avatar_src = session.url('/web/image', {
+            model:'res.users',
+            field: 'image_small',
+            id: session.uid,
+        });
+        $avatar.attr('src', avatar_src);
+    },
     /**
      * Renders the mainside bar with current threads
      *
@@ -1110,6 +1139,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
         });
 
         this.$('.o_mail_discuss_sidebar').html($sidebar.contents());
+        this._updateUserInfo();
         _.each(['dm_chat', 'public', 'private'], function (type) {
             var $input = self.$('.o_mail_add_thread[data-type=' + type + '] input');
             self._prepareAddThreadInput($input, type);
@@ -1414,6 +1444,26 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
             this._threadWidget.toggleModerationCheckboxes(true);
             this._updateModerationButtons();
         }
+    },
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onStatusClick: function (ev) {
+        ev.preventDefault();
+        var self = this;
+        var statusCode = $(ev.target).data('status');
+        var session = this.getSession();
+        this._rpc({
+            model: 'res.partner',
+            method: 'write',
+            args: [[session.partner_id], { 'im_status_set': statusCode }],
+        }).then(function () {
+            self.im_livechat_status = statusCode;
+            self.$('.statusButton').html(QWeb.render('mail.systray.statusValue', {
+                IMLivechatStatus: statusCode
+            }));
+        });
     },
     /**
      * @private

@@ -77,7 +77,33 @@
                 <t t-set="inputPlaceholder">Add a private channel</t>
                 <t t-set="displayHash" t-value="true"/>
             </t>
+            <div class="o_status_bar">
+                <div class="float-left">
+                    <img alt="Avatar" class="rounded-circle oe_avatar" />
+                    <span class="oe_user_name"/>
+                </div>
+                <a class="dropdown-toggle o-no-caret statusButton float-right" data-toggle="dropdown" aria-expanded="false" title="Status" href="#" role="button">
+                    <t t-call="mail.systray.statusValue" />
+                </a>
+                <div class="dropdown-menu statusDropdown" aria-labelledby="dropdownMenuButton">
+                    <a class="dropdown-item status" data-status="online" href="#"><i aria-label="User is Online" class="o_mail_user_status o_user_online fa fa-circle" role="img" title="Online"></i> Online</a>
+                    <a class="dropdown-item status" data-status="away" href="#"><i aria-label="User is Ideal" class="o_mail_user_status o_user_idle fa fa-circle" role="img" title="Idle"></i> Idle</a>
+                    <a class="dropdown-item status" data-status="offline" href="#"><i aria-label="User is offline" class="o_mail_user_status fa fa-circle" role="img" title="Offline"></i> Offline</a>
+                </div>
+            </div>
         </div>
+    </t>
+
+    <t t-name="mail.systray.statusValue">
+        <span t-if="IMLivechatStatus == 'away'">
+            <i aria-label="User is Idle" class="o_mail_user_status o_user_idle fa fa-circle" role="img" title="Idle"></i> Idle
+        </span>
+        <span t-elif="IMLivechatStatus == 'offline'">
+            <i aria-label="User is Offline" class="o_mail_user_status o_user_offline fa fa-circle" role="img" title="Offline"></i> Offline
+        </span>
+        <span t-else="">
+            <i aria-label="User is Online" class="o_mail_user_status o_user_online fa fa-circle" role="img" title="Online"></i> Online
+        </span>
     </t>
 
     <!--

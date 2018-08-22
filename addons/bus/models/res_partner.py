@@ -9,6 +9,7 @@ class ResPartner(models.Model):
     _inherit = 'res.partner'
 
     im_status = fields.Char('IM Status', compute='_compute_im_status')
+    im_status_set = fields.Selection([('online', 'Online'), ('away', 'Away'), ('offline', 'Offline')])
 
     @api.multi
     def _compute_im_status(self):
@@ -25,7 +26,10 @@ class ResPartner(models.Model):
         """, ("%s seconds" % DISCONNECTION_TIMER, "%s seconds" % AWAY_TIMER, tuple(self.ids)))
         res = dict(((status['id'], status['status']) for status in self.env.cr.dictfetchall()))
         for partner in self:
-            partner.im_status = res.get(partner.id, 'offline')
+            status = res.get(partner.id, 'offline')
+            if partner.im_status_set and status != 'offline' and partner.im_status_set != 'online':
+                status = partner.im_status_set
+            partner.im_status = status
 
     @api.model
     def im_search(self, name, limit=20):
