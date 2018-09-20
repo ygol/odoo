@@ -51,6 +51,7 @@
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/link.js"/>
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/font.js"/>
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/font_buttons.js"/>
+    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/keyboard.js"/>
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/unbreakable.js"/>
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/transform.js"/>
 </template>
@@ -122,6 +123,8 @@
     <xpath expr="." position="inside">
         <script type="text/javascript" src="/web_editor/static/tests/test_utils.js"/>
         <script type="text/javascript" src="/web_editor/static/tests/field_html_tests.js"/>
+        <script type="text/javascript" src="/web_editor/static/tests/wysiwyg_tests.js"/>
+        <script type="text/javascript" src="/web_editor/static/tests/wysiwyg_keyboard_tests.js"/>
     </xpath>
 </template>
 
