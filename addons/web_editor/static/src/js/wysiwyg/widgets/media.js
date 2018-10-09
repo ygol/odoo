@@ -4,6 +4,7 @@ odoo.define('wysiwyg.widgets.media', function (require) {
 var core = require('web.core');
 var fonts = require('wysiwyg.fonts');
 var Widget = require('web.Widget');
+var concurrency = require('web.concurrency');
 
 var QWeb = core.qweb;
 
@@ -98,6 +99,7 @@ var ImageWidget = MediaWidget.extend({
      */
     init: function (parent, media, options) {
         this._super.apply(this, arguments);
+        this._mutex = new concurrency.Mutex();
 
         this.IMAGES_PER_PAGE = this.IMAGES_PER_ROW * this.IMAGES_ROWS;
 
@@ -171,77 +173,7 @@ var ImageWidget = MediaWidget.extend({
      * @override
      */
     save: function () {
-        var self = this;
-        if (this.multiImages) {
-            return this.images;
-        }
-
-        var img = this.images[0];
-        if (!img) {
-            return this.media;
-        }
-
-        var def = $.when();
-        if (!img.access_token) {
-            def = this._rpc({
-                model: 'ir.attachment',
-                method: 'generate_access_token',
-                args: [[img.id]]
-            }).then(function (access_token) {
-                img.access_token = access_token[0];
-            });
-        }
-
-        return def.then(function () {
-            if (!img.isDocument) {
-                if (img.access_token && self.options.res_model !== 'ir.ui.view') {
-                    img.src += _.str.sprintf('?access_token=%s', img.access_token);
-                }
-                if (!self.$media.is('img')) {
-                    // Note: by default the images receive the bootstrap opt-in
-                    // img-fluid class. We cannot make them all responsive
-                    // by design because of libraries and client databases img.
-                    self.$media = $('<img/>', {class: 'img-fluid o_we_custom_image'});
-                    self.media = self.$media[0];
-                }
-                self.$media.attr('src', img.src);
-
-            } else {
-                if (!self.$media.is('a')) {
-                    $('.note-control-selection').hide();
-                    self.$media = $('<a/>');
-                    self.media = self.$media[0];
-                }
-                var href = '/web/content/' + img.id + '?';
-                if (img.access_token && self.options.res_model !== 'ir.ui.view') {
-                    href += _.str.sprintf('access_token=%s&', img.access_token);
-                }
-                href += 'unique=' + img.checksum + '&download=true';
-                self.$media.attr('href', href);
-                self.$media.addClass('o_image').attr('title', img.name).attr('data-mimetype', img.mimetype);
-            }
-
-            self.$media.attr('alt', img.alt);
-            var style = self.style;
-            if (style) {
-                self.$media.css(style);
-            }
-
-            if (self.options.onUpload) {
-                // We consider that when selecting an image it is as if we upload it in the html content.
-                self.options.onUpload([img]);
-            }
-
-            // Remove crop related attributes
-            if (self.$media.attr('data-aspect-ratio')) {
-                var attrs = ['aspect-ratio', 'x', 'y', 'width', 'height', 'rotate', 'scale-x', 'scale-y'];
-                _.each(attrs, function (attr) {
-                    self.$media.removeData(attr);
-                    self.$media.removeAttr('data-' + attr);
-                });
-            }
-            return self.media;
-        });
+        return this._mutex.exec(this._save.bind(this));
     },
     /**
      * @override
@@ -411,6 +343,82 @@ var ImageWidget = MediaWidget.extend({
     /**
      * @private
      */
+    _save: function () {
+        var self = this;
+        if (this.multiImages) {
+            return this.images;
+        }
+
+        var img = this.images[0];
+        if (!img) {
+            return this.media;
+        }
+
+        var def = $.when();
+        if (!img.access_token) {
+            def = this._rpc({
+                model: 'ir.attachment',
+                method: 'generate_access_token',
+                args: [[img.id]]
+            }).then(function (access_token) {
+                img.access_token = access_token[0];
+            });
+        }
+
+        return def.then(function () {
+            if (!img.isDocument) {
+                if (img.access_token && self.options.res_model !== 'ir.ui.view') {
+                    img.src += _.str.sprintf('?access_token=%s', img.access_token);
+                }
+                if (!self.$media.is('img')) {
+                    // Note: by default the images receive the bootstrap opt-in
+                    // img-fluid class. We cannot make them all responsive
+                    // by design because of libraries and client databases img.
+                    self.$media = $('<img/>', {class: 'img-fluid o_we_custom_image'});
+                    self.media = self.$media[0];
+                }
+                self.$media.attr('src', img.src);
+
+            } else {
+                if (!self.$media.is('a')) {
+                    $('.note-control-selection').hide();
+                    self.$media = $('<a/>');
+                    self.media = self.$media[0];
+                }
+                var href = '/web/content/' + img.id + '?';
+                if (img.access_token && self.options.res_model !== 'ir.ui.view') {
+                    href += _.str.sprintf('access_token=%s&', img.access_token);
+                }
+                href += 'unique=' + img.checksum + '&download=true';
+                self.$media.attr('href', href);
+                self.$media.addClass('o_image').attr('title', img.name).attr('data-mimetype', img.mimetype);
+            }
+
+            self.$media.attr('alt', img.alt);
+            var style = self.style;
+            if (style) {
+                self.$media.css(style);
+            }
+
+            if (self.options.onUpload) {
+                // We consider that when selecting an image it is as if we upload it in the html content.
+                self.options.onUpload([img]);
+            }
+
+            // Remove crop related attributes
+            if (self.$media.attr('data-aspect-ratio')) {
+                var attrs = ['aspect-ratio', 'x', 'y', 'width', 'height', 'rotate', 'scale-x', 'scale-y'];
+                _.each(attrs, function (attr) {
+                    self.$media.removeData(attr);
+                    self.$media.removeAttr('data-' + attr);
+                });
+            }
+            return self.media;
+        });
+    },
+    /**
+     * @private
+     */
     _toggleImage: function (attachment, clearSearch, force_select) {
         if (this.multiImages) {
             var img = _.select(this.images, function (v) { return v.id === attachment.id; });
@@ -434,8 +442,11 @@ var ImageWidget = MediaWidget.extend({
      * @private
      */
     _uploadImage: function () {
+        return this._mutex.exec(this._uploadImageIframe.bind(this));
+    },
+    _uploadImageIframe: function () {
         var self = this;
-
+        var def = $.Deferred();
         /**
          * @todo file upload cannot be handled with _rpc smoothly. This uses the
          * form posting in iframe trick to handle the upload.
@@ -465,6 +476,8 @@ var ImageWidget = MediaWidget.extend({
                 self.options.onUpload(attachments);
             }
 
+            def.resolve();
+
             function _processFile(attachment, error) {
                 var $button = self.$('.o_upload_image_button');
                 if (!error) {
@@ -482,7 +495,9 @@ var ImageWidget = MediaWidget.extend({
             }
         });
         this.$el.submit();
+        return def;
     },
+
 
     //--------------------------------------------------------------------------
     // Handlers
