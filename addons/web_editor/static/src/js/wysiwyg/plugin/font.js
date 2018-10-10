@@ -484,7 +484,10 @@ registry.addJob(function (wysiwyg) {
     return wysiwyg._rpc({
         model: 'ir.ui.view',
         method: 'read_template',
-        args: ['web_editor.colorpicker', options.context]
+        args: ['web_editor.colorpicker'],
+        kwargs: {
+            context: options.context,
+        },
     }).then(function (template) {
         QWeb.add_template(template);
     });
