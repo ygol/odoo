@@ -3,6 +3,7 @@ odoo.define('web_editor.wysiwyg_tests', function (require) {
 
 var ColorpickerDialog = require('wysiwyg.widgets.ColorpickerDialog');
 var LinkDialog = require('wysiwyg.widgets.LinkDialog');
+var MediaDialog = require('wysiwyg.widgets.MediaDialog');
 var testUtils = require('web.test_utils');
 var weTestUtils = require('web_editor.test_utils');
 var Wysiwyg = require('web_editor.wysiwyg');
@@ -1049,10 +1050,11 @@ QUnit.test('Link', function (assert) {
 
         var linkTests = [
             { name: "Click LINK: p -> a in p (w/ URL)",
+                async: true,
                 content: '<p>dom to edit</p>',
                 start: "p:contents()[0]->1",
                 end: "p:contents()[0]->5",
-                onInit: function () {
+                do: function () {
                     assert.strictEqual($('.modal-dialog #o_link_dialog_label_input').val(), 'om t', testName + ' (label)');
                     $('.modal-dialog #o_link_dialog_url_input').val('#');
                 },
@@ -1063,9 +1065,10 @@ QUnit.test('Link', function (assert) {
                 },
             },
             { name: "Click LINK: p -> a in p (w/ URL) (no selection)",
+                async: true,
                 content: '<p>do edit</p>',
                 start: 'p:contents()[0]->1',
-                onInit: function () {
+                do: function () {
                     $('.modal-dialog #o_link_dialog_label_input').val('om t');
                     $('.modal-dialog #o_link_dialog_url_input').val('#');
                 },
@@ -1078,7 +1081,7 @@ QUnit.test('Link', function (assert) {
             { name: "Click LINK: a.btn in div -> a.btn.btn-outline-primary in div (edit) (no selection)",
                 content: '<div><a href="#" class="btn btn-outline-primary btn-lg">dom to edit</a></div>',
                 start: 'a->0',
-                onInit: function () {
+                do: function () {
                     assert.strictEqual($('.modal-dialog #o_link_dialog_label_input').val(), 'dom to edit', testName + ' (label)');
                     $('.modal-dialog #o_link_dialog_url_input').val('#newlink');
                 },
@@ -1089,10 +1092,11 @@ QUnit.test('Link', function (assert) {
                 },
             },
             { name: "Click LINK: p -> a in p (w/ Email)",
+                async: true,
                 content: '<p>dom to edit</p>',
                 start: 'p:contents()[0]->1',
                 end: 'p:contents()[0]->5',
-                onInit: function () {
+                do: function () {
                     $('.modal-dialog #o_link_dialog_url_input').val('john.coltrane@example.com');
                 },
                 test: {
@@ -1102,10 +1106,11 @@ QUnit.test('Link', function (assert) {
                 },
             },
             { name: "Click LINK: p -> a in p (w/ URL & Size Large)",
+                async: true,
                 content: '<p>dom to edit</p>',
                 start: 'p:contents()[0]->1',
                 end: 'p:contents()[0]->5',
-                onInit: function () {
+                do: function () {
                     $('.modal-dialog #o_link_dialog_url_input').val('#');
                     $('.modal-dialog [name="link_style_size"]').val("lg");
                 },
@@ -1116,9 +1121,10 @@ QUnit.test('Link', function (assert) {
                 },
             },
             { name: "a in p -> a.btn-outline-primary in p with primary color and target=\"_blank\"",
+                async: true,
                 content: '<p><a href="#">dom to edit</a></p>',
                 start: 'a:contents()[0]->1',
-                onInit: function () {
+                do: function () {
                     $('.modal-dialog #o_link_dialog_url_input').val('#');
                     $('.modal-dialog [name="link_style_shape"]').val("outline");
                     $('.modal-dialog .o_link_dialog_color .o_link_dialog_color_item.btn-primary').mousedown().click();
@@ -1138,12 +1144,141 @@ QUnit.test('Link', function (assert) {
                 wysiwyg.setValue(test.content);
                 var range = _select(test.start, test.end, $editable);
                 Wysiwyg.setRange(range.sc, range.so, range.ec, range.eo);
-                return _clickLink(test.onInit, test.test);
+                return _clickLink(test.do, test.test);
             });
         });
         def.then(function () {
             testUtils.unpatch(LinkDialog);
             wysiwyg.destroy();
+            done();
+        });
+    });
+});
+
+QUnit.test('Media', function (assert) {
+    var done = assert.async();
+    assert.expect(2);
+
+    var records = [{
+        id: 1,
+        public: true,
+        name: 'image',
+        datas_fname: 'image.png',
+        mimetype: 'image/png',
+        checksum: false,
+        url: '/web_editor/static/src/img/transparent.png',
+        type: 'url',
+        res_id: 0,
+        res_model: false,
+        access_token: false
+    }];
+
+    return weTestUtils.createWysiwyg({
+        debug: true,
+        wysiwygOptions: {
+
+        },
+        data: {
+            'ir.attachment': {
+                fields: {
+                    display_name: { string: "Displayed name", type: 'char' },
+                },
+                records: records,
+                generate_access_token: function () {
+                    return;
+                },
+            },
+        },
+        mockRPC: function (route, args) {
+            if (args.model === 'ir.attachment') {
+                if (args.method === "search_read" &&
+                    args.kwargs.domain[7][2].join(',') === "image/gif,image/jpe,image/jpeg,image/jpg,image/gif,image/png") {
+                    return $.when(this.data.records);
+                }
+            }
+            return this._super(route, args);
+        },
+    }).then(function (wysiwyg) {
+        $('body').on('submit.WysiwygTests', function (ev) {
+            ev.preventDefault();
+            var $from = $(ev.target);
+            var iframe = $from.find('iframe[name="' + $from.attr('target') + '"]')[0];
+            if (iframe) {
+                iframe.contentWindow.attachments = records;
+                $(iframe).trigger('load');
+            }
+        }.bind(this));
+        var $editable = wysiwyg.$('.note-editable');
+
+        var $btnMedia = wysiwyg.$('.note-insert .note-icon-picture');
+
+        var defMediaDialogInit;
+        var defMediaDialogSave;
+        testUtils.patch(MediaDialog, {
+            init: function () {
+                this._super.apply(this, arguments);
+                defMediaDialogInit = $.Deferred();
+                defMediaDialogSave = $.Deferred();
+                this.opened(defMediaDialogInit.resolve.bind(defMediaDialogInit));
+            },
+            save: function () {
+                $.when(this._super.apply(this, arguments)).then(function () {
+                    var def = defMediaDialogSave;
+                    defMediaDialogInit = null;
+                    defMediaDialogSave = null;
+                    def.resolve();
+                });
+            },
+        });
+        var _clickMedia = function (callbackInit, test) {
+            $btnMedia.mousedown().click();
+            defMediaDialogSave.then(function () {
+                assert.deepEqual(wysiwyg.getValue(), test.content, testName);
+                if (test.start) {
+                    var range = _select(test.start, test.end, $editable);
+                    assert.deepEqual(Wysiwyg.getRange($editable[0]), range, testName + carretTestSuffix);
+                }
+                if (test.check) {
+                    test.check();
+                }
+            });
+            defMediaDialogInit.then(callbackInit);
+            return defMediaDialogSave;
+        }
+
+        var mediaTests = [
+            { name: "Click ADD AN IMAGE URL: p -> img in p",
+                async: true,
+                content: '<p><br></p>',
+                start: "p:contents()[0]->0",
+                do: function () {
+                    $('.modal-dialog #imageurl:first').val('https://www.odoo.com/logo.png');
+                    $('.modal-dialog #imageurl:first').trigger('input');
+                    $('.modal-dialog .o_upload_image_url_button').mousedown().click();
+                },
+                test: {
+                    content: '<p><img class="img-fluid o_we_custom_image" data-src="/web_editor/static/src/img/transparent.png"><br></p>',
+                    check: function () {
+                        assert.strictEqual(1, $('.note-image-popover').length, testName + ' (popover)');
+                    },
+                },
+            },
+        ];
+
+        var def = $.when();
+        _.each(mediaTests, function (test) {
+            def = def.then(function () {
+                testName = test.name;
+                wysiwyg.setValue(test.content);
+                var range = _select(test.start, test.end, $editable);
+                Wysiwyg.setRange(range.sc, range.so, range.ec, range.eo);
+                return _clickMedia(test.do, test.test);
+            });
+        });
+        def.then(function () {
+            testUtils.unpatch(MediaDialog);
+            wysiwyg.destroy();
+            $('body').off('submit.WysiwygTests');
             done();
         });
     });
