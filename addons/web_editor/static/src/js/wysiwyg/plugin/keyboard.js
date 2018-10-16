@@ -161,7 +161,6 @@ var KeyboardPlugin = AbstractPlugin.extend({
             var method = direction === 'prev' ? 'prevPointUntil' : 'nextPointUntil';
             var hasBlock = false;
             var blockToRemove = false;
-            var withinNode = direction === 'prev' ? range.so > 0 : range.so < dom.nodeLength(range.sc);
 
             var pt = dom[method]({node: range.sc, offset: range.so}, function (point) {
                 if (!point.offset && this.context.invoke('HelperPlugin.isNodeBlockType', point.node)) {
@@ -417,7 +416,6 @@ var KeyboardPlugin = AbstractPlugin.extend({
      **/
     _onKeydown: function (se, e) {
         var handled = false;
-        var range = this.context.invoke('editor.createRange');
 
         if (e.key && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
             this._onVisibleChar(e);
@@ -441,7 +439,6 @@ var KeyboardPlugin = AbstractPlugin.extend({
                 this._preventTextInEditableDiv();
                 this._normalize();
                 this.context.invoke('editor.saveRange');
-                this.editable.normalize();
                 e.preventDefault();
                 this.$editable.trigger('change');
             }
