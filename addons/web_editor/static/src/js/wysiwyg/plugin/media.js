@@ -343,6 +343,7 @@ var AbstractMediaPlugin = AbstractPlugin.extend({
             .render().appendTo(this.options.container);
         var $content = this.$popover.find('.popover-content, .note-popover-content');
         this.context.invoke('buttons.build', $content, this.options.popover[this.targetType]);
+        this.options.POPOVER_MARGIN = 15;
     },
     destroy: function () {
         this.$popover.remove();
@@ -378,10 +379,12 @@ var AbstractMediaPlugin = AbstractPlugin.extend({
     _popoverPosition: function (target, mousePosition) {
         var posContainer = this.$popover.parent().offset();
         var pos = $(target).offset();
+        var left = pos.left - posContainer.left;
+        var top = pos.top - posContainer.top;
         this.$popover.css({
             display: 'block',
-            left: pos.left - posContainer.left,
-            top: pos.top - posContainer.top,
+            left: left + this.$popover.width() < this.window.innerWidth ? left : this.window.innerWidth - this.$popover.width() - this.options.POPOVER_MARGIN,
+            top: top > 0 ? top : this.options.POPOVER_MARGIN,
         });
     },
     _isMedia: function (target) {},
@@ -456,10 +459,12 @@ var ImagePlugin = AbstractMediaPlugin.extend({
 
     _popoverPosition: function (target, mousePosition) {
         var posContainer = this.$popover.parent().offset();
+        var left = mousePosition.pageX - posContainer.left - 10;
+        var top = mousePosition.pageY - posContainer.top + 10;
         this.$popover.css({
             display: 'block',
-            left: mousePosition.pageX - posContainer.left - 10,
-            top: mousePosition.pageY - posContainer.top + 10,
+            left: left + this.$popover.width() < this.window.innerWidth ? left : this.window.innerWidth - this.$popover.width() - this.options.POPOVER_MARGIN,
+            top: top > 0 ? top : this.options.POPOVER_MARGIN,
         });
     },
     /**
@@ -637,9 +642,12 @@ var IconPlugin = AbstractMediaPlugin.extend({
 
     _popoverPosition: function (target, mousePosition) {
         this._super.apply(this, arguments);
+        var left = parseInt(this.$popover.css('left')) + parseInt($(target).css('font-size')) - 5;
+        var top = parseInt(this.$popover.css('top')) + parseInt($(target).css('font-size')) - 5;
         this.$popover.css({
-            left: parseInt(this.$popover.css('left')) + parseInt($(target).css('font-size')) - 5,
-            top: parseInt(this.$popover.css('top')) + parseInt($(target).css('font-size')) - 5
+            display: 'block',
+            left: left + this.$popover.width() < this.window.innerWidth ? left : this.window.innerWidth - this.$popover.width() - this.options.POPOVER_MARGIN,
+            top: top > 0 ? top : this.options.POPOVER_MARGIN,
         });
     },
     _isMedia: function (target) {
@@ -684,9 +692,12 @@ var DocumentPlugin = AbstractMediaPlugin.extend({
      */
     _popoverPosition: function (target, mousePosition) {
         this._super.apply(this, arguments);
+        var left = parseInt(this.$popover.css('left')) + $(target).width() - 15;
+        var top = parseInt(this.$popover.css('top')) - 15;
         this.$popover.css({
-            left: parseInt(this.$popover.css('left')) + $(target).width() - 15,
-            top: parseInt(this.$popover.css('top')) - 15
+            display: 'block',
+            left: left + this.$popover.width() < this.window.innerWidth ? left : this.window.innerWidth - this.$popover.width() - this.options.POPOVER_MARGIN,
+            top: top > 0 ? top : this.options.POPOVER_MARGIN,
         });
     },
     _isMedia: function (target) {
