@@ -150,7 +150,7 @@ var LinkPlugin = Plugins.linkDialog.extend({
             _.omit(linkInfo, 'range')
         );
 
-        linkDialog.on('save', this, function (newLinkInfo) {
+        linkDialog.on('save', this, this._wrapCommand(function (newLinkInfo) {
             var isCollapsed = linkInfo.range.isCollapsed();
             linkInfo.range.select();
             var $anchor;
@@ -179,7 +179,8 @@ var LinkPlugin = Plugins.linkDialog.extend({
             }
             $anchor.attr('class', newLinkInfo.className);
             $anchor.attr('href', newLinkInfo.url);
-        });
+            this.context.triggerEvent('focusnode', $anchor[0]);
+        }.bind(this)));
         linkDialog.on('closed', this, function () {
             def.reject();
             if (linkInfo.isAnchor) {
