@@ -68,9 +68,16 @@ var MediaPlugin = AbstractPlugin.extend({
         mediaDialog.open();
     },
     removeMedia: function () {
-        var $target = $(this.restoreTarget()).parent();
-        this.context.triggerEvent('media.delete', $target, this.$editable);
+        this.context.invoke('editor.beforeCommand');
+        var target = this.context.invoke('editor.restoreTarget');
+        var parent = target.parentNode;
+        $(target).remove();
+        this.context.invoke('editor.saveTarget', parent);
         this.hidePopovers();
+        if (/^[\s\u00A0\u200B]*$/.test(parent.innerHTML)) {
+            parent.innerHTML = this.options.isUnbreakableNode(parent) ? '<p><br/></p>' : '<br/>';
+        }
+        this.context.invoke('editor.afterCommand');
     },
     update: function (target) {
         if (!target) {
