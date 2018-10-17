@@ -1,6 +1,7 @@
 odoo.define('web.Dialog', function (require) {
 "use strict";
 
+var config = require('web.config');
 var core = require('web.core');
 var dom = require('web.dom');
 var Widget = require('web.Widget');
@@ -58,7 +59,7 @@ var Dialog = Widget.extend({
         options = _.defaults(options || {}, {
             title: _t('Odoo'), subtitle: '',
             size: 'large',
-            fullscreen: false,
+            fullscreen: config.device.isMobile,
             dialogClass: '',
             $content: false,
             buttons: [{text: _t("Ok"), close: true}],

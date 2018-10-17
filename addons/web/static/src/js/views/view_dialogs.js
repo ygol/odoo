@@ -1,7 +1,6 @@
 odoo.define('web.view_dialogs', function (require) {
 "use strict";
 
-var config = require('web.config');
 var core = require('web.core');
 var data = require('web.data');
 var Dialog = require('web.Dialog');
@@ -36,7 +35,6 @@ var ViewDialog = Dialog.extend({
      */
     init: function (parent, options) {
         options = options || {};
-        options.fullscreen = config.device.isMobile;
         options.dialogClass = options.dialogClass || '' + ' o_act_window';
 
         this._super(parent, $.extend(true, {}, options));
