@@ -429,10 +429,10 @@ QUnit.module('inline-style');
 
 QUnit.test('convert style to class on edit', function (assert) {
     var done = assert.async();
-    assert.expect(3);
+    assert.expect(5);
 
     this.data['note.note'].records[0].body = '<p class="pull-right" style="float: right;">toto '+
-        '<img data-class="fa fa-star" src="/web_editor/font_to_img/61445/rgb(76,76,76)/13" style="border-style:none;vertical-align:middle;height: auto; width: auto;">'+
+        '<img data-class="fa fa-star" data-style="color: red;" src="/web_editor/font_to_img/61445/rgb(255,0,0)/13" style="border-style:none;vertical-align:middle;height: auto; width: auto;">'+
         'toto toto</p><p>tata</p>';
 
     testUtils.createAsyncView({
@@ -447,11 +447,19 @@ QUnit.test('convert style to class on edit', function (assert) {
             if (args.method === "write") {
                 assert.strictEqual(args.args[1].body,
                     '<p class="pull-right" style="margin:0px 0 1rem 0;font-size:13px;font-family:&quot;Lucida Grande&quot;, Helvetica, Verdana, Arial, sans-serif;float:right;">toto '+
-                    '<img data-class="fa fa-star" data-src="/web_editor/font_to_img/61445/rgb(76,76,76)/13" style="border-style:none;vertical-align:middle;height: auto; width: auto;">'+
+                    '<img '+
+                        'data-class="fa fa-star" '+
+                        'data-style="color: red;" '+
+                        'style="border-style:none;vertical-align:middle;color: red; height: auto; width: auto;" '+
+                        'data-src="/web_editor/font_to_img/61445/rgb(255,0,0)/13"'+
+                    '>'+
                     'toto toto</p><p style="margin:0px 0 1rem 0;font-size:13px;font-family:&quot;Lucida Grande&quot;, Helvetica, Verdana, Arial, sans-serif;">tata</p>',
                     "should save the content");
             }
-            if (route === "/web_editor/font_to_img/61445/rgb(76,76,76)/13") {
+            if (route.indexOf("/web_editor/font_to_img/61445/rgb(") !== -1) {
+                assert.strictEqual(route,
+                    '/web_editor/font_to_img/61445/rgb(255,0,0)/13',
+                    "should use the image in function of the font and the color");
                 return $.when('#');
             } 
             return this._super.apply(this, arguments);
@@ -460,7 +468,7 @@ QUnit.test('convert style to class on edit', function (assert) {
         var $field = form.$('.oe_form_field[name="body"]');
 
         assert.strictEqual($field.children('.o_readonly').html(), '<p class="pull-right" style="float: right;">toto '+
-            '<img data-class="fa fa-star" style="border-style:none;vertical-align:middle;height: auto; width: auto;" data-src="/web_editor/font_to_img/61445/rgb(76,76,76)/13">'+
+            '<img data-class="fa fa-star" data-style="color: red;" style="border-style:none;vertical-align:middle;height: auto; width: auto;" data-src="/web_editor/font_to_img/61445/rgb(255,0,0)/13">'+
             'toto toto</p><p>tata</p>',
             "should have rendered a div with correct content in readonly");
 
@@ -468,7 +476,7 @@ QUnit.test('convert style to class on edit', function (assert) {
 
         $field = form.$('.oe_form_field[name="body"]');
         assert.strictEqual($field.find('.note-editable').html(), '<p class="pull-right">toto '+
-            '<span class="fa fa-star"></span>'+
+            '<span class="fa fa-star" style="color: red;"></span>'+
             'toto toto</p><p>tata</p>',
             "should have rendered the field correctly in edit (remove style inline who used class)");
 
