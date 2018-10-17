@@ -78,7 +78,6 @@ WysiwygMultizone.include({
         if ($target && $target.length) {
             this.close_dialog();
             $('.o_popup_bounce_small').show();
-            debugger
             if (!$target.find('.o_popup_content_dev').length) {
                 $target.find('.o_popup_modal_body').prepend($('<div class="o_popup_content_dev" data-oe-placeholder="' + _t("Type Here ...") + '"></div>'));
             }
