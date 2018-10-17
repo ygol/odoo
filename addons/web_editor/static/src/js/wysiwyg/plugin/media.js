@@ -105,6 +105,7 @@ var MediaPlugin = AbstractPlugin.extend({
         this.context.invoke('editor.saveTarget', media);
     },
     insertMedia: function (previous, data) {
+        var self = this;
         var deferred = $.Deferred();
         var newMedia = data.media;
         this._wrapCommand(function () {
@@ -115,7 +116,12 @@ var MediaPlugin = AbstractPlugin.extend({
                 $(newMedia).one('load error abort', deferred.resolve.bind(deferred));
             }
             if (previous) {
-                $(previous).replaceWith(newMedia);
+                if (dom.isVideo(newMedia)) {
+                    self.removeMedia(previous);
+                    self.insertMedia(undefined, {media: newMedia});
+                } else {
+                    $(previous).replaceWith(newMedia);
+                }
             } else if (dom.isVideo(newMedia)) {
                 this.context.invoke('HelperPlugin.insertBlockNode', newMedia);
             } else {
