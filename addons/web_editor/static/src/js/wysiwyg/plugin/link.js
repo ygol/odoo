@@ -179,13 +179,13 @@ var LinkPlugin = Plugins.linkDialog.extend({
             }
             $anchor.attr('class', newLinkInfo.className);
             $anchor.attr('href', newLinkInfo.url);
+            this.context.invoke('editor.saveRange');
+            this.context.invoke('editor.saveTarget', $anchor[0]);
             this.context.triggerEvent('focusnode', $anchor[0]);
         }.bind(this)));
         linkDialog.on('closed', this, function () {
             def.reject();
-            if (linkInfo.isAnchor) {
-                range.select();
-            }
+            this.context.invoke('editor.restoreRange');
             this.context.invoke('LinkPopover.update');
         });
 
@@ -288,11 +288,11 @@ var LinkPopover = Plugins.linkPopover.extend({
             var firstChild = this.context.invoke('HelperPlugin.firstChild', this.lastAnchor);
             if (!firstChild.tagName && /^\u200B/.test(firstChild.textContent)) {
                 firstChild.textContent = firstChild.textContent.replace(/^\u200B/, '');
-                if (range.sc === firstChild) {
+                if (range.sc === firstChild && range.so) {
                     range.so -= 1;
                     rangeChange = true;
                 }
-                if (range.ec === firstChild) {
+                if (range.ec === firstChild && range.eo) {
                     range.eo -= 1;
                     rangeChange = true;
                 }
