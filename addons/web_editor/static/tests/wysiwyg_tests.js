@@ -1277,15 +1277,15 @@ QUnit.test('Link', function (assert) {
             },
             { name: "Click LINK: a.btn in div -> a.btn.btn-outline-alpha in div (edit) (no selection)",
                 content: '<div><a href="#" class="btn btn-outline-alpha btn-lg">dom to edit</a></div>',
-                start: 'a->0',
+                start: 'a:contents()[0]->5',
                 do: function () {
                     assert.strictEqual($('.modal-dialog #o_link_dialog_label_input').val(), 'dom to edit', testName + ' (label)');
                     $('.modal-dialog #o_link_dialog_url_input').val('#newlink');
                 },
                 test: {
                     content: '<div><a href="#newlink" class="btn btn-outline-alpha btn-lg">dom to edit</a></div>',
-                    start: 'a:contents()[0]->0',
-                    end: 'a:contents()[0]->0',
+                    start: 'a->0',
+                    end: 'a->1',
                 },
             },
             { name: "Click LINK: p -> a in p (w/ Email)",
@@ -1329,7 +1329,8 @@ QUnit.test('Link', function (assert) {
                 },
                 test: {
                     content: '<p><a href="#" target="_blank" class="btn btn-outline-alpha">dom to edit</a></p>',
-                    start: 'a:contents()[0]->1',
+                    start: 'a->0',
+                    end: 'a->1',
                 },
             },
             /* POPOVER */
