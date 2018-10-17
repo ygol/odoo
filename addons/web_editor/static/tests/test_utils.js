@@ -56,7 +56,10 @@ var WysiwygTest = Wysiwyg.extend({
     },
     isUnbreakableNode: function (node) {
         var Node = (node.tagName ? node : node.parentNode);
-        return !this.isEditableNode(node) || Node.tagName === "UNBREAKABLE" || (Node.className + '').indexOf('unbreakable') !== -1;
+        return (!this.options.useOnlyTestUnbreakable && this._super(node)) ||
+            !this.isEditableNode(node) ||
+            Node.tagName === "UNBREAKABLE" ||
+            (Node.className + '').indexOf('unbreakable') !== -1;
     },
     isEditableNode: function (node) {
         if (!$(node).closest(this.$el).length) {
@@ -196,6 +199,7 @@ function createWysiwyg (params) {
             res_model: 'module.test',
             res_id: 1,
         },
+        useOnlyTestUnbreakable: params.useOnlyTestUnbreakable,
     });
 
     var wysiwyg = new WysiwygTest(parent, wysiwygOptions);

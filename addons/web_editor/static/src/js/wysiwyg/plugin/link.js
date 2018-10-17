@@ -5,7 +5,7 @@ var core = require('web.core');
 var Class = require('web.Class');
 var LinkDialog = require('wysiwyg.widgets.LinkDialog');
 var AbstractPlugin = require('web_editor.wysiwyg.plugin.abstract');
-var Plugins = require('web_editor.plugins');
+var Plugins = require('web_editor.wysiwyg.plugins');
 var registry = require('web_editor.wysiwyg.plugin.registry');
 var wysiwygTranslation = require('web_editor.wysiwyg.translation');
 

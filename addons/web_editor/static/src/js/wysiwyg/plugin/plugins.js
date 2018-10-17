@@ -1,4 +1,4 @@
-odoo.define('web_editor.plugins', function (require) {
+odoo.define('web_editor.wysiwyg.plugins', function (require) {
 'use strict';
 
 var AbstractPlugin = require('web_editor.wysiwyg.plugin.abstract');
@@ -6,7 +6,7 @@ var registry = require('web_editor.wysiwyg.plugin.registry');
 var wysiwygOptions = require('web_editor.wysiwyg.options');
 
 
-return _.mapObject(wysiwygOptions.modules, function (Module, pluginName) {
+var plugins = _.mapObject(wysiwygOptions.modules, function (Module, pluginName) {
     var prototype = {
         init: function () {
             this._super.apply(this, arguments);
@@ -42,5 +42,29 @@ return _.mapObject(wysiwygOptions.modules, function (Module, pluginName) {
 
     return Plugin;
 });
+
+// export table plugin to convert it in module (see editor)
+
+var $textarea = $('<textarea>');
+$('body').append($textarea);
+$textarea.summernote();
+var summernote = $textarea.data('summernote');
+
+_.each(['style', 'table', 'typing', 'bullet'], function (name) {
+    var prototype = {};
+    for (var k in summernote.modules.editor[name]) {
+        prototype[k] = summernote.modules.editor[name][k];
+    }
+    plugins[name] = AbstractPlugin.extend(prototype);
+});
+try {
+    $textarea.summernote('destroy');
+} catch (e) {
+    summernote.layoutInfo.editor.remove();
+}
+$textarea.remove();
+
+
+return plugins;
 
 });

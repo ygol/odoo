@@ -1996,6 +1996,209 @@ QUnit.test('Media', function (assert) {
     });
 });
 
+QUnit.test('Table', function (assert) {
+    var done = assert.async();
+    assert.expect(12);
+
+    function createTable(wysiwyg) {
+        wysiwyg.$('.note-table button:first').mousedown().click();
+
+        var $grid = wysiwyg.$('.note-table .note-dimension-picker-mousecatcher');
+        var pos = $grid.offset();
+        $grid.trigger($.Event('mousemove', {pageX: pos.left + 40, pageY: pos.top + 40}));
+        $grid.mousedown().click();
+    }
+
+    return weTestUtils.createWysiwyg({
+        debug: false,
+        wysiwygOptions: {
+        },
+    }).then(function (wysiwyg) {
+        wysiwyg.setValue('<p>dom to edit</p>');
+        var $editable = wysiwyg.getEditable();
+
+        // create a table
+
+        var range = weTestUtils.select('p:contents()[0]->5', 'p:contents()[0]->5', $editable);
+        Wysiwyg.setRange(range.sc, range.so, range.ec, range.eo);
+
+        createTable(wysiwyg);
+
+        assert.strictEqual($editable.html().replace(/\s+/g, ' '),
+            '<p>dom t</p>'+
+            '<table class=\"table table-bordered\"><tbody>'+
+                '<tr><td><br></td><td><br></td><td><br></td></tr>'+
+                '<tr><td><br></td><td><br></td><td><br></td></tr>'+
+                '<tr><td><br></td><td><br></td><td><br></td></tr>'+
+            '</tbody></table>'+
+            '<p>o edit</p>',
+            "should create a table");
+
+        // remove a table
+
+        range = weTestUtils.select('td:first->0', 'td:first->0', $editable);
+        $(range.sc).mousedown();
+        Wysiwyg.setRange(range.sc, range.so, range.ec, range.eo);
+
+        var $trash = $('.note-table-popover:visible button:has(.note-icon-trash)');
+        assert.strictEqual($trash.size(), 1, "should display the table popover");
+
+        $trash.mousedown().click();
+
+        assert.strictEqual($editable.html().replace(/\s+/g, ' '),
+            '<p>dom to edit</p>',
+            "should remove the table");
+
+        // re create a table and table in table
+
+        createTable(wysiwyg);
+        createTable(wysiwyg);
+
+        assert.strictEqual($editable.html().replace(/\s+/g, ' '),
+            '<p>dom t</p>'+
+            '<table class=\"table table-bordered\"><tbody>'+
+                '<tr><td>'+
+                    '<table class=\"table table-bordered\"><tbody>'+
+                        '<tr><td><br></td><td><br></td><td><br></td></tr>'+
+                        '<tr><td><br></td><td><br></td><td><br></td></tr>'+
+                        '<tr><td><br></td><td><br></td><td><br></td></tr>'+
+                    '</tbody></table>'+
+                '</td><td><br></td><td><br></td></tr>'+
+                '<tr><td><br></td><td><br></td><td><br></td></tr>'+
+                '<tr><td><br></td><td><br></td><td><br></td></tr>'+
+            '</tbody></table>'+
+            '<p>o edit</p>',
+            "should create a table inside the table");
+
+        // remove inner table
+
+        range = weTestUtils.select('td td:eq(1)->0', 'td td:eq(1)->0', $editable);
+        $(range.sc).mousedown();
+        Wysiwyg.setRange(range.sc, range.so, range.ec, range.eo);
+
+        $trash = $('.note-table-popover:visible button:has(.note-icon-trash)');
+        assert.strictEqual($trash.size(), 1, "should display the table popover");
+        $trash.mousedown().click();
+
+        assert.strictEqual($editable.html().replace(/\s+/g, ' '),
+            '<p>dom t</p>'+
+            '<table class=\"table table-bordered\"><tbody>'+
+                '<tr><td><br></td><td><br></td><td><br></td></tr>'+
+                '<tr><td><br></td><td><br></td><td><br></td></tr>'+
+                '<tr><td><br></td><td><br></td><td><br></td></tr>'+
+            '</tbody></table>'+
+            '<p>o edit</p>',
+            "should remove the inner table");
+
+        // use popover to change row and line
+
+        wysiwyg.setValue('<p>dom t</p>'+
+            '<table class=\"table table-bordered\"><tbody>'+
+                '<tr><td>0-0</td><td>0-1</td><td>0-2</td></tr>'+
+                '<tr><td>1-0</td><td>1-1</td><td>1-2</td></tr>'+
+                '<tr><td>2-0</td><td>2-1</td><td>2-2</td></tr>'+
+            '</tbody></table>'+
+            '<p>o edit</p>');
+
+        // remove a row
+
+        range = weTestUtils.select('td:eq(1)->0', 'td:eq(1)->0', $editable);
+        $(range.sc).mousedown();
+        Wysiwyg.setRange(range.sc, range.so, range.ec, range.eo);
+        $('.note-table-popover:visible button:has(.note-icon-col-remove)').mousedown().click();
+
+        assert.strictEqual($editable.html().replace(/\s+/g, ' '),
+            '<p>dom t</p>'+
+            '<table class=\"table table-bordered\"><tbody>'+
+                '<tr><td>0-0</td><td>0-2</td></tr>'+
+                '<tr><td>1-0</td><td>1-2</td></tr>'+
+                '<tr><td>2-0</td><td>2-2</td></tr>'+
+            '</tbody></table>'+
+            '<p>o edit</p>',
+            "should remove a row");
+
+        // remove a line
+
+        range = weTestUtils.select('tr:eq(1) td:eq(1)->0', 'tr:eq(1) td:eq(1)->0', $editable);
+        $(range.sc).mousedown();
+        Wysiwyg.setRange(range.sc, range.so, range.ec, range.eo);
+        $('.note-table-popover:visible button:has(.note-icon-row-remove)').mousedown().click();
+
+        assert.strictEqual($editable.html().replace(/\s+/g, ' '),
+            '<p>dom t</p>'+
+            '<table class=\"table table-bordered\"><tbody>'+
+                '<tr><td>0-0</td><td>0-2</td></tr>'+
+                '<tr><td>2-0</td><td>2-2</td></tr>'+
+            '</tbody></table>'+
+            '<p>o edit</p>',
+            "should remove a line");
+
+        // add a row after
+
+        range = weTestUtils.select('tr:eq(1) td:first->0', 'tr:eq(1) td:first->0', $editable);
+        $(range.sc).mousedown();
+        Wysiwyg.setRange(range.sc, range.so, range.ec, range.eo);
+        $('.note-table-popover:visible button:has(.note-icon-col-after)').mousedown().click();
+
+        assert.strictEqual($editable.html().replace(/\s+/g, ' '),
+            '<p>dom t</p>'+
+            '<table class=\"table table-bordered\"><tbody>'+
+                '<tr><td>0-0</td><td><br></td><td>0-2</td></tr>'+
+                '<tr><td>2-0</td><td><br></td><td>2-2</td></tr>'+
+            '</tbody></table>'+
+            '<p>o edit</p>',
+            "should add a row after");
+
+        // add a row before
+
+        $(range.sc).mousedown();
+        $('.note-table-popover:visible button:has(.note-icon-col-before)').mousedown().click();
+
+        assert.strictEqual($editable.html().replace(/\s+/g, ' '),
+            '<p>dom t</p>'+
+            '<table class=\"table table-bordered\"><tbody>'+
+                '<tr><td><br></td><td>0-0</td><td><br></td><td>0-2</td></tr>'+
+                '<tr><td><br></td><td>2-0</td><td><br></td><td>2-2</td></tr>'+
+            '</tbody></table>'+
+            '<p>o edit</p>',
+            "should add a row before");
+
+        // add a line after
+
+        $(range.sc).mousedown();
+        $('.note-table-popover:visible button:has(.note-icon-row-below)').mousedown().click();
+
+        assert.strictEqual($editable.html().replace(/\s+/g, ' '),
+            '<p>dom t</p>'+
+            '<table class=\"table table-bordered\"><tbody>'+
+                '<tr><td><br></td><td>0-0</td><td><br></td><td>0-2</td></tr>'+
+                '<tr><td><br></td><td>2-0</td><td><br></td><td>2-2</td></tr>'+
+                '<tr><td><br></td><td><br></td><td><br></td><td><br></td></tr>'+
+            '</tbody></table>'+
+            '<p>o edit</p>',
+            "should add a line after");
+
+        // add a line before
+
+        $(range.sc).mousedown();
+        $('.note-table-popover:visible button:has(.note-icon-row-above)').mousedown().click();
+
+        assert.strictEqual($editable.html().replace(/\s+/g, ' '),
+            '<p>dom t</p>'+
+            '<table class=\"table table-bordered\"><tbody>'+
+                '<tr><td><br></td><td>0-0</td><td><br></td><td>0-2</td></tr>'+
+                '<tr><td><br></td><td><br></td><td><br></td><td><br></td></tr>'+
+                '<tr><td><br></td><td>2-0</td><td><br></td><td>2-2</td></tr>'+
+                '<tr><td><br></td><td><br></td><td><br></td><td><br></td></tr>'+
+            '</tbody></table>'+
+            '<p>o edit</p>',
+            "should add a line before");
+
+        wysiwyg.destroy();
+        done();
+    });
+});
+
 
 });
 });

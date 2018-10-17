@@ -186,6 +186,7 @@ QUnit.test('Unbreakable selection and edition', function (assert) {
     var done = assert.async();
     weTestUtils.createWysiwyg({
         data: this.data,
+        useOnlyTestUnbreakable: true,
     }).then(function (wysiwyg) {
         var $editable = wysiwyg.$('.note-editable');
         weTestUtils.testKeyboard($editable, assert, UnbreakableTests).then(function () {

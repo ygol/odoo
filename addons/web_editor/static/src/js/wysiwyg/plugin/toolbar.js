@@ -1,7 +1,7 @@
 odoo.define('web_editor.wysiwyg.plugin.toolbar', function (require) {
 'use strict';
 
-var Plugins = require('web_editor.plugins');
+var Plugins = require('web_editor.wysiwyg.plugins');
 var registry = require('web_editor.wysiwyg.plugin.registry');
 
 var dom = $.summernote.dom;

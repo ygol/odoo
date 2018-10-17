@@ -5,7 +5,7 @@ var core = require('web.core');
 var weWidgets = require('wysiwyg.widgets');
 var AbstractPlugin = require('web_editor.wysiwyg.plugin.abstract');
 var registry = require('web_editor.wysiwyg.plugin.registry');
-var Plugins = require('web_editor.plugins');
+var Plugins = require('web_editor.wysiwyg.plugins');
 var wysiwygTranslation = require('web_editor.wysiwyg.translation');
 var wysiwygOptions = require('web_editor.wysiwyg.options');
 
@@ -70,7 +70,7 @@ var MediaPlugin = AbstractPlugin.extend({
     removeMedia: function () {
         this.context.invoke('editor.beforeCommand');
         var target = this.context.invoke('editor.restoreTarget');
-        var point = this._removeMedia(target);
+        var point = this.context.invoke('HelperPlugin.removeBlockNode', target);
         var rng = range.create(this.editable);
         rng.sc = rng.ec = point.node;
         rng.so = rng.eo = point.offset;
@@ -131,7 +131,7 @@ var MediaPlugin = AbstractPlugin.extend({
             }
 
             if (previous) {
-                var point = this._removeMedia(previous);
+                var point = this.context.invoke('HelperPlugin.removeBlockNode', previous);
                 rng.sc = rng.ec = point.node;
                 rng.so = rng.eo = point.offset;
                 rng.normalize().select();
@@ -209,55 +209,6 @@ var MediaPlugin = AbstractPlugin.extend({
         var padding = [null, 'padding-small', 'padding-medium', 'padding-large', 'padding-xl'];
         var values = _.zip(padding, this.lang.image.paddingList);
         this._createDropdownButton('padding', this.options.icons.padding, this.lang.image.padding, values);
-    },
-    _removeMedia: function (target) {
-        var check = function (point) {
-            if (point.node === target) {
-                return false;
-            }
-            return !point.node || this.options.isEditableNode(point.node) &&
-                (point.node.tagName === "BR" || this.context.invoke('HelperPlugin.isVisibleText', point.node));
-        }.bind(this);
-        var parent = target.parentNode;
-        var offset = [].indexOf.call(parent.childNodes, target);
-        var next = false;
-        var point = dom.prevPointUntil({node: target, offset: 0}, check);
-        if (!point || !point.node) {
-            next = true;
-            point = dom.nextPointUntil({node: target, offset: 0}, check);
-        }
-
-        $(target).remove();
-
-        if (dom.isVideo(target)) {
-            point = this.context.invoke('HelperPlugin.deleteEdge', point.node, next ? 'prev' : 'next');
-        }
-
-        if (/^[\s\u200B]*$/.test(parent.innerHTML)) {
-            var br = this.document.createElement('br');
-            if (this.options.isUnbreakableNode(parent)) {
-                var innerEl = this.document.createElement('p');
-                $(parent).append($(innerEl).append(br));
-            } else {
-                $(parent).append(br);
-            }
-            point = {
-                node: br.parentNode,
-                offset: 0,
-            };
-        }
-
-        if (point.node.tagName === "BR" && point.node.parentNode) {
-            point = {
-                node: point.node.parentNode,
-                offset: [].indexOf.call(point.node.parentNode.childNodes, point.node),
-            };
-        }
-
-        return point || {
-            node: parent,
-            offset: offset,
-        };
     },
     _selectTarget: function (target) {
         if (!target) {

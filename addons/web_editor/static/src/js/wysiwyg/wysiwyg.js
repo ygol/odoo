@@ -149,7 +149,7 @@ var Wysiwyg = Widget.extend({
      * @returns {Boolean}
      */
     isUnbreakableNode: function (node) {
-        return !this.isEditableNode(node.parentNode) || !this.isEditableNode(node) || $.summernote.dom.isMedia(node);
+        return node.tagName === "TD" || !this.isEditableNode(node.parentNode) || !this.isEditableNode(node) || $.summernote.dom.isMedia(node);
     },
     /*
      * return true if the current node is editable (for keypress and selection)
