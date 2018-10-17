@@ -1393,7 +1393,7 @@ QUnit.test('Link', function (assert) {
 
 QUnit.test('Media', function (assert) {
     var done = assert.async();
-    assert.expect(27);
+    assert.expect(29);
 
     var records = [{
         id: 1,
@@ -1788,6 +1788,51 @@ QUnit.test('Media', function (assert) {
                     },
                 },
             },
+            // Remove picture
+            { name: "Click REMOVE in popover after adding image in empty p",
+                async: true,
+                content: '<p><br></p>',
+                start: "p->0",
+                do: function () {
+                    _uploadAndInsertImg('https://www.odoo.com/logo.png');
+                },
+                test: {
+                    content: '<p><br></p>',
+                    check: function () {
+                        $('.note-image-popover .note-btn .note-icon-trash').mousedown().click();
+                    },
+                },
+            },
+            // Remove font
+            { name: "Click REMOVE in popover after adding font in empty p",
+                async: true,
+                content: '<p><br></p>',
+                start: "p->0",
+                do: function () {
+                    _insertPictogram('fa-glass');
+                },
+                test: {
+                    content: '<p><br></p>',
+                    check: function () {
+                        $('.note-image-popover .note-btn .note-icon-trash').mousedown().click();
+                    },
+                },
+            },
+            // Remove video
+            { name: "Click REMOVE in popover after adding video in empty p",
+                async: true,
+                content: '<p><br></p>',
+                start: "p->0",
+                do: function () {
+                    _insertVideo('https://www.youtube.com/watch?v=xxxxxxxxxxx');
+                },
+                test: {
+                    content: '<p><br></p>',
+                    check: function () {
+                        $('.note-image-popover .note-btn .note-icon-trash').mousedown().click();
+                    },
+                },
+            },
             // Replace picture
             { name: "Click PICTURE in popover after adding image in empty p (replace picture with video)",
                 async: true,
@@ -1805,25 +1850,8 @@ QUnit.test('Media', function (assert) {
                                              testName);
                         });
                         defMediaDialogInit.then(function () {
-                            $('.modal-dialog .nav-link:contains("Video")').mousedown().click();
-                            $('.modal-dialog #o_video_text').val('https://www.youtube.com/watch?v=xxxxxxxxxxx').keydown().keyup();
-                            $('.modal-dialog .modal-footer .btn.btn-primary:contains("Save")').mousedown().click();
+                            _insertVideo('https://www.youtube.com/watch?v=xxxxxxxxxxx');
                         });
-                    },
-                },
-            },
-            // Remove picture
-            { name: "Click REMOVE in popover after adding image in empty p",
-                async: true,
-                content: '<p><br></p>',
-                start: "p->0",
-                do: function () {
-                    _uploadAndInsertImg('https://www.odoo.com/logo.png');
-                },
-                test: {
-                    content: '<p><br></p>',
-                    check: function () {
-                        $('.note-image-popover .note-btn .note-icon-trash').mousedown().click();
                     },
                 },
             },

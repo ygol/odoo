@@ -777,8 +777,8 @@ var VideoWidget = MediaWidget.extend({
     start: function () {
         this.$content = this.$('.o_video_dialog_iframe');
 
-        var $media = $(this.media);
-        if ($media.hasClass('media_iframe_video')) {
+        if (this.media) {
+            var $media = $(this.media);
             var src = $media.data('oe-expression') || $media.data('src') || '';
             this.$('textarea#o_video_text').val(src);
 

@@ -51,9 +51,6 @@ var MediaDialog = Dialog.extend({
         this.noIcons = onlyImages || options.noIcons;
         this.noVideos = onlyImages || options.noVideos;
 
-        if (!this.noImages) {
-            this.imageDialog = new MediaModules.ImageWidget(this, this.media, options);
-        }
         if (!this.noDocuments) {
             this.documentDialog = new MediaModules.ImageWidget(this, this.media, _.extend({}, options, {document: true}));
         }
@@ -63,20 +60,29 @@ var MediaDialog = Dialog.extend({
         if (!this.noVideos) {
             this.videoDialog = new MediaModules.VideoWidget(this, this.media, options);
         }
+        if (!this.noImages) {
+            this.imageDialog = new MediaModules.ImageWidget(this, this.media, options);
+        }
+
+        var tabToShow = 'icon';
+        this.active = this.iconDialog;
+        if (!this.media || this.$media.is('img')) {
+            tabToShow = 'image';
+            this.active = this.imageDialog;
+        } else if (this.$media.is('a.o_image')) {
+            tabToShow = 'document';
+            this.active = this.documentDialog;
+        } else if (this.$media.hasClass('media_iframe_video')) {
+            tabToShow = 'video';
+            this.active = this.videoDialog;
+        } else if (this.$media.parent().hasClass('media_iframe_video')) {
+            this.$media = this.$media.parent();
+            this.media = this.$media[0];
+            tabToShow = 'video';
+            this.active = this.videoDialog;
+        }
 
         this.opened(function () {
-            var tabToShow = 'icon';
-            if (!self.media || self.$media.is('img')) {
-                tabToShow = 'image';
-            } else if (self.$media.is('a.o_image')) {
-                tabToShow = 'document';
-            } else if (self.$media.hasClass('media_iframe_video')) {
-                tabToShow = 'video';
-            } else if (self.$media.parent().hasClass('media_iframe_video')) {
-                self.$media = self.$media.parent();
-                self.media = self.$media[0];
-                tabToShow = 'video';
-            } 
             self.$('[href="#editor-media-' + tabToShow + '"]').tab('show');
         });
 
@@ -118,7 +124,7 @@ var MediaDialog = Dialog.extend({
         }
 
         return $.when.apply($, defs).then(function () {
-            self._setActive(self.imageDialog);
+            self._setActive(self.active);
             self._updateControlPanel();
         });
     },

@@ -70,20 +70,14 @@ var MediaPlugin = AbstractPlugin.extend({
     removeMedia: function () {
         this.context.invoke('editor.beforeCommand');
         var target = this.context.invoke('editor.restoreTarget');
-        var parent = target.parentNode;
-        $(target).remove();
-        this.context.invoke('editor.saveTarget', parent);
+        var point = this._removeMedia(target);
+        var rng = range.create(this.editable);
+        rng.sc = rng.ec = point.node;
+        rng.so = rng.eo = point.offset;
+        rng.normalize().select();
+        this.context.invoke('editor.saveRange');
+        this.context.invoke('editor.clearTarget');
         this.hidePopovers();
-        if (/^[\s\u00A0\u200B]*$/.test(parent.innerHTML)) {
-            var innerEl;
-            if (this.options.isUnbreakableNode(parent)) {
-                innerEl = this.document.createElement('p');
-                $(innerEl).append(this.document.createElement('br'));
-            } else {
-                innerEl = this.document.createElement('br');
-            }
-            $(parent).append(innerEl);
-        }
         this.context.invoke('editor.afterCommand');
     },
     update: function (target) {
@@ -95,6 +89,10 @@ var MediaPlugin = AbstractPlugin.extend({
         }
 
         this.context.triggerEvent('focusnode', target);
+
+        if (dom.isMedia(target)) {
+            this.context.invoke('editor.saveTarget', target);
+        }
 
         if (dom.isImg(target)) {
             this.context.invoke('ImagePlugin.show', target, this.mousePosition);
@@ -123,30 +121,38 @@ var MediaPlugin = AbstractPlugin.extend({
         var deferred = $.Deferred();
         var newMedia = data.media;
         this._wrapCommand(function () {
+            var rng = range.create(this.editable);
+
             if (newMedia.tagName !== "IMG") {
                 $(newMedia).filter('a.o_image:empty, span.fa:empty').text(" "); // Required for editing (delete, backspace) with summernote
                 deferred.resolve();
             } else {
                 $(newMedia).one('load error abort', deferred.resolve.bind(deferred));
             }
+
             if (previous) {
-                if (dom.isVideo(newMedia)) {
-                    self.removeMedia(previous);
-                    self.insertMedia(undefined, {media: newMedia});
-                } else {
-                    $(previous).replaceWith(newMedia);
-                }
-            } else if (dom.isVideo(newMedia)) {
+                var point = this._removeMedia(previous);
+                rng.sc = rng.ec = point.node;
+                rng.so = rng.eo = point.offset;
+                rng.normalize().select();
+                this.editable.normalize();
+                this.context.invoke('editor.saveRange');
+                this.context.invoke('editor.clearTarget');
+            }
+
+            if (dom.isVideo(newMedia)) {
                 this.context.invoke('HelperPlugin.insertBlockNode', newMedia);
             } else {
-                var rng = range.create(this.editable);
                 var childIndex = rng.so ? rng.so - 1 : rng.so;
                 if (rng.sc.childNodes.length && rng.sc.childNodes[childIndex].tagName === 'BR') {
                     $(rng.sc.childNodes[childIndex]).remove();
                 }
                 rng.insertNode(newMedia);
             }
+            this.context.invoke('editor.saveRange');
+            this.context.invoke('editor.saveTarget', newMedia);
             this.context.triggerEvent('focusnode', newMedia);
+            this.updatePopoverAfterEdit(newMedia);
         })();
 
         deferred.then(this.updatePopoverAfterEdit.bind(this, newMedia));
@@ -203,6 +209,55 @@ var MediaPlugin = AbstractPlugin.extend({
         var padding = [null, 'padding-small', 'padding-medium', 'padding-large', 'padding-xl'];
         var values = _.zip(padding, this.lang.image.paddingList);
         this._createDropdownButton('padding', this.options.icons.padding, this.lang.image.padding, values);
+    },
+    _removeMedia: function (target) {
+        var check = function (point) {
+            if (point.node === target) {
+                return false;
+            }
+            return !point.node || this.options.isEditableNode(point.node) &&
+                (point.node.tagName === "BR" || this.context.invoke('HelperPlugin.isVisibleText', point.node));
+        }.bind(this);
+        var parent = target.parentNode;
+        var offset = [].indexOf.call(parent.childNodes, target);
+        var next = false;
+        var point = dom.prevPointUntil({node: target, offset: 0}, check);
+        if (!point || !point.node) {
+            next = true;
+            point = dom.nextPointUntil({node: target, offset: 0}, check);
+        }
+
+        $(target).remove();
+
+        if (dom.isVideo(target)) {
+            point = this.context.invoke('HelperPlugin.deleteEdge', point.node, next ? 'prev' : 'next');
+        }
+
+        if (/^[\s\u200B]*$/.test(parent.innerHTML)) {
+            var br = this.document.createElement('br');
+            if (this.options.isUnbreakableNode(parent)) {
+                var innerEl = this.document.createElement('p');
+                $(parent).append($(innerEl).append(br));
+            } else {
+                $(parent).append(br);
+            }
+            point = {
+                node: br.parentNode,
+                offset: 0,
+            };
+        }
+
+        if (point.node.tagName === "BR" && point.node.parentNode) {
+            point = {
+                node: point.node.parentNode,
+                offset: [].indexOf.call(point.node.parentNode.childNodes, point.node),
+            };
+        }
+
+        return point || {
+            node: parent,
+            offset: offset,
+        };
     },
     _selectTarget: function (target) {
         if (!target) {
