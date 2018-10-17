@@ -144,10 +144,15 @@ var KeyboardPlugin = AbstractPlugin.extend({
         if (!range.sc.tagName && range.so === dom.nodeLength(range.sc) - 1 && range.sc.textContent.slice(range.so) === '\u200B') {
             range.sc.textContent = range.sc.textContent.slice(0, range.so);
         }
+        if (direction === 'prev' && range.so === 1 && range.sc.childElementCount === 1 && range.sc.firstChild.tagName === "BR") {
+                // If we're after a BR in an element that has only a BR, and moving in direction prev: move before the BR
+                range.so = 0;
+            }
 
         if (deleteNodes) {
             direction = 'next';
-        } else  if (direction === 'next' && range.so === dom.nodeLength(range.sc) || direction === 'prev' && range.so === 0) {
+        } else  if (direction === 'next' && range.so === dom.nodeLength(range.sc) ||
+                    direction === 'prev' && range.so === 0) {
             var rest = this.context.invoke('HelperPlugin.deleteEdge', range.sc, direction);
             deleteNodes = !!rest;
             if (deleteNodes) {

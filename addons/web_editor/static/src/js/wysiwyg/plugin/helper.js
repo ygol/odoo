@@ -19,15 +19,17 @@ var HelperPlugin = AbstractPlugin.extend({
         if (dom.isText(node)) {
             return dom.isText(otherNode);
         }
+        this.removeBlankAttrs(node);
+        this.removeBlankAttrs(otherNode);
+        this.orderClass(node);
+        this.orderStyle(node);
+        this.orderClass(otherNode);
+        this.orderStyle(otherNode);
         if ((!node.attributes) !== (!otherNode.attributes) ||
             node.attributes.length !== otherNode.attributes.length ||
             node.tagName != otherNode.tagName) {
             return false;
         }
-        this.orderClass(node);
-        this.orderStyle(node);
-        this.orderClass(otherNode);
-        this.orderStyle(otherNode);
         for (var i = 0; i < node.attributes.length; i++) {
             var attr = node.attributes[i];
             var otherAttr = otherNode.attributes[i];
@@ -186,7 +188,10 @@ var HelperPlugin = AbstractPlugin.extend({
                         node: deep,
                         offset: dom.nodeLength(deep),
                     };
-                    $next.append($(node).contents());
+                    if (/\S|\u00A0|\u200B/.test(node.textContent) || node.childElementCount > 1 ||
+                        node.firstElementChild && node.firstElementChild.tagName !== "BR") {
+                        $next.append($(node).contents());
+                    }
                     $(node).remove();
                 } else {
                     var deep = this.lastChild(node);
@@ -356,6 +361,17 @@ var HelperPlugin = AbstractPlugin.extend({
             node = node.parentNode;
         }
         return path;
+    },
+    /**
+     * 
+     */
+    removeBlankAttrs: function (node) {
+        _.each(node.attributes, function (attr) {
+            if (!attr.value) {
+                node.removeAttribute(attr.name);
+            }
+        });
+        return node
     },
     /**
      * 
