@@ -262,25 +262,25 @@ var Wysiwyg = Widget.extend({
                 ['float', ['alignLeft', 'alignCenter', 'alignRight', 'alignNone']],
                 ['imageShape'],
                 ['cropImage'],
-                ['media', ['mediaPlugin', 'removeMedia']],
+                ['media', ['mediaPlugin', 'removePluginMedia']],
                 ['alt']
             ],
             video: [
                 ['padding'],
                 ['imagesize', ['imageSize100', 'imageSize50', 'imageSize25']],
                 ['float', ['alignLeft', 'alignCenter', 'alignRight', 'alignNone']],
-                ['media', ['mediaPlugin', 'removeMedia']]
+                ['media', ['mediaPlugin', 'removePluginMedia']]
             ],
             icon: [
                 ['padding'],
                 ['faSize'],
                 ['float', ['alignLeft', 'alignCenter', 'alignRight', 'alignNone']],
                 ['faSpin'],
-                ['media', ['mediaPlugin', 'removeMedia']]
+                ['media', ['mediaPlugin', 'removePluginMedia']]
             ],
             document: [
                 ['float', ['alignLeft', 'alignCenter', 'alignRight', 'alignNone']],
-                ['media', ['mediaPlugin', 'removeMedia']]
+                ['media', ['mediaPlugin', 'removePluginMedia']]
             ],
             link: [
                 ['link', ['linkPlugin', 'unlink']]

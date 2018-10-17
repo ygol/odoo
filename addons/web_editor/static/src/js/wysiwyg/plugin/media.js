@@ -75,7 +75,14 @@ var MediaPlugin = AbstractPlugin.extend({
         this.context.invoke('editor.saveTarget', parent);
         this.hidePopovers();
         if (/^[\s\u00A0\u200B]*$/.test(parent.innerHTML)) {
-            parent.innerHTML = this.options.isUnbreakableNode(parent) ? '<p><br/></p>' : '<br/>';
+            var innerEl;
+            if (this.options.isUnbreakableNode(parent)) {
+                innerEl = this.document.createElement('p');
+                $(innerEl).append(this.document.createElement('br'));
+            } else {
+                innerEl = this.document.createElement('br');
+            }
+            $(parent).append(innerEl);
         }
         this.context.invoke('editor.afterCommand');
     },
@@ -170,7 +177,7 @@ var MediaPlugin = AbstractPlugin.extend({
             }).render();
         });
 
-        this.context.memo('button.removeMedia', function () {
+        this.context.memo('button.removePluginMedia', function () {
             return self.context.invoke('buttons.button', {
                 contents: self.ui.icon(self.options.icons.trash),
                 tooltip: self.lang.image.remove,
