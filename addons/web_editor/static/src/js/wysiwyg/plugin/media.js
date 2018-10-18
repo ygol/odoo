@@ -376,15 +376,22 @@ var AbstractMediaPlugin = AbstractPlugin.extend({
     // Private
     //--------------------------------------------------------------------------
 
+    _popoverFitWindow: function (left, top, margin) {
+        margin = margin || this.options.POPOVER_MARGIN;
+        var isBeyondBounds = left + this.$popover.width() >= this.window.innerWidth;
+        return {
+            left: isBeyondBounds ? this.window.innerWidth - this.$popover.width() - margin : left,
+            top: top > 0 ? top : margin,
+        }
+    },
     _popoverPosition: function (target, mousePosition) {
         var posContainer = this.$popover.parent().offset();
         var pos = $(target).offset();
-        var left = pos.left - posContainer.left;
-        var top = pos.top - posContainer.top;
+        var popoverPos = this._popoverFitWindow(pos.left - posContainer.left, pos.top - posContainer.top);
         this.$popover.css({
             display: 'block',
-            left: left + this.$popover.width() < this.window.innerWidth ? left : this.window.innerWidth - this.$popover.width() - this.options.POPOVER_MARGIN,
-            top: top > 0 ? top : this.options.POPOVER_MARGIN,
+            left: popoverPos.left,
+            top: popoverPos.top,
         });
     },
     _isMedia: function (target) {},
@@ -459,12 +466,11 @@ var ImagePlugin = AbstractMediaPlugin.extend({
 
     _popoverPosition: function (target, mousePosition) {
         var posContainer = this.$popover.parent().offset();
-        var left = mousePosition.pageX - posContainer.left - 10;
-        var top = mousePosition.pageY - posContainer.top + 10;
+        var popoverPos = this._popoverFitWindow(mousePosition.pageX - posContainer.left - 10, mousePosition.pageY - posContainer.top + 10);
         this.$popover.css({
             display: 'block',
-            left: left + this.$popover.width() < this.window.innerWidth ? left : this.window.innerWidth - this.$popover.width() - this.options.POPOVER_MARGIN,
-            top: top > 0 ? top : this.options.POPOVER_MARGIN,
+            left: popoverPos.left,
+            top: popoverPos.top,
         });
     },
     /**
@@ -642,12 +648,12 @@ var IconPlugin = AbstractMediaPlugin.extend({
 
     _popoverPosition: function (target, mousePosition) {
         this._super.apply(this, arguments);
-        var left = parseInt(this.$popover.css('left')) + parseInt($(target).css('font-size')) - 5;
-        var top = parseInt(this.$popover.css('top')) + parseInt($(target).css('font-size')) - 5;
+        var popoverPos = this._popoverFitWindow(parseInt(this.$popover.css('left')) + parseInt($(target).css('font-size')) - 5,
+                                                parseInt(this.$popover.css('top')) + parseInt($(target).css('font-size')) - 5);
         this.$popover.css({
             display: 'block',
-            left: left + this.$popover.width() < this.window.innerWidth ? left : this.window.innerWidth - this.$popover.width() - this.options.POPOVER_MARGIN,
-            top: top > 0 ? top : this.options.POPOVER_MARGIN,
+            left: popoverPos.left,
+            top: popoverPos.top,
         });
     },
     _isMedia: function (target) {
@@ -692,12 +698,12 @@ var DocumentPlugin = AbstractMediaPlugin.extend({
      */
     _popoverPosition: function (target, mousePosition) {
         this._super.apply(this, arguments);
-        var left = parseInt(this.$popover.css('left')) + $(target).width() - 15;
-        var top = parseInt(this.$popover.css('top')) - 15;
+        var popoverPos = this._popoverFitWindow(parseInt(this.$popover.css('left')) + $(target).width() - 15,
+                                                parseInt(this.$popover.css('top')) - 15);
         this.$popover.css({
             display: 'block',
-            left: left + this.$popover.width() < this.window.innerWidth ? left : this.window.innerWidth - this.$popover.width() - this.options.POPOVER_MARGIN,
-            top: top > 0 ? top : this.options.POPOVER_MARGIN,
+            left: popoverPos.left,
+            top: popoverPos.top,
         });
     },
     _isMedia: function (target) {
