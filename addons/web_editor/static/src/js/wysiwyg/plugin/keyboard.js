@@ -110,6 +110,29 @@ var KeyboardPlugin = AbstractPlugin.extend({
      * 
      * @private
      */
+    _completeEmptyNode: function (point) {
+        if (point.node.tagName && point.node.tagName !== 'BR' && point.node.innerHTML === '') {
+            var text = this.document.createTextNode('');
+            point.node.appendChild(text);
+            point.node = text;
+            point.offset = 0;
+        }
+        if (point.node.parentNode.innerHTML === '') {
+            if (this.context.invoke('HelperPlugin.isNodeBlockType', point.node.parentNode)) {
+                point.node = point.node.parentNode;
+                point.node.innerHTML = '<br/>';
+                point.offset = 0;
+            } else {
+                point.node.textContent = '\u200B';
+                point.offset = 1;
+            }
+        }
+        return point;
+    },
+    /**
+     * 
+     * @private
+     */
     _deleteSelection: function () {
         var range = this.context.invoke('editor.createRange');
         if (range.isCollapsed()) {
@@ -118,14 +141,13 @@ var KeyboardPlugin = AbstractPlugin.extend({
         var point = this.context.invoke('HelperPlugin.deleteBetween',
                         {node: range.sc, offset: range.so},
                         {node: range.ec, offset: range.eo});
+
+        point = this._completeEmptyNode(point);
+
         range.ec = range.sc = point.node;
         range.eo = range.so = point.offset;
-        if (range.sc.parentNode.innerHTML === '') {
-            range.sc = range.ec = range.sc.parentNode;
-            range.sc.innerHTML = '<br/>';
-            range.so = range.eo = 0;
-        }
         range.normalize().select();
+        this.editable.normalize();
         this.context.invoke('editor.saveRange');
         return true;
     },
@@ -145,9 +167,9 @@ var KeyboardPlugin = AbstractPlugin.extend({
             range.sc.textContent = range.sc.textContent.slice(0, range.so);
         }
         if (direction === 'prev' && range.so === 1 && range.sc.childElementCount === 1 && range.sc.firstChild.tagName === "BR") {
-                // If we're after a BR in an element that has only a BR, and moving in direction prev: move before the BR
-                range.so = 0;
-            }
+            // If we're after a BR in an element that has only a BR, and moving in direction prev: move before the BR
+            range.so = 0;
+        }
 
         if (deleteNodes) {
             direction = 'next';
@@ -206,17 +228,13 @@ var KeyboardPlugin = AbstractPlugin.extend({
             range.so = 0;
         }
 
-        if (range.sc.tagName && range.sc.tagName !== 'BR' && range.sc.innerHTML === '') {
-            range.sc.innerHTML = '<br/>';
-            range.ec = range.sc;
-            range.so = range.eo = 0;
-        } else if (range.sc.parentNode.innerHTML === '') {
-            range.sc = range.ec = range.sc.parentNode;
-            range.sc.innerHTML = '<br/>';
-            range.so = range.eo = 0;
-        }
+        var point = this.context.invoke('HelperPlugin.removeEmptyInlineNode', {node: range.sc, offset: range.so});
+        point = this._completeEmptyNode(point);
+        range.ec = range.sc = point.node;
+        range.eo = range.so = point.offset;
 
         range.collapse(direction === 'prev').normalize().select();
+        this.editable.normalize();
         return true;
     },
     /**
@@ -445,9 +463,8 @@ var KeyboardPlugin = AbstractPlugin.extend({
                 this._normalize();
                 this.context.invoke('editor.saveRange');
                 e.preventDefault();
-                this.$editable.trigger('change');
+                this.context.invoke('editor.afterCommand');
             }
-            this.context.invoke('editor.afterCommand');
         }
     },
     /**

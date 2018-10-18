@@ -391,7 +391,14 @@ var testKeyboard = function ($editable, assert, keyboardTests, addTests) {
 
             // test content
             if (test.test.content) {
-                assert.strictEqual($editable.html().replace(/\u200B/g, '&#8203;'), test.test.content.replace(/\u200B/g, '&#8203;'), test.name);
+                var value = $editable.html().replace(/\u200B/g, '&#8203;');
+                var result = test.test.content.replace(/\u200B/g, '&#8203;');
+                assert.strictEqual(value, result, test.name);
+
+                if (test.test.start && value !== result) {
+                    assert.notOk("Wrong DOM (see previous assert)", test.name + " (carret position)");
+                    return;
+                }
             }
 
             // test carret position

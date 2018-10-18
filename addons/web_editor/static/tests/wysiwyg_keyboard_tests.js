@@ -215,6 +215,14 @@ var keyboardTestsChar = [
             },
         },
     },
+    { name: "a on a selection of all the contents of a complex dom",
+        content: "<p><b>dom</b></p><p><b>to<br>completely</b>remov<i>e</i></p>",
+        steps: [{start: "p:contents()[0]->0", end: "i:contents()[0]->1", key: 'a'}],
+        test: {
+            content: "<p><b>a</b></p>",
+            start: "b:contents()[0]->1",
+        },
+    },
 ];
 
 QUnit.test('Char', function (assert) {
@@ -967,8 +975,8 @@ var keyboardTestsBackspace = [
         content: "<p><b>dom</b></p><p><b>to<br>completely</b>remov<i>e</i></p>",
         steps: [{start: "p:contents()[0]->0", end: "i:contents()[0]->1", key: 'BACK_SPACE'}],
         test: {
-            content: "<p><b><br></b></p>",
-            start: "b->1",
+            content: "<p><br></p>",
+            start: "p->1",
         },
     },
     { name: "BACKSPACE after br tag",
@@ -1207,8 +1215,8 @@ var keyboardTestsDelete = [
         content: "<p><b>dom</b></p><p><b>to<br>completely</b>remov<i>e</i></p>",
         steps: [{start: "p:contents()[0]->0", end: "i:contents()[0]->1", key: 'DELETE'}],
         test: {
-            content: "<p><b><br></b></p>",
-            start: "b->1",
+            content: "<p><br></p>",
+            start: "p->1",
         },
     },
     { name: "DELETE before only character in a p tag in a li",
@@ -1237,6 +1245,75 @@ var keyboardTestsDelete = [
     },
 ];
 
+var keyboardTestsDeleteDOM = 
+    '<div style="margin:0px; padding:0px;">\n'+
+    '    <p style="margin:0px; padding:0px;">\n'+
+    '        Dear Ready Mat\n'+
+    '        <br><br>\n'+
+    '        Here is\n'+
+    '            the quotation <strong>SO003</strong>\n'+
+    '        amounting in <strong>$&nbsp;1,127.50</strong>\n'+
+    '        from YourCompany.\n'+
+    '        <br><br>\n'+
+    '        Do not hesitate to contact us if you have any question.\n'+
+    '        <br><br>\n'+
+    '    </p>\n'+
+    '    <table width="100%">\n'+
+    '        <tbody><tr>\n'+
+    '            <td>\n'+
+    '                <strong>Virtual Interior Design</strong><br>On Site \n'+
+    '            </td>\n'+
+    '            <td width="100px" align="right">\n'+
+    '                10 Hour(s)\n'+
+    '            </td>\n'+
+    '        </tr>\n'+
+    '    </tbody></table>\n'+
+    '</div>\n'+
+    '            ';
+keyboardTestsDelete.push(
+    { name: "DELETE text selection in complexe dom",
+        content: keyboardTestsDeleteDOM,
+        steps: [
+            {start: "p:contents()[0]->20", end: 'p:contents()[0]->23', key: 'DELETE'},
+            {start: "p:contents()[10]->55", end: 'p:contents()[10]->63', key: 'DELETE'},
+        ],
+        test: {
+            content: keyboardTestsDeleteDOM.replace('question', '').replace('Mat', ''),
+            start: "p:contents()[10]->55",
+        },
+    },
+    { name: "DELETE br in complexe dom",
+        content: keyboardTestsDeleteDOM,
+        steps: [
+            {start: "p->2", key: 'DELETE'},
+        ],
+        test: {
+            content: keyboardTestsDeleteDOM.replace('<br>', ''),
+            start: "p:contents()[2]->0",
+        },
+    },
+    { name: "DELETE selection (all strong text content) in complexe dom",
+        content: keyboardTestsDeleteDOM,
+        steps: [
+            {start: "strong:eq(0):contents()[0]->0", end: 'strong:eq(0):contents()[0]->5', key: 'DELETE'},
+        ],
+        test: {
+            content: keyboardTestsDeleteDOM.replace(/<strong>SO003<\/strong>\s+/, '&nbsp;'),
+            start: "p:contents()[3]->43",
+        },
+    },
+    { name: "DELETE selection (in strong text content before a br) in complexe dom",
+        content: keyboardTestsDeleteDOM,
+        steps: [
+            {start: "strong:eq(2):contents()[0]->17", end: 'strong:eq(2):contents()[0]->23', key: 'DELETE'},
+        ],
+        test: {
+            content: keyboardTestsDeleteDOM.replace(/Design/, ''),
+            start: "strong:eq(2):contents()[0]->17",
+        },
+    }
+);
+
 QUnit.test('Delete', function (assert) {
     var done = assert.async();
     weTestUtils.createWysiwyg({
@@ -1244,7 +1321,7 @@ QUnit.test('Delete', function (assert) {
     }).then(function (wysiwyg) {
         var $editable = wysiwyg.$('.note-editable');
         weTestUtils.testKeyboard($editable, assert, keyboardTestsDelete).then(function () {
-            wysiwyg.destroy();
+            // wysiwyg.destroy();
             done();
         });
     });

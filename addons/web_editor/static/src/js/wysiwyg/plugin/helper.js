@@ -16,8 +16,14 @@ var HelperPlugin = AbstractPlugin.extend({
      * 
      */
     compareNodes: function (node, otherNode) {
+        if (!otherNode || !node) {
+            return false;
+        }
         if (dom.isText(node)) {
             return dom.isText(otherNode);
+        }
+        if (dom.isText(otherNode)) {
+            return false;
         }
         this.removeBlankAttrs(node);
         this.removeBlankAttrs(otherNode);
@@ -50,50 +56,31 @@ var HelperPlugin = AbstractPlugin.extend({
      * @param {Integer} pointB.offset
      */
     deleteBetween: function (pointA, pointB) {
-        if (pointB.node.childNodes[pointB.offset] || pointB.offset === dom.nodeLength(pointB.node)) {
-            pointB = dom.nextPointUntil(pointB, function (point) {
-                return !point.offset && !point.node.tagName;
-            }.bind(this)) || pointB;
+        if (pointB.node.childNodes[pointB.offset]) {
+            pointB = {
+                node: this.firstChild(pointB.node.childNodes[pointB.offset]),
+                offset: 0,
+            };
         }
-        var beginPath = this.path(pointA.node);
         var changed;
+        var sameNode = pointB.node === pointA.node;
         var commonAncestor = dom.commonAncestor(pointA.node, pointB.node);
-
-        var scAncestor = dom.ancestor(pointA.node, function (node) {
-            return node === commonAncestor || this.options.isUnbreakableNode(node.parentNode);
-        }.bind(this));
-
-        var next = this.splitTree(scAncestor, {node: pointA.node, offset: pointA.offset},
-                                              {nextText: true});
-
-        pointA.node = this.fromPath(beginPath);
-
-        if (pointB.node === pointA.node) {
-            pointB.node = next;
-            pointB.offset -= dom.nodeLength(pointA.node);
-        }
 
         var ecAncestor = dom.ancestor(pointB.node, function (node) {
             return node === commonAncestor || this.options.isUnbreakableNode(node.parentNode);
         }.bind(this));
+        var next = this.splitTree(ecAncestor, pointB, {nextText: true});
 
-        if (pointB.offset === dom.nodeLength(pointB.node)) {
-            pointB = dom.nextPointUntil(pointB, dom.isLeftEdgePoint);
-        }
-
-        if (pointB) {
-            ecAncestor = dom.ancestor(pointB.node, function (node) {
-                return node === commonAncestor || this.options.isUnbreakableNode(node.parentNode);
-            }.bind(this));
-            next = this.splitTree(ecAncestor, {node: pointB.node, offset: pointB.offset},
+        var scAncestor = dom.ancestor(pointA.node, function (node) {
+            return node === commonAncestor || this.options.isUnbreakableNode(node.parentNode);
+        }.bind(this));
+        this.splitTree(scAncestor, {node: pointA.node, offset: pointA.offset},
                                               {nextText: true});
-        } else {
-            next = null;
-        }
+        pointA.offset = dom.nodeLength(pointA.node);
 
         var nodes = [];
-        dom.nextPointUntil({node: pointA.node, offset: pointA.offset}, function (point) {
-            if (point.node === next) {
+        dom.nextPointUntil(pointA, function (point) {
+            if (point.node === next || !point.node) {
                 return true;
             }
             if (dom.isText(point.node) && point.offset) {
@@ -106,13 +93,19 @@ var HelperPlugin = AbstractPlugin.extend({
             if (nodes.indexOf(target) === -1 && !dom.ancestor(target, function (target) { return nodes.indexOf(target) !== -1; })) {
                 nodes.push(target);
             }
-        });
+        }.bind(this));
         $(nodes).remove();
 
         changed = !!nodes.length;
+        var toMerge = changed && pointA.node.parentNode !== next.parentNode;
 
-        if (changed) {
-            this.deleteEdge(pointA.node, 'next');
+        var point = this.removeEmptyInlineNode({node: this.firstChild(next), offset: 0});
+        if (!$.contains(this.editable, pointA.node)) {
+            pointA = point;
+        }
+
+        if (toMerge) {
+            pointA = this.deleteEdge(pointA.node, 'next') || pointA;
         }
 
         return {
@@ -129,6 +122,7 @@ var HelperPlugin = AbstractPlugin.extend({
      * @returns {object} {node, offset}
      */
     deleteEdge: function (node, direction) {
+        var initial = node;
         var prevOrNext = direction === 'prev' ? 'previousSibling' : 'nextSibling';
 
         if (node.tagName === 'BR' && node.nextSibling) {
@@ -157,17 +151,19 @@ var HelperPlugin = AbstractPlugin.extend({
 
         var result = false;
         while((node = nodes.pop())) {
-            if (!node[prevOrNext] ||
-                !(node.tagName || node[prevOrNext].tagName === 'BR') ||
-                !node[prevOrNext].tagName) {
+            var next = node[prevOrNext];
+            if (!next ||
+                !(node.tagName || next.tagName === 'BR') ||
+                !next.tagName) {
                 continue;
             }
 
-            if (!brRemoved && node[prevOrNext].tagName === 'BR') {
-                $(node[prevOrNext]).remove();
+            if (!brRemoved && next.tagName === 'BR' && (!next[prevOrNext] || this.compareNodes(node, next[prevOrNext]))) {
+                $(next).remove();
+                next = node[prevOrNext];
                 result = {
-                    node: node[prevOrNext] || node,
-                    offset: (node[prevOrNext] ? direction === 'prev' : direction === 'next') ? dom.nodeLength(node[prevOrNext]) : 0,
+                    node: next || node,
+                    offset: (next ? direction === 'prev' : direction === 'next') ? dom.nodeLength(next) : 0,
                 };
                 if (!ifBrRemovedAndMerge) {
                     continue;
@@ -176,10 +172,10 @@ var HelperPlugin = AbstractPlugin.extend({
                 ifBrRemovedAndMerge = false;
             }
 
-            if (!this.compareNodes(node, node[prevOrNext])) {
+            if (!this.compareNodes(node, next)) {
                 continue;
             }
-            var next = node[prevOrNext];
+            next = node[prevOrNext];
             var $next = $(next);
             if (next.tagName) {
                 if (direction === 'prev') {
@@ -442,12 +438,56 @@ var HelperPlugin = AbstractPlugin.extend({
     /**
      * 
      */
+    removeEmptyInlineNode: function (point) {
+        var node = point.node;
+        if (!point.node.tagName && !point.node.textContent.length) {
+            node = node.parentNode;
+        }
+        var prev, next;
+        while (node.tagName !== 'BR' &&
+            (node.tagName ? node.innerHTML : node.textContent) === '' &&
+            !this.isNodeBlockType(node) &&
+            this.options.isEditableNode(node.parentNode) &&
+            !dom.isMedia(node)) {
+            prev = node.previousSibling;
+            next = node.nextSibling;
+            point = {node: node.parentNode, offset: [].indexOf.call(node.parentNode.childNodes, node)};
+            $(node).remove();
+            node = point.node;
+        }
+        if (next && !next.tagName) {
+            if (/^\s+([^\s<])/.test(next.textContent)) {
+                next.textContent = next.textContent.replace(/^\s+/, '\u00A0');
+            }
+        }
+        if (prev) {
+            if(!prev.tagName) {
+                if (/([^\s>])\s+$/.test(prev.textContent)) {
+                    prev.textContent = prev.textContent.replace(/\s+$/, ' ');
+                }
+            }
+            point = {node: prev, offset: dom.nodeLength(prev)};
+        }
+        return point;
+    },
+    /**
+     * 
+     */
     splitTree: function (root, point, options) {
         var nextText;
-        if (options && options.nextText && dom.isText(point.node)) {
+        if (options && options.nextText && !point.node.tagName) {
             nextText = point.node.splitText(point.offset);
         }
+        var emptyText = false;
+        if (!point.node.tagName && point.node.textContent === "") {
+            emptyText = true;
+            point.node.textContent = '\u200B';
+            point.offset = 1;
+        }
         var next = dom.splitTree(root, point, options);
+        if (emptyText) {
+            point.node.textContent = '';
+        }
         var result = nextText || next;
         var att = nextText ? 'textContent' : 'innerHTML';
         if (/^\s+([^\s<])/.test(result[att])) {
