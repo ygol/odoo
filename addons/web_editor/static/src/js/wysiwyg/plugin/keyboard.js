@@ -441,8 +441,17 @@ var KeyboardPlugin = AbstractPlugin.extend({
         var handled = false;
 
         if (e.key && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+            clearTimeout(this.lastCharIsVisibleTime);
+            this.lastCharIsVisibleTime = setTimeout(function () {
+                this.lastCharIsVisible = false;
+            }.bind(this), 500);
+            if (!this.lastCharIsVisible) {
+                this.lastCharIsVisible = true;
+                this.context.invoke('HistoryPlugin.recordUndo');
+            }
             this._onVisibleChar(e);
         } else {
+            this.lastCharIsVisible = false;
             this.context.invoke('editor.beforeCommand');
             switch (e.keyCode) {
                 case 8:  // BACKSPACE

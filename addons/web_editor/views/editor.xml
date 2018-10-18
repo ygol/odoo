@@ -45,6 +45,7 @@
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/helper.js"/>
 
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/toolbar.js"/>
+    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/history.js"/>
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/table.js"/>
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/text.js"/>
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/editor.js"/>

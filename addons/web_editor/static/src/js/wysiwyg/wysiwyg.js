@@ -204,6 +204,7 @@ var Wysiwyg = Widget.extend({
      */
     setValue: function (value) {
         this._dirty = true;
+        this._summernote.invoke('HistoryPlugin.clear');
         this._summernote.invoke('editor.hidePopover');
         this._summernote.invoke('editor.clearTarget');
         this.getEditable().html(value + '').change();

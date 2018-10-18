@@ -2,7 +2,6 @@ odoo.define('web_editor.wysiwyg.plugin.table', function (require) {
 'use strict';
 
 var Plugins = require('web_editor.wysiwyg.plugins');
-var Abstract = require('web_editor.wysiwyg.plugin.abstract');
 var registry = require('web_editor.wysiwyg.plugin.registry');
 
 var dom = $.summernote.dom;

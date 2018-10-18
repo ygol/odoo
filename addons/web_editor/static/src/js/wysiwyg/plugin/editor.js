@@ -4,6 +4,7 @@ odoo.define('web_editor.wysiwyg.plugin.editor', function (require) {
 var Plugins = require('web_editor.wysiwyg.plugins');
 var registry = require('web_editor.wysiwyg.plugin.registry');
 var TablePlugin = require('web_editor.wysiwyg.plugin.table');
+var HistoryPlugin = require('web_editor.wysiwyg.plugin.history');
 
 
 var NewSummernoteEditor = Plugins.editor.extend({
@@ -18,9 +19,26 @@ var NewSummernoteEditor = Plugins.editor.extend({
     },
 
     //--------------------------------------------------------------------------
+    // Public summernote module API
+    //--------------------------------------------------------------------------
+
+    initialize: function () {
+        this.history = this.context.modules.HistoryPlugin;
+        this._super();
+    },
+
+    //--------------------------------------------------------------------------
     // Public
     //--------------------------------------------------------------------------
 
+    /**
+     * hide all popover
+     *
+     */
+    hidePopover: function () {
+        this.context.invoke('MediaPlugin.hidePopovers');
+        this.context.invoke('LinkPopover.hide');
+    },
     /**
      * change editor to fix the twice undo (CTRL-Z) with odoo integration
      *
@@ -29,14 +47,6 @@ var NewSummernoteEditor = Plugins.editor.extend({
     undo: function () {
         this.createRange();
         setTimeout(this._super.bind(this));
-    },
-    /**
-     * hide all popover
-     *
-     */
-    hidePopover: function () {
-        this.context.invoke('MediaPlugin.hidePopovers');
-        this.context.invoke('LinkPopover.hide');
     },
     /**
      * unlink

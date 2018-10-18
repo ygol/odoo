@@ -50,13 +50,22 @@ $('body').append($textarea);
 $textarea.summernote();
 var summernote = $textarea.data('summernote');
 
-_.each(['style', 'table', 'typing', 'bullet'], function (name) {
+_.each(['style', 'table', 'typing', 'bullet', 'history'], function (name) {
     var prototype = {};
     for (var k in summernote.modules.editor[name]) {
         prototype[k] = summernote.modules.editor[name][k];
     }
     plugins[name] = AbstractPlugin.extend(prototype);
 });
+
+var History = summernote.modules.editor.history.constructor;
+plugins.history.include({
+    init: function (context) {
+        this._super(context);
+        History.call(this, this.$editable);
+    },
+});
+
 try {
     $textarea.summernote('destroy');
 } catch (e) {
