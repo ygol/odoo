@@ -215,7 +215,7 @@ return {
             var current = this.def;
             var next = this.def = $.Deferred();
             this.unlockedDef = this.unlockedDef || $.Deferred();
-            return current.then(function() {
+            return current.done(function() {
                 return $.when(action()).always(function () {
                     next.resolve();
                     if (self.def.state() === 'resolved' && self.unlockedDef) {

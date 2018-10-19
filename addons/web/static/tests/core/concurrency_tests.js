@@ -8,9 +8,9 @@ QUnit.module('core', {}, function () {
     QUnit.module('concurrency');
 
 
-    QUnit.test('mutex: simple scheduling', function (assert) {
+    QUnit.only('mutex: simple scheduling', function (assert) {
         assert.expect(6);
-
+        var done = assert.async();
         var m = new concurrency.Mutex();
 
         var def1 = $.Deferred(),
@@ -29,6 +29,7 @@ QUnit.module('core', {}, function () {
         def2.resolve();
         assert.strictEqual(p1.state(), "resolved");
         assert.strictEqual(p2.state(), "resolved");
+        done();
     });
 
     QUnit.test('mutex: simpleScheduling2', function (assert) {
