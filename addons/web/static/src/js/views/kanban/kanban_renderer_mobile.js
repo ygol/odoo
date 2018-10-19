@@ -74,7 +74,7 @@ KanbanRenderer.include({
     /**
      * Displays the quick create record in the active column
      *
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     addQuickCreate: function () {
         return this.widgets[this.activeColumnIndex].addQuickCreate();
@@ -127,18 +127,18 @@ KanbanRenderer.include({
      * @private
      * @param {integer} moveToIndex index of the column to move to
      * @param {boolean} [animate=false] set to true to animate
-     * @returns {Deferred} resolved when the new current group has been loaded
+     * @returns {Promise} resolved when the new current group has been loaded
      *   and displayed
      */
     _moveToGroup: function (moveToIndex, animate) {
         var self = this;
         if (moveToIndex < 0 || moveToIndex >= this.widgets.length) {
-            return $.when();
+            return Promise.resolve();
         }
-        var def = $.Deferred();
         this.activeColumnIndex = moveToIndex;
         var column = this.widgets[this.activeColumnIndex];
-        this.trigger_up('kanban_load_records', {
+        return new Promise(function(resolve, reject) {
+            self.trigger_up('kanban_load_records', {
             columnID: column.db_id,
             onSuccess: function () {
                 // update the columns and tabs positions (optionally with an animation)
@@ -166,10 +166,10 @@ KanbanRenderer.include({
                         $tab[updateFunc]({left: '200%'});
                     }
                 });
-                def.resolve();
+                resolve();
             },
         });
-        return def;
+    });
     },
     /**
      * @override

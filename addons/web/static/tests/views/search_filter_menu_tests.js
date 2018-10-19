@@ -32,11 +32,12 @@ QUnit.module('FilterMenu', {
     },
 }, function () {
 
-    QUnit.test('simple rendering with no filter', function (assert) {
+    QUnit.test('simple rendering with no filter', async function (assert) {
         assert.expect(3);
 
         var filterMenu = createFilterMenu([], this.fields);
-        testUtils.dom.click(filterMenu.$('span.fa-filter'));
+        await testUtils.nextTick();
+        await testUtils.dom.click(filterMenu.$('span.fa-filter'));
         assert.containsNone(filterMenu, '.dropdown-divider');
         assert.containsNone(filterMenu, '.o_add_filter_menu');
         assert.containsOnce(filterMenu, '.o_add_custom_filter',
@@ -44,24 +45,26 @@ QUnit.module('FilterMenu', {
         filterMenu.destroy();
     });
 
-    QUnit.test('simple rendering with a filter', function (assert) {
+    QUnit.test('simple rendering with a filter', async function (assert) {
         assert.expect(2);
 
         var filterMenu = createFilterMenu(this.filters, this.fields);
+        await testUtils.nextTick();
         assert.containsN(filterMenu, '.dropdown-divider, .dropdown-item, .o_add_custom_filter', 4,
             'should have 4 elements: a hidden separator, a filter, a separator, a add custom filter item');
         assert.containsOnce(filterMenu, '.o_add_custom_filter');
         filterMenu.destroy();
     });
 
-    QUnit.test('click on add custom filter opens the submenu', function (assert) {
+    QUnit.test('click on add custom filter opens the submenu', async function (assert) {
         assert.expect(3);
 
         var filterMenu = createFilterMenu([], this.fields);
+        await testUtils.nextTick();
         // open menu dropdown
-        testUtils.dom.click(filterMenu.$('span.fa-filter'));
+        await testUtils.dom.click(filterMenu.$('span.fa-filter'));
         // open add custom filter submenu
-        testUtils.dom.click(filterMenu.$('.o_add_custom_filter'));
+        await testUtils.dom.click(filterMenu.$('.o_add_custom_filter'));
         assert.containsNone(filterMenu, '.dropdown-divider');
         assert.isVisible(filterMenu.$('.o_add_filter_menu'));
         assert.containsN(filterMenu, '.dropdown-item, .dropdown-item-text', 3,
@@ -70,16 +73,17 @@ QUnit.module('FilterMenu', {
         filterMenu.destroy();
     });
 
-    QUnit.test('removing last prop disable the apply button', function (assert) {
+    QUnit.test('removing last prop disable the apply button', async function (assert) {
         assert.expect(2);
 
         var filterMenu = createFilterMenu([], this.fields);
+        await testUtils.nextTick();
         // open menu dropdown and custom filter submenu
-        testUtils.dom.click(filterMenu.$('span.fa-filter'));
-        testUtils.dom.click(filterMenu.$('.o_add_custom_filter'));
+        await testUtils.dom.click(filterMenu.$('span.fa-filter'));
+        await testUtils.dom.click(filterMenu.$('.o_add_custom_filter'));
 
         // remove the current unique proposition
-        testUtils.dom.click(filterMenu.$('.o_searchview_extended_delete_prop'));
+        await testUtils.dom.click(filterMenu.$('.o_searchview_extended_delete_prop'));
 
         assert.containsNone(filterMenu, '.dropdown-divider');
         assert.containsN(filterMenu, '.dropdown-item, .dropdown-item-text', 2,
@@ -88,22 +92,23 @@ QUnit.module('FilterMenu', {
         filterMenu.destroy();
     });
 
-    QUnit.test('readding a proposition reenable apply button', function (assert) {
+    QUnit.test('readding a proposition reenable apply button', async function (assert) {
         assert.expect(1);
 
         var filterMenu = createFilterMenu([], this.fields);
+        await testUtils.nextTick();
         // open menu dropdown and custom filter submenu, remove existing prop
-        testUtils.dom.click(filterMenu.$('span.fa-filter'));
-        testUtils.dom.click(filterMenu.$('.o_add_custom_filter'));
-        testUtils.dom.click(filterMenu.$('.o_searchview_extended_delete_prop'));
+        await testUtils.dom.click(filterMenu.$('span.fa-filter'));
+        await testUtils.dom.click(filterMenu.$('.o_add_custom_filter'));
+        await testUtils.dom.click(filterMenu.$('.o_searchview_extended_delete_prop'));
         // read a proposition
-        testUtils.dom.click(filterMenu.$('.o_add_condition'));
+        await testUtils.dom.click(filterMenu.$('.o_add_condition'));
         assert.ok(!filterMenu.$('.o_apply_filter').attr('disabled'));
 
         filterMenu.destroy();
     });
 
-    QUnit.test('adding a simple filter works', function (assert) {
+    QUnit.test('adding a simple filter works', async function (assert) {
         assert.expect(6);
 
         delete this.fields.date_field;
@@ -124,10 +129,10 @@ QUnit.module('FilterMenu', {
             },
         });
         // open menu dropdown and custom filter submenu, remove existing prop
-        testUtils.dom.click(filterMenu.$('span.fa-filter'));
-        testUtils.dom.click(filterMenu.$('.o_add_custom_filter'));
+        await testUtils.dom.click(filterMenu.$('span.fa-filter'));
+        await testUtils.dom.click(filterMenu.$('.o_add_custom_filter'));
         // click on apply to activate filter
-        testUtils.dom.click(filterMenu.$('.o_apply_filter'));
+        await testUtils.dom.click(filterMenu.$('.o_apply_filter'));
         assert.containsNone(filterMenu, '.o_filter_condition');
         assert.containsN(filterMenu, '.dropdown-divider', 2);
         assert.isNotVisible(filterMenu.$('.dropdown-divider').eq(0));

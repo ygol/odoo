@@ -31,7 +31,7 @@ var ServicesMixin = require('web.ServicesMixin');
  *         },
  *         willStart: function () {
  *             // async work that need to be done before the widget is ready
- *             // this method should return a deferred
+ *             // this method should return a promise
  *         },
  *         start: function() {
  *             // stuff you want to make after the rendering, `this.$el` holds a correct value
@@ -135,10 +135,10 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * Method called between @see init and @see start. Performs asynchronous
      * calls required by the rendering and the start method.
      *
-     * This method should return a Deferred which is resolved when start can be
+     * This method should return a Promose which is resolved when start can be
      * executed.
      *
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     willStart: function () {
         var defs = [];
@@ -150,22 +150,22 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
         if (this.jsLibs || this.cssLibs || this.assetLibs) {
             defs.push(ajax.loadLibs(this));
         }
-        return $.when.apply($, defs);
+        return Promise.all(defs);
     },
     /**
      * Method called after rendering. Mostly used to bind actions, perform
      * asynchronous calls, etc...
      *
      * By convention, this method should return an object that can be passed to
-     * $.when() to inform the caller when this widget has been initialized.
+     * Promise.resolve() to inform the caller when this widget has been initialized.
      *
      * Note that, for historic reasons, many widgets still do work in the start
      * method that would be more suited to the willStart method.
      *
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     start: function () {
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * Destroys the current widget, also destroys all its children before
@@ -187,6 +187,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * Renders the current widget and appends it to the given jQuery object.
      *
      * @param {jQuery} target
+     * @returns {Promise}
      */
     appendTo: function (target) {
         var self = this;
@@ -198,6 +199,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * Attach the current widget to a dom element
      *
      * @param {jQuery} target
+     * @returns {Promise}
      */
     attachTo: function (target) {
         var self = this;
@@ -234,6 +236,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * object.
      *
      * @param {jQuery} target
+     * @returns {Promise}
      */
     insertAfter: function (target) {
         var self = this;
@@ -246,6 +249,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * object.
      *
      * @param {jQuery} target
+     * @returns {Promise}
      */
     insertBefore: function (target) {
         var self = this;
@@ -257,6 +261,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * Renders the current widget and prepends it to the given jQuery object.
      *
      * @param {jQuery} target
+     * @returns {Promise}
      */
     prependTo: function (target) {
         var self = this;
@@ -282,6 +287,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * Renders the current widget and replaces the given jQuery object.
      *
      * @param target A jQuery object or a Widget instance.
+     * @returns {Promise}
      */
     replace: function (target) {
         return this._widgetRenderAndInsert(_.bind(function (t) {
@@ -415,7 +421,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * @private
      * @param {function: jQuery -> any} insertion
      * @param {jQuery} target
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _widgetRenderAndInsert: function (insertion, target) {
         var self = this;

@@ -101,9 +101,9 @@ MailManager.include({
         // valid threadID, therefore no check
         var thread = this.getThread(threadID);
         var threadWindow = this._getThreadWindow(threadID);
-        var def = $.when();
+        var prom = Promise.resolve();
         if (!threadWindow) {
-            def = thread.fetchMessages().then(function () {
+            prom = thread.fetchMessages().then(function () {
                 threadWindow = self._makeNewThreadWindow(thread, options);
                 self._placeNewThreadWindow(threadWindow, options.passively);
                 return threadWindow.appendTo($(self.THREAD_WINDOW_APPENDTO));
@@ -118,7 +118,7 @@ MailManager.include({
                 ) {
                     thread.markAsRead();
                 }
-            }).fail(function () {
+            }).guardedCatch(function () {
                 // thread window could not be open, which may happen due to
                 // access error while fetching messages to the document.
                 // abort opening the thread window in this case.
@@ -129,7 +129,7 @@ MailManager.include({
                 this._makeThreadWindowVisible(threadWindow);
             }
         }
-        def.then(function () {
+        prom.then(function () {
             threadWindow.updateVisualFoldState();
         });
     },
@@ -419,7 +419,7 @@ MailManager.include({
      *
      * @private
      * @param {integer} partnerID
-     * @returns {$.Promise<integer>} resolved with ID of the DM chat
+     * @returns {Promise<integer>} resolved with ID of the DM chat
      */
     _openAndDetachDMChat: function (partnerID) {
         return this._rpc({
