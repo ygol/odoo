@@ -7,52 +7,83 @@ QUnit.module('core', {}, function () {
 
     QUnit.module('concurrency');
 
+    /**
+     * Helper function, make a promise with a public resolve function. Note that
+     * this is not standard and should not be used outside of tests...
+     *
+     * @returns {Promise + resolve function}
+     */
+    function makeTestPromise() {
+        var resolve;
+        var promise = new Promise(function (r) { resolve = r;});
+        promise.resolve = resolve;
+        return promise;
+    }
 
-    QUnit.only('mutex: simple scheduling', function (assert) {
-        assert.expect(6);
+    QUnit.test('mutex: simple scheduling', async function (assert) {
+        assert.expect(5);
         var done = assert.async();
-        var m = new concurrency.Mutex();
+        var mutex = new concurrency.Mutex();
 
-        var def1 = $.Deferred(),
-            def2 = $.Deferred();
+        var prom1 = makeTestPromise();
+        var prom2 = makeTestPromise();
 
-        var p1 = m.exec(function () { return def1; });
-        var p2 = m.exec(function () { return def2; });
+        prom1.then(function () {
+            assert.step('prom1');
+        });
+        prom2.then(function () {
+            assert.step('prom2');
+        });
 
-        assert.strictEqual(p1.state(), "pending");
-        assert.strictEqual(p2.state(), "pending");
+        mutex.exec(function () { return prom1; });
+        mutex.exec(function () { return prom2; });
 
-        def1.resolve();
-        assert.strictEqual(p1.state(), "resolved");
-        assert.strictEqual(p2.state(), "pending");
+        assert.verifySteps([]);
 
-        def2.resolve();
-        assert.strictEqual(p1.state(), "resolved");
-        assert.strictEqual(p2.state(), "resolved");
+        prom1.resolve();
+        await prom1;
+
+        assert.verifySteps(['prom1']);
+
+        prom2.resolve();
+        await prom2;
+
+        assert.verifySteps(['prom1', 'prom2']);
+
         done();
     });
 
-    QUnit.test('mutex: simpleScheduling2', function (assert) {
-        assert.expect(6);
+    QUnit.only('mutex: simpleScheduling2', async function (assert) {
+        assert.expect(5);
+        var done = assert.async();
+        var mutex = new concurrency.Mutex();
 
-        var m = new concurrency.Mutex();
+        var prom1 = makeTestPromise();
+        var prom2 = makeTestPromise();
 
-        var def1 = $.Deferred(),
-            def2 = $.Deferred();
+        prom1.then(function () {
+            assert.step('prom1');
+        });
+        prom2.then(function () {
+            assert.step('prom2');
+        });
 
-        var p1 = m.exec(function() { return def1; });
-        var p2 = m.exec(function() { return def2; });
+        mutex.exec(function () { return prom1; });
+        mutex.exec(function () { return prom2; });
 
-        assert.strictEqual(p1.state(), "pending");
-        assert.strictEqual(p2.state(), "pending");
-        def2.resolve();
+        assert.verifySteps([]);
 
-        assert.strictEqual(p1.state(), "pending");
-        assert.strictEqual(p2.state(), "pending");
+        prom2.resolve();
+        await prom2;
 
-        def1.resolve();
-        assert.strictEqual(p1.state(), "resolved");
-        assert.strictEqual(p2.state(), "resolved");
+        assert.verifySteps(['prom2']);
+
+        prom1.resolve();
+        await prom1;
+
+        assert.verifySteps(['prom2', 'prom1']);
+
+        done();
     });
 
     QUnit.test('mutex: reject', function (assert) {
