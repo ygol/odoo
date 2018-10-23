@@ -200,8 +200,7 @@ return {
      */
     Mutex: Class.extend({
         init: function () {
-            this.def = $.Deferred().resolve();
-            this.unlockedDef = undefined;
+            this.lock = Promise.resolve();
         },
         /**
          * Add a computation to the queue, it will be executed as soon as the
@@ -211,26 +210,84 @@ return {
          * @returns {Deferred}
          */
         exec: function (action) {
-            var self = this;
-            var current = this.def;
-            var next = this.def = $.Deferred();
-            this.unlockedDef = this.unlockedDef || $.Deferred();
-            return current.done(function() {
-                return $.when(action()).always(function () {
-                    next.resolve();
-                    if (self.def.state() === 'resolved' && self.unlockedDef) {
-                        self.unlockedDef.resolve();
-                        self.unlockedDef = undefined;
-                    }
+            var currentLock = this.lock;
+            var result;
+            this.lock = new Promise(function (resolve) {
+                currentLock.then(function () {
+                    result = action();
+                    Promise.resolve(result)
+                        .then(resolve)
+                        .catch(resolve);
                 });
             });
+
+            return this.lock.then(function () {
+                return result;
+            });
+
+            // var currentPromise = this.promise;
+
+            // return new Promise(function (resolve) {
+
+            //     return currentPromise.then(function () {
+            //         var result = action();
+            //         result
+            //             .then(resolve)
+            //             .catch(resolve);
+            //         return result;
+            //     });
+            // });
+
+
+
+
+            // PROPOSITION
+
+            // var currentPromise = this.promise;
+            // var nextResolver;
+
+            // this.promise = new Promise(function (resolve) {
+            //     nextResolver = resolve;
+            // });
+
+            // return currentPromise.then(function () {
+            //     var result = action();
+            //     result
+            //         .then(nextResolver)
+            //         .catch(nextResolver);
+            //     return result;
+            // });
+
+
+
+
+
+            // INITIAL
+            // this.current.then(function () {
+
+            // this.def = $.Deferred();
+            // var next = this.def;
+
+            // var self = this;
+            // var current = this.def;
+            // var next = this.def = $.Deferred();
+            // this.unlockedDef = this.unlockedDef || $.Deferred();
+            // return current.done(function() {
+            //     return $.when(action()).always(function () {
+            //         next.resolve();
+            //         if (self.def.state() === 'resolved' && self.unlockedDef) {
+            //             self.unlockedDef.resolve();
+            //             self.unlockedDef = undefined;
+            //         }
+            //     });
+            // });
         },
         /**
          * @returns {Promise} resolved as soon as the Mutex is unlocked
          *   (directly if it is currently idle)
          */
         getUnlockedDef: function () {
-            return $.when(this.unlockedDef);
+            // return $.when(this.unlockedDef);
         },
     }),
     /**
