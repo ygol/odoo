@@ -87,7 +87,7 @@ QUnit.module('core', {}, function () {
     });
 
     QUnit.only('mutex: reject', async function (assert) {
-        assert.expect(12);
+        assert.expect(7);
         var done = assert.async();
 
         var mutex = new concurrency.Mutex();
@@ -115,6 +115,7 @@ QUnit.module('core', {}, function () {
         await prom3.resolve();
 
         assert.verifySteps(['ok prom1', 'ko prom2', 'ok prom3']);
+        done();
     });
 
     QUnit.test('mutex: getUnlockedDef checks', function (assert) {
