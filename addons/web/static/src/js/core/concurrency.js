@@ -287,6 +287,7 @@ return {
          *   (directly if it is currently idle)
          */
         getUnlockedDef: function () {
+            throw "Not implemented yet";
             // return $.when(this.unlockedDef);
         },
     }),
