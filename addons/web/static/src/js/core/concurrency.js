@@ -33,9 +33,9 @@ return {
     asyncWhen: function () {
         var async = false;
         var def = $.Deferred();
-        $.when.apply($, arguments).done(function() {
+        $.when.apply($, arguments).done(function () {
             var args = arguments;
-            var action = function() {
+            var action = function () {
                 def.resolve.apply(def, args);
             };
             if (async) {
@@ -43,9 +43,9 @@ return {
             } else {
                 setTimeout(action, 0);
             }
-        }).fail(function() {
+        }).fail(function () {
             var args = arguments;
-            var action = function() {
+            var action = function () {
                 def.reject.apply(def, args);
             };
             if (async) {
@@ -64,7 +64,7 @@ return {
      * @return {Deferred}
      */
     delay: function (wait) {
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             setTimeout(resolve, wait);
         });
     },
@@ -86,6 +86,7 @@ return {
          *   should be failed or just ignored
          */
         init: function (failMisordered) {
+            console.log("start drop misordered");
             // local sequence number, for requests sent
             this.lsn = 0;
             // remote sequence number, seqnum of last received request
@@ -154,15 +155,23 @@ return {
         /**
          * Registers a new deferred and rejects the previous one
          *
-         * @param {Deferred} deferred the new deferred
+         * @param {Promise} promise the new deferred
          * @returns {Promise}
          */
         add: function (deferred) {
-            if (this.current_def) { this.current_def.reject(); }
-            var res = $.Deferred();
-            deferred.then(res.resolve, res.reject);
-            this.current_def = res;
-            return res.promise();
+            console.log("add drop previous");
+
+            if (this.currentDef) { this.currentDef.reject(); }
+            var rejection;
+            var res = new Promise(function (resolve, reject) {
+                rejection = reject;
+                deferred.then(resolve).catch(reject);
+            });
+
+            this.currentDef = res;
+            this.currentDef.reject = rejection;
+
+            return res;
         }
     }),
     /**
@@ -212,12 +221,12 @@ return {
         exec: function (action) {
             var currentLock = this.lock;
             var result;
-            this.lock = new Promise(function (resolve) {
+            this.lock = new Promise(function (unlockCurrent) {
                 currentLock.then(function () {
                     result = action();
                     Promise.resolve(result)
-                        .then(resolve)
-                        .catch(resolve);
+                        .then(unlockCurrent)
+                        .catch(unlockCurrent);
                 });
             });
 
@@ -319,10 +328,13 @@ return {
      */
     MutexedDropPrevious: Class.extend({
         init: function () {
+            console.log("start mutexed drop previous");
+
             this.currentDef = null;
             this.locked = false;
             this.pendingAction = null;
             this.pendingDef = null;
+            this.i = 0;
         },
         /**
          * @param {function} action a function which may return a deferred
@@ -330,36 +342,58 @@ return {
          */
         exec: function (action) {
             var self = this;
+            var resolution, rejection;
             if (this.locked) {
                 this.pendingAction = action;
                 var oldPendingDef = this.pendingDef;
-                this.pendingDef = $.Deferred()
-                var pendingDef = this.pendingDef;
-                if (oldPendingDef) {
-                    oldPendingDef.reject();
-                }
-                this.currentDef.reject();
-                return pendingDef.promise();
+
+                this.pendingDef = new Promise(function (resolve, reject) {
+                    resolution = resolve;
+                    rejection = reject;
+                    if (oldPendingDef) {
+                        oldPendingDef.reject();
+                    }
+                    self.currentDef.reject();
+                });
+                this.pendingDef.resolve = resolution;
+                this.pendingDef.reject = rejection;
+                this.pendingDef.name = ++self.i;
+                return this.pendingDef;
             } else {
                 this.locked = true;
-
-                this.currentDef = $.Deferred();
-                $.when(action())
-                    .then(this.currentDef.resolve.bind(this.currentDef))
-                    .fail(this.currentDef.reject.bind(this.currentDef))
-                    .always(function () {
-                        self.locked = false;
-                        if (self.pendingAction) {
-                            var action = self.pendingAction;
-                            self.pendingAction = null;
-                            self.exec(action)
-                                .then(self.pendingDef.resolve.bind(self.pendingDef))
-                                .fail(self.pendingDef.reject.bind(self.pendingDef));
-                        }
+                this.currentDef = new Promise(function (resolve, reject) {
+                    resolution = resolve;
+                    rejection = reject;
+                    Promise.resolve(action())
+                        .then(function (result) {
+                            resolve(result);
+                            self.locked = false;
+                            if (self.pendingAction) {
+                                var action = self.pendingAction;
+                                self.pendingAction = null;
+                                self.exec(action)
+                                    .then(self.pendingDef.resolve)
+                                    .catch(self.pendingDef.reject);
+                            }
+                        })
+                        .catch(function (result) {
+                            reject(result);
+                            self.locked = false;
+                            if (self.pendingAction) {
+                                var action = self.pendingAction;
+                                self.pendingAction = null;
+                                self.exec(action)
+                                    .then(self.pendingDef.resolve)
+                                    .catch(self.pendingDef.reject);
+                            }
+                        });
                 });
-                return this.currentDef.promise();
+                this.currentDef.resolve = resolution;
+                this.currentDef.reject = rejection;
+                this.currentDef.name = ++self.i;
+                return this.currentDef;
             }
-        },
+        }
     }),
     /**
      * Rejects a deferred as soon as a reference deferred is either resolved or
