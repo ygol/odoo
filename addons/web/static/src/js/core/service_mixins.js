@@ -145,24 +145,27 @@ var ServicesMixin = {
         });
     },
     loadViews: function (modelName, context, views, options) {
-        var def = $.Deferred();
-        this.trigger_up('load_views', {
-            modelName: modelName,
-            context: context,
-            views: views,
-            options: options,
-            on_success: def.resolve.bind(def),
+        //var def = $.Deferred();
+        var self = this;
+        return new Promise(function(resolve) {
+            self.trigger_up('load_views', {
+                modelName: modelName,
+                context: context,
+                views: views,
+                options: options,
+                on_success: resolve,
+            });
         });
-        return def;
     },
     loadFilters: function (dataset, action_id) {
-        var def = $.Deferred();
-        this.trigger_up('load_filters', {
-            dataset: dataset,
-            action_id: action_id,
-            on_success: def.resolve.bind(def),
+        var self = this;
+        return new Promise(function(resolve){
+            self.trigger_up('load_filters', {
+                dataset: dataset,
+                action_id: action_id,
+                on_success: resolve,
+            });
         });
-        return def;
     },
     // Session stuff
     getSession: function () {

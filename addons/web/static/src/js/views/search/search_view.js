@@ -413,7 +413,7 @@ var SearchView = Widget.extend({
                 self.favorite_filters = filters;
             });
         }
-        return $.when(this._super(), def);
+        return Promise.all([this._super(), def]);
     },
     start: function () {
         var self= this;
@@ -443,19 +443,21 @@ var SearchView = Widget.extend({
             .then(function ()  {
                 var menu_defs = [];
                 self.timeRangeMenu = self._createTimeRangeMenu();
-                menu_defs.push(self.timeRangeMenu.prependTo($buttons));
-                self.timeRangeMenu.do_hide();
-                self.displayedTimeRangeMenu = self.options.disableTimeRangeMenu !== undefined &&
+                menu_defs.push(self.timeRangeMenu.prependTo($buttons).then(function(){
+                    self.timeRangeMenu.do_hide();
+
+                    self.displayedTimeRangeMenu = self.options.disableTimeRangeMenu !== undefined &&
                     !self.options.disableTimeRangeMenu;
-                self.displayTimeRangeMenu(self.displayedTimeRangeMenu);
-                if (!self.options.disable_groupby) {
-                    self.groupby_menu = self._createGroupByMenu();
-                    menu_defs.push(self.groupby_menu.prependTo($buttons));
-                }
-                if (!self.options.disable_filters) {
-                    self.filters_menu = self._createFiltersMenu();
-                    menu_defs.push(self.filters_menu.prependTo($buttons));
-                }
+                    self.displayTimeRangeMenu(self.displayedTimeRangeMenu);
+                    if (!self.options.disable_groupby) {
+                        self.groupby_menu = self._createGroupByMenu();
+                        menu_defs.push(self.groupby_menu.prependTo($buttons));
+                    }
+                    if (!self.options.disable_filters) {
+                        self.filters_menu = self._createFiltersMenu();
+                        menu_defs.push(self.filters_menu.prependTo($buttons));
+                    }
+                }));
                 return $.when.apply($, menu_defs);
             });
     },

@@ -139,6 +139,7 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
      * @override
      */
     renderPager: function ($node, options) {
+        var self = this;
         var data = this.model.get(this.handle, {raw: true});
         this.pager = new Pager(this, data.count, data.offset + 1, data.limit, options);
 
@@ -156,8 +157,9 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
                 })
                 .then(this.pager.enable.bind(this.pager));
         });
-        this.pager.appendTo($node);
-        this._updatePager();  // to force proper visibility
+        this.pager.appendTo($node).then(function() {
+            self._updatePager();  // to force proper visibility
+        });
     },
     /**
      * Saves the record whose ID is given if necessary (@see _saveRecord).

@@ -650,7 +650,7 @@ var BasicRenderer = AbstractRenderer.extend({
      * @returns {Deferred}
      */
     _renderView: function () {
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * Instantiate custom widgets

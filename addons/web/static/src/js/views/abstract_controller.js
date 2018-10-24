@@ -150,7 +150,7 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
      * @returns {Deferred} resolved if properly discarded, rejected otherwise
      */
     discardChanges: function (recordID) {
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * Returns any special keys that may be useful when reloading the view to

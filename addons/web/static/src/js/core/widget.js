@@ -119,9 +119,9 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
             var defs = _.map(this.xmlDependencies, function (xmlPath) {
                 return ajax.loadXML(xmlPath, core.qweb);
             });
-            return $.when.apply($, defs);
+            return Promise.all(defs);
         }
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * Method called after rendering. Mostly used to bind actions, perform
@@ -136,7 +136,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * @returns {Deferred}
      */
     start: function () {
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * Destroys the current widget, also destroys all its children before

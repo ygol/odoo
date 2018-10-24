@@ -221,29 +221,31 @@
                 var require = make_require(job);
 
                 var job_exec;
-                var def = $.Deferred();
-                try {
-                    job_exec = job.factory.call(null, require);
-                    jobs.splice(jobs.indexOf(job), 1);
-                    job_deferred.push(def);
-                } catch (e) {
-                    job.error = e;
-                    console.error('Error while loading ' + job.name);
-                    console.error(e.stack);
-                }
-                if (!job.error) {
-                    $.when(job_exec).then(
-                        function (data) {
-                            services[job.name] = data;
-                            def.resolve();
-                            odoo.process_jobs(jobs, services);
-                        }, function (e) {
-                            job.rejected = e || true;
-                            jobs.push(job);
-                            def.resolve();
-                        }
-                    );
-                }
+                var def =  new Promise(function(resolve, reject){
+                    try {
+                        job_exec = job.factory.call(null, require);
+                        jobs.splice(jobs.indexOf(job), 1);
+                        job_deferred.push(def);
+                    } catch (e) {
+                        job.error = e;
+                        console.error('Error while loading ' + job.name);
+                        console.error(e.stack);
+                    }
+                    if (!job.error) {
+                        Promise.resolve(job_exec).then(
+                            function (data) {
+                                services[job.name] = data;
+                                resolve();
+                                odoo.process_jobs(jobs, services);
+                            }).catch(function (e) {
+                                job.rejected = e || true;
+                                jobs.push(job);
+                                resolve();
+                            }
+                        );
+                    }
+                });
+                job_deferred.push(def);
             }
 
             function is_ready (job) {

@@ -186,12 +186,12 @@ return AbstractWebClient.extend({
                         clear_breadcrumbs: true,
                         action_menu_id: ev.data.menu_id,
                     });
-                    $.when(self._openMenu(result, options)).fail(function () {
+                    $.when(self._openMenu(result, options)).catch(function () {
                         completed.resolve();
                     }).done(function () {
                         self._on_app_clicked_done(ev)
                             .then(completed.resolve.bind(completed))
-                            .fail(completed.reject.bind(completed));
+                            .catch(completed.reject.bind(completed));
                     });
                     setTimeout(function () {
                         completed.resolve();

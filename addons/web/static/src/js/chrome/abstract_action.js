@@ -56,7 +56,7 @@ var AbstractAction = Widget.extend({
      * @returns {Deferred} resolved if the action can be removed, rejected otherwise
      */
     canBeRemoved: function () {
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * This function is called when the current context (~state) of the action

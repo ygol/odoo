@@ -64,9 +64,9 @@ return {
      * @return {Deferred}
      */
     delay: function (wait) {
-        var def = $.Deferred();
-        setTimeout(def.resolve, wait);
-        return def;
+        return new Promise(function(resolve, reject) {
+            setTimeout(resolve, wait);
+        });
     },
     /**
      * The DropMisordered abstraction is useful for situations where you have
@@ -287,7 +287,9 @@ return {
          *   (directly if it is currently idle)
          */
         getUnlockedDef: function () {
+            console.error("getUnlockedDef Not implemented yet");
             throw "Not implemented yet";
+
             // return $.when(this.unlockedDef);
         },
     }),
@@ -331,7 +333,8 @@ return {
             if (this.locked) {
                 this.pendingAction = action;
                 var oldPendingDef = this.pendingDef;
-                var pendingDef = this.pendingDef = $.Deferred();
+                this.pendingDef = $.Deferred()
+                var pendingDef = this.pendingDef;
                 if (oldPendingDef) {
                     oldPendingDef.reject();
                 }
@@ -339,6 +342,7 @@ return {
                 return pendingDef.promise();
             } else {
                 this.locked = true;
+
                 this.currentDef = $.Deferred();
                 $.when(action())
                     .then(this.currentDef.resolve.bind(this.currentDef))

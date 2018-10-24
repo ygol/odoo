@@ -347,12 +347,12 @@ var KanbanRenderer = BasicRenderer.extend({
                 this.quickCreate = new ColumnQuickCreate(this, {
                     examples: this.examples,
                 });
-                this.quickCreate.appendTo(fragment).then(function () {
+                this.defs.push(this.quickCreate.appendTo(fragment).then(function () {
                     // Open it directly if there is no column yet
                     if (!self.state.data.length) {
                         self.quickCreate.toggleFold();
                     }
-                });
+                }));
 
             }
         }
@@ -370,9 +370,7 @@ var KanbanRenderer = BasicRenderer.extend({
             var kanbanRecord = new KanbanRecord(self, record, self.recordOptions);
             self.widgets.push(kanbanRecord);
             var def = kanbanRecord.appendTo(fragment);
-            if (def.state() === 'pending') {
-                self.defs.push(def);
-            }
+            self.defs.push(def);
         });
 
         // append ghost divs to ensure that all kanban records are left aligned

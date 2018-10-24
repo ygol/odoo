@@ -113,7 +113,7 @@ var ActionManager = Widget.extend({
         if (currentController) {
             return currentController.widget.canBeRemoved();
         }
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * This is the entry point to execute Odoo actions, given as an ID in
@@ -369,7 +369,7 @@ var ActionManager = Widget.extend({
 
                 return action;
             })
-            .fail(function () {
+            .catch(function () {
                 self._removeAction(action.jsID);
             });
     },
@@ -488,7 +488,7 @@ var ActionManager = Widget.extend({
         });
         this.controllers[controllerID] = controller;
         action.controllerID = controllerID;
-        return this._executeAction(action, options).done(function () {
+        return this._executeAction(action, options).then(function () {
             // AAB: this should be done automatically in AbstractAction, so that
             // it can be overriden by actions that have specific stuff to push
             // (e.g. Discuss, Views)

@@ -245,13 +245,13 @@ var Session = core.Class.extend(mixins.EventDispatcherMixin, {
         return d;
     },
     load_qweb: function (mods) {
-        this.qweb_mutex.exec(function () {
+        var lock = this.qweb_mutex.exec(function () {
             return $.get('/web/webclient/qweb?mods=' + mods).then(function (doc) {
                 if (!doc) { return; }
                 qweb.add_template(doc);
             });
         });
-        return this.qweb_mutex.def;
+        return lock;
     },
     on_modules_loaded: function () {
         var openerp = window.openerp;

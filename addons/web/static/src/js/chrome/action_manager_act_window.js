@@ -129,13 +129,12 @@ ActionManager.include({
             if (currentAction) {
                 action.searchView = currentAction.searchView;
                 action.env = currentAction.env; // make those actions share the same env
-                return $.when(currentAction.searchView);
-            } else {
-                // there is not searchview to keep, so reset the flag to false
-                // to ensure that the one that will be created will be correctly
-                // destroyed
-                action._keepSearchView = false;
+                return Promise.resolve(currentAction.searchView);
             }
+            // there is not searchview to keep, so reset the flag to false
+            // to ensure that the one that will be created will be correctly
+            // destroyed
+            action._keepSearchView = false;
         }
 
         // AAB: temporarily create a dataset, until the SearchView is refactored
@@ -329,7 +328,7 @@ ActionManager.include({
                     _.extend(action.env, self._processSearchData(action, searchData));
                 });
             }
-            return $.when(def).then(function () {
+            return Promise.resolve(def).then(function () {
                 var defs = [];
                 defs.push(self._createViewController(action, firstView.type));
                 if (mainView) {
@@ -338,7 +337,7 @@ ActionManager.include({
                 return self.dp.add($.when.apply($, defs));
             }).then(function (controller, lazyLoadedController) {
                 action.controllerID = controller.jsID;
-                return self._executeAction(action, options).done(function () {
+                return self._executeAction(action, options).then(function () {
                     if (lazyLoadedController) {
                         // controller should be placed just before the current one
                         var index = self.controllerStack.length - 1;
@@ -348,7 +347,7 @@ ActionManager.include({
                         }, {clear: false});
                     }
                 });
-            }).fail(self._destroyWindowAction.bind(self, action));
+            }).catch(self._destroyWindowAction.bind(self, action));
         });
     },
     /**
@@ -586,11 +585,11 @@ ActionManager.include({
             return this.clearUncommittedChanges().then(function () {
                 // AAB: this will be done directly in AbstractAction's restore
                 // function
-                var def;
+                var def = Promise.resolve();
                 if (action.on_reverse_breadcrumb) {
                     def = action.on_reverse_breadcrumb();
                 }
-                return $.when(def).then(function () {
+                return Promise.resolve(def).then(function () {
                     return self._switchController(action, controller.viewType);
                 });
             });
