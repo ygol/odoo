@@ -269,7 +269,7 @@
             }
 
             while (jobs.length && (job = _.find(jobs, is_ready))) {
-                console.log('loading: ' + job.name);
+                //console.log('loading: ' + job.name);
                 process_job(job);
             }
 

@@ -31,6 +31,7 @@ return {
      * @returns {Deferred}
      */
     asyncWhen: function () {
+        throw "only used in tests";
         var async = false;
         var def = $.Deferred();
         $.when.apply($, arguments).done(function () {
@@ -100,7 +101,29 @@ return {
          * @returns {Deferred}
          */
         add: function (deferred) {
-            var res = $.Deferred();
+            console.log("add drop missordered")
+            var self = this;
+            var seq = this.lsn++;
+            var res = new Promise(function(resolve, reject) {
+                deferred.then(function() {
+                    if (seq > self.rsn) {
+                        self.rsn = seq;
+                        resolve(arguments);
+                    } else if (self.failMisordered) {
+                        reject();
+                    }
+                }).catch(function() {
+                    if (seq > self.rsn) {
+                        self.rsn = seq;
+                        resolve(arguments);
+                    } else if (self.failMisordered) {
+                        reject();
+                    }
+                    reject(arguments);
+                });
+            });
+            return res;
+            /*var res = $.Deferred();
 
             var self = this, seq = this.lsn++;
             deferred.done(function () {
@@ -115,6 +138,7 @@ return {
             });
 
             return res.promise();
+            */
         },
     }),
     /**

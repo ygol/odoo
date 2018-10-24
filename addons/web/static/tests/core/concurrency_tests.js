@@ -494,7 +494,7 @@ QUnit.module('core', {}, function () {
         done();
     });
 
-    QUnit.test('MutexedDropPrevious: 3 arrives after 2 initialization', async function (assert) {
+    QUnit.only('MutexedDropPrevious: 3 arrives after 2 initialization', async function (assert) {
 
         assert.expect(14);
         var done = assert.async();
