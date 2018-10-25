@@ -37,7 +37,7 @@ var ChangePassword = AbstractAction.extend({
                         fields: $('form[name=change_password_form]').serializeArray()
                     }
                 })
-                .done(function (result) {
+                .then(function (result) {
                     if (result.error) {
                         self._display_error(result);
                     } else {
