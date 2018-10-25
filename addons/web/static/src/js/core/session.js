@@ -353,7 +353,10 @@ var Session = core.Class.extend(mixins.EventDispatcherMixin, {
 
         var promise = prom.then(function () {
             if (aborted) {
-                var def = Promise.reject({message: "XmlHttpRequestError abort"}, $.Event('abort'));
+                var def = Promise.reject({
+                    message: "XmlHttpRequestError abort",
+                    event: $.Event('abort')
+                });
                 def.abort = function () {};
                 return def;
             }

@@ -136,7 +136,7 @@ var ServicesMixin = {
         var prom = this.call('ajax', 'rpc', query.route, query.params, options, this) || Promise.resolve();
         var abort = (prom.abort ? prom.abort : prom.reject);
         if (!abort) {
-            throw "a promise should always have a reject function";
+            throw new Error("a promise should always have a reject function");
         }
         prom.abort = abort.bind(prom);
         return prom;
