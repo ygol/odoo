@@ -124,7 +124,7 @@ var ServicesMixin = {
         return result;
     },
     /**
-     * Builds and executes RPC query. Returns a deferred's promise resolved with
+     * Builds and executes RPC query. Returns a promise resolved with
      * the RPC result.
      *
      * @param {string} params either a route or a model
@@ -133,11 +133,13 @@ var ServicesMixin = {
      */
     _rpc: function (params, options) {
         var query = rpc.buildQuery(params);
-        var def = this.call('ajax', 'rpc', query.route, query.params, options, this) || $.Deferred();
-        var promise = def.promise();
-        var abort = (def.abort ? def.abort : def.reject) || function () {};
-        promise.abort = abort.bind(def);
-        return promise;
+        var prom = this.call('ajax', 'rpc', query.route, query.params, options, this) || Promise.resolve();
+        var abort = (prom.abort ? prom.abort : prom.reject);
+        if (!abort) {
+            throw "a promise should always have a reject function";
+        }
+        prom.abort = abort.bind(prom);
+        return prom;
     },
     loadFieldView: function (dataset, view_id, view_type, options) {
         return this.loadViews(dataset.model, dataset.get_context().eval(), [[view_id, view_type]], options).then(function (result) {
@@ -145,7 +147,6 @@ var ServicesMixin = {
         });
     },
     loadViews: function (modelName, context, views, options) {
-        //var def = $.Deferred();
         var self = this;
         return new Promise(function(resolve) {
             self.trigger_up('load_views', {
@@ -181,22 +182,21 @@ var ServicesMixin = {
      * Informs the action manager to do an action. This supposes that the action
      * manager can be found amongst the ancestors of the current widget.
      * If that's not the case this method will simply return an unresolved
-     * deferred.
+     * promise.
      *
      * @param {any} action
      * @param {any} options
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     do_action: function (action, options) {
-        var def = $.Deferred();
-
-        this.trigger_up('do_action', {
-            action: action,
-            options: options,
-            on_success: function (result) { def.resolve(result); },
-            on_fail: function (result) { def.reject(result); },
+        return new Promise(function(resolve, reject) {
+            this.trigger_up('do_action', {
+                action: action,
+                options: options,
+                on_success: resolve,
+                on_fail: reject,
+            });
         });
-        return def;
     },
     do_notify: function (title, message, sticky, className) {
         return this.call('notification', 'notify', {title: title, message: message, sticky: sticky, className: className});

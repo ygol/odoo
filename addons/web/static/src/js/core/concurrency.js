@@ -105,21 +105,21 @@ return {
             var self = this;
             var seq = this.lsn++;
             var res = new Promise(function(resolve, reject) {
-                deferred.then(function() {
+                deferred.then(function(result) {
                     if (seq > self.rsn) {
                         self.rsn = seq;
-                        resolve(arguments);
+                        resolve(result);
                     } else if (self.failMisordered) {
                         reject();
                     }
-                }).catch(function() {
+                }).catch(function(result) {
                     if (seq > self.rsn) {
                         self.rsn = seq;
-                        resolve(arguments);
+                        resolve(result);
                     } else if (self.failMisordered) {
                         reject();
                     }
-                    reject(arguments);
+                    reject(result);
                 });
             });
             return res;

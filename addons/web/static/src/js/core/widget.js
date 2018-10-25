@@ -31,7 +31,7 @@ var ServicesMixin = require('web.ServicesMixin');
  *         },
  *         willStart: function () {
  *             // async work that need to be done before the widget is ready
- *             // this method should return a deferred
+ *             // this method should return a promise
  *         },
  *         start: function() {
  *             // stuff you want to make after the rendering, `this.$el` holds a correct value
@@ -109,10 +109,10 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * Method called between @see init and @see start. Performs asynchronous
      * calls required by the rendering and the start method.
      *
-     * This method should return a Deferred which is resolved when start can be
+     * This method should return a Promose which is resolved when start can be
      * executed.
      *
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     willStart: function () {
         if (this.xmlDependencies) {
@@ -133,7 +133,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * Note that, for historic reasons, many widgets still do work in the start
      * method that would be more suited to the willStart method.
      *
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     start: function () {
         return Promise.resolve();
@@ -386,7 +386,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * @private
      * @param {function: jQuery -> any} insertion
      * @param {jQuery} target
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _widgetRenderAndInsert: function (insertion, target) {
         var self = this;
