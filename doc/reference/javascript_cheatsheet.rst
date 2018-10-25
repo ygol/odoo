@@ -1,5 +1,9 @@
 :banner: banners/javascript.jpg
 
+.. highlight:: javascript
+
+.. default-domain:: js
+
 =====================
 Javascript Cheatsheet
 =====================
@@ -44,9 +48,7 @@ This can be done in three steps: creating a new widget, registering it in the
 field registry, then adding the widget to the field in the form view
 
 - creating a new widget:
-    This can be done by extending a widget:
-
-    .. code-block:: javascript
+    This can be done by extending a widget::
 
         var FieldChar = require('web.basic_fields').FieldChar;
 
@@ -58,9 +60,7 @@ field registry, then adding the widget to the field in the form view
 
 - registering it in the field registry:
     The web client needs to know the mapping between a widget name and its
-    actual class.  This is done by a registry:
-
-    .. code-block:: javascript
+    actual class.  This is done by a registry::
 
         var fieldRegistry = require('web.field_registry');
 
@@ -83,10 +83,8 @@ example, the voip addon in odoo need to modify the FieldPhone widget to add the
 possibility to easily call the given number on voip. This is done by *including*
 the FieldPhone widget, so there is no need to change any existing form view.
 
-Field Widgets (instances of (subclass of) AbstractField) are like every other
-widgets, so they can be monkey patched. This looks like this:
-
-.. code-block:: javascript
+Field Widgets (instances of (subclass of) :class:`AbstractField`) are like
+every other widgets, so they can be monkey patched::
 
     var basic_fields = require('web.basic_fields');
     var Phone = basic_fields.FieldPhone;
@@ -116,9 +114,7 @@ interface.  For example, adding a message in the home menu.  The usual process
 in this case is again to *include* the widget.  This is the only way to do it,
 since there are no registries for those widgets.
 
-This is usually done with code looking like this:
-
-.. code-block:: javascript
+This is usually done with code looking like this::
 
     var HomeMenu = require('web_enterprise.HomeMenu');
 
@@ -137,28 +133,30 @@ Creating a new view (from scratch)
 Creating a new view is a more advanced topic.  This cheatsheet will only
 highlight the steps that will probably need to be done (in no particular order):
 
-- adding a new view type to the field ``type`` of ``ir.ui.view``::
+- adding a new view type to the field ``type`` of ``ir.ui.view``:
+
+  .. code-block:: python
 
     class View(models.Model):
         _inherit = 'ir.ui.view'
 
         type = fields.Selection(selection_add=[('map', "Map")])
 
-- adding the new view type to the field ``view_mode`` of ``ir.actions.act_window.view``::
+- adding the new view type to the field ``view_mode`` of ``ir.actions.act_window.view``:
+
+  .. code-block:: python
 
     class ActWindowView(models.Model):
         _inherit = 'ir.actions.act_window.view'
 
         view_mode = fields.Selection(selection_add=[('map', "Map")])
 
+- creating the four main pieces which makes a view (in JavaScript)
 
-- creating the four main pieces which makes a view (in JavaScript):
-    we need a view (a subclass of ``AbstractView``, this is the factory), a
-    renderer (from ``AbstractRenderer``), a controller (from ``AbstractController``)
-    and a model (from ``AbstractModel``).  I suggest starting by simply
-    extending the superclasses:
-
-    .. code-block:: javascript
+  We need a view (a subclass of :class:`AbstractView`, this is the factory), a
+  renderer (from :class:`AbstractRenderer`), a controller (from :class:`AbstractController`)
+  and a model (from :class:`AbstractModel`).  I suggest starting by simply
+  extending the superclasses::
 
         var AbstractController = require('web.AbstractController');
         var AbstractModel = require('web.AbstractModel');
@@ -178,24 +176,25 @@ highlight the steps that will probably need to be done (in no particular order):
         });
 
 - adding the view to the registry:
-    As usual, the mapping between a view type and the actual class needs to be
-    updated:
 
-    .. code-block:: javascript
+  As usual, the mapping between a view type and the actual class needs to be
+  updated::
 
         var viewRegistry = require('web.view_registry');
 
         viewRegistry.add('map', MapView);
 
 - implementing the four main classes:
-    The ``View`` class needs to parse the ``arch`` field and setup the other
-    three classes.  The ``Renderer`` is in charge of representing the data in
-    the user interface, the ``Model`` is supposed to talk to the server, to
-    load data and process it.  And the ``Controller`` is there to coordinate,
-    to talk to the web client, ...
+
+  The ``View`` class needs to parse the ``arch`` field and setup the other
+  three classes.  The ``Renderer`` is in charge of representing the data in
+  the user interface, the ``Model`` is supposed to talk to the server, to
+  load data and process it.  And the ``Controller`` is there to coordinate,
+  to talk to the web client, ...
 
 - creating some views in the database:
-    .. code-block:: xml
+
+  .. code-block:: xml
 
         <record id="customer_map_view" model="ir.ui.view">
             <field name="name">customer.map.view</field>
@@ -219,9 +218,8 @@ and/or models), then registering the view in the view registry, and finally,
 using the view in the kanban arch (a specific example is the helpdesk dashboard).
 
 - extending a view:
-    Here is what it could look like:
 
-    .. code-block:: javascript
+  Here is what it could look like::
 
         var HelpdeskDashboardRenderer = KanbanRenderer.extend({
             ...
@@ -244,23 +242,23 @@ using the view in the kanban arch (a specific example is the helpdesk dashboard)
         });
 
 - adding it to the view registry:
-    as usual, we need to inform the web client of the mapping between the name
-    of the views and the actual class.
 
-    .. code-block:: javascript
+  as usual, we need to inform the web client of the mapping between the name
+  of the views and the actual class::
 
         var viewRegistry = require('web.view_registry');
         viewRegistry.add('helpdesk_dashboard', HelpdeskDashboardView);
 
 - using it in an actual view:
-    we now need to inform the web client that a specific ``ir.ui.view`` needs to
-    use our new class.  Note that this is a web client specific concern.  From
-    the point of view of the server, we still have a kanban view.  The proper
-    way to do this is by using a special attribute ``js_class`` (which will be
-    renamed someday into ``widget``, because this is really not a good name) on
-    the root node of the arch:
 
-    .. code-block:: xml
+  we now need to inform the web client that a specific ``ir.ui.view`` needs to
+  use our new class.  Note that this is a web client specific concern.  From
+  the point of view of the server, we still have a kanban view.  The proper
+  way to do this is by using a special attribute ``js_class`` (which will be
+  renamed someday into ``widget``, because this is really not a good name) on
+  the root node of the arch:
+
+  .. code-block:: xml
 
         <record id="helpdesk_team_view_kanban" model="ir.ui.view" >
             ...
