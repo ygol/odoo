@@ -88,7 +88,7 @@ function _genericJsonRpc (fct_name, params, settings, fct) {
                 xhr.abort();
             }
         };
-        promise.catch(function (reason) { // Allow deferred user to disable rpc_error call in fail
+        promise.catch(function (reason) { // Allow promise user to disable rpc_error call in case of failure
             if (!event.isDefaultPrevented()) {
                 core.bus.trigger('rpc_error', reason.message, reason.event);
             }
@@ -206,7 +206,7 @@ var loadCSS = (function () {
         if (url in urlDefs) {
             // nothing to do here
         } else if ($('link[href="' + url + '"]').length) {
-            // the link is already in the DOM, the deferred can be resolved
+            // the link is already in the DOM, the promise can be resolved
             urlDefs[url] = Promise.resolve();
         } else {
             var $link = $('<link>', {
@@ -403,7 +403,7 @@ function post (controller_url, data) {
 /**
  * Loads an XML file according to the given URL and adds its associated qweb
  * templates to the given qweb engine. The function can also be used to get
- * the deferred which indicates when all the calls to the function are finished.
+ * the promise which indicates when all the calls to the function are finished.
  *
  * Note: "all the calls" = the calls that happened before the current no-args
  * one + the calls that will happen after but when the previous ones are not
@@ -411,8 +411,8 @@ function post (controller_url, data) {
  *
  * @param {string} [url] - an URL where to find qweb templates
  * @param {QWeb} [qweb] - the engine to which the templates need to be added
- * @returns {Deferred}
- *          If no argument is given to the function, the deferred's state
+ * @returns {Promise}
+ *          If no argument is given to the function, the promise's state
  *          indicates if "all the calls" are finished (see main description).
  *          Otherwise, it indicates when the templates associated to the given
  *          url have been loaded.
@@ -421,63 +421,63 @@ var loadXML = (function () {
     // Some "static" variables associated to the loadXML function
     var isLoading = false;
     var loadingsData = [];
-    var allLoadingsDef = $.when();
     var seenURLs = [];
 
     return function (url, qweb) {
-        // If no argument, simply returns the deferred which indicates when
-        // "all the calls" are finished
-        if (!url || !qweb) {
-            return allLoadingsDef;
-        }
-
-        // If the given URL has already been seen, do nothing but returning the
-        // associated deferred
-        if (_.contains(seenURLs, url)) {
-            var oldLoadingData = _.findWhere(loadingsData, {url: url});
-            return oldLoadingData ? oldLoadingData.def : $.when();
-        }
-        seenURLs.push(url);
-
-        // Add the information about the new data to load: the url, the qweb
-        // engine and the associated deferred
-        var newLoadingData = {
-            url: url,
-            qweb: qweb,
-            def: $.Deferred(),
-        };
-        loadingsData.push(newLoadingData);
-
-        // If not already started, start the loading loop (reinitialize the
-        // "all the calls" deferred to an unresolved state)
-        if (!isLoading) {
-            allLoadingsDef = $.Deferred();
-            _load();
-        }
-
-        // Return the deferred associated to the new given URL
-        return newLoadingData.def;
-
         function _load() {
             isLoading = true;
             if (loadingsData.length) {
                 // There is something to load, load it, resolve the associated
-                // deferred then start loading the next one
+                // promise then start loading the next one
                 var loadingData = loadingsData[0];
                 loadingData.qweb.add_template(loadingData.url, function () {
                     // Remove from array only now so that multiple calls to
-                    // loadXML with the same URL returns the right deferred
+                    // loadXML with the same URL returns the right promise
                     loadingsData.shift();
-                    loadingData.def.resolve();
+                    loadingData.resolve();
                     _load();
                 });
             } else {
                 // There is nothing to load anymore, so resolve the
-                // "all the calls" deferred
+                // "all the calls" promise
                 isLoading = false;
-                allLoadingsDef.resolve();
             }
         }
+
+        // If no argument, simply returns the promise which indicates when
+        // "all the calls" are finished
+        if (!url || !qweb) {
+            return Promise.resolve();
+        }
+
+        // If the given URL has already been seen, do nothing but returning the
+        // associated promise
+        if (_.contains(seenURLs, url)) {
+            var oldLoadingData = _.findWhere(loadingsData, {url: url});
+            return oldLoadingData ? oldLoadingData.def : Promise.resolve();
+        }
+        seenURLs.push(url);
+
+        // If not already started, start the loading loop (reinitialize the
+        // "all the calls" promise to an unresolved state)
+        if (!isLoading) {
+            _load();
+        }
+
+        // Add the information about the new data to load: the url, the qweb
+        // engine and the associated promise
+        var newLoadingData = {
+            url: url,
+            qweb: qweb,
+        };
+        newLoadingData.def = new Promise(function (resolve, reject) {
+            newLoadingData.resolve = resolve;
+            newLoadingData.reject = reject;
+        })
+        loadingsData.push(newLoadingData);
+
+        // Return the promise associated to the new given URL
+        return newLoadingData.def;
     };
 })();
 
@@ -494,16 +494,16 @@ var loadXML = (function () {
  * @param {Array<string>} [libs.cssLibs=[]] A list of css files, to be loaded in
  *   parallel
  *
- * @returns {Deferred}
+ * @returns {Promise}
  */
 function loadLibs (libs) {
     var defs = [];
     _.each(libs.jsLibs || [], function (urls) {
-        defs.push($.when.apply($, defs).then(function () {
+        defs.push(Promise.all(defs).then(function () {
             if (typeof(urls) === 'string') {
                 return ajax.loadJS(urls);
             } else {
-                return $.when.apply($, _.map(urls, function (url) {
+                return Promise.all(_.map(urls, function (url) {
                     return ajax.loadJS(url);
                 }));
             }
@@ -512,7 +512,7 @@ function loadLibs (libs) {
     _.each(libs.cssLibs || [], function (url) {
         defs.push(ajax.loadCSS(url));
     });
-    return $.when.apply($, defs);
+    return Promise.all(defs);
 }
 
 var ajax = {
