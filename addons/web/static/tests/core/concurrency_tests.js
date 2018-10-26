@@ -551,48 +551,45 @@ QUnit.module('core', {}, function () {
      });
 
     QUnit.test('MutexedDropPrevious: 2 in then of 1 with 3', async function (assert) {
-        assert.expect(6);
+        assert.expect(9);
         var done = assert.async();
 
         var m = new concurrency.MutexedDropPrevious();
 
-        var d1 = makeTestPromiseWithAssert(assert, "d1");
-        var d2 = makeTestPromiseWithAssert(assert, "d2");
-        var d3 = makeTestPromiseWithAssert(assert, "d3");
+        var d1 = makeTestPromiseWithAssert(assert, 'd1');
+        var d2 = makeTestPromiseWithAssert(assert, 'd2');
+        var d3 = makeTestPromiseWithAssert(assert, 'd3');
         var p3;
 
         var p1 = m.exec(function () { return d1; })
-            .then(function () {
+            .catch(function () {
+                assert.step('p1 rejected');
                 p3 = m.exec(function () {
                     return d3;
                 }).then(function (result) {
-                    assert.strictEqual(result, 'd3');
-                });
-                return p3;
-            }).catch(function () {
-                p3 = m.exec(function () {
-                    return d3;
-                }).then(function (result) {
-                    assert.strictEqual(result, 'd3');
+                    assert.step('p3 resolved');
                 });
                 return p3;
             });
 
+        await Promise.resolve();
         assert.verifySteps([]);
-        assert.strictEqual(p1.state(), "pending");
 
         var p2 = m.exec(function () {
-            assert.ok(false, "should not execute this function");
+            assert.ok(false, 'should not execute this function');
             return d2;
+        }).catch(function () {
+            assert.step('p2 rejected');
         });
-        assert.strictEqual(p1.state(), "rejected");
-        assert.strictEqual(p2.state(), "rejected");
 
-        d1.resolve('d1');
-        assert.strictEqual(p3.state(), "pending");
+        await Promise.resolve();
+        assert.verifySteps(['p1 rejected', 'p2 rejected']);
 
-        d3.resolve('d3');
-        assert.strictEqual(p3.state(), "resolved");
+        await d1.resolve('d1');
+        assert.verifySteps(['p1 rejected', 'p2 rejected', 'ok d1']);
+
+        await d3.resolve('d3');
+        assert.verifySteps(['p1 rejected', 'p2 rejected', 'ok d1', 'ok d3', 'p3 resolved']);
 
         done();
     });
