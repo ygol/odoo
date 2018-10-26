@@ -1,0 +1,8 @@
+<odoo>
+    <template id="assets_backend" name="web_qweb assets" inherit_id="web.assets_backend">
+        <xpath expr="." position="inside">
+            <script type="text/javascript" src="/web_qweb/static/js/qweb_view.js"></script>
+            <link rel="stylesheet" type="text/scss" href="/web_qweb/static/scss/web_qweb.scss"/>
+        </xpath>
+    </template>
+</odoo>

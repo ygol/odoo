@@ -1,0 +1,21 @@
+<odoo>
+    <record id="partner_qweb_view" model="ir.ui.view">
+        <field name="name">Partner QWeb view</field>
+        <field name="model">res.partner</field>
+        <field name="type">qweb</field>
+        <field name="arch" type="xml">
+            <ul>
+                <li t-foreach="records" t-as="record">
+                    <t t-esc="record.id"/>
+                    <t t-esc="record.display_name"/>
+                </li>
+            </ul>
+        </field>
+    </record>
+
+    <record id="demo_contacts_qweb" model="ir.actions.act_window.view">
+        <field name="view_mode">qweb</field>
+        <field name="act_window_id" ref="contacts.action_contacts"/>
+        <field name="view_id" ref="partner_qweb_view"/>
+    </record>
+</odoo>
