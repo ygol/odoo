@@ -156,7 +156,7 @@ QUnit.module('core', {}, function () {
         var prom1 = makeTestPromise(assert, 'prom1');
         var prom2 = makeTestPromise(assert, 'prom2');
 
-        var dp1 = dp.add(prom1).then(() => assert.fail('should not go here'))
+        var dp1 = dp.add(prom1).then(() => assert.catch('should not go here'))
                                .catch(()=> assert.step("rejected dp1"));
         var dp2 = dp.add(prom2).then(() => assert.step("ok dp2"));
 
@@ -179,7 +179,7 @@ QUnit.module('core', {}, function () {
         var prom1 = makeTestPromise(assert, 'prom1');
         var prom2 = makeTestPromise(assert, 'prom2');
 
-        var dp1 = dp.add(prom1).then(() => assert.fail('should not go here'))
+        var dp1 = dp.add(prom1).then(() => assert.catch('should not go here'))
                                .catch(()=> assert.step("rejected dp1"));
         var dp2 = dp.add(prom2).then(() => assert.step("ok dp2"));
 
@@ -193,9 +193,9 @@ QUnit.module('core', {}, function () {
         done();
     });
 
-    QUnit.only('DropMisordered: resolve all correctly ordered, sync', async function (assert) {
+    QUnit.test('DropMisordered: resolve all correctly ordered, sync', async function (assert) {
         assert.expect(1);
-        var done = asset.async();
+        var done = assert.async();
 
         var dm = new concurrency.DropMisordered(),
             flag = false;
@@ -206,7 +206,7 @@ QUnit.module('core', {}, function () {
         var r1 = dm.add(d1),
             r2 = dm.add(d2);
 
-        $.when(r1, r2).done(function () {
+        Promise.all([r1, r2]).then(function () {
             flag = true;
         });
 
@@ -217,8 +217,9 @@ QUnit.module('core', {}, function () {
         done();
     });
 
-    QUnit.test("DropMisordered: don't resolve mis-ordered, sync", function (assert) {
+    QUnit.test("DropMisordered: don't resolve mis-ordered, sync", async function (assert) {
         assert.expect(4);
+        var done = assert.async();
 
         var dm = new concurrency.DropMisordered(),
             done1 = false,
@@ -226,45 +227,47 @@ QUnit.module('core', {}, function () {
             fail1 = false,
             fail2 = false;
 
-        var d1 = $.Deferred(),
-            d2 = $.Deferred();
+        var d1 = makeTestPromise(),
+            d2 = makeTestPromise();
 
-        dm.add(d1).done(function () { done1 = true; })
-                    .fail(function () { fail1 = true; });
-        dm.add(d2).done(function () { done2 = true; })
-                    .fail(function () { fail2 = true; });
+        dm.add(d1).then(function () { done1 = true; })
+                    .catch(function () { fail1 = true; });
+        dm.add(d2).then(function () { done2 = true; })
+                    .catch(function () { fail2 = true; });
 
-        d2.resolve();
-        d1.resolve();
+        await d2.resolve();
+        await d1.resolve();
 
         // d1 is in limbo
         assert.ok(!done1);
         assert.ok(!fail1);
 
-        // d2 is resolved
+        // d2 is fulfilled
         assert.ok(done2);
         assert.ok(!fail2);
+        done();
     });
 
-    QUnit.test('DropMisordered: fail mis-ordered flag, sync', function (assert) {
+    QUnit.test('DropMisordered: fail mis-ordered flag, sync', async function (assert) {
         assert.expect(4);
+        var done = assert.async();
 
-        var dm = new concurrency.DropMisordered(true),
+        var dm = new concurrency.DropMisordered(true/* failMisordered */),
             done1 = false,
             done2 = false,
             fail1 = false,
             fail2 = false;
 
-        var d1 = $.Deferred(),
-            d2 = $.Deferred();
+        var d1 = makeTestPromise(),
+            d2 = makeTestPromise();
 
-        dm.add(d1).done(function () { done1 = true; })
-                    .fail(function () { fail1 = true; });
-        dm.add(d2).done(function () { done2 = true; })
-                    .fail(function () { fail2 = true; });
+        dm.add(d1).then(function () { done1 = true; })
+                    .catch(function () { fail1 = true; });
+        dm.add(d2).then(function () { done2 = true; })
+                    .catch(function () { fail2 = true; });
 
-        d2.resolve();
-        d1.resolve();
+        await d2.resolve();
+        await d1.resolve();
 
         // d1 is in limbo
         assert.ok(!done1);
@@ -273,6 +276,7 @@ QUnit.module('core', {}, function () {
         // d2 is resolved
         assert.ok(done2);
         assert.ok(!fail2);
+        done();
     });
 
     QUnit.test('DropMisordered: resolve all correctly ordered, async', function (assert) {
@@ -281,8 +285,8 @@ QUnit.module('core', {}, function () {
 
         var dm = new concurrency.DropMisordered();
 
-        var d1 = $.Deferred(),
-            d2 = $.Deferred();
+        var d1 = makeTestPromise(),
+            d2 = makeTestPromise();
 
         var r1 = dm.add(d1),
             r2 = dm.add(d2);
@@ -290,7 +294,7 @@ QUnit.module('core', {}, function () {
         setTimeout(function () { d1.resolve(); }, 10);
         setTimeout(function () { d2.resolve(); }, 20);
 
-        $.when(r1, r2).done(function () {
+        Promise.all([r1, r2]).then(function () {
             assert.ok(true);
             done();
         });
@@ -304,13 +308,13 @@ QUnit.module('core', {}, function () {
             done1 = false, done2 = false,
             fail1 = false, fail2 = false;
 
-        var d1 = $.Deferred(),
-            d2 = $.Deferred();
+        var d1 = makeTestPromise(),
+            d2 = makeTestPromise();
 
-        dm.add(d1).done(function () { done1 = true; })
-                    .fail(function () { fail1 = true; });
-        dm.add(d2).done(function () { done2 = true; })
-                    .fail(function () { fail2 = true; });
+        dm.add(d1).then(function () { done1 = true; })
+                    .catch(function () { fail1 = true; });
+        dm.add(d2).then(function () { done2 = true; })
+                    .catch(function () { fail2 = true; });
 
         setTimeout(function () { d1.resolve(); }, 20);
         setTimeout(function () { d2.resolve(); }, 10);
@@ -335,13 +339,13 @@ QUnit.module('core', {}, function () {
             done1 = false, done2 = false,
             fail1 = false, fail2 = false;
 
-        var d1 = $.Deferred(),
-            d2 = $.Deferred();
+        var d1 = makeTestPromise(),
+            d2 = makeTestPromise();
 
-        dm.add(d1).done(function () { done1 = true; })
-                    .fail(function () { fail1 = true; });
-        dm.add(d2).done(function () { done2 = true; })
-                    .fail(function () { fail2 = true; });
+        dm.add(d1).then(function () { done1 = true; })
+                    .catch(function () { fail1 = true; });
+        dm.add(d2).then(function () { done2 = true; })
+                    .catch(function () { fail2 = true; });
 
         setTimeout(function () { d1.resolve(); }, 20);
         setTimeout(function () { d2.resolve(); }, 10);
@@ -496,7 +500,7 @@ QUnit.module('core', {}, function () {
         done();
     });
 
-    QUnit.only('MutexedDropPrevious: 3 arrives after 2 initialization', async function (assert) {
+    QUnit.test('MutexedDropPrevious: 3 arrives after 2 initialization', async function (assert) {
 
         assert.expect(14);
         var done = assert.async();
@@ -546,18 +550,26 @@ QUnit.module('core', {}, function () {
         done();
      });
 
-    QUnit.test('MutexedDropPrevious: 2 in then of 1 with 3', function (assert) {
+    QUnit.test('MutexedDropPrevious: 2 in then of 1 with 3', async function (assert) {
         assert.expect(6);
+        var done = assert.async();
 
         var m = new concurrency.MutexedDropPrevious();
 
-        var d1 = $.Deferred();
-        var d2 = $.Deferred();
-        var d3 = $.Deferred();
+        var d1 = makeTestPromiseWithAssert(assert, "d1");
+        var d2 = makeTestPromiseWithAssert(assert, "d2");
+        var d3 = makeTestPromiseWithAssert(assert, "d3");
         var p3;
 
         var p1 = m.exec(function () { return d1; })
-            .always(function () {
+            .then(function () {
+                p3 = m.exec(function () {
+                    return d3;
+                }).then(function (result) {
+                    assert.strictEqual(result, 'd3');
+                });
+                return p3;
+            }).catch(function () {
                 p3 = m.exec(function () {
                     return d3;
                 }).then(function (result) {
@@ -566,6 +578,7 @@ QUnit.module('core', {}, function () {
                 return p3;
             });
 
+        assert.verifySteps([]);
         assert.strictEqual(p1.state(), "pending");
 
         var p2 = m.exec(function () {
@@ -580,6 +593,8 @@ QUnit.module('core', {}, function () {
 
         d3.resolve('d3');
         assert.strictEqual(p3.state(), "resolved");
+
+        done();
     });
 
 });

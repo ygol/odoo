@@ -23,7 +23,7 @@ function _genericJsonRpc (fct_name, params, settings, fct) {
         id: Math.floor(Math.random() * 1000 * 1000 * 1000)
     };
     var xhr = fct(data);
-    var result = xhr.pipe(function(result) {
+    var result = xhr.then(function(result) {
         core.bus.trigger('rpc:result', data, result);
         if (result.error !== undefined) {
             if (result.error.data.arguments[0] !== "bus.Bus not available in test mode") {
@@ -458,11 +458,6 @@ var loadXML = (function () {
         }
         seenURLs.push(url);
 
-        // If not already started, start the loading loop (reinitialize the
-        // "all the calls" promise to an unresolved state)
-        if (!isLoading) {
-            _load();
-        }
 
         // Add the information about the new data to load: the url, the qweb
         // engine and the associated promise
@@ -475,6 +470,12 @@ var loadXML = (function () {
             newLoadingData.reject = reject;
         })
         loadingsData.push(newLoadingData);
+
+        // If not already started, start the loading loop (reinitialize the
+        // "all the calls" promise to an unresolved state)
+        if (!isLoading) {
+            _load();
+        }
 
         // Return the promise associated to the new given URL
         return newLoadingData.def;
