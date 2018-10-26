@@ -6,8 +6,8 @@
  * @name openerp
  * @namespace openerp
  *
- * Each module can return a deferred. In that case, the module is marked as loaded
- * only when the deferred is resolved, and its value is equal to the resolved value.
+ * Each module can return a promise. In that case, the module is marked as loaded
+ * only when the promise is resolved, and its value is equal to the resolved value.
  * The module can be rejected (unloaded). This will be logged in the console as info.
  *
  * logs:
@@ -17,7 +17,7 @@
  *      Failed modules:
  *          A javascript error is detected
  *      Rejected modules:
- *          The module returns a rejected deferred. It (and its dependent modules)
+ *          The module returns a rejected promise. It (and its dependent modules)
  *          is not loaded.
  *      Rejected linked modules:
  *          Modules who depend on a rejected module
@@ -34,7 +34,7 @@
     var factories = Object.create(null);
     var job_names = [];
     var job_deps = [];
-    var job_deferred = [];
+    var job_promise = [];
 
 
     var services = Object.create({});
@@ -45,13 +45,18 @@
     var debug = ($.deparam($.param.querystring()).debug !== undefined);
 
     var odoo = window.odoo = window.odoo || {};
+    var didLogInfoResolve ;
+    var didLogInfoPromise = new Promise(function(resolve, reject) {
+        didLogInfoResolve = resolve;
+    });
+
     _.extend(odoo, {
         testing: typeof QUnit === "object",
         debug: debug,
         remaining_jobs: jobs,
 
         __DEBUG__: {
-            didLogInfo: $.Deferred(),
+            didLogInfo: didLogInfoPromise,
             get_dependencies: function (name, transitive) {
                 var deps = name instanceof Array ? name: [name],
                     changed;
@@ -212,7 +217,7 @@
                 missing: missing,
                 failed: _.pluck(failed, 'name'),
             };
-            odoo.__DEBUG__.didLogInfo.resolve();
+            didLogInfoResolve();
         },
         process_jobs: function (jobs, services) {
             var job;
@@ -225,7 +230,7 @@
                     try {
                         job_exec = job.factory.call(null, require);
                         jobs.splice(jobs.indexOf(job), 1);
-                        job_deferred.push(def);
+                        //job_promise.push(def);
                     } catch (e) {
                         job.error = e;
                         console.error('Error while loading ' + job.name);
@@ -236,7 +241,7 @@
                             function (data) {
                                 services[job.name] = data;
                                 resolve();
-                                odoo.process_jobs(jobs, services);
+                                //odoo.process_jobs(jobs, services);
                             }).catch(function (e) {
                                 job.rejected = e || true;
                                 jobs.push(job);
@@ -244,8 +249,8 @@
                             }
                         );
                     }
-                });
-                job_deferred.push(def);
+                }).then(function() {odoo.process_jobs(jobs, services);});
+                job_promise.push(def);
             }
 
             function is_ready (job) {
@@ -269,7 +274,7 @@
             }
 
             while (jobs.length && (job = _.find(jobs, is_ready))) {
-                //console.log('loading: ' + job.name);
+                console.log('loading: ' + job.name);
                 process_job(job);
             }
 
@@ -281,9 +286,9 @@
     // automatically log errors detected when loading modules
     var log_when_loaded = function () {
         _.delay(function () {
-            var len = job_deferred.length;
-            $.when.apply($, job_deferred).then(function () {
-                if (len === job_deferred.length) {
+            var len = job_promise.length;
+            Promise.all(job_promise).then(function () {
+                if (len === job_promise.length) {
                     odoo.log();
                 } else {
                     log_when_loaded();

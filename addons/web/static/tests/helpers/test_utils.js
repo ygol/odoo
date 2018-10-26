@@ -28,10 +28,12 @@ var testUtilsPivot = require('web.test_utils_pivot');
 // before starting the qunit test suite.
 // (session.js is in charge of loading the static xml bundle and we also have
 // to load xml files that are normally lazy loaded by specific widgets).
-return $.when(
-    session.is_bound,
-    ajax.loadXML('/web/static/src/xml/dialog.xml', core.qweb)
-).then(function () {
+debugger;
+var a = session.is_bound;
+var b = ajax.loadXML('/web/static/src/xml/dialog.xml', core.qweb);
+return Promise.all([
+    a,b
+]).then(function () {
     setTimeout(function () {
         // this is done with the hope that tests are
         // only started all together...

@@ -189,8 +189,9 @@ var ServicesMixin = {
      * @returns {Promise}
      */
     do_action: function (action, options) {
+        var self = this;
         return new Promise(function(resolve, reject) {
-            this.trigger_up('do_action', {
+            self.trigger_up('do_action', {
                 action: action,
                 options: options,
                 on_success: resolve,
