@@ -53,7 +53,7 @@ var AbstractAction = Widget.extend({
      * promise is succesfully resolved, then we can destroy the current action,
      * otherwise, we need to stop.
      *
-     * @returns {Deferred} resolved if the action can be removed, rejected otherwise
+     * @returns {Promise} resolved if the action can be removed, rejected otherwise
      */
     canBeRemoved: function () {
         return Promise.resolve();

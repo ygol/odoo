@@ -639,7 +639,7 @@ ActionManager.include({
             controllerDef = controllerDef.then(function (controller) {
                 if (!controller.widget) {
                     // lazy loaded -> load it now
-                    return newController().done(function (newController) {
+                    return newController().then(function (newController) {
                         // replace the old controller (without widget) by the new one
                         var index = self.controllerStack.indexOf(controller.jsID);
                         self.controllerStack[index] = newController.jsID;

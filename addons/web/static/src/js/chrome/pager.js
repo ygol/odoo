@@ -46,7 +46,7 @@ var Pager = Widget.extend({
             can_edit: true, // editable
             single_page_hidden: false, // displayed even if there is a single page
             validate: function() {
-                return $.Deferred().resolve();
+                return Promise.resolve();
             },
             withAccessKey: true,  // can be disabled, for example, for x2m widgets
         });
@@ -55,7 +55,7 @@ var Pager = Widget.extend({
     /**
      * Renders the pager
      *
-     * @returns {jQuery.Deferred}
+     * @returns {Promise}
      */
     start: function () {
         this.$value = this.$('.o_pager_value');
@@ -216,7 +216,7 @@ var Pager = Widget.extend({
                 }
                 self.trigger('pager_changed', _.clone(self.state));
             }
-        }).always(function() {
+        }).then(function() {
             // Render the pager's new state (removes the input)
             self._render();
         });

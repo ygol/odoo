@@ -16,18 +16,20 @@ var SystrayMenu = Widget.extend({
         this._super(parent);
         this.items = [];
         this.widgets = [];
-        this.load = $.Deferred();
+        this.load = new Promise(function(){});
     },
     /**
      * @override
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     start: function () {
         var self = this;
         self._super.apply(this, arguments);
         self._loadItems();
-        $.when.apply($, self.items).always(function () {
-            self.load.resolve();
+        Promise.all(self.items).then(function () {
+            Promise.resolve(self.load);
+        }).catch(function () { // I didn't find an elegant way to do 'always'
+            Promise.resolve(self.load);
         });
         return self.load;
     },

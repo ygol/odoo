@@ -87,7 +87,7 @@ var ControlPanel = Widget.extend({
     },
     /**
      * Renders the control panel and creates a dictionnary of its exposed elements
-     * @return {jQuery.Deferred}
+     * @return {Promise}
      */
     start: function() {
         // Exposed jQuery nodesets

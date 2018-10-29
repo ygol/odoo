@@ -72,7 +72,7 @@ var ActionManager = Widget.extend({
         this.controlPanel = new ControlPanel(this);
         var def = this.controlPanel.insertBefore(this.$el);
 
-        return $.when(def, this._super.apply(this, arguments));
+        return Promise.all([def, this._super.apply(this, arguments)]);
     },
     /**
      * Called each time the action manager is attached into the DOM.
@@ -229,7 +229,7 @@ var ActionManager = Widget.extend({
     loadState: function (state) {
         var action;
         if (!state.action) {
-            return $.when();
+            return Promise.resolve();
         }
         if (_.isString(state.action) && core.action_registry.contains(state.action)) {
             action = {
@@ -523,7 +523,7 @@ var ActionManager = Widget.extend({
             this.trigger_up('show_effect', action.effect);
         }
 
-        return $.when(result);
+        return Promise.resolve(result);
     },
     /**
      * Executes actions of type 'ir.actions.server'.
