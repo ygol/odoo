@@ -32,7 +32,7 @@ var SwitchCompanyMenu = Widget.extend({
      * @override
      */
     willStart: function () {
-        return session.user_companies ? this._super() : $.Deferred().reject();
+        return session.user_companies ? this._super() : Promise.reject();
     },
     /**
      * @override
