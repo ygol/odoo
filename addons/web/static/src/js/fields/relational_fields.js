@@ -170,11 +170,11 @@ var FieldMany2One = AbstractField.extend({
      * is saved.
      *
      * @override
-     * @returns {Deferred} resolved as soon as there is no longer record being
+     * @returns {Promise} resolved as soon as there is no longer record being
      *   (quick) created
      */
     commitChanges: function () {
-        return $.when(this.createDef);
+        return Promise.resolve(this.createDef);
     },
     /**
      * @override
@@ -207,7 +207,7 @@ var FieldMany2One = AbstractField.extend({
             this.isDirty = false;
         }
         if (this.isDirty) {
-            return $.when();
+            return Promise.resolve();
         } else {
             return this._render();
         }
@@ -252,7 +252,7 @@ var FieldMany2One = AbstractField.extend({
 
                         // Wrap the returned value of the source.method with $.when.
                         // So event if the returned value is not async, it will work
-                        $.when(source.method.call(self, req.term)).then(function (results) {
+                        Promise.resolve(source.method.call(self, req.term)).then(function (results) {
                             source.results = results;
                             source.loading = false;
                             resp(self._concatenateAutocompleteResults());
