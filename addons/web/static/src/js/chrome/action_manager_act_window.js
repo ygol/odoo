@@ -219,8 +219,10 @@ ActionManager.include({
             // communication with trigger_up (e.g. for 'env_updated' event)
             viewOptions = _.extend(viewOptions, { controllerID: controllerID });
 
+            var rejection;
             var view = new viewDescr.Widget(viewDescr.fieldsView, viewOptions);
             var def = new Promise(function (resolve, reject) {
+                rejection = reject;
                 view.getController(self).then(function (widget) {
                     if (def.rejected) {
                         // the promise has been rejected meanwhile, meaning that
@@ -231,7 +233,9 @@ ActionManager.include({
                         resolve(controller);
                     }
                 }).catch(reject);
-            })
+            });
+            // Need to define an reject property to call it into _destroyWindowAction
+            def.reject = rejection;
             def.catch(function () {
                 def.rejected = true;
                 delete self.controllers[controllerID];
@@ -239,8 +243,11 @@ ActionManager.include({
             action.controllers[viewType] = def;
         } else {
             action.controllers[viewType] = Promise.resolve(controller);
+            // Again, we need to define an reject property to call it into
+            // _destroyWindowAction but it's wrong to reject an already
+            // resolved promise (since a promise is immutable)
+            action.controllers[viewType].reject = function () {return;};
         }
-
         return action.controllers[viewType];
     },
     /**
