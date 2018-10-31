@@ -1053,10 +1053,15 @@ var BasicModel = AbstractModel.extend({
                 });
             }
 
+            var resolution, rejection;
             var def = new Promise(function (resolve, reject) {
+                resolution = resolve;
+                rejection = reject;
             }).then(function () {
                 record._isDirty = false;
             });
+            def.resolve = resolution;
+            def.reject = rejection;
             var changedFields = Object.keys(changes);
 
             if (options.savePoint) {
