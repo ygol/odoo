@@ -453,29 +453,51 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
      * @private
      * @param {OdooEvent} ev
      */
-    _onActionClicked: function (ev) {
+    _onActionClicked: function (ev) { // FIXME: maybe this should also work on <button> tags?
         var $target = $(ev.currentTarget);
         var self = this;
-        var model = $target.data('model');
-        var method = $target.data('method');
+        var data = $target.data();
 
-        if (method !== undefined && model !== undefined) {
+        if (data.method !== undefined && data.model !== undefined) {
             var options = {};
-            if ($target.data('reload-on-close')) {
+            if (data.reloadOnClose) {
                 options.on_close = function () {
                     self.trigger_up('reload');
                 };
             }
             this.dp.add(this._rpc({
-                model: model,
-                method: method,
+                model: data.model,
+                method: data.method,
             })).then(function (action) {
                 if (action !== undefined) {
                     self.do_action(action, options);
                 }
             });
-        } else {
+        } else if ($target.attr('name')) {
             this.do_action($target.attr('name'));
+        } else {
+            var action_model = data.model || this.modelName;
+            var context = {};
+            // forward current active_* iif next action is on the same model
+            if (action_model === this.modelName) {
+                var currentAction = this.getParent().getCurrentAction();
+                context = {
+                    active_id: currentAction.context.active_id,
+                    active_ids: currentAction.context.active_ids,
+                    active_model: currentAction.context.active_model,
+                }
+            }
+            this.do_action({
+                name: $target.attr('title') || _.str.strip($target.text()),
+                type: 'ir.actions.act_window',
+                res_model: action_model,
+                res_id: data.resId,
+                target: 'current', // TODO: make customisable?
+                views: data.views || (data.resId ? [[false, 'form']] : [[false, 'list'], [false, 'form']]),
+                domain: data.domain || [],
+            }, {
+                additional_context: _.extend(context, data.context)
+            });
         }
     },
     /**
