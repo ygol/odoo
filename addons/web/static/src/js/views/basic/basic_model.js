@@ -2373,7 +2373,7 @@ var BasicModel = AbstractModel.extend({
      * @see _fetchReferencesSingleBatch
      * @param {Object} list a valid resource object
      * @param {string} fieldName
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _fetchReferenceSingleBatch: function (list, fieldName) {
         var self = this;
@@ -2391,14 +2391,14 @@ var BasicModel = AbstractModel.extend({
             defs.push(self._fetchReferenceData(datapoints, model, fieldName));
         });
 
-        return $.when.apply($, defs);
+        return Promise.all($, defs);
     },
     /**
      * Batch requests for all reference field in list's children.
      * Called by _readGroup to make only one 'name_get' rpc by fieldName.
      *
      * @param {Object} list a valid resource object
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _fetchReferencesSingleBatch: function (list) {
         var defs = [];
@@ -2409,7 +2409,7 @@ var BasicModel = AbstractModel.extend({
                 defs.push(this._fetchReferenceSingleBatch(list, fieldNames[fIndex]));
             }
         }
-        return $.when.apply($, defs);
+        return Promise.all($, defs);
     },
     /**
      * Fetch model data from server, relationally to fieldName and resulted
