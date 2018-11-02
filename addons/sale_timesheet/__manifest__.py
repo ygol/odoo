@@ -13,7 +13,7 @@ This module set the right product on all timesheet lines
 according to the order/contract you work on. This allows to
 have real delivered quantities in sales orders.
 """,
-    'depends': ['sale_management', 'hr_timesheet'],
+    'depends': ['sale_management', 'hr_timesheet', 'web_qweb'],
     'data': [
         'security/ir.model.access.csv',
         'security/sale_timesheet_security.xml',
@@ -32,9 +32,6 @@ have real delivered quantities in sales orders.
     ],
     'demo': [
         'data/sale_service_demo.xml',
-    ],
-    'qweb': [
-        'static/src/xml/timesheet_plan.xml',
     ],
     'auto_install': True,
     'uninstall_hook': 'uninstall_hook',
