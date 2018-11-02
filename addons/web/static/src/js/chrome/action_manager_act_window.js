@@ -345,7 +345,7 @@ ActionManager.include({
                 }
                 return self.dp.add(Promise.all(defs));
             }).then(function (controller, lazyLoadedController) {
-                action.controllerID = controller.jsID;
+                action.controllerID = controller[0].jsID;
                 return self._executeAction(action, options).then(function () {
                     if (lazyLoadedController) {
                         // controller should be placed just before the current one
