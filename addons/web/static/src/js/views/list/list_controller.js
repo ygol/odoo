@@ -141,6 +141,7 @@ var ListController = BasicController.extend({
      * main buttons)
      *
      * @param {jQuery Node} $node
+     * @returns {Promise}
      */
     renderSidebar: function ($node) {
         var self = this;
@@ -178,10 +179,11 @@ var ListController = BasicController.extend({
                 },
                 actions: _.extend(this.toolbarActions, {other: other}),
             });
-            this.sidebar.appendTo($node);
-
-            this._toggleSidebar();
+            return this.sidebar.appendTo($node).then(function() {
+                self._toggleSidebar();
+            });
         }
+        return Promise.resolve();
     },
     /**
      * Overrides to update the list of selected records

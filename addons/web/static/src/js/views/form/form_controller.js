@@ -179,6 +179,7 @@ var FormController = BasicController.extend({
      *   inserted
      **/
     renderSidebar: function ($node) {
+        var self = this;
         if (this.hasSidebar) {
             var otherItems = [];
             if (this.is_action_enabled('delete')) {
@@ -203,11 +204,12 @@ var FormController = BasicController.extend({
                 },
                 actions: _.extend(this.toolbarActions, {other: otherItems}),
             });
-            this.sidebar.appendTo($node);
-
-            // Show or hide the sidebar according to the view mode
-            this._updateSidebar();
+            return this.sidebar.appendTo($node).then(function() {
+                 // Show or hide the sidebar according to the view mode
+                self._updateSidebar();
+            });
         }
+        return Promise.resolve();
     },
     /**
      * Show a warning message if the user modified a translated field.  For each
@@ -468,13 +470,11 @@ var FormController = BasicController.extend({
         }
         var attrs = ev.data.attrs;
         if (attrs.confirm) {
-            var d = $.Deferred();
-            Dialog.confirm(this, attrs.confirm, {
-                confirm_callback: saveAndExecuteAction,
-            }).on("closed", null, function () {
-                d.resolve();
+            def = new Promise(function(resolve, reject) {
+                Dialog.confirm(this, attrs.confirm, {
+                    confirm_callback: saveAndExecuteAction,
+                }).on("closed", null, resolve);
             });
-            def = d.promise();
         } else if (attrs.special === 'cancel') {
             def = this._callButtonAction(attrs, ev.data.record);
         } else if (!attrs.special || attrs.special === 'save') {
@@ -482,7 +482,7 @@ var FormController = BasicController.extend({
             def = saveAndExecuteAction();
         }
 
-        def.always(this._enableButtons.bind(this));
+        def.then(this._enableButtons).catch(this._enableButtons);
     },
     /**
      * Called when the user wants to create a new record -> @see createRecord
@@ -657,9 +657,7 @@ var FormController = BasicController.extend({
         ev.stopPropagation(); // Prevent x2m lines to be auto-saved
         var self = this;
         this._disableButtons();
-        this.saveRecord().always(function () {
-            self._enableButtons();
-        });
+        this.saveRecord().then(self._enableButtons).catch(self._enableButtons);
     },
     /**
      * Called when user swipes left. Move to next record.

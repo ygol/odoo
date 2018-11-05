@@ -53,6 +53,7 @@ var KanbanController = BasicController.extend({
 
     /**
      * @param {jQueryElement} $node
+     * @returns {Promise}
      */
     renderButtons: function ($node) {
         if (this.hasButtons && this.is_action_enabled('create')) {
@@ -63,8 +64,9 @@ var KanbanController = BasicController.extend({
             this.$buttons.on('click', 'button.o-kanban-button-new', this._onButtonNew.bind(this));
             this.$buttons.on('keydown',this._onButtonsKeyDown.bind(this));
             this._updateButtons();
-            this.$buttons.appendTo($node);
+            return this.$buttons.appendTo($node);
         }
+        return Promise.resolve();
     },
 
     //--------------------------------------------------------------------------

@@ -590,26 +590,21 @@ var BasicRenderer = AbstractRenderer.extend({
 
         // Prepare widget rendering and save the related promise
         var def = widget._widgetRenderAndInsert(function () {});
-        var async = def.state() === 'pending';
-        var $el = async ? $('<div>') : widget.$el;
-        if (async) {
-            this.defs.push(def);
-        }
+        var $el =  $('<div>');
+        this.defs.push(def);
 
         // Update the modifiers registration by associating the widget and by
         // giving the modifiers options now (as the potential callback is
         // associated to new widget)
         var self = this;
         def.then(function () {
-            if (async) {
-                $el.replaceWith(widget.$el);
-            }
+            $el.replaceWith(widget.$el);
             self._registerModifiers(node, record, widget, {
                 callback: function (element, modifiers, record) {
                     element.$el.toggleClass('o_field_empty', !!(
-                        record.data.id
-                        && (modifiers.readonly || mode === 'readonly')
-                        && !element.widget.isSet()
+                        record.data.id &&
+                        (modifiers.readonly || mode === 'readonly') &&
+                        !element.widget.isSet()
                     ));
                 },
                 keepBaseMode: !!options.keepBaseMode,
@@ -668,20 +663,15 @@ var BasicRenderer = AbstractRenderer.extend({
 
         // Prepare widget rendering and save the related promise
         var def = widget._widgetRenderAndInsert(function () {});
-        var async = def.state() === 'pending';
-        if (async) {
-            this.defs.push(def);
-        }
-        var $el = async ? $('<div>') : widget.$el;
+        this.defs.push(def);
+        var $el = $('<div>');
 
         var self = this;
         def.then(function () {
             self._handleAttributes(widget.$el, node);
             self._registerModifiers(node, record, widget);
             widget.$el.addClass('o_widget');
-            if (async) {
-                $el.replaceWith(widget.$el);
-            }
+            $el.replaceWith(widget.$el);
         });
 
         return $el;

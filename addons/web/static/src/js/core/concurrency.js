@@ -321,8 +321,8 @@ return {
          */
         getUnlockedDef: function () {
             console.error("getUnlockedDef Not implemented yet");
-            throw new Error("Not implemented yet");
-
+            //throw new Error("Not implemented yet");
+            return this.lock;
             // return $.when(this.unlockedDef);
         },
     }),
