@@ -420,18 +420,19 @@ return {
         }
     }),
     /**
-     * Rejects a deferred as soon as a reference deferred is either resolved or
+     * Rejects a promise as soon as a reference promise is either resolved or
      * rejected
      *
-     * @param {Deferred} [target_def] the deferred to potentially reject
-     * @param {Deferred} [reference_def] the reference target
-     * @returns {Deferred}
+     * @param {Promise} [target_def] the promise to potentially reject
+     * @param {Promise} [reference_def] the reference target
+     * @returns {Promise}
      */
     rejectAfter: function (target_def, reference_def) {
-        var res = $.Deferred();
-        target_def.then(res.resolve, res.reject);
-        reference_def.always(res.reject);
-        return res.promise();
+        console.log("rejectAfter");
+        return new Promise(function(resolve, reject) {
+            target_def.then(resolve, reject);
+            reference_def.then(reject, reject);
+        });
     }
 };
 
