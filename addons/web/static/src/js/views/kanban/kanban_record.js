@@ -63,7 +63,7 @@ var KanbanRecord = Widget.extend({
      * @override
      */
     start: function () {
-        return $.when(this._super.apply(this, arguments), this._render());
+        return Promise.all([this._super.apply(this, arguments), this._render()]);
     },
     /**
      * Called each time the record is attached to the DOM.
@@ -86,7 +86,7 @@ var KanbanRecord = Widget.extend({
      * Re-renders the record with a new state
      *
      * @param {Object} state
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     update: function (state) {
         // detach the widgets because the record will empty its $el, which will
@@ -331,7 +331,7 @@ var KanbanRecord = Widget.extend({
     /**
      * Renders the record
      *
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _render: function () {
         this.defs = [];
@@ -355,7 +355,7 @@ var KanbanRecord = Widget.extend({
         // We use boostrap tooltips for better and faster display
         this.$('span.o_tag').tooltip({delay: {'show': 50}});
 
-        return $.when.apply(this, this.defs);
+        return Promise.all(this.defs);
     },
     /**
      * Sets particular classnames on a field $el according to the

@@ -1057,8 +1057,6 @@ var BasicModel = AbstractModel.extend({
             var def = new Promise(function (resolve, reject) {
                 resolution = resolve;
                 rejection = reject;
-            }).then(function () {
-                record._isDirty = false;
             });
             def.resolve = resolution;
             def.reject = rejection;
@@ -1067,6 +1065,10 @@ var BasicModel = AbstractModel.extend({
             if (options.savePoint) {
                 return def.resolve(changedFields);
             }
+
+            def.then(function () {
+                record._isDirty = false;
+            });
 
             // in the case of a write, only perform the RPC if there are changes to save
             if (method === 'create' || changedFields.length) {

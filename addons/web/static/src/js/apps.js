@@ -145,7 +145,7 @@ var Apps = AbstractAction.extend({
                 self.$ifr.appendTo(self.$el).css(css).addClass('apps-client');
 
                 resolve();
-            }, function() {
+            }).catch(function () {
                 self.do_warn(_t('Odoo Apps will be available soon'), _t('Showing locally available modules'), true);
                 return self._rpc({
                     route: '/web/action/load',

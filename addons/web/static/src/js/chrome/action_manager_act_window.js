@@ -633,7 +633,13 @@ ActionManager.include({
         };
 
         var controllerDef = action.controllers[viewType];
-        if (!controllerDef || controllerDef.state() === 'rejected') {
+        // TODO: Workaround, need to find a better way to fix this
+        if (controllerDef) {
+            controllerDef.catch(function () {
+                controllerDef.state = 'rejected';
+            });
+        }
+        if (!controllerDef || (controllerDef && controllerDef.state === 'rejected')) {
             // if the controllerDef is rejected, it probably means that the js
             // code or the requests made to the server crashed.  In that case,
             // if we reuse the same promise, then the switch to the view is
