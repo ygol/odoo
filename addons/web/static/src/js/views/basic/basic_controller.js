@@ -140,10 +140,10 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
     /**
      * @override
      */
-    renderPager: function ($node, options) {
+    renderPager: function ($node) {
         var self = this;
         var data = this.model.get(this.handle, {raw: true});
-        this.pager = new Pager(this, data.count, data.offset + 1, data.limit, options);
+        this.pager = new Pager(this, data.count, data.offset + 1, data.limit);
 
         this.pager.on('pager_changed', this, function (newState) {
             var self = this;
