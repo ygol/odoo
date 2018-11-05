@@ -117,8 +117,11 @@ var AttachDocument = Widget.extend({
                     kwargs: {
                         'attachment_ids': _.map(files, function (file) {return file.id;}),
                     }
-                }).then( function () {
+                }).then(function () {
                     resolve();
+                }).catch(function(reason) {
+                    resolve();
+                    throw new Error(reason);
                 });
             } else {
                 resolve();

@@ -16,7 +16,6 @@ var SystrayMenu = Widget.extend({
         this._super(parent);
         this.items = [];
         this.widgets = [];
-        this.load = new Promise(function(){});
     },
     /**
      * @override
@@ -26,12 +25,10 @@ var SystrayMenu = Widget.extend({
         var self = this;
         self._super.apply(this, arguments);
         self._loadItems();
-        Promise.all(self.items).then(function () {
-            Promise.resolve(self.load);
-        }).catch(function () { // I didn't find an elegant way to do 'always'
-            Promise.resolve(self.load);
+
+        return new Promise(function(resolve, reject) {
+            Promise.all(self.items).then(resolve).catch(resolve);
         });
-        return self.load;
     },
 
     //--------------------------------------------------------------------------

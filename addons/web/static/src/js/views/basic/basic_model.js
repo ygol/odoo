@@ -1053,64 +1053,57 @@ var BasicModel = AbstractModel.extend({
                 });
             }
 
-            var resolution, rejection;
-            var def = new Promise(function (resolve, reject) {
-                resolution = resolve;
-                rejection = reject;
-            });
-            def.resolve = resolution;
-            def.reject = rejection;
-            var changedFields = Object.keys(changes);
+            return new Promise(function (resolve, reject) {
+                var changedFields = Object.keys(changes);
 
-            if (options.savePoint) {
-                return def.resolve(changedFields);
-            }
+                if (options.savePoint) {
+                    resolve(changedFields);
+                    return;
+                }
 
-            def.then(function () {
+                // in the case of a write, only perform the RPC if there are changes to save
+                if (method === 'create' || changedFields.length) {
+                    var args = method === 'write' ? [[record.data.id], changes] : [changes];
+                    self._rpc({
+                            model: record.model,
+                            method: method,
+                            args: args,
+                            context: record.getContext(),
+                        }).then(function (id) {
+                            if (method === 'create') {
+                                record.res_id = id;  // create returns an id, write returns a boolean
+                                record.data.id = id;
+                                record.offset = record.res_ids.length;
+                                record.res_ids.push(id);
+                                record.count++;
+                            }
+
+                            var _changes = record._changes;
+
+                            // Erase changes as they have been applied
+                            record._changes = {};
+
+                            // Optionally clear the DataManager's cache
+                            self._invalidateCache(record);
+
+                            self.unfreezeOrder(record.id);
+
+                            // Update the data directly or reload them
+                            if (shouldReload) {
+                                self._fetchRecord(record).then(function () {
+                                    resolve(changedFields);
+                                });
+                            } else {
+                                _.extend(record.data, _changes);
+                                resolve(changedFields);
+                            }
+                        }).catch(reject);
+                } else {
+                    resolve(changedFields);
+                }
+            }).then(function () {
                 record._isDirty = false;
             });
-
-            // in the case of a write, only perform the RPC if there are changes to save
-            if (method === 'create' || changedFields.length) {
-                var args = method === 'write' ? [[record.data.id], changes] : [changes];
-                self._rpc({
-                        model: record.model,
-                        method: method,
-                        args: args,
-                        context: record.getContext(),
-                    }).then(function (id) {
-                        if (method === 'create') {
-                            record.res_id = id;  // create returns an id, write returns a boolean
-                            record.data.id = id;
-                            record.offset = record.res_ids.length;
-                            record.res_ids.push(id);
-                            record.count++;
-                        }
-
-                        var _changes = record._changes;
-
-                        // Erase changes as they have been applied
-                        record._changes = {};
-
-                        // Optionally clear the DataManager's cache
-                        self._invalidateCache(record);
-
-                        self.unfreezeOrder(record.id);
-
-                        // Update the data directly or reload them
-                        if (shouldReload) {
-                            self._fetchRecord(record).then(function () {
-                                def.resolve(changedFields);
-                            });
-                        } else {
-                            _.extend(record.data, _changes);
-                            def.resolve(changedFields);
-                        }
-                    }).catch(def.reject());
-            } else {
-                def.resolve(changedFields);
-            }
-            return def;
         });
     },
     /**
@@ -1202,7 +1195,7 @@ var BasicModel = AbstractModel.extend({
             group.res_ids = [];
             group.offset = 0;
             this._updateParentResIDs(group);
-            return $Promise.resolve(groupId);
+            return Promise.resolve(groupId);
         }
         if (!group.isOpen) {
             group.isOpen = true;
@@ -2724,12 +2717,6 @@ var BasicModel = AbstractModel.extend({
 
         return new Promise(function (resolve, reject) {
             var evalContext = this._getEvalContext(record);
-            var always = function (nbRecords) {
-                resolve({
-                    model: domainModel,
-                    nbRecords: nbRecords,
-                });
-            };
             this._rpc({
                 model: domainModel,
                 method: 'search_count',
@@ -2740,7 +2727,12 @@ var BasicModel = AbstractModel.extend({
                 e.preventDefault(); // prevent traceback (the search_count might be intended to break)
                 return false;
             })
-            .then(always).catch(always);
+            .then(function (nbRecords) {
+                resolve({
+                    model: domainModel,
+                    nbRecords: nbRecords,
+                });
+            });
         });
     },
     /**
@@ -4133,7 +4125,7 @@ var BasicModel = AbstractModel.extend({
                 context: list.getContext(),
             });
         } else {
-            def = Promise.all(_.map(missingIDs, function (id) {
+            def = Promise.resolve(_.map(missingIDs, function (id) {
                 return {id:id};
             }));
         }

@@ -457,7 +457,7 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
             }
             return saveDef;
         } else {
-            return $.Promise.reject(); // Cannot be saved
+            return Promise.reject(); // Cannot be saved
         }
     },
     /**

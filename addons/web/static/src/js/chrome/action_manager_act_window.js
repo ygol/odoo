@@ -243,10 +243,6 @@ ActionManager.include({
             action.controllers[viewType] = def;
         } else {
             action.controllers[viewType] = Promise.resolve(controller);
-            // Again, we need to define an reject property to call it into
-            // _destroyWindowAction but it's wrong to reject an already
-            // resolved promise (since a promise is immutable)
-            action.controllers[viewType].reject = function () {return;};
         }
         return action.controllers[viewType];
     },
@@ -269,7 +265,9 @@ ActionManager.include({
             // reject the promise if it is not yet resolved, so that the
             // controller is correctly destroyed as soon as it is ready, and
             // its reference is removed
-            controllerDef.reject();
+            if (controllerDef.reject) {
+                controllerDef.reject();
+            }
         });
         if (action.searchView && !action._keepSearchView) {
             action.searchView.destroy();
@@ -635,20 +633,6 @@ ActionManager.include({
         var controllerDef = action.controllers[viewType];
         // TODO: Workaround, need to find a better way to fix this
         if (controllerDef) {
-            controllerDef.catch(function () {
-                controllerDef.state = 'rejected';
-            });
-        }
-        if (!controllerDef || (controllerDef && controllerDef.state === 'rejected')) {
-            // if the controllerDef is rejected, it probably means that the js
-            // code or the requests made to the server crashed.  In that case,
-            // if we reuse the same promise, then the switch to the view is
-            // definitely blocked.  We want to use a new controller, even though
-            // it is very likely that it will recrash again.  At least, it will
-            // give more feedback to the user, and it could happen that one
-            // record crashes, but not another.
-            controllerDef = newController();
-        } else {
             controllerDef = controllerDef.then(function (controller) {
                 if (!controller.widget) {
                     // lazy loaded -> load it now
@@ -666,7 +650,18 @@ ActionManager.include({
                         });
                     });
                 }
+            }, function () {
+                // if the controllerDef is rejected, it probably means that the js
+                // code or the requests made to the server crashed.  In that case,
+                // if we reuse the same promise, then the switch to the view is
+                // definitely blocked.  We want to use a new controller, even though
+                // it is very likely that it will recrash again.  At least, it will
+                // give more feedback to the user, and it could happen that one
+                // record crashes, but not another.
+                return newController();
             });
+        } else {
+            controllerDef = newController();
         }
 
         return this.dp.add(controllerDef).then(function (controller) {

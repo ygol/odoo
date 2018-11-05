@@ -216,9 +216,10 @@ var Pager = Widget.extend({
                 }
                 self.trigger('pager_changed', _.clone(self.state));
             }
-        }).then(function() {
             // Render the pager's new state (removes the input)
             self._render();
+        }).catch(function() {
+            throw new Error("Something bad happened after the validation of the pager.");
         });
     },
     /**

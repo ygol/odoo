@@ -270,7 +270,7 @@ var DataExport = Dialog.extend({
                                 self.add_field(record.id, record.string);
                             }
                         });
-                    });
+                    }).catch(function() { reject();});
             }).eq(0).change();
         });
         waitFor.push(got_fields);

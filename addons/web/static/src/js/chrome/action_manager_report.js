@@ -52,7 +52,7 @@ ActionManager.include({
                 data: {
                     data: JSON.stringify([url, type]),
                 },
-                success: resolve(),
+                success: resolve,
                 error: function () {
                     crash_manager.rpc_error.apply(crash_manager, arguments);
                     reject();
