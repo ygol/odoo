@@ -127,8 +127,8 @@ var ServicesMixin = {
      * Builds and executes RPC query. Returns a deferred's promise resolved with
      * the RPC result.
      *
-     * @param {string} params either a route or a model
-     * @param {string} options if a model is given, this argument is a method
+     * @param {Object} params either a route or a model
+     * @param {Object} [options] if a model is given, this argument is a method
      * @returns {Promise}
      */
     _rpc: function (params, options) {
