@@ -68,14 +68,16 @@ var Menu = Widget.extend({
 
         // Systray Menu
         this.systray_menu = new SystrayMenu(this);
-        this.systray_menu.attachTo(this.$('.o_menu_systray'));
-
-        dom.initAutoMoreMenu(this.$section_placeholder, {
+        this.systray_menu.attachTo(this.$('.o_menu_systray')).then(function() {
+            dom.initAutoMoreMenu(self.$section_placeholder, {
             maxWidth: function () {
                 return self.$el.width() - (self.$menu_apps.outerWidth(true) + self.$menu_brand_placeholder.outerWidth(true) + self.systray_menu.$el.outerWidth(true));
             },
             sizeClass: 'SM',
+            }); 
         });
+
+
 
         return this._super.apply(this, arguments);
     },

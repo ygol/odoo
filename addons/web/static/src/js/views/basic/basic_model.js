@@ -2404,7 +2404,7 @@ var BasicModel = AbstractModel.extend({
                 defs.push(this._fetchReferenceSingleBatch(list, fieldNames[fIndex]));
             }
         }
-        return Promise.all($, defs);
+        return Promise.all(defs);
     },
     /**
      * Fetch model data from server, relationally to fieldName and resulted

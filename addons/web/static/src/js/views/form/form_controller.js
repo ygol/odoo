@@ -482,7 +482,7 @@ var FormController = BasicController.extend({
             def = saveAndExecuteAction();
         }
 
-        def.then(this._enableButtons).catch(this._enableButtons);
+        def.then(self._enableButtons).catch(self._enableButtons);
     },
     /**
      * Called when the user wants to create a new record -> @see createRecord

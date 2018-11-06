@@ -364,16 +364,19 @@ var FieldMany2One = AbstractField.extend({
      */
     _quickCreate: function (name) {
         var self = this;
+        var createDone;
+
         var def = new Promise(function(resolve, reject) {
-            this.createDef = this.createDef || $.Deferred();
-            // called when the record has been quick created, or when the dialog has
-            // been closed (in the case of a 'slow' create), meaning that the job is
-            // done
-            var createDone = function () {
-                resolve();
-                self.createDef.resolve();
-                self.createDef = undefined;
-            };
+            self.createDef = new Promise(function(innerResolve, innerReject) {
+                // called when the record has been quick created, or when the dialog has
+                // been closed (in the case of a 'slow' create), meaning that the job is
+                // done
+                createDone = function () {
+                    innerResolve();
+                    resolve();
+                };
+            });
+
             // called if the quick create is disabled on this many2one, or if the
             // quick creation failed (probably because there are mandatory fields on
             // the model)
@@ -1102,7 +1105,7 @@ var FieldX2Many = AbstractField.extend({
                     onFailure: def.reject.bind(def),
                 });
             } else {
-                this.renderer.setRowMode(recordID, 'readonly').done(resolve);
+                this.renderer.setRowMode(recordID, 'readonly').then(resolve);
             }
         }).then(function () {
             self.pager.updateState({ size: self.value.count });

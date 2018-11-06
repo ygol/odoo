@@ -481,7 +481,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
      * loaded when scrolling to the top, so they can't be loaded if there is no
      * scrollbar)
      *
-     * @returns {Deferred} resolved when there are enough messages to fill the
+     * @returns {Promise} resolved when there are enough messages to fill the
      *   screen, or when there is no more message to fetch
      */
     _loadEnoughMessages: function () {
@@ -560,7 +560,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
             $input.autocomplete({
                 source: function (request, response) {
                     self._lastSearchVal = _.escape(request.term);
-                    self._searchChannel(self._lastSearchVal).done(function (result){
+                    self._searchChannel(self._lastSearchVal).then(function (result){
                         result.push({
                             label:  _.str.sprintf(
                                         '<strong>' + _t("Create %s") + '</strong>',
@@ -596,7 +596,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
             $input.autocomplete({
                 source: function (request, response) {
                     self._lastSearchVal = _.escape(request.term);
-                    self.call('mail_service', 'searchPartner', self._lastSearchVal, 10).done(response);
+                    self.call('mail_service', 'searchPartner', self._lastSearchVal, 10).then(response);
                 },
                 select: function (ev, ui) {
                     var partnerID = ui.item.id;
@@ -650,7 +650,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
     },
     /**
      * @private
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _renderSearchView: function () {
         var self = this;
@@ -711,7 +711,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
      * Renders, binds events and appends a thread widget.
      *
      * @private
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _renderThread: function () {
         this._threadWidget = new ThreadWidget(this, {
