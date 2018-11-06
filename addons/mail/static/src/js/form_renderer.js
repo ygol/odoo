@@ -56,8 +56,9 @@ FormRenderer.include({
                     isEditable: this.activeActions.edit,
                     viewType: 'form',
                 });
-                this.chatter.appendTo($('<div>'));
-                this._handleAttributes(this.chatter.$el, node);
+                this.defs.push(this.chatter.appendTo($('<div>')).then(function(){
+                    this._handleAttributes(this.chatter.$el, node);
+                }));
             } else {
                 this.chatter.update(this.state);
             }
