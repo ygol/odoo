@@ -27,7 +27,7 @@ var _t = core._t;
  */
 function _readActivities(self, ids) {
     if (!ids.length) {
-        return Promise.resolve();
+        return Promise.resolve([]);
     }
     return self._rpc({
         model: 'mail.activity',

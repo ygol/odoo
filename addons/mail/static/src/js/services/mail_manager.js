@@ -384,10 +384,11 @@ var MailManager =  AbstractService.extend({
      *   'searchVal')
      */
     searchPartner: function (searchVal, limit) {
+        var self = this;
         var partners = this._searchPartnerPrefetch(searchVal, limit);
         return new Promise(function(resolve, reject) {
             if (!partners.length) {
-                resolve(this._searchPartnerFetch(searchVal, limit));
+                resolve(self._searchPartnerFetch(searchVal, limit));
             } else {
                 resolve(partners);
             }

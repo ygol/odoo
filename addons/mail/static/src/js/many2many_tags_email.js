@@ -117,10 +117,10 @@ var FieldMany2ManyTagsEmail = M2MTags.extend({
      */
     _render: function () {
         var self = this;
+        var _super = this._super.bind(this);
         return new Promise(function(resolve, reject) {
-            var _super = this._super.bind(this);
-            if (this.record.specialData[this.name].invalidPartnerIds.length) {
-                resolve(this._checkEmailPopup());
+            if (self.record.specialData[self.name].invalidPartnerIds.length) {
+                resolve(self._checkEmailPopup());
             } else {
                 resolve();
             }

@@ -261,8 +261,8 @@ var BasicComposer = Widget.extend({
     _mentionGetCannedResponses: function (search) {
         var self = this;
         return new Promise(function(resolve, reject) {
-            clearTimeout(this._cannedTimeout);
-            this._cannedTimeout = setTimeout(function () {
+            clearTimeout(self._cannedTimeout);
+            self._cannedTimeout = setTimeout(function () {
                 var cannedResponses = self.call('mail_service', 'getCannedResponses');
                 var matches = fuzzy.filter(mailUtils.unaccent(search), _.pluck(cannedResponses, 'source'));
                 var indexes = _.pluck(matches.slice(0, self.options.mentionFetchLimit), 'index');
@@ -342,13 +342,13 @@ var BasicComposer = Widget.extend({
         var self = this;
         // Delays the execution of the RPC to prevent unnecessary RPCs when the user is still typing
         return new Promise(function(resolve, reject) {
-            clearTimeout(this.mentionFetchTimer);
-            this.mentionFetchTimer = setTimeout(function () {
+            clearTimeout(self.mentionFetchTimer);
+            self.mentionFetchTimer = setTimeout(function () {
                 return self._rpc({model: model, method: method, kwargs: kwargs})
                 .then(function (results) {
                     resolve(results);
                 });
-            }, this.MENTION_THROTTLE);
+            }, self.MENTION_THROTTLE);
         });
     },
     /**
