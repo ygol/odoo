@@ -336,9 +336,11 @@ var Chatter = Widget.extend({
         var self = this;
 
         var $spinner = $(QWeb.render('Spinner'));
-//         concurrency.rejectAfter(concurrency.delay(500), def).then(function () {
-//             $spinner.appendTo(self.$el);
-//         });
+        concurrency.rejectAfter(concurrency.delay(500), def).then(function () {
+            $spinner.appendTo(self.$el);
+        }).catch(function () {
+            // swallow the error
+        });
         var always = function () {
             // disable widgets in create mode, otherwise enable
             self._isCreateMode ? self._disableChatter() : self._enableChatter();

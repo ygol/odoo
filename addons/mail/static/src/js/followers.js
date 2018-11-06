@@ -60,10 +60,12 @@ var Followers = AbstractField.extend({
         var self = this;
         var fetch_def = this.dp.add(this._readFollowers());
 
-        // concurrency.rejectAfter(concurrency.delay(0), fetch_def).then(this._displayGeneric.bind(this));
+        concurrency.rejectAfter(concurrency.delay(0), fetch_def).then(this._displayGeneric.bind(this))
+        .catch(function () {
+            // swallow the error
+        });
 
         return fetch_def.then(function () {
-            self._displayGeneric();
             self._displayButtons();
             self._displayFollowers(self.followers);
             if (self.subtypes) { // current user is follower

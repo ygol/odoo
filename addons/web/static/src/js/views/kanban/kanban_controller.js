@@ -64,7 +64,7 @@ var KanbanController = BasicController.extend({
             this.$buttons.on('click', 'button.o-kanban-button-new', this._onButtonNew.bind(this));
             this.$buttons.on('keydown',this._onButtonsKeyDown.bind(this));
             this._updateButtons();
-            return this.$buttons.appendTo($node);
+            return Promise.resolve(this.$buttons.appendTo($node));
         }
         return Promise.resolve();
     },
@@ -77,7 +77,7 @@ var KanbanController = BasicController.extend({
      * @override method comes from field manager mixin
      * @private
      * @param {string} id local id from the basic record data
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _confirmSave: function (id) {
         var data = this.model.get(this.handle, {raw: true});
@@ -150,7 +150,7 @@ var KanbanController = BasicController.extend({
     /**
      * @param {number[]} ids
      * @private
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _resequenceColumns: function (ids) {
         var state = this.model.get(this.handle, {raw: true});
@@ -165,7 +165,7 @@ var KanbanController = BasicController.extend({
      * @private
      * @param {string} column_id
      * @param {string[]} ids
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _resequenceRecords: function (column_id, ids) {
         var self = this;
@@ -240,7 +240,7 @@ var KanbanController = BasicController.extend({
                             self.renderer.updateColumn(db_id, data);
                         });
                     });
-            }).fail(this.reload.bind(this));
+            }).catch(this.reload.bind(this));
     },
     /**
      * @private
@@ -322,7 +322,7 @@ var KanbanController = BasicController.extend({
         var relatedModelName = state.fields[state.groupedBy[0]].relation;
         this.model
             .deleteRecords([column.db_id], relatedModelName)
-            .done(function () {
+            .then(function () {
                 if (column.isEmpty()) {
                     self.renderer.removeWidget(column);
                     self._updateButtons();
@@ -397,7 +397,7 @@ var KanbanController = BasicController.extend({
 
         this.model.createRecordInGroup(column.db_id, values)
             .then(update)
-            .fail(function (error, ev) {
+            .catch(function (error, ev) {
                 ev.preventDefault();
                 var columnState = self.model.get(column.db_id, {raw: true});
                 var context = columnState.getContext();
