@@ -499,6 +499,7 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
                 additional_context: _.extend(context, data.context)
             });
         }
+        return false;
     },
     /**
      * When an Odoo event arrives requesting a record to be opened, this method
