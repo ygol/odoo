@@ -397,8 +397,8 @@ var KanbanController = BasicController.extend({
 
         this.model.createRecordInGroup(column.db_id, values)
             .then(update)
-            .catch(function (error, ev) {
-                ev.preventDefault();
+            .catch(function (reason) {
+                reason.event.preventDefault();
                 var columnState = self.model.get(column.db_id, {raw: true});
                 var context = columnState.getContext();
                 var state = self.model.get(self.handle, {raw: true});

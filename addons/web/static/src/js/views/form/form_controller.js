@@ -84,7 +84,7 @@ var FormController = BasicController.extend({
      * @todo make record creation a basic controller feature
      * @param {string} [parentID] if given, the parentID will be used as parent
      *                            for the new record.
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     createRecord: function (parentID) {
         var self = this;
@@ -296,7 +296,7 @@ var FormController = BasicController.extend({
      * @private
      * @override method from field manager mixin
      * @param {string} id - id of the previously changed record
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _confirmSave: function (id) {
         if (id === this.handle) {
@@ -393,7 +393,7 @@ var FormController = BasicController.extend({
      * @override
      * @private
      * @param {Object} state
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _update: function () {
         var title = this.getTitle();

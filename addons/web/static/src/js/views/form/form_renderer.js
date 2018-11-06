@@ -230,7 +230,7 @@ var FormRenderer = BasicRenderer.extend({
      * @param {string} [params.mode] new mode, either 'edit' or 'readonly'
      * @param {string[]} [params.fieldNames] if given, the renderer will only
      *   update the fields in this list
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     updateState: function (state, params) {
         this.mode = (params && 'mode' in params) ? params.mode : this.mode;
@@ -577,7 +577,7 @@ var FormRenderer = BasicRenderer.extend({
      *
      * For fields, it will return the $el of the field widget. Note that this
      * method is synchronous, field widgets are instantiated and appended, but
-     * if they are asynchronous, they register their deferred in this.defs, and
+     * if they are asynchronous, they register their promises in this.defs, and
      * the _renderView method will properly wait.
      *
      * @private
@@ -887,12 +887,12 @@ var FormRenderer = BasicRenderer.extend({
     },
     /**
      * Main entry point for the rendering.  From here, we call _renderNode on
-     * the root of the arch, then, when every deferred (from the field widgets)
+     * the root of the arch, then, when every promise (from the field widgets)
      * are done, it will resolves itself.
      *
      * @private
      * @override method from BasicRenderer
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _renderView: function () {
         var self = this;
@@ -903,7 +903,7 @@ var FormRenderer = BasicRenderer.extend({
         var $form = this._renderNode(this.arch).addClass(this.className);
         delete this.defs;
 
-        return $.when.apply($, defs).then(function () {
+        return Promise.all(defs).then(function () {
             self._updateView($form.contents());
         }, function () {
             $form.remove();

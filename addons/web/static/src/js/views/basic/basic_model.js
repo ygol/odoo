@@ -2266,7 +2266,7 @@ var BasicModel = AbstractModel.extend({
      *   @see _getDataToFetchByModel
      * @param {string} model
      * @param {string} fieldName
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _fetchReferenceData: function (datapoints, model, fieldName) {
         var self = this;
@@ -2416,7 +2416,7 @@ var BasicModel = AbstractModel.extend({
      * @param {Object} toFetch a list of records and res_ids,
      *   @see _getDataToFetch
      * @param {string} fieldName
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _fetchRelatedData: function (list, toFetch, fieldName) {
         var self = this;
@@ -2441,7 +2441,7 @@ var BasicModel = AbstractModel.extend({
                 context: list.getContext() || {},
             });
         } else {
-            def = $.when(_.map(ids, function (id) {
+            def = Promise.resolve(_.map(ids, function (id) {
                 return {id:id};
             }));
         }
@@ -2461,7 +2461,7 @@ var BasicModel = AbstractModel.extend({
      * This method is currently only called by _makeDefaultRecord, it should be
      * called by the onchange methods at some point.
      *
-     * @todo fix bug: returns a list of deferred, not a deferred
+     * @todo fix bug: returns a list of promise, not a promise
      *
      * @param {Object} record a valid resource object
      * @returns {Promise}
