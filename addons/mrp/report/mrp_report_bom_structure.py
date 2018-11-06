@@ -38,14 +38,19 @@ class ReportBomStructure(models.AbstractModel):
             'docs': docs,
         }
 
-    @api.model
-    def get_html(self, bom_id=False, searchQty=1, searchVariant=False):
-        res = self._get_report_data(bom_id=bom_id, searchQty=searchQty, searchVariant=searchVariant)
+    def _qweb_prepare_qcontext(self, view_id, domain):
+        sup = super()._qweb_prepare_qcontext(view_id, domain)
+
+        bom_id = self.env.context['bom_id']
+        res = self._get_report_data(bom_id=bom_id, searchQty=1, searchVariant=False)
         res['lines']['report_type'] = 'html'
         res['lines']['report_structure'] = 'all'
         res['lines']['has_attachments'] = res['lines']['attachments'] or any(component['attachments'] for component in res['lines']['components'])
-        res['lines'] = self.env.ref('mrp.report_mrp_bom').render({'data': res['lines']})
-        return res
+
+        return {
+            **sup,
+            'data': res['lines']
+        }
 
     @api.model
     def get_bom(self, bom_id=False, product_id=False, line_qty=False, line_id=False, level=False):

@@ -2,10 +2,11 @@
 <odoo>
     <data>
         <!-- Bill of Materials -->
-        <record id="action_report_mrp_bom" model="ir.actions.client">
+        <record id="action_report_mrp_bom" model="ir.actions.act_window">
             <field name="name">BoM Structure &amp; Cost</field>
-            <field name="tag">mrp_bom_report</field>
-            <field name="context" eval="{'model': 'report.mrp.report_bom_structure'}" />
+            <field name="res_model">report.mrp.report_bom_structure</field>
+            <field name="view_mode">qweb</field>
+            <field name="context">{ 'bom_id': active_id }</field>
         </record>
 
         <record id="mrp_bom_form_view" model="ir.ui.view">

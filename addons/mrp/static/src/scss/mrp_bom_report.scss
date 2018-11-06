@@ -13,7 +13,7 @@
             border-width: 1px;
             border-top-style: solid;
             border-bottom-style: groove;
-            .o_mrp_bom_unfoldable, .o_mrp_bom_foldable {
+            [type="toggle"] {
                 cursor: pointer;
             }
         }
@@ -28,7 +28,7 @@
                 .o_mrp_bom_no_fold {
                     margin-left: 18px;
                 }
-                .o_mrp_bom_unfoldable, .o_mrp_bom_foldable {
+                [type="toggle"] {
                     margin-left: -2px;
                 }
             }
