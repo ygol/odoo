@@ -242,16 +242,16 @@ var ThreadWidget = Widget.extend({
      */
     removeMessageAndRender: function (messageID, thread, options) {
         var self = this;
-        var done = $.Deferred();
-        this.$('.o_thread_message[data-message-id="' + messageID + '"]')
+        return new Promise(function(resolve, reject) {
+            this.$('.o_thread_message[data-message-id="' + messageID + '"]')
             .fadeOut({
                 done: function () {
                     self.render(thread, options);
-                    done.resolve();
+                    resolve();
                 },
                 duration: 200,
             });
-        return done;
+        });
     },
     /**
      * Render the 'is typing...' text on the typing notification bar of the

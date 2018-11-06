@@ -223,7 +223,7 @@ QUnit.test('activity view: batch send mail on activity', function (assert) {
         mockRPC: function(route, args) {
             if (args.method === 'activity_send_mail'){
                 assert.step(args.args);
-                return $.when();
+                return Promise.resolve();
             }
             if (args.method === 'get_activity_data') {
                 return $.when(ACTIVITY_DATA);
@@ -263,7 +263,7 @@ QUnit.test('activity view: activity widget', function (assert) {
             if (args.method === 'activity_send_mail'){
                 assert.deepEqual([[30],8],args.args, "Should send template 8 on record 30");
                 assert.step('activity_send_mail');
-                return $.when();
+                return Promise.resolve();
             }
             if (args.method === 'action_feedback_schedule_next'){
                 assert.deepEqual([[3]],args.args, "Should execute action_feedback_schedule_next on activity 3 only ");

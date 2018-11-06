@@ -20,16 +20,16 @@ var createViewer = function (params) {
 
     var mockRPC = function (route) {
         if (route === '/web/static/lib/pdfjs/web/viewer.html?file=/web/content/1') {
-            return $.when();
+            return Promise.resolve();
         }
         if (route === 'https://www.youtube.com/embed/FYqW0Gdwbzk') {
-            return $.when();
+            return Promise.resolve();
         }
         if (route === '/web/content/4') {
-            return $.when();
+            return Promise.resolve();
         }
         if (route === '/web/image/6?unique=1&signature=999') {
-            return $.when();
+            return Promise.resolve();
         }
     };
     testUtils.mock.addMockEnvironment(parent, {
@@ -109,7 +109,7 @@ QUnit.module('DocumentViewer', {
             mockRPC: function (route, args) {
                 if (args.method === 'split_pdf') {
                     assert.deepEqual(args.args, [1, "", false], "should have the right arguments");
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super.apply(this, arguments);
             },

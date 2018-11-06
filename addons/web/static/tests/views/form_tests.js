@@ -5536,7 +5536,7 @@ QUnit.module('Views', {
                 } else if (route === "/web/dataset/call_button" && args.method === 'translate_fields') {
                     assert.deepEqual(args.args, ["product",37,"name",{}], 'should call "call_button" route');
                     nbTranslateCalls++;
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super.apply(this, arguments);
             },
@@ -6812,7 +6812,7 @@ QUnit.module('Views', {
             res_id: 1,
             mockRPC: function (route, args) {
                 if (args.method === 'get_formview_action' && args.model === 'partner_type') {
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super(route, args);
             },
@@ -6862,7 +6862,7 @@ QUnit.module('Views', {
             res_id: 1,
             mockRPC: function (route, args) {
                 if (args.method === 'get_formview_action' && args.model === 'partner_type') {
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super(route, args);
             },

@@ -494,7 +494,7 @@ var PivotModel = AbstractModel.extend({
             this.data.measures = _.without(this.data.measures, field);
             // in this case, we already have all data in memory, no need to
             // actually reload a lesser amount of information
-            return $.when();
+            return Promise.resolve();
         } else {
             this.data.measures.push(field);
         }

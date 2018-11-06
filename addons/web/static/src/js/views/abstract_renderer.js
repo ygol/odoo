@@ -109,7 +109,7 @@ return Widget.extend({
      * @returns {Deferred}
      */
     _render: function () {
-        return $.when();
+        return Promise.resolve();
     },
 });
 

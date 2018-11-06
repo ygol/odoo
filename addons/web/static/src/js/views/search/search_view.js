@@ -496,7 +496,7 @@ var SearchView = Widget.extend({
             });
         }
         this.query.reset([], {preventSearch: true});
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * Performs the search view collection of widget data.
@@ -1070,7 +1070,7 @@ var SearchView = Widget.extend({
                 }],
             });
         } else {
-            return $.when();
+            return Promise.resolve();
         }
     },
 

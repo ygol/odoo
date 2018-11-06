@@ -44,7 +44,7 @@ var db = {
             {id: 99, display_name: "partner 99", image: 'ZZZ', customer: true},
         ],
         mark_as_reconciled: function () {
-            return $.when();
+            return Promise.resolve();
         },
     },
     'account.account': {
@@ -70,7 +70,7 @@ var db = {
             {id: 504, code: 504, name: "504 Account", company_id: 1},
         ],
         mark_as_reconciled: function () {
-            return $.when();
+            return Promise.resolve();
         },
     },
     'account.tax': {
@@ -202,7 +202,7 @@ var db = {
                     return ids.indexOf(mv_line.id) === -1;
                 });
             }
-            return $.when();
+            return Promise.resolve();
         },
         get_move_lines_for_bank_statement_line: function (args) {
             var partner_id = args.splice(1, 1)[0];
@@ -270,7 +270,7 @@ var db = {
                     });
                 }
             }
-            return $.when();
+            return Promise.resolve();
         },
     }
 };

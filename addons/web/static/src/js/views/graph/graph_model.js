@@ -124,7 +124,7 @@ return AbstractModel.extend({
         }
         if ('mode' in params) {
             this.chart.mode = params.mode;
-            return $.when();
+            return Promise.resolve();
         }
         return this._loadGraph();
     },

@@ -464,7 +464,7 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
                                 else {
                                     $('.create_force_tax_included').removeClass('d-none');
                                 }
-                            } 
+                            }
                         });
                     });
                 });
@@ -817,7 +817,7 @@ var ManualLineRenderer = LineRenderer.extend({
      */
     removeProposition: function (handle, id) {
         if (!id) {
-            return $.when();
+            return Promise.resolve();
         }
         return this._super(handle, id);
     },

@@ -94,7 +94,7 @@ var FiltersMenu = DropdownMenu.extend({
      * Add a proposition inside the custom filter edition menu
      *
      * @private
-     * @returns {$.Deferred}
+     * @returns {Promise}
      */
     _appendProposition: function () {
         var prop = new search_filters.ExtendedSearchProposition(this, this.fields);

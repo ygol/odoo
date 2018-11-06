@@ -855,7 +855,7 @@ QUnit.test('mark all messages as read from Inbox', function (assert) {
                 var notification = [[false, 'res.partner', 3], notificationData];
                 objectDiscuss.call('bus_service', 'trigger', 'notification', [notification]);
                 markAllReadDef.resolve();
-                return $.when();
+                return Promise.resolve();
             }
             return this._super.apply(this, arguments);
         },

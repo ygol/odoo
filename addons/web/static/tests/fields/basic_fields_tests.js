@@ -1036,7 +1036,7 @@ QUnit.module('basic_fields', {
             mockRPC: function (route, args) {
                 if (route === "/web/dataset/call_button" && args.method === 'translate_fields') {
                     assert.deepEqual(args.args, ["partner",1,"foo",{}], 'should call "call_button" route');
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super.apply(this, arguments);
             },
@@ -1635,7 +1635,7 @@ QUnit.module('basic_fields', {
             mockRPC: function (route, args) {
                 if (route === "/web/dataset/call_button" && args.method === 'translate_fields') {
                     assert.deepEqual(args.args, ["partner",1,"txt",{}], 'should call "call_button" route');
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super.apply(this, arguments);
             },
@@ -1739,7 +1739,7 @@ QUnit.module('basic_fields', {
             assert.strictEqual(option.data.data, 'coucou==\n',
                 "we should download the correct data");
             option.complete();
-            return $.when();
+            return Promise.resolve();
         };
 
         this.data.partner.records[0].foo = 'coucou.txt';
@@ -1884,7 +1884,7 @@ QUnit.module('basic_fields', {
                 '</form>',
             mockRPC: function (route) {
                 if (route.indexOf('/web/static/lib/pdfjs/web/viewer.html') !== -1) {
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super.apply(this, arguments);
             }
@@ -2122,7 +2122,7 @@ QUnit.module('basic_fields', {
                 }
                 if (route === 'data:image/png;base64,product_image') {
                     assert.step("The dialog's image should have been fetched");
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super.apply(this, arguments);
             },
@@ -2166,7 +2166,7 @@ QUnit.module('basic_fields', {
             mockRPC: function (route, args) {
                 if (route === 'data:image/png;base64,product_image') {
                     assert.ok(true, "The list's image should have been fetched");
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super.apply(this, arguments);
             },

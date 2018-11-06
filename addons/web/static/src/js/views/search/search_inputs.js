@@ -213,7 +213,7 @@ var CharField = Field.extend( /** @lends instance.web.search.CharField# */ {
 var NumberField = Field.extend(/** @lends instance.web.search.NumberField# */{
     complete: function (value) {
         var val = this.parse(value);
-        if (isNaN(val)) { return $.when(); }
+        if (isNaN(val)) { return Promise.resolve(); }
         var label = _.str.sprintf(
             _t("Search %(field)s for: %(value)s"), {
                 field: '<em>' + _.escape(this.attrs.string) + '</em>',

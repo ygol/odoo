@@ -875,7 +875,7 @@ var FieldX2Many = AbstractField.extend({
         if (!fieldChanged) {
            var newEval = this._evalColumnInvisibleFields();
            if (_.isEqual(this.currentColInvisibleFields, newEval)) {
-               return $.when();
+               return Promise.resolve();
            }
         } else if (ev && ev.target === this && ev.data.changes && this.view.arch.tag === 'tree') {
             var command = ev.data.changes[this.name];
@@ -975,7 +975,7 @@ var FieldX2Many = AbstractField.extend({
             this.currentColInvisibleFields = this._evalColumnInvisibleFields();
             this.renderer.updateState(this.value, {'columnInvisibleFields': this.currentColInvisibleFields});
             this.pager.updateState({ size: this.value.count });
-            return $.when();
+            return Promise.resolve();
         }
         var arch = this.view.arch;
         var viewType;
@@ -1025,7 +1025,7 @@ var FieldX2Many = AbstractField.extend({
      */
     _renderControlPanel: function () {
         if (!this.view) {
-            return $.when();
+            return Promise.resolve();
         }
         var self = this;
         var defs = [];

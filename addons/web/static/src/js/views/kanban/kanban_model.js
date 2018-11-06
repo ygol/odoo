@@ -371,7 +371,7 @@ var KanbanModel = BasicModel.extend({
         var self = this;
         var groupedByField = list.fields[list.groupedBy[0].split(':')[0]];
         if (groupedByField.type !== 'many2one') {
-            return $.when();
+            return Promise.resolve();
         }
         var groupIds = _.reduce(list.data, function (groupIds, id) {
             var res_id = self.get(id, {raw: true}).res_id;
@@ -400,7 +400,7 @@ var KanbanModel = BasicModel.extend({
                 });
             });
         }
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * Reloads all progressbar data. This is done after given deferred and

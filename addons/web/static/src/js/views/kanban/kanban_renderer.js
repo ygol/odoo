@@ -240,7 +240,7 @@ var KanbanRenderer = BasicRenderer.extend({
         if (record) {
             return record.update(recordState);
         }
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * @override

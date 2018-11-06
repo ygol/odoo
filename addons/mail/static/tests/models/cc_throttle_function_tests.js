@@ -52,7 +52,7 @@ QUnit.test('cancel()', function (assert) {
                 }
                 step++;
 
-                return $.when();
+                return Promise.resolve();
             }
             return this._super.apply(this, arguments);
         },
@@ -110,7 +110,7 @@ QUnit.test('clear()', function (assert) {
                 }
                 step++;
 
-                return $.when();
+                return Promise.resolve();
             }
             return this._super.apply(this, arguments);
         },

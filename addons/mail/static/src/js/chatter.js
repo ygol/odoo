@@ -94,9 +94,9 @@ var Chatter = Widget.extend({
         // start and append the widgets
         var fieldDefs = _.invoke(this.fields, 'appendTo', $('<div>'));
         var def = this._dp.add(Promise.all(fieldDefs));
-        this._render(def).then(this._updateMentionSuggestions.bind(this));
+        var renderPromise = this._render(def).then(this._updateMentionSuggestions.bind(this));
 
-        return this._super.apply(this, arguments);
+        return Promise.all([this._super.apply(this, arguments), renderPromise]);
     },
 
     //--------------------------------------------------------------------------
@@ -336,9 +336,9 @@ var Chatter = Widget.extend({
         var self = this;
 
         var $spinner = $(QWeb.render('Spinner'));
-        concurrency.rejectAfter(concurrency.delay(500), def).then(function () {
-            $spinner.appendTo(self.$el);
-        });
+//         concurrency.rejectAfter(concurrency.delay(500), def).then(function () {
+//             $spinner.appendTo(self.$el);
+//         });
         var always = function () {
             // disable widgets in create mode, otherwise enable
             self._isCreateMode ? self._disableChatter() : self._enableChatter();

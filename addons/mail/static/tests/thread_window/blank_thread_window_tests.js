@@ -53,8 +53,8 @@ QUnit.module('Blank', {
          * functions end.
          *
          * @param {Object} params
-         * @param {$.Deferred} params.selectDef
-         * @param {$.Deferred} params.sourceDef
+         * @param {Promise} params.selectDef
+         * @param {Promise} params.sourceDef
          */
         this.patchAutocomplete = function (params) {
             var selectDef = params.selectDef;

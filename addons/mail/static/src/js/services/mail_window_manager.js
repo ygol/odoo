@@ -414,7 +414,7 @@ MailManager.include({
      *
      * @private
      * @param {integer} partnerID
-     * @returns {$.Promise<integer>} resolved with ID of the DM chat
+     * @returns {Promise<integer>} resolved with ID of the DM chat
      */
     _openAndDetachDMChat: function (partnerID) {
         return this._rpc({

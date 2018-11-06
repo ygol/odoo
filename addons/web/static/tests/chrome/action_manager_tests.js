@@ -2039,7 +2039,7 @@ QUnit.module('ActionManager', {
                     return $.when('broken');
                 }
                 if (route === 'test /report/html/some_report') {
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super.apply(this, arguments);
             },

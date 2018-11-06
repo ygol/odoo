@@ -2427,7 +2427,7 @@ var BasicModel = AbstractModel.extend({
         var fieldInfo = list.fieldsInfo[list.viewType][fieldName];
 
         if (!ids.length || fieldInfo.__no_fetch) {
-            return $.when();
+            return Promise.resolve();
         }
 
         var def;

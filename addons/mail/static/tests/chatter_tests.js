@@ -535,7 +535,7 @@ QUnit.test('kanban activity widget with an activity', function (assert) {
                 var done_ids = args.args[0];
                 this.data.partner.records[0].activity_ids = _.difference(current_ids, done_ids);
                 this.data.partner.records[0].activity_state = false;
-                return $.when();
+                return Promise.resolve();
             }
             return this._super(route, args);
         },
@@ -610,7 +610,7 @@ QUnit.test('kanban activity widget popover test', function (assert) {
                 var done_ids = args.args[0];
                 this.data.partner.records[0].activity_ids = _.difference(current_ids, done_ids);
                 this.data.partner.records[0].activity_state = false;
-                return $.when();
+                return Promise.resolve();
             }
             return this._super(route, args);
         },
@@ -712,7 +712,7 @@ QUnit.test('chatter: post, receive and star messages', function (assert) {
                 };
                 var notification = [[false, 'res.partner'], data];
                 form.call('bus_service', 'trigger', 'notification', [notification]);
-                return $.when();
+                return Promise.resolve();
             }
             return this._super(route, args);
         },
@@ -2214,7 +2214,7 @@ QUnit.test('chatter: do not duplicate messages on (un)star message', function (a
                 };
                 var notification = [[false, 'res.partner'], data];
                 form.call('bus_service', 'trigger', 'notification', [notification]);
-                return $.when();
+                return Promise.resolve();
             }
             return this._super(route, args);
         },

@@ -133,7 +133,7 @@ KanbanRenderer.include({
     _moveToGroup: function (moveToIndex, animate) {
         var self = this;
         if (moveToIndex < 0 || moveToIndex >= this.widgets.length) {
-            return $.when();
+            return Promise.resolve();
         }
         var def = $.Deferred();
         this.activeColumnIndex = moveToIndex;

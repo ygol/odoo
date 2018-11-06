@@ -2486,7 +2486,7 @@ QUnit.module('Views', {
                     '</kanban>',
             mockRPC: function (route, args) {
                 if (route === '/web/dataset/resequence') {
-                    return $.when();
+                    return Promise.resolve();
                 }
                 if (args.model === 'partner' && args.method === 'write') {
                     throw new Error('should not be draggable');
@@ -4189,7 +4189,7 @@ QUnit.module('Views', {
             mockRPC: function (route) {
                 if (route === '/web/dataset/resequence') {
                     nbResequence++;
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super.apply(this, arguments);
             },

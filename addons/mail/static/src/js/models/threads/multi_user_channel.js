@@ -39,7 +39,7 @@ var MultiUserChannel = Channel.extend({
      * Unsubscribes from channel
      *
      * @override
-     * @returns {$.Promise} resolve when unsubscribed
+     * @returns {Promise} resolve when unsubscribed
      */
     unsubscribe: function () {
         return this._rpc({

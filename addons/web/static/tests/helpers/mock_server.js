@@ -738,7 +738,7 @@ var MockServer = Class.extend({
                     }
                 }
                 if (type === 'many2one') {
-                    var ids = _.pluck(records, aggregatedFields[i]); 
+                    var ids = _.pluck(records, aggregatedFields[i]);
                     group[aggregatedFields[i]] = _.uniq(ids).length || null;
                 }
             }
@@ -1075,7 +1075,7 @@ var MockServer = Class.extend({
                 return $.when(this._mockResequence(args));
         }
         if (route.indexOf('/web/image') >= 0 || _.contains(['.png', '.jpg'], route.substr(route.length - 4))) {
-            return $.when();
+            return Promise.resolve();
         }
         switch (args.method) {
             case 'copy':

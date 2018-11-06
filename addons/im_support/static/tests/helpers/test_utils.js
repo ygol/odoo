@@ -40,7 +40,7 @@ function addMockSupportEnvironment(widget, params) {
             return $.when([]);
         }
         if (route === '/odoo_im_support/chat_post') {
-            return $.when();
+            return Promise.resolve();
         }
         if (route === '/longpolling/support_poll') {
             return $.Deferred();

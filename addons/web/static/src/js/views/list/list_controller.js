@@ -257,7 +257,7 @@ var ListController = BasicController.extend({
      */
     _archive: function (ids, archive) {
         if (ids.length === 0) {
-            return $.when();
+            return Promise.resolve();
         }
         return this.model
             .toggleActive(ids, !archive, this.handle)
@@ -318,7 +318,7 @@ var ListController = BasicController.extend({
         if ((recordID || this.handle) === this.handle) {
             recordID = this.renderer.getEditableRecordID();
             if (recordID === null) {
-                return $.when();
+                return Promise.resolve();
             }
         }
         var self = this;

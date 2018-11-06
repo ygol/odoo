@@ -198,7 +198,7 @@ odoo.define('partner_autocomplete.tests', function (require) {
                 if (route === "/web/static/src/img/placeholder.png"
                     || route === "odoo.com/logo.png"
                     || route === "data:image/png;base64,odoobase64") { // land here as it is not valid base64 content
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super.apply(this, arguments);
             },
@@ -277,7 +277,7 @@ odoo.define('partner_autocomplete.tests', function (require) {
                 if (route === "/web/static/src/img/placeholder.png"
                     || route === "odoo.com/logo.png"
                     || route === "data:image/png;base64,odoobase64") { // land here as it is not valid base64 content
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super.apply(this, arguments);
             },

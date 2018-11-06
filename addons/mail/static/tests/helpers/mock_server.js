@@ -193,10 +193,10 @@ MockServer.include({
             return $.when(this._mockChannelFetchPreview(args));
         }
         if (args.method === 'channel_minimize') {
-            return $.when();
+            return Promise.resolve();
         }
         if (args.method === 'channel_seen') {
-            return $.when();
+            return Promise.resolve();
         }
         if (args.method === 'message_fetch') {
             return $.when(this._mockMessageFetch(args));
@@ -223,10 +223,10 @@ MockServer.include({
             return $.when(this._mockModerate(args));
         }
         if (args.method === 'notify_typing') {
-            return $.when();
+            return Promise.resolve();
         }
         if (args.method === 'set_message_done') {
-            return $.when();
+            return Promise.resolve();
         }
         return this._super(route, args);
     },

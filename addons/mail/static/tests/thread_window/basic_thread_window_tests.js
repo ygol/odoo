@@ -106,7 +106,7 @@ QUnit.test('close thread window using ESCAPE key', function (assert) {
         mockRPC: function (route, args) {
             if (args.method === 'channel_fold') {
                 assert.ok(true, "should call channel_fold");
-                return $.when();
+                return Promise.resolve();
             }
             return this._super.apply(this, arguments);
         },

@@ -51,7 +51,7 @@ var AbstractModel = Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
      * @returns {Deferred} The deferred resolves to some kind of handle
      */
     load: function (params) {
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * When something changes, the data may need to be refetched.  This is the
@@ -62,7 +62,7 @@ var AbstractModel = Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
      * @returns {Deferred}
      */
     reload: function (params) {
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * Processes date(time) and selection field values sent by the server.

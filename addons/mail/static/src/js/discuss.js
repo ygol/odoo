@@ -83,7 +83,7 @@ var PartnerInviteDialog = Dialog.extend({
 
     /**
      * @private
-     * @returns {$.Promise}
+     * @returns {Promise}
      */
     _addChannel: function () {
         var self = this;
@@ -227,7 +227,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
             .then(function (fieldsView) {
                 self.fields_view = fieldsView;
             });
-        return $.when(this._super(), this.call('mail_service', 'isReady'), def);
+        return Promise.all([this._super(), this.call('mail_service', 'isReady'), def]);
     },
     /**
      * @override
@@ -259,7 +259,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
             this._extendedComposer.appendTo(this.$('.o_mail_discuss_content')));
         defs.push(this._renderSearchView());
 
-        return this.alive($.when.apply($, defs))
+        return this.alive(Promise.all(defs))
             .then(function () {
                 return self.alive(self._setThread(self._defaultThreadID));
             })
@@ -402,7 +402,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
     },
     /**
      * @private
-     * @returns {$.Promise}
+     * @returns {Promise}
      */
     _fetchAndRenderThread: function () {
         var self = this;
@@ -497,7 +497,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
      * Load more messages for the current thread
      *
      * @private
-     * @returns {$.Promise}
+     * @returns {Promise}
      */
     _loadMoreMessages: function () {
         var self = this;
@@ -769,7 +769,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
     /**
      * @private
      * @param {string} searchVal
-     * @returns {$.Promise<Array>}
+     * @returns {Promise<Array>}
      */
     _searchChannel: function (searchVal){
         return this._rpc({
@@ -818,7 +818,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
      *
      * @private
      * @param {integer} threadID a thread with such ID
-     * @returns {$.Promise}
+     * @returns {Promise}
      */
     _setThread: function (threadID) {
         var self = this;
@@ -1337,7 +1337,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
                     self._threadWidget.scrollToBottom();
                 }
             })
-            .fail(function () {
+            .catch(function () {
                 // todo: display notifications
             });
     },

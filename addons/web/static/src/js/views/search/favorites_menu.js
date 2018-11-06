@@ -301,7 +301,7 @@ return Widget.extend({
      *
      * @private
      * @param {Object} filter the filter description
-     * @returns {$.Deferred} resolved with the RPC's result when it succeeds
+     * @returns {Promise} resolved with the RPC's result when it succeeds
      */
     _createFilter: function (filter) {
         var def = $.Deferred();

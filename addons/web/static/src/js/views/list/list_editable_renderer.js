@@ -321,7 +321,7 @@ ListRenderer.include({
         }
 
         if (rowIndex < 0) {
-            return $.when();
+            return Promise.resolve();
         }
         var editMode = (mode === 'edit');
 
@@ -406,7 +406,7 @@ ListRenderer.include({
     unselectRow: function () {
         // Protect against calling this method when no row is selected
         if (this.currentRow === null) {
-            return $.when();
+            return Promise.resolve();
         }
 
         var record = this.state.data[this.currentRow];
@@ -698,7 +698,7 @@ ListRenderer.include({
         options = options || {};
         // Do nothing if the user tries to select current cell
         if (!options.force && rowIndex === this.currentRow && fieldIndex === this.currentFieldIndex) {
-            return $.when();
+            return Promise.resolve();
         }
         var wrap = options.wrap === undefined ? true : options.wrap;
 
@@ -735,7 +735,7 @@ ListRenderer.include({
     _selectRow: function (rowIndex) {
         // Do nothing if already selected
         if (rowIndex === this.currentRow) {
-            return $.when();
+            return Promise.resolve();
         }
 
         // To select a row, the currently selected one must be unselected first

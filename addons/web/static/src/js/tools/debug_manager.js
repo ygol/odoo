@@ -160,7 +160,7 @@ var DebugManager = Widget.extend({
             .append(QWeb.render('WebClient.DebugManager.Global', {
                 manager: this,
             }));
-        return $.when();
+        return Promise.resolve();
     },
     select_view: function () {
         var self = this;
