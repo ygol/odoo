@@ -42,13 +42,13 @@ var AbstractModel = Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
     },
     /**
      * The load method is called once in a model, when we load the data for the
-     * first time.  The method returns (a deferred that resolves to) some kind
+     * first time.  The method returns (a Promise that resolves to) some kind
      * of token/handle.  The handle can then be used with the get method to
      * access a representation of the data.
      *
      * @param {Object} params
      * @param {string} params.modelName the name of the model
-     * @returns {Deferred} The deferred resolves to some kind of handle
+     * @returns {Promise} The promise resolves to some kind of handle
      */
     load: function (params) {
         return Promise.resolve();
@@ -59,7 +59,7 @@ var AbstractModel = Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
      * making sure that they are ready to be redisplayed.
      *
      * @param {Object} params
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     reload: function (params) {
         return Promise.resolve();

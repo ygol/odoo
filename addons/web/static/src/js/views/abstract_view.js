@@ -217,15 +217,15 @@ var AbstractView = Class.extend({
      *
      * @param {Widget} parent The parent of the resulting Controller (most
      *      likely an action manager)
-     * @returns {Deferred} The deferred resolves to a controller
+     * @returns {Promise} The promise resolves to a controller
      */
     getController: function (parent) {
         var self = this;
         // check if a model already exists, as if not, one will be created and
         // we'll have to set the controller as its parent
         var alreadyHasModel = !!this.model;
-        return $.when(this._loadData(parent), ajax.loadLibs(this)).then(function () {
-            var state = self.model.get(arguments[0]);
+        return Promise.all([this._loadData(parent), ajax.loadLibs(this)]).then(function (results) {
+            var state = self.model.get(results[0]);
             var renderer = self.getRenderer(parent, state);
             var Controller = self.Controller || self.config.Controller;
             var controllerParams = _.extend({
@@ -285,7 +285,7 @@ var AbstractView = Class.extend({
      *
      * @private
      * @param {Widget} parent the parent of the model
-     * @returns {Deferred<*>} a deferred that resolves to whatever the model
+     * @returns {Promise<*>} a promise that resolves to whatever the model
      *   decide to return
      */
     _loadData: function (parent) {

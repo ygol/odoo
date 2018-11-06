@@ -143,12 +143,12 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
      * this method on the active view to make sure it is ok to open the home
      * screen (and lose all current state).
      *
-     * Note that it returns a deferred, because the view could choose to ask the
+     * Note that it returns a Promise, because the view could choose to ask the
      * user if he agrees to discard.
      *
      * @param {string} [recordID]
      *        if not given, we consider all the changes made by the controller
-     * @returns {Deferred} resolved if properly discarded, rejected otherwise
+     * @returns {Promise} resolved if properly discarded, rejected otherwise
      */
     discardChanges: function (recordID) {
         return Promise.resolve();
@@ -197,7 +197,7 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
      * Short helper method to reload the view
      *
      * @param {Object} [params] This object will simply be given to the update
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     reload: function (params) {
         return this.update(params || {});
@@ -237,7 +237,7 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
      * @param {Object} [options]
      * @param {boolean} [options.reload=true] if true, the model will reload data
      *
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     update: function (params, options) {
         var self = this;
@@ -303,7 +303,7 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
      *     return {'html': '<h1>hello, world</h1>'}
      *
      * @private
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _renderBanner: function () {
         if (this.bannerRoute !== undefined) {
@@ -418,7 +418,7 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
      *
      * @private
      * @param {Object} state the state given by the model
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _update: function (state) {
         // AAB: update the control panel -> this will be moved elsewhere at some point

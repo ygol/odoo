@@ -252,7 +252,7 @@ var FormViewDialog = ViewDialog.extend({
 
     /**
      * @private
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _save: function () {
         var self = this;
@@ -361,27 +361,27 @@ var SelectCreateDialog = ViewDialog.extend({
         var self = this;
         var fragment = document.createDocumentFragment();
 
-        var searchDef = $.Deferred();
-
-        // Set the dialog's header and its search view
-        var $header = $('<div/>').addClass('o_modal_header').appendTo(fragment);
-        var $pager = $('<div/>').addClass('o_pager').appendTo($header);
-        var options = {
-            $buttons: $('<div/>').addClass('o_search_options').appendTo($header),
-            search_defaults: search_defaults,
-        };
-        var searchview = new SearchView(this, this.dataset, fields_views.search, options);
-        searchview.prependTo($header).done(function () {
-            var d = searchview.build_search_data();
-            if (self.initial_ids) {
-                d.domains.push([["id", "in", self.initial_ids]]);
-                self.initial_ids = undefined;
-            }
-            var searchData = self._process_search_data(d.domains, d.contexts, d.groupbys);
-            searchDef.resolve(searchData);
+        var searchDef = new Promise(function(resolve, reject) {
+            // Set the dialog's header and its search view
+            var $header = $('<div/>').addClass('o_modal_header').appendTo(fragment);
+            var $pager = $('<div/>').addClass('o_pager').appendTo($header);
+            var options = {
+                $buttons: $('<div/>').addClass('o_search_options').appendTo($header),
+                search_defaults: search_defaults,
+            };
+            var searchview = new SearchView(this, this.dataset, fields_views.search, options);
+            searchview.prependTo($header).then(function () {
+                var d = searchview.build_search_data();
+                if (self.initial_ids) {
+                    d.domains.push([["id", "in", self.initial_ids]]);
+                    self.initial_ids = undefined;
+                }
+                var searchData = self._process_search_data(d.domains, d.contexts, d.groupbys);
+                resolve(searchData);
+            });
         });
 
-        return $.when(searchDef).then(function (searchResult) {
+        return searchDef.then(function (searchResult) {
             // Set the list view
             var listView = new ListView(fields_views.list, _.extend({
                 context: searchResult.context,
