@@ -50,6 +50,7 @@ FormRenderer.include({
      * @private
      */
     _renderNode: function (node) {
+        var self = this;
         if (node.tag === 'div' && node.attrs.class === 'oe_chatter') {
             if (!this.chatter) {
                 this.chatter = new Chatter(this, this.state, this.mailFields, {
@@ -57,7 +58,7 @@ FormRenderer.include({
                     viewType: 'form',
                 });
                 this.defs.push(this.chatter.appendTo($('<div>')).then(function(){
-                    this._handleAttributes(this.chatter.$el, node);
+                    self._handleAttributes(self.chatter.$el, node);
                 }));
             } else {
                 this.chatter.update(this.state);

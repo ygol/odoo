@@ -198,7 +198,7 @@ var Chatter = Widget.extend({
     _discardChanges: function () {
         var self = this;
         return new Promise(function(resolve, reject) {
-            this.trigger_up('discard_changes', {
+            self.trigger_up('discard_changes', {
                 recordID: self.record.id,
                 onSuccess: resolve,
                 onFailure: reject,
@@ -453,8 +453,8 @@ var Chatter = Widget.extend({
         if (!this.suggested_partners_def) {
             this.suggested_partners_def = new Promise(function(resolve, reject) {
                 var method = 'message_get_suggested_recipients';
-                var args = [[this.context.default_res_id], this.context];
-                this._rpc({model: this.record.model, method: method, args: args})
+                var args = [[self.context.default_res_id], self.context];
+                self._rpc({model: self.record.model, method: method, args: args})
                 .then(function (result) {
                     if (!self.suggested_partners_def) {
                         return; // widget has been reset (e.g. we just switched to another record)
