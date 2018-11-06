@@ -806,7 +806,7 @@ var Discuss = AbstractAction.extend(ControlPanelMixin, {
         this._extendedComposer.do_show();
 
         this._threadWidget.scrollToMessage({
-            msgID: messageID,
+            messageID: messageID,
             duration: 200,
             onlyIfNecessary: true
         });

@@ -97,10 +97,7 @@ var KanbanColumn = Widget.extend({
         this.$header = this.$('.o_kanban_header');
 
         for (var i = 0; i < this.data_records.length; i++) {
-            var def = this._addRecord(this.data_records[i]);
-            if (def.state() === 'pending') {
-                defs.push(def);
-            }
+            defs.push(this._addRecord(this.data_records[i]));
         }
         this.$header.find('.o_kanban_header_title').tooltip();
 

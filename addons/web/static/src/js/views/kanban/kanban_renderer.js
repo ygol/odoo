@@ -309,10 +309,7 @@ var KanbanRenderer = BasicRenderer.extend({
                 def = column.appendTo(fragment);
                 self.widgets.push(column);
             }
-            if (def.state() === 'pending') {
-                self.defs.push(def);
-            }
-
+            self.defs.push(def);
         });
 
         // remove previous sorting

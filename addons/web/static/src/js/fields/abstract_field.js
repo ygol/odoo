@@ -487,13 +487,14 @@ var AbstractField = Widget.extend({
         if (!(options && options.forceChange) && this._isSameValue(value)) {
             return Promise.resolve();
         }
+        var self = this;
         return new Promise(function(resolve, reject) {
             var changes = {};
-            changes[this.name] = value;
-            this.trigger_up('field_changed', {
-                dataPointID: this.dataPointID,
+            changes[self.name] = value;
+            self.trigger_up('field_changed', {
+                dataPointID: self.dataPointID,
                 changes: changes,
-                viewType: this.viewType,
+                viewType: self.viewType,
                 doNotSetDirty: options && options.doNotSetDirty,
                 notifyChange: !options || options.notifyChange !== false,
                 allowWarning: options && options.allowWarning,
