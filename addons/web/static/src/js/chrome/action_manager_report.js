@@ -44,6 +44,7 @@ ActionManager.include({
      *   rejected if something went wrong during the report generation
      */
     _downloadReport: function (url) {
+        var self = this;
         framework.blockUI();
         return new Promise(function (resolve, reject) {
             var type = 'qweb-' + url.split('/')[2];
@@ -66,7 +67,7 @@ ActionManager.include({
                 var message = _t('A popup window with your report was blocked. You ' +
                                  'may need to change your browser settings to allow ' +
                                  'popup windows for this page.');
-                this.do_warn(_t('Warning'), message, true);
+                self.do_warn(_t('Warning'), message, true);
             }
         });
     },

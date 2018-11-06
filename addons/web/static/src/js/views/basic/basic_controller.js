@@ -68,6 +68,7 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
      *          rejected otherwise
      */
     canBeDiscarded: function (recordID) {
+        var self = this;
         if (!this.isDirty(recordID)) {
             return Promise.resolve(false);
         }
@@ -75,7 +76,7 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
         var message = _t("The record has been modified, your changes will be discarded. Do you want to proceed?");
         var def;
         def = new Promise(function (resolve, reject) {
-            var dialog = Dialog.confirm(this, message, {
+            var dialog = Dialog.confirm(self, message, {
                 title: _t("Warning"),
                 confirm_callback: resolve(true),
                 cancel_callback: reject(),

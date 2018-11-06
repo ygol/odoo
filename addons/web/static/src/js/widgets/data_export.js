@@ -237,7 +237,7 @@ var DataExport = Dialog.extend({
         waitFor.push(this._rpc({route: '/web/export/formats'}).then(do_setup_export_formats));
 
         var got_fields = new Promise(function (resolve, reject) {
-            this.$import_compat_radios.change(function(e) {
+            self.$import_compat_radios.change(function(e) {
                 self.isCompatibleMode = !!$(e.target).val();
                 self.$('.o_field_tree_structure').remove();
 

@@ -2716,8 +2716,8 @@ var BasicModel = AbstractModel.extend({
         }
 
         return new Promise(function (resolve, reject) {
-            var evalContext = this._getEvalContext(record);
-            this._rpc({
+            var evalContext = self._getEvalContext(record);
+            self._rpc({
                 model: domainModel,
                 method: 'search_count',
                 args: [Domain.prototype.stringToArray(domainValue, evalContext)],

@@ -294,7 +294,7 @@ var AbstractThreadWindow = Widget.extend({
             Promise.all([
                 this._threadWidget.scrollToBottom(),
                 this._focusInput()
-            ]).then(this._animateFold);
+            ]).then(this._animateFold.bind(this));
         }
     },
 

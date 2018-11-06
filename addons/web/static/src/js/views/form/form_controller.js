@@ -482,7 +482,7 @@ var FormController = BasicController.extend({
             def = saveAndExecuteAction();
         }
 
-        def.then(self._enableButtons).catch(self._enableButtons);
+        def.then(this._enableButtons.bind(this)).catch(this._enableButtons.bind(this));
     },
     /**
      * Called when the user wants to create a new record -> @see createRecord
@@ -657,7 +657,7 @@ var FormController = BasicController.extend({
         ev.stopPropagation(); // Prevent x2m lines to be auto-saved
         var self = this;
         this._disableButtons();
-        this.saveRecord().then(self._enableButtons).catch(self._enableButtons);
+        this.saveRecord().then(this._enableButtons.bind(this)).catch(this._enableButtons.bind(this));
     },
     /**
      * Called when user swipes left. Move to next record.
