@@ -867,9 +867,9 @@ exports.PosModel = Backbone.Model.extend({
                 rejectInvoiced({code:400, message:'Missing Customer', data:{}});
             }
             else {
-                var order_id = this.db.add_order(order.export_as_JSON());
+                var order_id = self.db.add_order(order.export_as_JSON());
 
-                this.flush_mutex.exec(function(){
+                self.flush_mutex.exec(function(){
                     var done =  new Promise(function(resolveDone, rejectDone) {
                         // send the order to the server
                         // we have a 30 seconds timeout on this push.

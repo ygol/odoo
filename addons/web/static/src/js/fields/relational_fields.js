@@ -384,17 +384,17 @@ var FieldMany2One = AbstractField.extend({
                 var dialog = self._searchCreatePopup("form", false, self._createContext(name));
                 dialog.on('closed', self, createDone);
             };
-            if (this.nodeOptions.quick_create) {
-                var nameCreateDef = this._rpc({
-                    model: this.field.relation,
+            if (self.nodeOptions.quick_create) {
+                var nameCreateDef = self._rpc({
+                    model: self.field.relation,
                     method: 'name_create',
                     args: [name],
-                    context: this.record.getContext(this.recordParams),
+                    context: self.record.getContext(self.recordParams),
                 }).catch(function (error, ev) {
                     ev.preventDefault();
                     slowCreate();
                 });
-                this.dp.add(nameCreateDef)
+                self.dp.add(nameCreateDef)
                     .then(function (result) {
                         if (self.mode === "edit") {
                             self.reinitialize({id: result[0], display_name: result[1]});
