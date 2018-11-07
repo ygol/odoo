@@ -22,6 +22,50 @@ var testUtilsKanban = require('web.test_utils_kanban');
 var testUtilsMock = require('web.test_utils_mock');
 var testUtilsModal = require('web.test_utils_modal');
 var testUtilsPivot = require('web.test_utils_pivot');
+var Widget = require('web.Widget');
+
+/**
+ * Removes the src attribute on images and iframes to prevent not found errors,
+ * and optionally triggers an rpc with the src url as route on a widget.
+ * This method is critical and must be fastest (=> no jQuery, no underscore)
+ *
+ * @param {DOM Node} el
+ * @param {[Widget]} widget the widget on which the rpc should be performed
+ */
+function removeSrcAttribute(el, widget) {
+    var nodes;
+    if (el.nodeName === 'IMG' || el.nodeName === 'IFRAME') {
+        nodes = [el];
+    } else {
+        nodes = Array.prototype.slice.call(el.getElementsByTagName('img'))
+            .concat(Array.prototype.slice.call(el.getElementsByTagName('iframe')));
+    }
+    var node;
+    while (node = nodes.pop()) {
+        var src = node.attributes.src && node.attributes.src.value;
+        if (src && src !== 'about:blank') {
+            var $el = $(node);
+            node.setAttribute('data-src', src);
+            if (node.nodeName === 'IMG') {
+                node.attributes.removeNamedItem('src');
+            } else {
+                node.setAttribute('src', 'about:blank');
+            }
+            if (widget) {
+                widget._rpc({ route: src });
+            }
+        }
+    }
+}
+
+/**
+ * Opens the datepicker of a given element.
+ *
+ * @param {jQuery} $datepickerEl element to which a datepicker is attached
+ */
+function openDatepicker($datepickerEl) {
+    $datepickerEl.find('.o_datepicker_input').trigger('focus.datetimepicker');
+}
 
 // Loading static files cannot be properly simulated when their real content is
 // really needed. This is the case for static XML files so we load them here,

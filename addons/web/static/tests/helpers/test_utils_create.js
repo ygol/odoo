@@ -253,29 +253,6 @@ function createParent(params) {
     return widget;
 }
 
-/**
- * create a view synchronously.  This method uses the createAsyncView method.
- * Most views are synchronous, so the deferred can be resolved immediately and
- * this method will work.
- *
- * Be careful, if for some reason a view is async, this method will crash.
- * @see createAsyncView
- *
- * @param {Object} params will be given to createAsyncView
- * @returns {AbstractView}
- */
-function createView(params) {
-    var view;
-    createAsyncView(params).then(function (result) {
-        view = result;
-    });
-    if (!view) {
-        throw "The view that you are trying to create is async. Please use createAsyncView instead";
-    }
-    return view;
-}
-
-
 return {
     createActionManager: createActionManager,
     createAsyncView: createAsyncView,
