@@ -133,7 +133,12 @@ var ServicesMixin = {
      */
     _rpc: function (params, options) {
         var query = rpc.buildQuery(params);
-        var prom = this.call('ajax', 'rpc', query.route, query.params, options, this) || Promise.resolve();
+        var prom = this.call('ajax', 'rpc', query.route, query.params, options, this);
+        if (!prom) {
+            var dummy = Promise.resolve();
+            dummy.abort = function () {};
+            prom = dummy;
+        }
         var abort = (prom.abort ? prom.abort : prom.reject);
         if (!abort) {
             throw new Error("a promise should always have a reject function");
