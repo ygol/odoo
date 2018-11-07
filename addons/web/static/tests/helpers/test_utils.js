@@ -11,6 +11,10 @@ odoo.define('web.test_utils', function (require) {
  */
 
 var ajax = require('web.ajax');
+var basic_fields = require('web.basic_fields');
+var concurrency = require('web.concurrency');
+var config = require('web.config');
+var ControlPanel = require('web.ControlPanel');
 var core = require('web.core');
 var session = require('web.session');
 var testUtilsCreate = require('web.test_utils_create');
@@ -23,6 +27,26 @@ var testUtilsMock = require('web.test_utils_mock');
 var testUtilsModal = require('web.test_utils_modal');
 var testUtilsPivot = require('web.test_utils_pivot');
 var Widget = require('web.Widget');
+
+/**
+ * Create a new promise that can be waited by the caller in order to execute
+ * code after the next microtask tick and before the next jobqueue tick.
+ *
+ * @return {Promise} an already fulfilled promise
+ */
+async function nextMicrotaskTick() {
+    return Promise.resolve();
+}
+
+/**
+ * Returns a promise that is resolved in the next jobqueue tick so that the
+ *  caller can wait on it in order to execute code in the next jobqueue tick.
+ *
+ * @return {Promise} a promise that will be fulfilled in the next jobqueue tick
+ */
+async function nextTick() {
+    return concurrency.delay(0);
+}
 
 /**
  * Removes the src attribute on images and iframes to prevent not found errors,
@@ -142,6 +166,8 @@ return Promise.all([
         createAsyncView: testUtilsCreate.createAsyncView,
         createModel: testUtilsCreate.createModel,
         createParent: testUtilsCreate.createParent,
+        nextMicrotaskTick: nextMicrotaskTick,
+        nextTick: nextTick,
     };
 });
 
