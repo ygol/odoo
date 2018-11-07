@@ -307,10 +307,11 @@ var KanbanRecord = Widget.extend({
         });
         var options = _.extend({}, this.options, { attrs: attrs });
         var widget = new Widget(this, field_name, this.state, options);
-        var def = widget.replace($field).then(function () {
+        var def = widget.replace($field)
+        this.defs.push(def);
+        def.then(function () {
             self._setFieldDisplay(widget.$el, field_name);
         });
-        this.defs.push(def);
         return widget;
     },
     _processWidgets: function () {
@@ -320,10 +321,11 @@ var KanbanRecord = Widget.extend({
             var Widget = widgetRegistry.get($field.attr('name'));
             var widget = new Widget(self, self.state);
 
-            var def = widget._widgetRenderAndInsert(function () { }).then(function () {
+            var def = widget._widgetRenderAndInsert(function () { })
+            self.defs.push(def);
+            def.then(function () {
                 widget.$el.addClass('o_widget');
             });
-            self.defs.push(def);
             $field.replaceWith(widget.$el);
         });
     },

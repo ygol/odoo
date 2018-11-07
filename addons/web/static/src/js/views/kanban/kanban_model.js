@@ -346,7 +346,6 @@ var KanbanModel = BasicModel.extend({
             },
         });
         return Promise.all([groupsDef, progressBarDef]).then(function (results) {
-            var a = results[0];
             var data = results[1];
             _.each(list.data, function (groupID) {
                 var group = self.localData[groupID];
