@@ -521,7 +521,8 @@ var FieldDate = InputField.extend({
                     this._setValue(value);
                 }
             });
-            def = this.datewidget.appendTo('<div>').then(function () {
+            def = this.datewidget.appendTo('<div>');
+            def.then(function () {
                 self.datewidget.$el.addClass(self.$el.attr('class'));
                 self._prepareInput(self.datewidget.$input);
                 self._replaceElement(self.datewidget.$el);
@@ -727,7 +728,7 @@ var FieldMonetary = InputField.extend({
         this.$el.empty();
 
         // Prepare and add the input
-        this._prepareInput(this.$input).appendTo(this.$el);
+        var def = this._prepareInput(this.$input).appendTo(this.$el);
 
         if (this.currency) {
             // Prepare and add the currency symbol
@@ -738,6 +739,7 @@ var FieldMonetary = InputField.extend({
                 this.$el.prepend($currencySymbol);
             }
         }
+        return def;
     },
     /**
      * @override
