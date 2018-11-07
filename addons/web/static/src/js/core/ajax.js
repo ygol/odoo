@@ -33,7 +33,7 @@ function _genericJsonRpc (fct_name, params, settings, fct) {
                     console.error("Server application error", JSON.stringify(result.error));
                 }
             }
-            return Promise.reject(result.error);
+            return Promise.reject({type: "server", error: result.error});
         } else {
             return result.result;
         }
@@ -51,7 +51,11 @@ function _genericJsonRpc (fct_name, params, settings, fct) {
                     core.bus.trigger('rpc_response');
                 }
                 resolve(result);
-            }, function (type, error, textStatus, errorThrown) {
+            }, function (reason) {
+                var type = reason.type;
+                var error = reason.error;
+                var textStatus = reason.textStatus;
+                var errorThrown = reason.errorThrown;
                 if (type === "server") {
                     if (!shadow) {
                         core.bus.trigger('rpc_response');
@@ -89,7 +93,7 @@ function _genericJsonRpc (fct_name, params, settings, fct) {
             }
         };
         promise.catch(function (reason) { // Allow promise user to disable rpc_error call in case of failure
-            if (!event.isDefaultPrevented()) {
+            if (!reason.event.isDefaultPrevented()) {
                 core.bus.trigger('rpc_error', reason.message, reason.event);
             }
         });

@@ -1053,7 +1053,7 @@ var BasicModel = AbstractModel.extend({
                 });
             }
 
-            return new Promise(function (resolve, reject) {
+            var prom = new Promise(function (resolve, reject) {
                 var changedFields = Object.keys(changes);
 
                 if (options.savePoint) {
@@ -1101,9 +1101,11 @@ var BasicModel = AbstractModel.extend({
                 } else {
                     resolve(changedFields);
                 }
-            }).then(function () {
+            });
+            prom.then(function () {
                 record._isDirty = false;
             });
+            return prom;
         });
     },
     /**

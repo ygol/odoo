@@ -78,7 +78,7 @@ var RecordQuickCreate = Widget.extend({
                 return self.controller.appendTo(document.createDocumentFragment());
             });
         });
-        return Promise.all(superWillStart, viewsLoaded);
+        return Promise.all([superWillStart, viewsLoaded]);
     },
     /**
      * @override
