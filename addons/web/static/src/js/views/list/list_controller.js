@@ -65,7 +65,7 @@ var ListController = BasicController.extend({
      * this method should be private, most of the code in the sidebar should be
      * moved to the controller, and we should not use the getParent method...
      *
-     * @returns {Deferred<array[]>} a deferred that resolve to the active domain
+     * @returns {Promise<array[]>} a promise that resolve to the active domain
      */
     getActiveDomain: function () {
         // TODO: this method should be synchronous...
@@ -79,9 +79,9 @@ var ListController = BasicController.extend({
                 group_by_seq: searchData.groupbys || []
             });
             var record = self.model.get(self.handle, {raw: true});
-            return $.when(record.getDomain().concat(results.domain || []));
+            return Promise.resolve(record.getDomain().concat(results.domain || []));
         } else {
-            return $.Deferred().resolve();
+            return Promise.resolve();
         }
     },
     /**
@@ -245,7 +245,7 @@ var ListController = BasicController.extend({
             self.renderer.updateState(state, {});
             self.renderer.editRecord(recordID);
             self._updatePager();
-        }).always(this._enableButtons.bind(this));
+        }).then(this._enableButtons.bind(this)).catch(this._enableButtons.bind(this));
     },
     /**
      * Archive the current selection
@@ -253,7 +253,7 @@ var ListController = BasicController.extend({
      * @private
      * @param {string[]} ids
      * @param {boolean} archive
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _archive: function (ids, archive) {
         if (ids.length === 0) {
@@ -297,7 +297,7 @@ var ListController = BasicController.extend({
      * @override
      * @param {string} id a basicmodel valid resource handle.  It is supposed to
      *   be a record from the list view.
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _confirmSave: function (id) {
         var state = this.model.get(this.handle);
@@ -312,7 +312,7 @@ var ListController = BasicController.extend({
      * @override
      * @private
      * @param {string} [recordID] - default to main recordID
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _discardChanges: function (recordID) {
         if ((recordID || this.handle) === this.handle) {
@@ -342,7 +342,7 @@ var ListController = BasicController.extend({
      * @private
      * @param {string} mode
      * @param {string} [recordID] - default to main recordID
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _setMode: function (mode, recordID) {
         if ((recordID || this.handle) !== this.handle) {
@@ -372,7 +372,7 @@ var ListController = BasicController.extend({
     },
     /**
      * @override
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _update: function () {
         this._toggleSidebar();
@@ -470,7 +470,7 @@ var ListController = BasicController.extend({
                 var record = self.model.get(self.handle);
                 var editedRecord = record.data[ev.data.index];
                 self._setMode('edit', editedRecord.id)
-                    .done(ev.data.onSuccess);
+                    .then(ev.data.onSuccess);
             },
         });
     },
@@ -522,8 +522,8 @@ var ListController = BasicController.extend({
     _onSaveLine: function (ev) {
         var recordID = ev.data.recordID;
         this.saveRecord(recordID)
-            .done(ev.data.onSuccess)
-            .fail(ev.data.onFailure);
+            .then(ev.data.onSuccess)
+            .catch(ev.data.onFailure);
     },
     /**
      * When the current selection changes (by clicking on the checkboxes on the

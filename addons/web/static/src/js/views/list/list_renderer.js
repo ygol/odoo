@@ -637,7 +637,7 @@ var ListRenderer = BasicRenderer.extend({
      *
      * @override
      * @private
-     * returns {Deferred} this deferred is resolved immediately
+     * @returns {Promise} this promise is resolved immediately
      */
     _renderView: function () {
         var self = this;

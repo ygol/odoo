@@ -14,6 +14,7 @@ var widgetRegistry = require('web.widget_registry');
 var Widget = require('web.Widget');
 
 var createView = testUtils.createView;
+var createAsyncView = testUtils.createAsyncView;
 
 QUnit.module('Views', {
     beforeEach: function () {
@@ -95,10 +96,10 @@ QUnit.module('Views', {
 
     QUnit.module('ListView');
 
-    QUnit.test('simple readonly list', function (assert) {
+    QUnit.test('simple readonly list', async function (assert) {
         assert.expect(10);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -129,10 +130,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('list with create="0"', function (assert) {
+    QUnit.test('list with create="0"', async function (assert) {
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -147,10 +148,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('list with delete="0"', function (assert) {
+    QUnit.test('list with delete="0"', async function (assert) {
         assert.expect(4);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -168,10 +169,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('simple editable rendering', function (assert) {
+    QUnit.only('simple editable rendering', async function (assert) {
         assert.expect(12);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,

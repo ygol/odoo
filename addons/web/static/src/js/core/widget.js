@@ -158,6 +158,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * Renders the current widget and appends it to the given jQuery object.
      *
      * @param {jQuery} target
+     * @returns {Promise}
      */
     appendTo: function (target) {
         var self = this;
@@ -169,6 +170,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * Attach the current widget to a dom element
      *
      * @param {jQuery} target
+     * @returns {Promise}
      */
     attachTo: function (target) {
         var self = this;
@@ -205,6 +207,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * object.
      *
      * @param {jQuery} target
+     * @returns {Promise}
      */
     insertAfter: function (target) {
         var self = this;
@@ -217,6 +220,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * object.
      *
      * @param {jQuery} target
+     * @returns {Promise}
      */
     insertBefore: function (target) {
         var self = this;
@@ -228,6 +232,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * Renders the current widget and prepends it to the given jQuery object.
      *
      * @param {jQuery} target
+     * @returns {Promise}
      */
     prependTo: function (target) {
         var self = this;
@@ -253,6 +258,7 @@ var Widget = core.Class.extend(mixins.PropertiesMixin, ServicesMixin, {
      * Renders the current widget and replaces the given jQuery object.
      *
      * @param target A jQuery object or a Widget instance.
+     * @returns {Promise}
      */
     replace: function (target) {
         return this._widgetRenderAndInsert(_.bind(function (t) {
