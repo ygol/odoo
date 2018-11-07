@@ -169,7 +169,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.only('simple editable rendering', async function (assert) {
+    QUnit.test('simple editable rendering', async function (assert) {
         assert.expect(12);
 
         var list = await createAsyncView({

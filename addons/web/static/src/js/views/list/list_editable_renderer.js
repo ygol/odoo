@@ -404,6 +404,7 @@ ListRenderer.include({
      *   user refuses to discard its changes.
      */
     unselectRow: function () {
+        var self = this;
         // Protect against calling this method when no row is selected
         if (this.currentRow === null) {
             return Promise.resolve();
@@ -414,7 +415,7 @@ ListRenderer.include({
         toggleWidgets(true);
 
         var prom = new Promise(function (resolve, reject) {
-            this.trigger_up('save_line', {
+            self.trigger_up('save_line', {
                 recordID: record.id,
                 onSuccess: resolve,
                 onFailure: reject,
