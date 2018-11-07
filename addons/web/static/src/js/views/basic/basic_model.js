@@ -4284,11 +4284,11 @@ var BasicModel = AbstractModel.extend({
                     });
                 }
 
-                return Promise.all(defs).then(function () {
+                return Promise.all(defs).then(function (groups) {
                     if (!options || !options.onlyGroups) {
                         // generate the res_ids of the main list, being the concatenation
                         // of the fetched res_ids in each group
-                        list.res_ids = _.flatten(_.map(arguments[0], function (group) {
+                        list.res_ids = _.flatten(_.map(groups, function (group) {
                             return group ? group.res_ids : [];
                         }));
                     }
