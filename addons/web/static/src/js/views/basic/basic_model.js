@@ -4288,7 +4288,7 @@ var BasicModel = AbstractModel.extend({
                     if (!options || !options.onlyGroups) {
                         // generate the res_ids of the main list, being the concatenation
                         // of the fetched res_ids in each group
-                        list.res_ids = _.flatten(_.map(arguments, function (group) {
+                        list.res_ids = _.flatten(_.map(arguments[0], function (group) {
                             return group ? group.res_ids : [];
                         }));
                     }
