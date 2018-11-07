@@ -488,12 +488,14 @@ var ActionManager = Widget.extend({
         });
         this.controllers[controllerID] = controller;
         action.controllerID = controllerID;
-        return this._executeAction(action, options).then(function () {
+        var prom = this._executeAction(action, options);
+        prom.then(function () {
             // AAB: this should be done automatically in AbstractAction, so that
             // it can be overriden by actions that have specific stuff to push
             // (e.g. Discuss, Views)
             self._pushState(controllerID, {});
         });
+        return prom;
     },
     /**
      * Executes actions of type 'ir.actions.act_window_close', i.e. closes the

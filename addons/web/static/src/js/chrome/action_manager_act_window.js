@@ -344,7 +344,8 @@ ActionManager.include({
                 return self.dp.add(Promise.all(defs));
             }).then(function (controller, lazyLoadedController) {
                 action.controllerID = controller[0].jsID;
-                return self._executeAction(action, options).then(function () {
+                var prom = self._executeAction(action, options)
+                prom.then(function () {
                     if (lazyLoadedController) {
                         // controller should be placed just before the current one
                         var index = self.controllerStack.length - 1;
@@ -354,6 +355,7 @@ ActionManager.include({
                         }, {clear: false});
                     }
                 });
+                return prom;
             }).catch(self._destroyWindowAction.bind(self, action));
         });
     },
@@ -636,12 +638,14 @@ ActionManager.include({
             controllerDef = controllerDef.then(function (controller) {
                 if (!controller.widget) {
                     // lazy loaded -> load it now
-                    return newController().then(function (newController) {
+                    var prom = newController();
+                    prom.then(function (newController) {
                         // replace the old controller (without widget) by the new one
                         var index = self.controllerStack.indexOf(controller.jsID);
                         self.controllerStack[index] = newController.jsID;
                         delete self.controllers[controller.jsID];
                     });
+                    return prom;
                 } else {
                     viewOptions = _.extend(viewOptions || {}, action.env);
                     return $.when(controller.widget.willRestore()).then(function () {
