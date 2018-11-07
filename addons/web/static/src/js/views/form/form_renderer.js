@@ -479,6 +479,7 @@ var FormRenderer = BasicRenderer.extend({
     _renderInnerGroup: function (node) {
         var self = this;
         var $result = $('<table/>', {class: 'o_group o_inner_group'});
+        var $tbody = $('<tbody />').appendTo($result);
         this._handleAttributes($result, node);
         this._registerModifiers(node, this.state, $result);
 
@@ -539,7 +540,7 @@ var FormRenderer = BasicRenderer.extend({
                 var $el = $(el);
                 $el.css('width', ((parseInt($el.attr('colspan'), 10) || 1) * nonLabelColSize) + '%');
             });
-            $result.append($tr);
+            $tbody.append($tr);
         });
 
         return $result;
@@ -901,7 +902,7 @@ var FormRenderer = BasicRenderer.extend({
         var defs = [];
         this.defs = defs;
         var $form = this._renderNode(this.arch).addClass(this.className);
-        delete this.defs;
+        //delete this.defs;
 
         return Promise.all(defs).then(function () {
             self._updateView($form.contents());
