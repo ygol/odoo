@@ -75,6 +75,7 @@ function createActionManager (params) {
     return actionManager;
 }
 
+
 /**
  * create a view from various parameters.  Here, a view means a javascript
  * instance of an AbstractView class, such as a form view, a list view or a
@@ -83,10 +84,6 @@ function createActionManager (params) {
  * It returns the instance of the view, properly created, with all rpcs going
  * through a mock method using the data object as source, and already loaded/
  * started.
- *
- * Most views can be tested synchronously (@see createView), but some view have
- * external dependencies (like lazy loaded libraries). In that case, it is
- * necessary to use this method.
  *
  * @param {Object} params
  * @param {string} params.arch the xml (arch) of the view to be instantiated
@@ -104,9 +101,9 @@ function createActionManager (params) {
  *   Note that this is particularly useful if you want to intercept events going
  *   up in the init process of the view, because there are no other way to do it
  *   after this method returns
- * @returns {Deferred<AbstractView>} resolves with the instance of the view
+ * @returns {Promise<AbstractView>} resolves with the instance of the view
  */
-function createAsyncView(params) {
+async function createAsyncView(params) {
     var $target = $('#qunit-fixture');
     var widget = new Widget();
     if (params.debug) {
@@ -115,8 +112,8 @@ function createAsyncView(params) {
     }
 
     // add mock environment: mock server, session, fieldviewget, ...
-    var mockServer = testUtilsMock.addMockEnvironment(widget, params);
-    var viewInfo = testUtilsMock.fieldsViewGet(mockServer, params);
+    var mockServer = addMockEnvironment(widget, params);
+    var viewInfo = fieldsViewGet(mockServer, params);
     // create the view
     var viewOptions = {
         modelName: params.model || 'foo',
@@ -135,46 +132,44 @@ function createAsyncView(params) {
     var view = new params.View(viewInfo, viewOptions);
 
     // reproduce the DOM environment of views
-    var $web_client = $('<div>').addClass('o_web_client').prependTo($target);
+    var $web_client =  $('<div>').addClass('o_web_client').prependTo($target);
     var controlPanel = new ControlPanel(widget);
-    controlPanel.appendTo($web_client);
-    var $content = $('<div>').addClass('o_content').appendTo($web_client);
+    await controlPanel.appendTo($web_client);
+    var $content =  $('<div>').addClass('o_content').appendTo($web_client);
 
     if (params.interceptsPropagate) {
         _.each(params.interceptsPropagate, function (cb, name) {
-            testUtilsMock.intercept(widget, name, cb, true);
+            intercept(widget, name, cb, true);
         });
     }
 
-    return view.getController(widget).then(function (view) {
-        // override the view's 'destroy' so that it calls 'destroy' on the widget
-        // instead, as the widget is the parent of the view and the mockServer.
-        view.__destroy = view.destroy;
-        view.destroy = function () {
-            // remove the override to properly destroy the view and its children
-            // when it will be called the second time (by its parent)
-            delete view.destroy;
-            widget.destroy();
-        };
+    var view = await view.getController(widget)
+    // override the view's 'destroy' so that it calls 'destroy' on the widget
+    // instead, as the widget is the parent of the view and the mockServer.
+    view.__destroy = view.destroy;
+    view.destroy = function () {
+        // remove the override to properly destroy the view and its children
+        // when it will be called the second time (by its parent)
+        delete view.destroy;
+        widget.destroy();
+    };
 
-        // link the view to the control panel
-        view.set_cp_bus(controlPanel.get_bus());
+    // link the view to the control panel
+    view.set_cp_bus(controlPanel.get_bus());
 
-        // render the view in a fragment as they must be able to render correctly
-        // without being in the DOM
-        var fragment = document.createDocumentFragment();
-        return view.appendTo(fragment).then(function () {
-            dom.append($content, fragment, {
-                callbacks: [{ widget: view }],
-                in_DOM: true,
-            });
-            view.$el.on('click', 'a', function (ev) {
-                ev.preventDefault();
-            });
-
-            return view;
-        });
+    // render the view in a fragment as they must be able to render correctly
+    // without being in the DOM
+    var fragment = document.createDocumentFragment();
+    await view.appendTo(fragment)
+    dom.append($content, fragment, {
+        callbacks: [{ widget: view }],
+        in_DOM: true,
     });
+    view.$el.on('click', 'a', function (ev) {
+        ev.preventDefault();
+    });
+
+    return view;
 }
 
 /**
