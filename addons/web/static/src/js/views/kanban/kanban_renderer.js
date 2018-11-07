@@ -394,9 +394,6 @@ var KanbanRenderer = BasicRenderer.extend({
         } else {
             this._renderUngrouped(fragment);
         }
-        this.$el.append(fragment);
-        this._toggleNoContentHelper();
-        var defs = this.defs;
         return this._super.apply(this, arguments).then(function () {
             _.invoke(oldWidgets, 'destroy');
             if (self._isInDom) {
