@@ -112,6 +112,7 @@ var MockServer = Class.extend({
         }
         var def = this._performRpc(route, args);
 
+        // Todo: need to look ahead if abort/reject actually need to be defined
         var abort = def.abort || def.reject;
         if (abort) {
             abort = abort.bind(def);
@@ -135,9 +136,8 @@ var MockServer = Class.extend({
             return Promise.reject({message: errorString, event:event || $.Event()});
         });
 
-        var promise = def.promise();
-        promise.abort = abort;
-        return promise;
+        def.abort = abort;
+        return def;
     },
 
     //--------------------------------------------------------------------------
