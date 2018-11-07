@@ -15,6 +15,8 @@ var Widget = require('web.Widget');
 
 var createView = testUtils.createView;
 var createAsyncView = testUtils.createAsyncView;
+var nextTick = testUtils.nextTick;
+var nextMicrotaskTick = testUtils.nextMicrotaskTick;
 
 QUnit.module('Views', {
     beforeEach: function () {
@@ -210,10 +212,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('invisible columns are not displayed', function (assert) {
+    QUnit.test('invisible columns are not displayed', async function (assert) {
         assert.expect(1);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -228,10 +230,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('record-depending invisible lines are correctly aligned', function (assert) {
+    QUnit.test('record-depending invisible lines are correctly aligned', async function (assert) {
         assert.expect(4);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -253,12 +255,12 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('do not perform extra RPC to read invisible many2one fields', function (assert) {
+    QUnit.test('do not perform extra RPC to read invisible many2one fields', async function (assert) {
         assert.expect(3);
 
         this.data.foo.fields.m2o.default = 2;
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -278,10 +280,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('at least 4 rows are rendered, even if less data', function (assert) {
+    QUnit.test('at least 4 rows are rendered, even if less data', async function (assert) {
         assert.expect(1);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -293,10 +295,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('basic grouped list rendering', function (assert) {
+    QUnit.test('basic grouped list rendering', async function (assert) {
         assert.expect(4);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -311,10 +313,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('basic grouped list rendering 1 col without selector', function (assert) {
+    QUnit.test('basic grouped list rendering 1 col without selector', async function (assert) {
         assert.expect(1);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -328,10 +330,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('basic grouped list rendering 1 col with selector', function (assert) {
+    QUnit.test('basic grouped list rendering 1 col with selector', async function (assert) {
         assert.expect(1);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -345,10 +347,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('basic grouped list rendering 2 col without selector', function (assert) {
+    QUnit.test('basic grouped list rendering 2 col without selector', async function (assert) {
         assert.expect(1);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -362,10 +364,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('basic grouped list rendering 2 col with selector', function (assert) {
+    QUnit.test('basic grouped list rendering 2 col with selector', async function (assert) {
         assert.expect(1);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -379,10 +381,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('many2one field rendering', function (assert) {
+    QUnit.test('many2one field rendering', async function (assert) {
         assert.expect(1);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -394,10 +396,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('grouped list view, with 1 open group', function (assert) {
+    QUnit.test('grouped list view, with 1 open group', async function (assert) {
         assert.expect(6);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -415,10 +417,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('opening records when clicking on record', function (assert) {
+    QUnit.test('opening records when clicking on record', async function (assert) {
         assert.expect(3);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -438,12 +440,12 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('editable list view: readonly fields cannot be edited', function (assert) {
+    QUnit.test('editable list view: readonly fields cannot be edited', async function (assert) {
         assert.expect(4);
 
         this.data.foo.fields.foo.readonly = true;
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -519,10 +521,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('basic operations for editable list renderer', function (assert) {
+    QUnit.test('basic operations for editable list renderer', async function (assert) {
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -536,7 +538,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('editable list: add a line and discard', function (assert) {
+    QUnit.test('editable list: add a line and discard', async function (assert) {
         assert.expect(11);
 
         testUtils.mock.patch(basicFields.FieldChar, {
@@ -546,7 +548,7 @@ QUnit.module('Views', {
             },
         });
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -585,10 +587,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('field changes are triggered correctly', function (assert) {
+    QUnit.test('field changes are triggered correctly', async function (assert) {
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -608,10 +610,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('editable list view: basic char field edition', function (assert) {
+    QUnit.test('editable list view: basic char field edition', async function (assert) {
         assert.expect(4);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -633,12 +635,12 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('editable list view: save data when list sorting in edit mode', function (assert) {
+    QUnit.test('editable list view: save data when list sorting in edit mode', async function (assert) {
         assert.expect(3);
 
         this.data.foo.fields.foo.sortable = true;
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -666,10 +668,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('selection changes are triggered correctly', function (assert) {
+    QUnit.test('selection changes are triggered correctly', async function (assert) {
         assert.expect(8);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -705,10 +707,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('selection is reset on reload', function (assert) {
+    QUnit.test('selection is reset on reload', async function (assert) {
         assert.expect(5);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -730,7 +732,7 @@ QUnit.module('Views', {
 
         // reload
         list.reload();
-        $firstRowSelector = list.$('tbody .o_list_record_selector input').first();
+                $firstRowSelector = list.$('tbody .o_list_record_selector input').first();
         assert.notOk($firstRowSelector.is(':checked'),
             "first row should no longer be selected");
         assert.strictEqual(list.$('tfoot td:nth(2)').text(), '32',
@@ -742,7 +744,7 @@ QUnit.module('Views', {
     QUnit.test('selection is kept on render without reload', function (assert) {
         assert.expect(6);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -777,10 +779,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('aggregates are computed correctly', function (assert) {
+    QUnit.test('aggregates are computed correctly', async function (assert) {
         assert.expect(4);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -807,10 +809,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('aggregates are computed correctly in grouped lists', function (assert) {
+    QUnit.test('aggregates are computed correctly in grouped lists', async function (assert) {
         assert.expect(4);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -835,10 +837,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('aggregates are updated when a line is edited', function (assert) {
+    QUnit.test('aggregates are updated when a line is edited', async function (assert) {
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -855,10 +857,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('aggregates are formatted according to field widget', function (assert) {
+    QUnit.test('aggregates are formatted according to field widget', async function (assert) {
         assert.expect(1);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -874,9 +876,9 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('groups can be sorted on aggregates', function (assert) {
+    QUnit.test('groups can be sorted on aggregates', async function (assert) {
         assert.expect(10);
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -909,14 +911,14 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('groups cannot be sorted on non-aggregable fields', function (assert) {
+    QUnit.test('groups cannot be sorted on non-aggregable fields', async function (assert) {
         assert.expect(6);
         this.data.foo.fields.sort_field = {string: "sortable_field", type: "sting", sortable: true, default: "value"};
         _.each(this.data.records, function(elem) {
             elem.sort_field = "value" + elem.id;
         });
         this.data.foo.fields.foo.sortable= true;
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -950,7 +952,7 @@ QUnit.module('Views', {
     });
 
 
-    QUnit.test('properly apply onchange in simple case', function (assert) {
+    QUnit.test('properly apply onchange in simple case', async function (assert) {
         assert.expect(2);
 
         this.data.foo.onchanges = {
@@ -958,7 +960,7 @@ QUnit.module('Views', {
                 obj.int_field = obj.foo.length + 1000;
             },
         };
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -978,11 +980,11 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('column width should not change when switching mode', function (assert) {
+    QUnit.test('column width should not change when switching mode', async function (assert) {
         assert.expect(4);
 
         // Warning: this test is css dependant
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1021,10 +1023,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('deleting one record', function (assert) {
+    QUnit.test('deleting one record', async function (assert) {
         assert.expect(5);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1049,13 +1051,13 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('archiving one record', function (assert) {
+    QUnit.test('archiving one record', async function (assert) {
         assert.expect(12);
 
         // add active field on foo model and make all records active
         this.data.foo.fields.active = {string: 'Active', type: 'boolean', default: true};
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1090,10 +1092,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('pager (ungrouped and grouped mode), default limit', function (assert) {
+    QUnit.test('pager (ungrouped and grouped mode), default limit', async function (assert) {
         assert.expect(4);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1113,13 +1115,13 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('can sort records when clicking on header', function (assert) {
+    QUnit.test('can sort records when clicking on header', async function (assert) {
         assert.expect(9);
 
         this.data.foo.fields.foo.sortable = true;
 
         var nbSearchRead = 0;
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1157,10 +1159,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('use default_order', function (assert) {
+    QUnit.test('use default_order', async function (assert) {
         assert.expect(3);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1182,10 +1184,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('use more complex default_order', function (assert) {
+    QUnit.test('use more complex default_order', async function (assert) {
         assert.expect(3);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1209,12 +1211,12 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('use default_order on editable tree: sort on save', function (assert) {
+    QUnit.test('use default_order on editable tree: sort on save', async function (assert) {
         assert.expect(8);
 
         this.data.foo.records[0].o2m = [1, 3];
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'foo',
             data: this.data,
@@ -1257,7 +1259,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('use default_order on editable tree: sort on demand', function (assert) {
+    QUnit.test('use default_order on editable tree: sort on demand', async function (assert) {
         assert.expect(11);
 
         this.data.foo.records[0].o2m = [1, 3];
@@ -1265,7 +1267,7 @@ QUnit.module('Views', {
         this.data.bar.records[0].name = "Value 1";
         this.data.bar.records[2].name = "Value 3";
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'foo',
             data: this.data,
@@ -1318,7 +1320,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('use default_order on editable tree: sort on demand in page', function (assert) {
+    QUnit.test('use default_order on editable tree: sort on demand in page', async function (assert) {
         assert.expect(4);
 
         this.data.bar.fields = {name: {string: "Name", type: "char", sortable: true}};
@@ -1334,7 +1336,7 @@ QUnit.module('Views', {
         }
         this.data.foo.records[0].o2m = ids;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'foo',
             data: this.data,
@@ -1366,10 +1368,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('can display button in edit mode', function (assert) {
+    QUnit.test('can display button in edit mode', async function (assert) {
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1383,10 +1385,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('can display a list with a many2many field', function (assert) {
+    QUnit.test('can display a list with a many2many field', async function (assert) {
         assert.expect(3);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1404,10 +1406,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('list without import button', function (assert) {
+    QUnit.test('list without import button', async function (assert) {
         assert.expect(1);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1421,13 +1423,13 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('display a tooltip on a field', function (assert) {
+    QUnit.test('display a tooltip on a field', async function (assert) {
         assert.expect(2);
 
         var initialDebugMode = config.debug;
         config.debug = false;
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1453,10 +1455,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('support row decoration', function (assert) {
+    QUnit.test('support row decoration', async function (assert) {
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1472,12 +1474,12 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('support row decoration (with unset numeric values)', function (assert) {
+    QUnit.test('support row decoration (with unset numeric values)', async function (assert) {
         assert.expect(2);
 
         this.data.foo.records = [];
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1496,12 +1498,12 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('support row decoration with date', function (assert) {
+    QUnit.test('support row decoration with date', async function (assert) {
         assert.expect(3);
 
         this.data.foo.records[0].datetime = '2017-02-27 12:51:35';
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1520,14 +1522,14 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('no content helper when no data', function (assert) {
+    QUnit.test('no content helper when no data', async function (assert) {
         assert.expect(5);
 
         var records = this.data.foo.records;
 
         this.data.foo.records = [];
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1556,12 +1558,12 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('no nocontent helper when no data and no help', function (assert) {
+    QUnit.test('no nocontent helper when no data and no help', async function (assert) {
         assert.expect(3);
 
         this.data.foo.records = [];
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1578,14 +1580,14 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('list view, editable, without data', function (assert) {
+    QUnit.test('list view, editable, without data', async function (assert) {
         assert.expect(13);
 
         this.data.foo.records = [];
 
         this.data.foo.fields.date.default = "2017-02-10";
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1644,12 +1646,12 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('list view, editable, with a button', function (assert) {
+    QUnit.test('list view, editable, with a button', async function (assert) {
         assert.expect(1);
 
         this.data.foo.records = [];
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1666,10 +1668,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('list view with a button without icon', function (assert) {
+    QUnit.test('list view with a button without icon', async function (assert) {
         assert.expect(1);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1684,10 +1686,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('list view, editable, can discard', function (assert) {
+    QUnit.test('list view, editable, can discard', async function (assert) {
         assert.expect(5);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1713,7 +1715,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('editable list view, click on the list to save', function (assert) {
+    QUnit.test('editable list view, click on the list to save', async function (assert) {
         assert.expect(3);
 
         this.data.foo.fields.date.default = "2017-02-10";
@@ -1721,7 +1723,7 @@ QUnit.module('Views', {
 
         var createCount = 0;
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1753,10 +1755,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('click on a button in a list view', function (assert) {
+    QUnit.test('click on a button in a list view', async function (assert) {
         assert.expect(9);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1794,10 +1796,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('invisible attrs in readonly and editable list', function (assert) {
+    QUnit.test('invisible attrs in readonly and editable list', async function (assert) {
         assert.expect(5);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1830,14 +1832,14 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('monetary fields are properly rendered', function (assert) {
+    QUnit.test('monetary fields are properly rendered', async function (assert) {
         assert.expect(3);
 
         var currencies = {};
         _.each(this.data.res_currency.records, function (currency) {
             currencies[currency.id] = currency;
         });
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1861,10 +1863,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('simple list with date and datetime', function (assert) {
+    QUnit.test('simple list with date and datetime', async function (assert) {
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1888,7 +1890,7 @@ QUnit.module('Views', {
 
         this.data.foo.fields.foo.readonly = true;
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -1923,7 +1925,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('list view with nested groups', function (assert) {
+    QUnit.test('list view with nested groups', async function (assert) {
         assert.expect(42);
 
         this.data.foo.records.push({id: 5, foo: "blip", int_field: -7, m2o: 1});
@@ -1932,7 +1934,7 @@ QUnit.module('Views', {
         var nbRPCs = {readGroup: 0, searchRead: 0};
         var envIDs = []; // the ids that should be in the environment during this test
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2050,7 +2052,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('grouped list on selection field at level 2', function (assert) {
+    QUnit.test('grouped list on selection field at level 2', async function (assert) {
         assert.expect(4);
 
         this.data.foo.fields.priority = {
@@ -2062,7 +2064,7 @@ QUnit.module('Views', {
         this.data.foo.records.push({id: 5, foo: "blip", int_field: -7, m2o: 1, priority: 2});
         this.data.foo.records.push({id: 6, foo: "blip", int_field: 5, m2o: 1, priority: 3});
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2087,11 +2089,11 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('grouped list with a pager in a group', function (assert) {
+    QUnit.test('grouped list with a pager in a group', async function (assert) {
         assert.expect(6);
         this.data.foo.records[3].bar = true;
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2125,10 +2127,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('edition: create new line, then discard', function (assert) {
+    QUnit.test('edition: create new line, then discard', async function (assert) {
         assert.expect(8);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2156,10 +2158,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('invisible attrs on fields are re-evaluated on field change', function (assert) {
+    QUnit.test('invisible attrs on fields are re-evaluated on field change', async function (assert) {
         assert.expect(7);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2201,10 +2203,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('readonly attrs on fields are re-evaluated on field change', function (assert) {
+    QUnit.test('readonly attrs on fields are re-evaluated on field change', async function (assert) {
         assert.expect(9);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2251,10 +2253,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('required attrs on fields are re-evaluated on field change', function (assert) {
+    QUnit.test('required attrs on fields are re-evaluated on field change', async function (assert) {
         assert.expect(7);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2296,11 +2298,11 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('leaving unvalid rows in edition', function (assert) {
+    QUnit.test('leaving unvalid rows in edition', async function (assert) {
         assert.expect(4);
 
         var warnings = 0;
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2343,10 +2345,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('open a virtual id', function (assert) {
+    QUnit.test('open a virtual id', async function (assert) {
         assert.expect(1);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'event',
             data: this.data,
@@ -2366,10 +2368,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('pressing enter on last line of editable list view', function (assert) {
+    QUnit.test('pressing enter on last line of editable list view', async function (assert) {
         assert.expect(7);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2400,10 +2402,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('pressing tab on last cell of editable list view', function (assert) {
+    QUnit.test('pressing tab on last cell of editable list view', async function (assert) {
         assert.expect(9);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2440,13 +2442,13 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('navigation with tab and read completes after default_get', function (assert) {
+    QUnit.test('navigation with tab and read completes after default_get', async function (assert) {
         assert.expect(8);
 
         var defaultGetDef = $.Deferred();
         var readDef = $.Deferred();
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2491,10 +2493,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('display toolbar', function (assert) {
+    QUnit.test('display toolbar', async function (assert) {
         assert.expect(3);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'event',
             data: this.data,
@@ -2526,10 +2528,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('edit list line after line deletion', function (assert) {
+    QUnit.test('edit list line after line deletion', async function (assert) {
         assert.expect(5);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2555,14 +2557,14 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('navigation with tab and readonly field (no modification)', function (assert) {
+    QUnit.test('navigation with tab and readonly field (no modification)', async function (assert) {
         // This test makes sure that if we have 2 cells in a row, the first in
         // edit mode, and the second one readonly, then if we press TAB when the
         // focus is on the first, then the focus skip the readonly cells and
         // directly goes to the next line instead.
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2587,14 +2589,14 @@ QUnit.module('Views', {
     });
 
 
-    QUnit.test('navigation with tab and readonly field (with modification)', function (assert) {
+    QUnit.test('navigation with tab and readonly field (with modification)', async function (assert) {
         // This test makes sure that if we have 2 cells in a row, the first in
         // edit mode, and the second one readonly, then if we press TAB when the
         // focus is on the first, then the focus skips the readonly cells and
         // directly goes to the next line instead.
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2622,10 +2624,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('navigation with tab on a list with create="0"', function (assert) {
+    QUnit.test('navigation with tab on a list with create="0"', async function (assert) {
         assert.expect(4);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2657,11 +2659,11 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('navigation with tab on a one2many list with create="0"', function (assert) {
+    QUnit.test('navigation with tab on a one2many list with create="0"', async function (assert) {
         assert.expect(4);
 
         this.data.foo.records[0].o2m = [1, 2];
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'foo',
             data: this.data,
@@ -2699,14 +2701,14 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('edition, then navigation with tab (with a readonly field)', function (assert) {
+    QUnit.test('edition, then navigation with tab (with a readonly field)', async function (assert) {
         // This test makes sure that if we have 2 cells in a row, the first in
         // edit mode, and the second one readonly, then if we edit and press TAB,
         // (before debounce), the save operation is properly done (before
         // selecting the next row)
         assert.expect(4);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2731,10 +2733,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('skip invisible fields when navigating list view with TAB', function (assert) {
+    QUnit.test('skip invisible fields when navigating list view with TAB', async function (assert) {
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2756,10 +2758,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('skip buttons when navigating list view with TAB (end)', function (assert) {
+    QUnit.test('skip buttons when navigating list view with TAB (end)', async function (assert) {
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2780,10 +2782,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('skip buttons when navigating list view with TAB (middle)', function (assert) {
+    QUnit.test('skip buttons when navigating list view with TAB (middle)', async function (assert) {
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2807,10 +2809,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('navigation: not moving down with keydown', function (assert) {
+    QUnit.test('navigation: not moving down with keydown', async function (assert) {
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2826,11 +2828,11 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('navigation: moving right with keydown from text field does not move the focus', function (assert) {
+    QUnit.test('navigation: moving right with keydown from text field does not move the focus', async function (assert) {
         assert.expect(6);
 
         this.data.foo.fields.foo.type = 'text';
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2863,7 +2865,7 @@ QUnit.module('Views', {
     QUnit.test('discarding changes in a row properly updates the rendering', function (assert) {
         assert.expect(3);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2889,14 +2891,14 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('numbers in list are right-aligned', function (assert) {
+    QUnit.test('numbers in list are right-aligned', async function (assert) {
         assert.expect(2);
 
         var currencies = {};
         _.each(this.data.res_currency.records, function (currency) {
             currencies[currency.id] = currency;
         });
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2931,7 +2933,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('grouped list are not editable (ungrouped first)', function (assert) {
+    QUnit.test('grouped list are not editable (ungrouped first)', async function (assert) {
         // Editable grouped list views are not supported, so the purpose of this
         // test is to check that when a list view is grouped, its editable
         // attribute is ignored
@@ -2940,7 +2942,7 @@ QUnit.module('Views', {
         // editable
         assert.expect(5);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -2974,7 +2976,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('grouped list are not editable (grouped first)', function (assert) {
+    QUnit.test('grouped list are not editable (grouped first)', async function (assert) {
         // Editable grouped list views are not supported, so the purpose of this
         // test is to check that when a list view is grouped, its editable
         // attribute is ignored
@@ -2982,7 +2984,7 @@ QUnit.module('Views', {
         // editable, and then it is reloaded with no groupBy and becomes editable
         assert.expect(6);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3027,13 +3029,13 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('field values are escaped', function (assert) {
+    QUnit.test('field values are escaped', async function (assert) {
         assert.expect(1);
         var value = '<script>throw Error();</script>';
 
         this.data.foo.records[0].foo = value;
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3046,10 +3048,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('pressing ESC discard the current line changes', function (assert) {
+    QUnit.test('pressing ESC discard the current line changes', async function (assert) {
         assert.expect(3);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3068,10 +3070,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('pressing ESC discard the current line changes (with required)', function (assert) {
+    QUnit.test('pressing ESC discard the current line changes (with required)', async function (assert) {
         assert.expect(3);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3090,10 +3092,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('field with password attribute', function (assert) {
+    QUnit.test('field with password attribute', async function (assert) {
         assert.expect(2);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3108,10 +3110,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('list with handle widget', function (assert) {
+    QUnit.test('list with handle widget', async function (assert) {
         assert.expect(11);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3161,7 +3163,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('result of consecutive resequences is correctly sorted', function (assert) {
+    QUnit.test('result of consecutive resequences is correctly sorted', async function (assert) {
         assert.expect(9);
         this.data = { // we want the data to be minimal to have a minimal test
             foo: {
@@ -3175,7 +3177,7 @@ QUnit.module('Views', {
             }
         };
         var moves = 0;
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3255,7 +3257,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('editable list with handle widget', function (assert) {
+    QUnit.test('editable list with handle widget', async function (assert) {
         assert.expect(12);
 
         // resequence makes sense on a sequence field, not on arbitrary fields
@@ -3264,7 +3266,7 @@ QUnit.module('Views', {
         this.data.foo.records[2].int_field = 2;
         this.data.foo.records[3].int_field = 3;
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3318,7 +3320,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('editable list, handle widget locks and unlocks on sort', function (assert) {
+    QUnit.test('editable list, handle widget locks and unlocks on sort', async function (assert) {
         assert.expect(6);
 
         // we need another sortable field to lock/unlock the handle
@@ -3329,7 +3331,7 @@ QUnit.module('Views', {
         this.data.foo.records[2].int_field = 2;
         this.data.foo.records[3].int_field = 3;
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3388,7 +3390,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('editable list with handle widget with slow network', function (assert) {
+    QUnit.test('editable list with handle widget with slow network', async function (assert) {
         assert.expect(15);
 
         // resequence makes sense on a sequence field, not on arbitrary fields
@@ -3399,7 +3401,7 @@ QUnit.module('Views', {
 
         var def = $.Deferred();
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3475,7 +3477,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('multiple clicks on Add do not create invalid rows', function (assert) {
+    QUnit.test('multiple clicks on Add do not create invalid rows', async function (assert) {
         assert.expect(2);
 
         this.data.foo.onchanges = {
@@ -3483,7 +3485,7 @@ QUnit.module('Views', {
         };
 
         var def = $.Deferred();
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3512,7 +3514,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('reference field rendering', function (assert) {
+    QUnit.test('reference field rendering', async function (assert) {
         assert.expect(4);
 
         this.data.foo.records.push({
@@ -3520,7 +3522,7 @@ QUnit.module('Views', {
             reference: 'res_currency,2',
         });
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3539,10 +3541,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('editable list view: contexts are correctly sent', function (assert) {
+    QUnit.test('editable list view: contexts are correctly sent', async function (assert) {
         assert.expect(6);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3575,10 +3577,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('list grouped by date:month', function (assert) {
+    QUnit.test('list grouped by date:month', async function (assert) {
         assert.expect(1);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3592,10 +3594,10 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('grouped list edition with toggle_button widget', function (assert) {
+    QUnit.test('grouped list edition with toggle_button widget', async function (assert) {
         assert.expect(3);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3620,7 +3622,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('grouped list view, indentation for empty group', function (assert) {
+    QUnit.test('grouped list view, indentation for empty group', async function (assert) {
         assert.expect(3);
 
         this.data.foo.fields.priority = {
@@ -3632,7 +3634,7 @@ QUnit.module('Views', {
         this.data.foo.records.push({id: 5, foo: "blip", int_field: -7, m2o: 1, priority: 2});
         this.data.foo.records.push({id: 6, foo: "blip", int_field: 5, m2o: 1, priority: 3});
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3669,7 +3671,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('basic support for widgets', function (assert) {
+    QUnit.test('basic support for widgets', async function (assert) {
         assert.expect(1);
 
         var MyWidget = Widget.extend({
@@ -3682,7 +3684,7 @@ QUnit.module('Views', {
         });
         widgetRegistry.add('test', MyWidget);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3696,10 +3698,10 @@ QUnit.module('Views', {
         delete widgetRegistry.map.test;
     });
 
-    QUnit.test('use the limit attribute in arch', function (assert) {
+    QUnit.test('use the limit attribute in arch', async function (assert) {
         assert.expect(3);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3719,7 +3721,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('check if the view destroys all widgets and instances', function (assert) {
+    QUnit.test('check if the view destroys all widgets and instances', async function (assert) {
         assert.expect(1);
 
         var instanceNumber = 0;
@@ -3756,13 +3758,13 @@ QUnit.module('Views', {
                 '</tree>',
         };
 
-        var list = createView(params);
+        var list = await createAsyncView(params);
         list.destroy();
 
         var initialInstanceNumber = instanceNumber;
         instanceNumber = 0;
 
-        list = createView(params);
+        list = await createAsyncView(params);
 
         // call destroy function of controller to ensure that it correctly destroys everything
         list.__destroy();
@@ -3774,12 +3776,12 @@ QUnit.module('Views', {
         testUtils.mock.unpatch(mixins.ParentedMixin);
     });
 
-    QUnit.test('concurrent reloads finishing in inverse order', function (assert) {
+    QUnit.test('concurrent reloads finishing in inverse order', async function (assert) {
         assert.expect(3);
 
         var blockSearchRead = false;
         var def = $.Deferred();
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3815,14 +3817,14 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('list view on a "noCache" model', function (assert) {
+    QUnit.test('list view on a "noCache" model', async function (assert) {
         assert.expect(8);
 
         testUtils.mock.patch(BasicModel, {
             noCacheModels: BasicModel.prototype.noCacheModels.concat(['foo']),
         });
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3870,10 +3872,10 @@ QUnit.module('Views', {
         testUtils.mock.unpatch(BasicModel);
     });
 
-    QUnit.test('list should ask to scroll to top on page changes', function (assert) {
+    QUnit.test('list should ask to scroll to top on page changes', async function (assert) {
         assert.expect(10);
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
@@ -3914,12 +3916,12 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('list with handle field, override default_get, bottom when inline', function (assert) {
+    QUnit.test('list with handle field, override default_get, bottom when inline', async function (assert) {
         assert.expect(2);
 
         this.data.foo.fields.int_field.default = 10;
 
-        var list = createView({
+        var list = await createAsyncView({
             View: ListView,
             model: 'foo',
             data: this.data,
