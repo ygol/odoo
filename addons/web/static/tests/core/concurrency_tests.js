@@ -156,7 +156,7 @@ QUnit.module('core', {}, function () {
         var prom1 = makeTestPromise(assert, 'prom1');
         var prom2 = makeTestPromise(assert, 'prom2');
 
-        var dp1 = dp.add(prom1).then(() => assert.catch('should not go here'))
+        var dp1 = dp.add(prom1).then(() => assert.step('should not go here'))
                                .catch(()=> assert.step("rejected dp1"));
         var dp2 = dp.add(prom2).then(() => assert.step("ok dp2"));
 
@@ -179,7 +179,7 @@ QUnit.module('core', {}, function () {
         var prom1 = makeTestPromise(assert, 'prom1');
         var prom2 = makeTestPromise(assert, 'prom2');
 
-        var dp1 = dp.add(prom1).then(() => assert.catch('should not go here'))
+        var dp1 = dp.add(prom1).then(() => assert.step('should not go here'))
                                .catch(()=> assert.step("rejected dp1"));
         var dp2 = dp.add(prom2).then(() => assert.step("ok dp2"));
 
