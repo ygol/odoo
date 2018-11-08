@@ -44,72 +44,72 @@ function _genericJsonRpc (fct_name, params, settings, fct) {
 
     var rejection;
     var promise = new Promise(function(resolve, reject) {
-            rejection = reject;
+        rejection = reject;
 
-            result.then(function (result) {
+        result.then(function (result) {
+            if (!shadow) {
+                core.bus.trigger('rpc_response');
+            }
+            resolve(result);
+        }, function (reason) {
+            var type = reason.type;
+            var error = reason.error;
+            var textStatus = reason.textStatus;
+            var errorThrown = reason.errorThrown;
+            if (type === "server") {
                 if (!shadow) {
                     core.bus.trigger('rpc_response');
                 }
-                resolve(result);
-            }, function (reason) {
-                var type = reason.type;
-                var error = reason.error;
-                var textStatus = reason.textStatus;
-                var errorThrown = reason.errorThrown;
-                if (type === "server") {
-                    if (!shadow) {
-                        core.bus.trigger('rpc_response');
-                    }
-                    if (error.code === 100) {
-                        core.bus.trigger('invalidate_session');
-                    }
-                    reject({message: error, event: $.Event()});
-                } else {
-                    if (!shadow) {
-                        core.bus.trigger('rpc_response_failed');
-                    }
-                    var nerror = {
-                        code: -32098,
-                        message: "XmlHttpRequestError " + errorThrown,
-                        data: {
-                            type: "xhr"+textStatus,
-                            debug: error.responseText,
-                            objects: [error, errorThrown]
-                        },
-                    };
-                    reject({message: nerror, event: $.Event()});
+                if (error.code === 100) {
+                    core.bus.trigger('invalidate_session');
                 }
-            });
-        });
-
-        // FIXME: jsonp?
-        promise.abort = function () {
-            rejection({
-                message: "XmlHttpRequestError abort",
-                event: $.Event('abort')
-            });
-            if (xhr.abort) {
-                xhr.abort();
+                reject({message: error, event: $.Event()});
+            } else {
+                if (!shadow) {
+                    core.bus.trigger('rpc_response_failed');
+                }
+                var nerror = {
+                    code: -32098,
+                    message: "XmlHttpRequestError " + errorThrown,
+                    data: {
+                        type: "xhr"+textStatus,
+                        debug: error.responseText,
+                        objects: [error, errorThrown]
+                    },
+                };
+                reject({message: nerror, event: $.Event()});
             }
-        };
-        promise.catch(function (reason) { // Allow promise user to disable rpc_error call in case of failure
-            if (!reason.event.isDefaultPrevented()) {
-                core.bus.trigger('rpc_error', reason.message, reason.event);
-            }
         });
-        return promise;
-    }
+    });
 
-    function jsonRpc(url, fct_name, params, settings) {
-        settings = settings || {};
-        return _genericJsonRpc(fct_name, params, settings, function(data) {
-            return $.ajax(url, _.extend({}, settings, {
-                url: url,
-                dataType: 'json',
-                type: 'POST',
-                data: JSON.stringify(data, time.date_to_utc),
-                contentType: 'application/json'
-            }));
+    // FIXME: jsonp?
+    promise.abort = function () {
+        rejection({
+            message: "XmlHttpRequestError abort",
+            event: $.Event('abort')
+        });
+        if (xhr.abort) {
+            xhr.abort();
+        }
+    };
+    promise.catch(function (reason) { // Allow promise user to disable rpc_error call in case of failure
+        if (!reason.event.isDefaultPrevented()) {
+            core.bus.trigger('rpc_error', reason.message, reason.event);
+        }
+    });
+    return promise;
+};
+
+function jsonRpc(url, fct_name, params, settings) {
+    settings = settings || {};
+    return _genericJsonRpc(fct_name, params, settings, function(data) {
+        return $.ajax(url, _.extend({}, settings, {
+            url: url,
+            dataType: 'json',
+            type: 'POST',
+            data: JSON.stringify(data, time.date_to_utc),
+            contentType: 'application/json'
+        }));
     });
 }
 
