@@ -48,6 +48,12 @@ class MrpStockReport(models.TransientModel):
         return lines_seen - move_lines
 
     @api.model
+    def get_lines_html(self, line_id, model_name, model_id, level):
+        return self.env.ref('stock.report_mrp_line').render({
+            'lines': self.get_lines(line_id, model_name=model_name, model_id=model_id, level=level)
+        })
+
+    @api.model
     def get_lines(self, line_id=None, **kw):
         context = dict(self.env.context)
         model = kw and kw['model_name'] or context.get('model')
@@ -219,17 +225,8 @@ class MrpStockReport(models.TransientModel):
             specific_paperformat_args={'data-report-margin-top': 10, 'data-report-header-spacing': 10}
         )
 
-    def _get_html(self):
-        result = {}
-        rcontext = {}
-        context = dict(self.env.context)
-        rcontext['lines'] = self.with_context(context).get_lines()
-        result['html'] = self.env.ref('stock.report_stock_inventory').render(rcontext)
-        return result
-
-    @api.model
-    def get_html(self, given_context=None):
-        res = self.search([('create_uid', '=', self.env.uid)], limit=1)
-        if not res:
-            return self.create({}).with_context(given_context)._get_html()
-        return res.with_context(given_context)._get_html()
+    def _qweb_prepare_qcontext(self, view_id, domain):
+        return {
+            **super()._qweb_prepare_qcontext(view_id, domain),
+            'lines': self.get_lines()
+        }
