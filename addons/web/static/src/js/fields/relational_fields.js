@@ -1097,15 +1097,15 @@ var FieldX2Many = AbstractField.extend({
     _saveLine: function (recordID) {
         var self = this;
         return new Promise(function(resolve, reject) {
-            var fieldNames = this.renderer.canBeSaved(recordID);
+            var fieldNames = self.renderer.canBeSaved(recordID);
             if (fieldNames.length) {
-                this.trigger_up('discard_changes', {
+                self.trigger_up('discard_changes', {
                     recordID: recordID,
                     onSuccess: def.resolve.bind(def),
                     onFailure: def.reject.bind(def),
                 });
             } else {
-                this.renderer.setRowMode(recordID, 'readonly').then(resolve);
+                self.renderer.setRowMode(recordID, 'readonly').then(resolve);
             }
         }).then(function () {
             self.pager.updateState({ size: self.value.count });

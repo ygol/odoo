@@ -87,10 +87,11 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
         this.$el.addClass('o_view_controller');
 
         // render the ControlPanel elements (buttons, pager, sidebar...)
-        this.controlPanelElements = this._renderControlPanelElements();
+        var renderedControlPanel = this._renderControlPanelElements();
+        this.controlPanelElements = renderedControlPanel.elements;
 
         return Promise.all([
-            this.controlPanelElements.done,
+            renderedControlPanel.done,
             this._super.apply(this, arguments),
             this.renderer.appendTo(this.$el)
         ]).then(function () {
@@ -361,14 +362,16 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
             defs.push(this.renderButtons(elements.$buttons));
             defs.push(this.renderSidebar(elements.$sidebar));
             defs.push(this.renderPager(elements.$pager));
+        }
+        var done = Promise.all(defs);
+        done.then(function () {
             // remove the unnecessary outer div
             elements = _.mapObject(elements, function ($node) {
                 return $node && $node.contents();
             });
-            elements.$switch_buttons = this._renderSwitchButtons();
-        }
-        elements.done = Promise.all(defs);
-        return elements;
+        });
+        elements.$switch_buttons = this._renderSwitchButtons();
+        return {elements: elements, done: done};
     },
     /**
      * Renders the switch buttons and binds listeners on them.
