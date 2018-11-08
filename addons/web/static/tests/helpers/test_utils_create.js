@@ -30,7 +30,7 @@ var Widget = require('web.Widget');
  * @param {function} [params.mockRPC]
  * @returns {ActionManager}
  */
-function createActionManager (params) {
+var createActionManager = async function (params) {
     params = params || {};
     var $target = $('#qunit-fixture');
     if (params.debug) {
@@ -47,7 +47,7 @@ function createActionManager (params) {
     _.extend(params, {
         mockRPC: function (route, args) {
             if (args.model === 'ir.attachment') {
-                return $.when([]);
+                return Promise.resolve([]);
             }
             if (mockRPC) {
                 return mockRPC.apply(this, arguments);
@@ -55,8 +55,8 @@ function createActionManager (params) {
             return this._super.apply(this, arguments);
         },
     });
-    testUtilsMock.addMockEnvironment(widget, _.defaults(params, { debounce: false }));
-    widget.prependTo($target);
+    addMockEnvironment(widget, _.defaults(params, { debounce: false }));
+    await widget.prependTo($target);
     widget.$el.addClass('o_web_client');
     if (config.device.isMobile) {
         widget.$el.addClass('o_touch_device');
@@ -70,10 +70,10 @@ function createActionManager (params) {
         actionManager.destroy = originalDestroy;
         widget.destroy();
     };
-    actionManager.appendTo(widget.$el);
+    await actionManager.appendTo(widget.$el);
 
     return actionManager;
-}
+};
 
 
 /**
@@ -178,16 +178,16 @@ async function createAsyncView(params) {
  *
  * @param {Object} [params={}]
  */
-function createDebugManager (params) {
+var createDebugManager = function (params) {
     params = params || {};
     var mockRPC = params.mockRPC;
     _.extend(params, {
         mockRPC: function (route, args) {
             if (args.method === 'check_access_rights') {
-                return $.when(true);
+                return Promise.resolve(true);
             }
             if (args.method === 'xmlid_to_res_id') {
-                return $.when(true);
+                return Promise.resolve(true);
             }
             if (mockRPC) {
                 return mockRPC.apply(this, arguments);
@@ -197,16 +197,16 @@ function createDebugManager (params) {
         session: {
             user_has_group: function (group) {
                 if (group === 'base.group_no_one') {
-                    return $.when(true);
+                    return Promise.resolve(true);
                 }
                 return this._super.apply(this, arguments);
             },
         },
     });
     var debugManager = new DebugManager();
-    testUtilsMock.addMockEnvironment(debugManager, params);
+    addMockEnvironment(debugManager, params);
     return debugManager;
-}
+};
 
 /**
  * create a model from given parameters.
