@@ -78,8 +78,8 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
         def = new Promise(function (resolve, reject) {
             var dialog = Dialog.confirm(self, message, {
                 title: _t("Warning"),
-                confirm_callback: resolve(true),
-                cancel_callback: reject(),
+                confirm_callback: resolve.bind(self, true),
+                cancel_callback: reject,
             });
             dialog.on('closed', def, reject);
         });
