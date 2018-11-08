@@ -399,7 +399,7 @@ var KanbanRenderer = BasicRenderer.extend({
             if (self._isInDom) {
                 _.invoke(self.widgets, 'on_attach_callback');
             }
-            return Promise.all(defs);
+            return Promise.all(self.defs);
         });
     },
     /**
