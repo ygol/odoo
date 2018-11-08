@@ -13,9 +13,9 @@ var pyUtils = require('web.py_utils');
 var testUtils = require('web.test_utils');
 var widgetRegistry = require('web.widget_registry');
 var Widget = require('web.Widget');
+var relationalFields = require('web.relational_fields');
 
 var _t = core._t;
-var createView = testUtils.createView;
 var createAsyncView = testUtils.createAsyncView;
 
 QUnit.module('Views', {
@@ -109,10 +109,10 @@ QUnit.module('Views', {
 
     QUnit.module('FormView');
 
-    QUnit.test('simple form rendering', function (assert) {
+    QUnit.test('simple form rendering', async function (assert) {
         assert.expect(12);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -168,6 +168,7 @@ QUnit.module('Views', {
 
     QUnit.test('attributes are transferred on async widgets', function (assert) {
         assert.expect(1);
+        var done  = assert.async();
 
         var def = $.Deferred();
 
@@ -193,14 +194,15 @@ QUnit.module('Views', {
                 "should apply style attribute on fields");
             form.destroy();
             delete fieldRegistry.map.asyncwidget;
+            done();
         });
         def.resolve();
     });
 
-    QUnit.test('decoration works on widgets', function (assert) {
+    QUnit.test('decoration works on widgets', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -216,10 +218,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('decoration on widgets are reevaluated if necessary', function (assert) {
+    QUnit.test('decoration on widgets are reevaluated if necessary', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -236,10 +238,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('decoration on widgets works on same widget', function (assert) {
+    QUnit.test('decoration on widgets works on same widget', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -255,10 +257,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('only necessary fields are fetched with correct context', function (assert) {
+    QUnit.test('only necessary fields are fetched with correct context', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -279,10 +281,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('group rendering', function (assert) {
+    QUnit.test('group rendering', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -301,10 +303,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('invisible fields are properly hidden', function (assert) {
+    QUnit.test('invisible fields are properly hidden', async function (assert) {
         assert.expect(4);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -331,10 +333,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('invisible elements are properly hidden', function (assert) {
+    QUnit.test('invisible elements are properly hidden', async function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -367,7 +369,8 @@ QUnit.module('Views', {
 
         // we set the value bar to simulate a falsy boolean value.
         this.data.partner.records[0].bar = false;
-        var form = createView({
+
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -380,6 +383,9 @@ QUnit.module('Views', {
                     '</group></sheet>' +
                 '</form>',
             res_id: 1,
+            viewOptions: {
+                mode:'edit'
+            },
         });
 
         testUtils.form.clickEdit(form);
@@ -393,8 +399,9 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('asynchronous fields can be set invisible', function (assert) {
+    QUnit.test('asynchronous fields can be set invisible', async function (assert) {
         assert.expect(1);
+        var done = assert.async();
 
         var def = $.Deferred();
 
@@ -422,15 +429,15 @@ QUnit.module('Views', {
             assert.hasClass(form.$('.o_field_widget[name="int_field"]'), 'o_invisible_modifier');
             form.destroy();
             delete fieldRegistry.map.asyncwidget;
+            done()
         });
         def.resolve();
     });
 
-
-    QUnit.test('properly handle modifiers and attributes on notebook tags', function (assert) {
+    QUnit.test('properly handle modifiers and attributes on notebook tags', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -452,10 +459,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('invisible attrs on first notebook page', function (assert) {
+    QUnit.test('invisible attrs on first notebook page', async function (assert) {
         assert.expect(6);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -479,6 +486,9 @@ QUnit.module('Views', {
         assert.hasClass(form.$('.o_notebook .nav .nav-link:first()'), 'active');
         assert.doesNotHaveClass(form.$('.o_notebook .nav .nav-item:first()'), 'o_invisible_modifier');
 
+        var M2O_DELAY = relationalFields.FieldMany2One.prototype.AUTOCOMPLETE_DELAY;
+        relationalFields.FieldMany2One.prototype.AUTOCOMPLETE_DELAY = 0;
+
         // set a value on the m2o
         testUtils.fields.many2one.searchAndClickItem('product_id');
         assert.doesNotHaveClass(form.$('.o_notebook .nav .nav-link:first()'), 'active');
@@ -488,10 +498,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('first notebook page invisible', function (assert) {
+    QUnit.test('first notebook page invisible', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -518,10 +528,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('autofocus on second notebook page', function (assert) {
+    QUnit.test('autofocus on second notebook page', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -547,10 +557,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('invisible attrs on group are re-evaluated on field change', function (assert) {
+    QUnit.test('invisible attrs on group are re-evaluated on field change', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -564,7 +574,10 @@ QUnit.module('Views', {
                         '</group>' +
                     '</sheet>' +
                 '</form>',
-            res_id: 1
+            res_id: 1,
+            viewOptions: {
+                mode: 'edit'
+            },
         });
 
         assert.containsOnce(form, 'div.o_group:visible');
@@ -574,12 +587,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('invisible attrs with zero value in domain and unset value in data', function (assert) {
+    QUnit.test('invisible attrs with zero value in domain and unset value in data', async function (assert) {
         assert.expect(1);
 
         this.data.partner.fields.int_field.type = 'monetary';
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -598,10 +611,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('rendering stat buttons', function (assert) {
+    QUnit.test('rendering stat buttons', async function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -635,10 +648,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('label uses the string attribute', function (assert) {
+    QUnit.test('label uses the string attribute', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -657,10 +670,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('readonly attrs on fields are re-evaluated on field change', function (assert) {
+    QUnit.test('readonly attrs on fields are re-evaluated on field change', async function (assert) {
         assert.expect(4);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -691,7 +704,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('empty fields have o_form_empty class in readonly mode', function (assert) {
+    QUnit.test('empty fields have o_form_empty class in readonly mode', async function (assert) {
         assert.expect(8);
 
         this.data.partner.fields.foo.default = false; // no default value for this test
@@ -704,7 +717,7 @@ QUnit.module('Views', {
             }
         };
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -749,14 +762,14 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('empty fields\' labels still get the empty class after widget rerender', function (assert) {
+    QUnit.test('empty fields\' labels still get the empty class after widget rerender', async function (assert) {
         assert.expect(6);
 
         this.data.partner.fields.foo.default = false; // no default value for this test
         this.data.partner.records[1].foo = false;  // 1 is record with id=2
         this.data.partner.records[1].display_name = false;  // 1 is record with id=2
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -793,11 +806,11 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('empty inner readonly fields don\'t have o_form_empty class in "create" mode', function (assert) {
+    QUnit.test('empty inner readonly fields don\'t have o_form_empty class in "create" mode', async function (assert) {
         assert.expect(2);
 
         this.data.partner.fields.product_id.readonly = true;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -818,10 +831,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('form view can switch to edit mode', function (assert) {
+    QUnit.test('form view can switch to edit mode', async function (assert) {
         assert.expect(9);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -846,10 +859,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('required attrs on fields are re-evaluated on field change', function (assert) {
+    QUnit.test('required attrs on fields are re-evaluated on field change', async function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -877,11 +890,11 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('required fields should have o_required_modifier in readonly mode', function (assert) {
+    QUnit.test('required fields should have o_required_modifier in readonly mode', async function (assert) {
         assert.expect(2);
 
         this.data.partner.fields.foo.required = true;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -903,11 +916,11 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('required float fields works as expected', function (assert) {
+    QUnit.test('required float fields works as expected', async function (assert) {
         assert.expect(10);
 
         this.data.partner.fields.qux.required = true;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -940,17 +953,17 @@ QUnit.module('Views', {
 
         testUtils.form.clickEdit(form);
 
-        assert.strictEqual(form.$('input[name="qux"]').val(), "1.0",
+                assert.strictEqual(form.$('input[name="qux"]').val(), "1.0",
             "qux input is properly formatted");
 
         assert.verifySteps(['default_get', 'create', 'read', 'write', 'read']);
         form.destroy();
     });
 
-    QUnit.test('separators', function (assert) {
+    QUnit.test('separators', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -969,10 +982,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('invisible attrs on separators', function (assert) {
+    QUnit.test('invisible attrs on separators', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -992,12 +1005,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('buttons in form view', function (assert) {
+    QUnit.test('buttons in form view', async function (assert) {
         assert.expect(8);
 
         var rpcCount = 0;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1035,7 +1048,7 @@ QUnit.module('Views', {
         rpcCount = 0;
         testUtils.dom.click('.o_form_statusbar button.p', form);
 
-        assert.strictEqual(rpcCount, 1, "should have done 1 rpcs to reload");
+                assert.strictEqual(rpcCount, 1, "should have done 1 rpcs to reload");
 
         testUtils.mock.intercept(form, 'execute_action', function (ev) {
             ev.data.on_fail();
@@ -1048,10 +1061,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('buttons classes in form view', function (assert) {
+    QUnit.test('buttons classes in form view', async function (assert) {
         assert.expect(16);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1101,13 +1114,13 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('buttons in form view, new record', function (assert) {
+    QUnit.test('buttons in form view, new record', async function (assert) {
         // this simulates a situation similar to the settings forms.
         assert.expect(7);
 
         var resID;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1147,7 +1160,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('buttons in form view, new record, with field id in view', function (assert) {
+    QUnit.test('buttons in form view, new record, with field id in view', async function (assert) {
         assert.expect(7);
         // buttons in form view are one of the rare example of situation when we
         // save a record without reloading it immediately, because we only care
@@ -1157,7 +1170,7 @@ QUnit.module('Views', {
 
         var resID;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1193,13 +1206,13 @@ QUnit.module('Views', {
         });
         testUtils.dom.click('.o_form_statusbar button.p', form);
 
-        assert.verifySteps(['default_get', 'create', 'read', 'execute_action', 'read']);
+                assert.verifySteps(['default_get', 'create', 'read', 'execute_action', 'read']);
         form.destroy();
     });
 
-    QUnit.test('change and save char', function (assert) {
+    QUnit.test('change and save char', async function (assert) {
         assert.expect(6);
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1231,10 +1244,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('properly reload data from server', function (assert) {
+    QUnit.test('properly reload data from server', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1258,10 +1271,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('disable buttons until reload data from server', function (assert) {
+    QUnit.test('disable buttons until reload data from server', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1274,7 +1287,7 @@ QUnit.module('Views', {
                 } else if (args.method === 'read') {
                     // Block the 'read' call
                     var result = this._super.apply(this, arguments);
-                    return $.when(def).then(_.constant(result));
+                    return Promise.resolve(def).then(result);
                 }
                 return this._super(route, args);
             },
@@ -1297,7 +1310,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('properly apply onchange in simple case', function (assert) {
+    QUnit.test('properly apply onchange in simple case', async function (assert) {
         assert.expect(2);
 
         this.data.partner.onchanges = {
@@ -1305,7 +1318,7 @@ QUnit.module('Views', {
                 obj.int_field = obj.foo.length + 1000;
             },
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1327,7 +1340,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('properly apply onchange when changed field is active field', function (assert) {
+    QUnit.test('properly apply onchange when changed field is active field', async function (assert) {
         assert.expect(3);
 
         this.data.partner.onchanges = {
@@ -1335,7 +1348,7 @@ QUnit.module('Views', {
                 obj.int_field = 14;
             },
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1357,20 +1370,20 @@ QUnit.module('Views', {
 
         testUtils.form.clickSave(form);
 
-        assert.strictEqual(form.$('.o_field_widget[name=int_field]').text(), "14",
+                assert.strictEqual(form.$('.o_field_widget[name=int_field]').text(), "14",
             "value should still be 14");
 
         form.destroy();
     });
 
-    QUnit.test('onchange send only the present fields to the server', function (assert) {
+    QUnit.test('onchange send only the present fields to the server', async function (assert) {
         assert.expect(1);
         this.data.partner.records[0].product_id = false;
         this.data.partner.onchanges.foo = function (obj) {
             obj.foo = obj.foo + " alligator";
         };
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1404,11 +1417,11 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('onchange only send present fields value', function (assert) {
+    QUnit.test('onchange only send present fields value', async function (assert) {
         assert.expect(1);
         this.data.partner.onchanges.foo = function (obj) {};
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1451,7 +1464,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('evaluate in python field options', function (assert) {
+    QUnit.test('evaluate in python field options', async function (assert) {
         assert.expect(1);
 
         var isOk = false;
@@ -1462,7 +1475,7 @@ QUnit.module('Views', {
             }
             return tmp.apply(tmp, arguments);
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1478,10 +1491,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('can create a record with default values', function (assert) {
+    QUnit.test('can create a record with default values', async function (assert) {
         assert.expect(5);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1518,12 +1531,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('default record with a one2many and an onchange on sub field', function (assert) {
+    QUnit.test('default record with a one2many and an onchange on sub field', async function (assert) {
         assert.expect(4);
 
         this.data.partner.onchanges.foo = function () {};
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1549,10 +1562,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('sidebar is hidden when switching to edit mode', function (assert) {
+    QUnit.test('sidebar is hidden when switching to edit mode', async function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1574,13 +1587,13 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('basic default record', function (assert) {
+    QUnit.test('basic default record', async function (assert) {
         assert.expect(2);
 
         this.data.partner.fields.foo.default = "default foo value";
 
         var count = 0;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1598,7 +1611,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('make default record with non empty one2many', function (assert) {
+    QUnit.test('make default record with non empty one2many', async function (assert) {
         assert.expect(4);
 
         this.data.partner.fields.p.default = [
@@ -1609,7 +1622,7 @@ QUnit.module('Views', {
 
         var nameGetCount = 0;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1638,7 +1651,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('make default record with non empty many2one', function (assert) {
+    QUnit.test('make default record with non empty many2one', async function (assert) {
         var done = assert.async();
         assert.expect(2);
 
@@ -1670,10 +1683,10 @@ QUnit.module('Views', {
         });
     });
 
-    QUnit.test('form view properly change its title', function (assert) {
+    QUnit.test('form view properly change its title', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1691,10 +1704,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('can duplicate a record', function (assert) {
+    QUnit.test('can duplicate a record', async function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1711,17 +1724,17 @@ QUnit.module('Views', {
         testUtils.dom.click(form.sidebar.$('.o_dropdown_toggler_btn:contains(Action)'));
         testUtils.dom.click(form.sidebar.$('a:contains(Duplicate)'));
 
-        assert.strictEqual(form.get('title'), 'first record (copy)',
+                assert.strictEqual(form.get('title'), 'first record (copy)',
             "should have duplicated the record");
 
         assert.strictEqual(form.mode, "edit", 'should be in edit mode');
         form.destroy();
     });
 
-    QUnit.test('duplicating a record preserve the context', function (assert) {
+    QUnit.test('duplicating a record preserve the context', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1747,10 +1760,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('cannot duplicate a record', function (assert) {
+    QUnit.test('cannot duplicate a record', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1768,11 +1781,11 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('buttons in footer are moved to $buttons if necessary', function (assert) {
+    QUnit.test('buttons in footer are moved to $buttons if necessary', async function (assert) {
         // not sure about this test...
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1791,10 +1804,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('clicking on stat buttons in edit mode', function (assert) {
+    QUnit.test('clicking on stat buttons in edit mode', async function (assert) {
         assert.expect(9);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1834,16 +1847,16 @@ QUnit.module('Views', {
         testUtils.fields.editInput(form.$('input[name=foo]'), 'tralala');
         testUtils.dom.click('.oe_stat_button:first');
 
-        assert.strictEqual(form.mode, "edit", "form view should be in edit mode");
+                assert.strictEqual(form.mode, "edit", "form view should be in edit mode");
         assert.strictEqual(count, 2, "should have triggered a execute action");
         assert.verifySteps(['read', 'write', 'read']);
         form.destroy();
     });
 
-    QUnit.test('clicking on stat buttons save and reload in edit mode', function (assert) {
+    QUnit.test('clicking on stat buttons save and reload in edit mode', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1882,13 +1895,13 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('buttons with attr "special" do not trigger a save', function (assert) {
+    QUnit.test('buttons with attr "special" do not trigger a save', async function (assert) {
         assert.expect(4);
 
         var executeActionCount = 0;
         var writeCount = 0;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1927,10 +1940,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('buttons with attr "special=save" save', function (assert) {
+    QUnit.test('buttons with attr "special=save" save', async function (assert) {
         assert.expect(5);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1960,11 +1973,11 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('missing widgets do not crash', function (assert) {
+    QUnit.test('missing widgets do not crash', async function (assert) {
         assert.expect(1);
 
         this.data.partner.fields.foo.type = 'new field type without widget';
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1977,10 +1990,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('nolabel', function (assert) {
+    QUnit.test('nolabel', async function (assert) {
         assert.expect(6);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2015,13 +2028,13 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('many2one in a one2many', function (assert) {
+    QUnit.test('many2one in a one2many', async function (assert) {
         assert.expect(1);
 
         this.data.partner.records[0].p = [2];
         this.data.partner.records[1].product_id = 37;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2038,13 +2051,13 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('circular many2many\'s', function (assert) {
+    QUnit.test('circular many2many\'s', async function (assert) {
         assert.expect(4);
         this.data.partner_type.fields.partner_ids = {string: "partners", type: "many2many", relation: 'partner'}
         this.data.partner.records[0].timmy = [12];
         this.data.partner_type.records[0].partner_ids = [1];
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2083,11 +2096,11 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('discard changes on a non dirty form view', function (assert) {
+    QUnit.test('discard changes on a non dirty form view', async function (assert) {
         assert.expect(4);
 
         var nbWrite = 0;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2114,11 +2127,11 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('discard changes on a dirty form view', function (assert) {
+    QUnit.test('discard changes on a dirty form view', async function (assert) {
         assert.expect(7);
 
         var nbWrite = 0;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2154,7 +2167,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('discard changes on a dirty form view (for date field)', function (assert) {
+    QUnit.test('discard changes on a dirty form view (for date field)', async function (assert) {
         assert.expect(1);
 
         // this test checks that the basic model properly handles date object
@@ -2163,7 +2176,7 @@ QUnit.module('Views', {
         // then parsed into string, which is wrong.
 
         this.data.partner.fields.date.default = "2017-01-25";
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2188,7 +2201,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('discard changes on relational data on new record', function (assert) {
+    QUnit.test('discard changes on relational data on new record', async function (assert) {
         assert.expect(3);
 
         var form = createView({
@@ -2219,23 +2232,23 @@ QUnit.module('Views', {
         testUtils.fields.many2one.clickOpenDropdown('product_id');
         testUtils.fields.many2one.clickHighlightedItem('product_id');
 
-        assert.strictEqual(form.$('input').val(), 'xphone', 'input should contain xphone');
+                assert.strictEqual(form.$('input').val(), 'xphone', 'input should contain xphone');
 
         // click on discard and confirm
         testUtils.form.clickDiscard(form);
         testUtils.dom.click('.modal-footer .btn-primary'); // click on confirm
 
-        assert.notOk(form.$el.prop('outerHTML').match('xphone'),
+                assert.notOk(form.$el.prop('outerHTML').match('xphone'),
             "the string xphone should not be present after discarding");
         form.destroy();
     });
 
-    QUnit.test('discard changes on a new (non dirty, except for defaults) form view', function (assert) {
+    QUnit.test('discard changes on a new (non dirty, except for defaults) form view', async function (assert) {
         assert.expect(3);
 
         this.data.partner.fields.foo.default = "ABC";
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2257,12 +2270,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('discard changes on a new (dirty) form view', function (assert) {
+    QUnit.test('discard changes on a new (dirty) form view', async function (assert) {
         assert.expect(8);
 
         this.data.partner.fields.foo.default = "ABC";
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2300,10 +2313,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('discard changes on a duplicated record', function (assert) {
+    QUnit.test('discard changes on a duplicated record', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2318,7 +2331,7 @@ QUnit.module('Views', {
         testUtils.dom.click(form.sidebar.$('.o_dropdown_toggler_btn:contains(Action)'));
         testUtils.dom.click(form.sidebar.$('a:contains(Duplicate)'));
 
-        assert.strictEqual(form.$('input').val(), 'tralala', 'input should contain ABC');
+                assert.strictEqual(form.$('input').val(), 'tralala', 'input should contain ABC');
 
         testUtils.form.clickDiscard(form);
 
@@ -2327,11 +2340,11 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('switching to another record from a dirty one', function (assert) {
+    QUnit.test('switching to another record from a dirty one', async function (assert) {
         assert.expect(11);
 
         var nbWrite = 0;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2347,6 +2360,7 @@ QUnit.module('Views', {
                 }
                 return this._super.apply(this, arguments);
             },
+            debug: 1
         });
 
         assert.strictEqual(form.pager.$('.o_pager_value').text(), "1", 'pager value should be 1');
@@ -2375,13 +2389,13 @@ QUnit.module('Views', {
         assert.strictEqual(form.pager.$('.o_pager_value').text(), "2", 'pager value should be 2');
 
         assert.strictEqual(nbWrite, 0, 'no write RPC should have been done');
-        form.destroy();
+        // form.destroy();
     });
 
-    QUnit.test('handling dirty state: switching to another record', function (assert) {
+    QUnit.test('handling dirty state: switching to another record', async function (assert) {
         assert.expect(12);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2439,10 +2453,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('restore local state when switching to another record', function (assert) {
+    QUnit.test('restore local state when switching to another record', async function (assert) {
         assert.expect(4);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2477,10 +2491,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('pager is hidden in create mode', function (assert) {
+    QUnit.test('pager is hidden in create mode', async function (assert) {
         assert.expect(7);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2513,12 +2527,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('switching to another record, in readonly mode', function (assert) {
+    QUnit.test('switching to another record, in readonly mode', async function (assert) {
         assert.expect(5);
 
         var pushStateCount = 0;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2546,10 +2560,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('modifiers are reevaluated when creating new record', function (assert) {
+    QUnit.test('modifiers are reevaluated when creating new record', async function (assert) {
         assert.expect(4);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2573,14 +2587,14 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('empty readonly fields are visible on new records', function (assert) {
+    QUnit.test('empty readonly fields are visible on new records', async function (assert) {
         assert.expect(2);
 
         this.data.partner.fields.foo.readonly = true;
         this.data.partner.fields.foo.default = undefined;
         this.data.partner.records[0].foo = undefined;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2600,10 +2614,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('all group children have correct layout classname', function (assert) {
+    QUnit.test('all group children have correct layout classname', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2625,10 +2639,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('deleting a record', function (assert) {
+    QUnit.test('deleting a record', async function (assert) {
         assert.expect(8);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2663,10 +2677,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('deleting the last record', function (assert) {
+    QUnit.test('deleting the last record', async function (assert) {
         assert.expect(6);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2698,13 +2712,13 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('empty required fields cannot be saved', function (assert) {
+    QUnit.test('empty required fields cannot be saved', async function (assert) {
         assert.expect(5);
 
         this.data.partner.fields.foo.required = true;
         delete this.data.partner.fields.foo.default;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2739,11 +2753,11 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('changes in a readonly form view are saved directly', function (assert) {
+    QUnit.test('changes in a readonly form view are saved directly', async function (assert) {
         assert.expect(10);
 
         var nbWrite = 0;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2792,12 +2806,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('display a dialog if onchange result is a warning', function (assert) {
+    QUnit.test('display a dialog if onchange result is a warning', async function (assert) {
         assert.expect(5);
 
         this.data.partner.onchanges = { foo: true };
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2842,12 +2856,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('can create record even if onchange returns a warning', function (assert) {
+    QUnit.test('can create record even if onchange returns a warning', async function (assert) {
         assert.expect(2);
 
         this.data.partner.onchanges = { foo: true };
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2878,12 +2892,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('do nothing if add a line in one2many result in a onchange with a warning', function (assert) {
+    QUnit.test('do nothing if add a line in one2many result in a onchange with a warning', async function (assert) {
         assert.expect(2);
 
         this.data.partner.onchanges = { foo: true };
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2922,12 +2936,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('default_get, onchange which fails, should still work', function (assert) {
+    QUnit.test('default_get, onchange which fails, should still work', async function (assert) {
         assert.expect(1);
 
         this.data.partner.onchanges.foo = true;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2960,7 +2974,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('attrs are properly transmitted to new records', function (assert) {
+    QUnit.test('attrs are properly transmitted to new records', async function (assert) {
         assert.expect(2);
 
         // this test checks that the fieldsInfo have been transmitted to the
@@ -2972,7 +2986,7 @@ QUnit.module('Views', {
             string_false: "Test Environment",
             hover_false: "Switch to production environment"
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2996,10 +3010,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('button box is rendered in create mode', function (assert) {
+    QUnit.test('button box is rendered in create mode', async function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3032,7 +3046,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('properly apply onchange on one2many fields', function (assert) {
+    QUnit.test('properly apply onchange on one2many fields', async function (assert) {
         assert.expect(5);
 
         this.data.partner.records[0].p = [4];
@@ -3045,7 +3059,7 @@ QUnit.module('Views', {
                 ];
             },
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3079,7 +3093,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('update many2many value in one2many after onchange', function (assert) {
+    QUnit.test('update many2many value in one2many after onchange', async function (assert) {
         assert.expect(2);
 
         this.data.partner.records[1].p = [4];
@@ -3094,7 +3108,7 @@ QUnit.module('Views', {
                 ];
             },
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3120,12 +3134,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('delete a line in a one2many while editing another line triggers a warning', function (assert) {
+    QUnit.test('delete a line in a one2many while editing another line triggers a warning', async function (assert) {
         assert.expect(3);
 
         this.data.partner.records[0].p = [1, 2];
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3156,7 +3170,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('properly apply onchange on many2many fields', function (assert) {
+    QUnit.test('properly apply onchange on many2many fields', async function (assert) {
         assert.expect(14);
 
         this.data.partner.onchanges = {
@@ -3168,7 +3182,7 @@ QUnit.module('Views', {
                 ];
             },
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3217,7 +3231,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('display_name not sent for onchanges if not in view', function (assert) {
+    QUnit.test('display_name not sent for onchanges if not in view', async function (assert) {
         assert.expect(7);
 
         this.data.partner.records[0].timmy = [12];
@@ -3228,7 +3242,7 @@ QUnit.module('Views', {
             name: function () {},
         };
         var readInModal = false;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3303,7 +3317,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('onchanges on date(time) fields', function (assert) {
+    QUnit.test('onchanges on date(time) fields', async function (assert) {
         assert.expect(6);
 
         this.data.partner.onchanges = {
@@ -3312,7 +3326,7 @@ QUnit.module('Views', {
                 obj.datetime = '2021-12-12 10:55:05';
             },
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3354,7 +3368,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('onchanges are not sent for each keystrokes', function (assert) {
+    QUnit.test('onchanges are not sent for each keystrokes', async function (assert) {
         var done = assert.async();
         assert.expect(5);
 
@@ -3366,7 +3380,7 @@ QUnit.module('Views', {
             },
         };
         var def = $.Deferred();
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3421,7 +3435,7 @@ QUnit.module('Views', {
         }
     });
 
-    QUnit.test('onchanges are not sent for invalid values', function (assert) {
+    QUnit.test('onchanges are not sent for invalid values', async function (assert) {
         assert.expect(6);
 
         this.data.partner.onchanges = {
@@ -3429,7 +3443,7 @@ QUnit.module('Views', {
                 obj.foo = String(obj.int_field);
             },
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3465,10 +3479,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('rpc complete after destroying parent', function (assert) {
+    QUnit.test('rpc complete after destroying parent', async function (assert) {
         // We just test that there is no crash in this situation
         assert.expect(0);
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3486,7 +3500,7 @@ QUnit.module('Views', {
         testUtils.dom.click(form.$('.o_form_button_update'));
     });
 
-    QUnit.test('onchanges that complete after discarding', function (assert) {
+    QUnit.test('onchanges that complete after discarding', async function (assert) {
         assert.expect(4);
 
         var def1 = $.Deferred();
@@ -3496,7 +3510,7 @@ QUnit.module('Views', {
                 obj.int_field = obj.foo.length + 1000;
             },
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3538,12 +3552,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('discarding before save returns', function (assert) {
+    QUnit.test('discarding before save returns', async function (assert) {
         assert.expect(4);
 
         var def = $.Deferred();
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3585,7 +3599,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('unchanged relational data is sent for onchanges', function (assert) {
+    QUnit.test('unchanged relational data is sent for onchanges', async function (assert) {
         assert.expect(1);
 
         this.data.partner.records[1].p = [4];
@@ -3594,7 +3608,7 @@ QUnit.module('Views', {
                 obj.int_field = obj.foo.length + 1000;
             },
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3626,7 +3640,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('onchanges on unknown fields of o2m are ignored', function (assert) {
+    QUnit.test('onchanges on unknown fields of o2m are ignored', async function (assert) {
         // many2one fields need to be postprocessed (the onchange returns [id,
         // display_name]), but if we don't know the field, we can't know it's a
         // many2one, so it isn't ignored, its value is an array instead of a
@@ -3637,7 +3651,7 @@ QUnit.module('Views', {
         this.data.partner.onchanges = {
             foo: function () {},
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3692,14 +3706,14 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('onchange value are not discarded on o2m edition', function (assert) {
+    QUnit.test('onchange value are not discarded on o2m edition', async function (assert) {
         assert.expect(4);
 
         this.data.partner.records[1].p = [4];
         this.data.partner.onchanges = {
             foo: function () {},
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3756,7 +3770,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('args of onchanges in o2m fields are correct (inline edition)', function (assert) {
+    QUnit.test('args of onchanges in o2m fields are correct (inline edition)', async function (assert) {
         assert.expect(3);
 
         this.data.partner.records[1].p = [4];
@@ -3767,7 +3781,7 @@ QUnit.module('Views', {
                 obj.foo = '[' + obj.rel_field.foo + '] ' + obj.int_field;
             },
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3804,7 +3818,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('args of onchanges in o2m fields are correct (dialog edition)', function (assert) {
+    QUnit.test('args of onchanges in o2m fields are correct (dialog edition)', async function (assert) {
         assert.expect(6);
 
         this.data.partner.records[1].p = [4];
@@ -3815,7 +3829,7 @@ QUnit.module('Views', {
                 obj.foo = '[' + obj.rel_field.foo + '] ' + obj.int_field;
             },
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3862,13 +3876,13 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('context of onchanges contains the context of changed fields', function (assert) {
+    QUnit.test('context of onchanges contains the context of changed fields', async function (assert) {
         assert.expect(2);
 
         this.data.partner.onchanges = {
             foo: function () {},
         };
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3896,10 +3910,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('navigation with tab key in form view', function (assert) {
+    QUnit.test('navigation with tab key in form view', async function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3938,12 +3952,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('navigation with tab key in readonly form view', function (assert) {
+    QUnit.test('navigation with tab key in readonly form view', async function (assert) {
         assert.expect(3);
 
         this.data.partner.records[1].product_id = 37;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -3983,12 +3997,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('skip invisible fields when navigating with TAB', function (assert) {
+    QUnit.test('skip invisible fields when navigating with TAB', async function (assert) {
         assert.expect(1);
 
         this.data.partner.records[0].bar = true;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4012,10 +4026,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('clicking on a stat button with a context', function (assert) {
+    QUnit.test('clicking on a stat button with a context', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4047,10 +4061,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('clicking on a stat button with no context', function (assert) {
+    QUnit.test('clicking on a stat button with no context', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4081,10 +4095,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('diplay a stat button outside a buttonbox', function (assert) {
+    QUnit.test('diplay a stat button outside a buttonbox', async function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4108,10 +4122,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('diplay something else than a button in a buttonbox', function (assert) {
+    QUnit.test('diplay something else than a button in a buttonbox', async function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4136,10 +4150,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('display correctly buttonbox, in large size class', function (assert) {
+    QUnit.test('display correctly buttonbox, in large size class', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4165,12 +4179,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('one2many default value creation', function (assert) {
+    QUnit.test('one2many default value creation', async function (assert) {
         assert.expect(1);
 
         this.data.partner.records[0].product_ids = [37];
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4206,10 +4220,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('many2manys inside one2manys are saved correctly', function (assert) {
+    QUnit.test('many2manys inside one2manys are saved correctly', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4243,10 +4257,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('one2manys (list editable) inside one2manys are saved correctly', function (assert) {
+    QUnit.test('one2manys (list editable) inside one2manys are saved correctly', async function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4297,7 +4311,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('*_view_ref in context are passed correctly', function (assert) {
+    QUnit.test('*_view_ref in context are passed correctly', async function (assert) {
         var done = assert.async();
         assert.expect(3);
 
@@ -4337,7 +4351,7 @@ QUnit.module('Views', {
         });
     });
 
-    QUnit.test('readonly fields with modifiers may be saved', function (assert) {
+    QUnit.test('readonly fields with modifiers may be saved', async function (assert) {
         // the readonly property on the field description only applies on view,
         // this is not a DB constraint. It should be seen as a default value,
         // that may be overriden in views, for example with modifiers. So
@@ -4345,7 +4359,7 @@ QUnit.module('Views', {
         assert.expect(3);
 
         this.data.partner.fields.foo.readonly = true;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4381,10 +4395,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('check if id and active_id are defined', function (assert) {
+    QUnit.test('check if id and active_id are defined', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4402,8 +4416,8 @@ QUnit.module('Views', {
             },
             mockRPC: function (route, args) {
                 if (args.method === 'default_get' && args.args[0][0] === 'trululu') {
-                  assert.strictEqual(args.kwargs.context.current_id, false,
-                      "current_id should be false");
+                    assert.strictEqual(args.kwargs.context.current_id, false,
+                        "current_id should be false");
                     assert.strictEqual(args.kwargs.context.default_trululu, false,
                         "default_trululu should be false");
                 }
@@ -4415,10 +4429,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('modifiers are considered on multiple <footer/> tags', function (assert) {
+    QUnit.test('modifiers are considered on multiple <footer/> tags', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4458,10 +4472,10 @@ QUnit.module('Views', {
         }
     });
 
-    QUnit.test('footers are not duplicated on rerender', function (assert) {
+    QUnit.test('footers are not duplicated on rerender', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4486,10 +4500,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('render stat button with string inline', function (assert) {
+    QUnit.test('render stat button with string inline', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             res_id: 1,
@@ -4508,7 +4522,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('renderer waits for asynchronous fields rendering', function (assert) {
+    QUnit.test('renderer waits for asynchronous fields rendering', async function (assert) {
         assert.expect(1);
         var done = assert.async();
 
@@ -4530,7 +4544,7 @@ QUnit.module('Views', {
         });
     });
 
-    QUnit.test('open one2many form containing one2many', function (assert) {
+    QUnit.test('open one2many form containing one2many', async function (assert) {
         assert.expect(9);
 
         this.data.partner.records[0].product_ids = [37];
@@ -4539,7 +4553,7 @@ QUnit.module('Views', {
         };
         this.data.product.records[0].partner_type_ids = [12];
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             res_id: 1,
@@ -4590,10 +4604,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('in edit mode, first field is focused', function (assert) {
+    QUnit.test('in edit mode, first field is focused', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4613,10 +4627,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('autofocus fields are focused', function (assert) {
+    QUnit.test('autofocus fields are focused', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4633,10 +4647,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('in create mode, autofocus fields are focused', function (assert) {
+    QUnit.test('in create mode, autofocus fields are focused', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4651,9 +4665,9 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('create with false values', function (assert) {
+    QUnit.test('create with false values', async function (assert) {
         assert.expect(1);
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4674,10 +4688,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('autofocus first visible field', function (assert) {
+    QUnit.test('autofocus first visible field', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4692,10 +4706,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('no autofocus with disable_autofocus option [REQUIRE FOCUS]', function (assert) {
+    QUnit.test('no autofocus with disable_autofocus option [REQUIRE FOCUS]', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4718,7 +4732,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('open one2many form containing many2many_tags', function (assert) {
+    QUnit.test('open one2many form containing many2many_tags', async function (assert) {
             assert.expect(4);
 
             this.data.partner.records[0].product_ids = [37];
@@ -4727,7 +4741,7 @@ QUnit.module('Views', {
             };
             this.data.product.records[0].partner_type_ids = [12, 14];
 
-            var form = createView({
+            var form = await createAsyncView({
                 View: FormView,
                 model: 'partner',
                 res_id: 1,
@@ -4766,7 +4780,7 @@ QUnit.module('Views', {
             form.destroy();
         });
 
-    QUnit.test('onchanges are applied before checking if it can be saved', function (assert) {
+    QUnit.test('onchanges are applied before checking if it can be saved', async function (assert) {
         assert.expect(4);
 
         this.data.partner.onchanges.foo = function (obj) {};
@@ -4774,7 +4788,7 @@ QUnit.module('Views', {
 
         var def = $.Deferred();
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4813,10 +4827,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('display toolbar', function (assert) {
+    QUnit.test('display toolbar', async function (assert) {
         assert.expect(7);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4872,7 +4886,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('check interactions between multiple FormViewDialogs', function (assert) {
+    QUnit.test('check interactions between multiple FormViewDialogs', async function (assert) {
         assert.expect(8);
 
         this.data.product.fields.product_ids = {
@@ -4881,7 +4895,7 @@ QUnit.module('Views', {
 
         this.data.partner.records[0].product_id = 37;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             res_id: 1,
@@ -4947,10 +4961,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('fields and record contexts are not mixed', function (assert) {
+    QUnit.test('fields and record contexts are not mixed', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -4980,10 +4994,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('do not activate an hidden tab when switching between records', function (assert) {
+    QUnit.test('do not activate an hidden tab when switching between records', async function (assert) {
         assert.expect(6);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5028,16 +5042,16 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('support anchor tags with action type', function (assert) {
+    QUnit.test('support anchor tags with action type', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
             arch: '<form string="Partners">' +
                             '<a type="action" name="42"><i class="fa fa-arrow-right"/> Click me !</a>' +
-                  '</form>',
+                    '</form>',
             res_id: 1,
             intercepts: {
                 do_action: function (event) {
@@ -5051,12 +5065,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('do not perform extra RPC to read invisible many2one fields', function (assert) {
+    QUnit.test('do not perform extra RPC to read invisible many2one fields', async function (assert) {
         assert.expect(2);
 
         this.data.partner.fields.trululu.default = 2;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5076,14 +5090,14 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('do not perform extra RPC to read invisible x2many fields', function (assert) {
+    QUnit.test('do not perform extra RPC to read invisible x2many fields', async function (assert) {
         assert.expect(2);
 
         this.data.partner.records[0].p = [2]; // one2many
         this.data.partner.records[0].product_ids = [37]; // one2many
         this.data.partner.records[0].timmy = [12]; // many2many
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5108,13 +5122,13 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('default_order on x2many embedded view', function (assert) {
+    QUnit.test('default_order on x2many embedded view', async function (assert) {
         assert.expect(11);
 
         this.data.partner.fields.display_name.sortable = true;
         this.data.partner.records[0].p = [1, 4];
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5184,10 +5198,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('action context is used when evaluating domains', function (assert) {
+    QUnit.test('action context is used when evaluating domains', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5214,10 +5228,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('form rendering with groups with col/colspan', function (assert) {
+    QUnit.test('form rendering with groups with col/colspan', async function (assert) {
         assert.expect(46);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5339,10 +5353,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('outer and inner groups string attribute', function (assert) {
+    QUnit.test('outer and inner groups string attribute', async function (assert) {
         assert.expect(5);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5379,10 +5393,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('form group with newline tag inside', function (assert) {
+    QUnit.test('form group with newline tag inside', async function (assert) {
         assert.expect(6);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5436,11 +5450,11 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('custom open record dialog title', function (assert) {
+    QUnit.test('custom open record dialog title', async function (assert) {
         assert.expect(1);
 
         this.data.partner.records[0].p = [2];
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5465,7 +5479,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('display translation alert', function (assert) {
+    QUnit.test('display translation alert', async function (assert) {
         assert.expect(1);
 
         this.data.partner.fields.foo.translate = true;
@@ -5473,7 +5487,7 @@ QUnit.module('Views', {
         var multi_lang = _t.database.multi_lang;
         _t.database.multi_lang = true;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5498,7 +5512,7 @@ QUnit.module('Views', {
         _t.database.multi_lang = multi_lang;
     });
 
-    QUnit.test('translate event correctly handled with multiple controllers', function (assert) {
+    QUnit.test('translate event correctly handled with multiple controllers', async function (assert) {
         assert.expect(3);
 
         this.data.product.fields.name.translate = true;
@@ -5508,7 +5522,7 @@ QUnit.module('Views', {
         var multi_lang = _t.database.multi_lang;
         _t.database.multi_lang = true;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5556,12 +5570,12 @@ QUnit.module('Views', {
         _t.database.multi_lang = multi_lang;
     });
 
-    QUnit.test('buttons are disabled until status bar action is resolved', function (assert) {
+    QUnit.test('buttons are disabled until status bar action is resolved', async function (assert) {
         assert.expect(9);
 
         var def = $.Deferred();
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5620,12 +5634,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('buttons are disabled until button box action is resolved', function (assert) {
+    QUnit.test('buttons are disabled until button box action is resolved', async function (assert) {
         assert.expect(9);
 
         var def = $.Deferred();
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5684,10 +5698,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('buttons with "confirm" attribute save before calling the method', function (assert) {
+    QUnit.test('buttons with "confirm" attribute save before calling the method', async function (assert) {
         assert.expect(9);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5731,12 +5745,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('buttons are disabled until action is resolved (in dialogs)', function (assert) {
+    QUnit.test('buttons are disabled until action is resolved (in dialogs)', async function (assert) {
         assert.expect(3);
 
         var def = $.Deferred();
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5796,12 +5810,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('multiple clicks on save should reload only once', function (assert) {
+    QUnit.test('multiple clicks on save should reload only once', async function (assert) {
         assert.expect(4);
 
         var def = $.Deferred();
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5842,10 +5856,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('form view is not broken if save operation fails', function (assert) {
+    QUnit.test('form view is not broken if save operation fails', async function (assert) {
         assert.expect(5);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5887,7 +5901,7 @@ QUnit.module('Views', {
     QUnit.test('support password attribute', function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5907,10 +5921,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('support autocomplete attribute', function (assert) {
+    QUnit.test('support autocomplete attribute', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -5926,10 +5940,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('context is correctly passed after save & new in FormViewDialog', function (assert) {
+    QUnit.test('context is correctly passed after save & new in FormViewDialog', async function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             res_id: 4,
@@ -5976,12 +5990,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('render domain field widget without model', function (assert) {
+    QUnit.test('render domain field widget without model', async function (assert) {
         assert.expect(3);
 
         this.data.partner.fields.model_name = { string: "Model name", type: "char" };
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6015,7 +6029,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('readonly fields are not sent when saving', function (assert) {
+    QUnit.test('readonly fields are not sent when saving', async function (assert) {
         assert.expect(6);
 
         // define an onchange on display_name to check that the value of readonly
@@ -6026,7 +6040,7 @@ QUnit.module('Views', {
         };
         var checkOnchange = false;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6082,10 +6096,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('id is False in evalContext for new records', function (assert) {
+    QUnit.test('id is False in evalContext for new records', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6107,11 +6121,11 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('delete a duplicated record', function (assert) {
+    QUnit.test('delete a duplicated record', async function (assert) {
         assert.expect(5);
 
         var newRecordID;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6158,13 +6172,13 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('display tooltips for buttons', function (assert) {
+    QUnit.test('display tooltips for buttons', async function (assert) {
         assert.expect(2);
 
         var initialDebugMode = config.debug;
         config.debug = true;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6196,7 +6210,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('reload event is handled only once', function (assert) {
+    QUnit.test('reload event is handled only once', async function (assert) {
         // In this test, several form controllers are nested (two of them are
         // opened in dialogs). When the users clicks on save in the last
         // opened dialog, a 'reload' event is triggered up to reload the (direct)
@@ -6209,7 +6223,7 @@ QUnit.module('Views', {
                         '<field name="display_name"/>' +
                         '<field name="trululu"/>' +
                     '</form>';
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6253,12 +6267,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('process the context for inline subview', function (assert) {
+    QUnit.test('process the context for inline subview', async function (assert) {
         assert.expect(1);
 
         this.data.partner.records[0].p = [2];
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6280,12 +6294,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('process the context for subview not inline', function (assert) {
+    QUnit.test('process the context for subview not inline', async function (assert) {
         assert.expect(1);
 
         this.data.partner.records[0].p = [2];
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6308,12 +6322,12 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('can toggle column in x2many in sub form view', function (assert) {
+    QUnit.test('can toggle column in x2many in sub form view', async function (assert) {
         assert.expect(2);
 
         this.data.partner.records[2].p = [1,2];
         this.data.partner.fields.foo.sortable = true;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6348,10 +6362,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('rainbowman attributes correctly passed on button click', function (assert) {
+    QUnit.test('rainbowman attributes correctly passed on button click', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6372,7 +6386,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('basic support for widgets', function (assert) {
+    QUnit.test('basic support for widgets', async function (assert) {
         assert.expect(1);
 
         var MyWidget = Widget.extend({
@@ -6385,7 +6399,7 @@ QUnit.module('Views', {
         });
         widgetRegistry.add('test', MyWidget);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6403,10 +6417,10 @@ QUnit.module('Views', {
         delete widgetRegistry.map.test;
     });
 
-    QUnit.test('support header button as widgets on form statusbar', function (assert) {
+    QUnit.test('support header button as widgets on form statusbar', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6425,7 +6439,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('basic support for widgets', function (assert) {
+    QUnit.test('basic support for widgets', async function (assert) {
         assert.expect(1);
 
         var MyWidget = Widget.extend({
@@ -6441,7 +6455,7 @@ QUnit.module('Views', {
         });
         widgetRegistry.add('test', MyWidget);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6460,10 +6474,10 @@ QUnit.module('Views', {
     });
 
 
-    QUnit.test('bounce edit button in readonly mode', function (assert) {
+    QUnit.test('bounce edit button in readonly mode', async function (assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6492,13 +6506,13 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('proper stringification in debug mode tooltip', function (assert) {
+    QUnit.test('proper stringification in debug mode tooltip', async function (assert) {
         assert.expect(4);
 
         var initialDebugMode = config.debug;
         config.debug = true;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6527,14 +6541,14 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('autoresize of text fields is done when switching to edit mode', function (assert) {
+    QUnit.test('autoresize of text fields is done when switching to edit mode', async function (assert) {
         assert.expect(4);
 
         this.data.partner.fields.text_field = { string: 'Text field', type: 'text' };
         this.data.partner.fields.text_field.default = "some\n\nmulti\n\nline\n\ntext\n";
         this.data.partner.records[0].text_field = "a\nb\nc\nd\ne\nf";
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6571,7 +6585,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('check if the view destroys all widgets and instances', function (assert) {
+    QUnit.test('check if the view destroys all widgets and instances', async function (assert) {
         assert.expect(1);
 
         var instanceNumber = 0;
@@ -6631,13 +6645,13 @@ QUnit.module('Views', {
             res_id: 1,
         };
 
-        var form = createView(params);
+        var form = createAsyncView(params);
         form.destroy();
 
         var initialInstanceNumber = instanceNumber;
         instanceNumber = 0;
 
-        form = createView(params);
+        form = createAsyncView(params);
 
         // call destroy function of controller to ensure that it correctly destroys everything
         form.__destroy();
@@ -6649,10 +6663,10 @@ QUnit.module('Views', {
         testUtils.mock.unpatch(mixins.ParentedMixin);
     });
 
-    QUnit.test('do not change pager when discarding current record', function (assert) {
+    QUnit.test('do not change pager when discarding current record', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6678,14 +6692,14 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('edition in form view on a "noCache" model', function (assert) {
+    QUnit.test('edition in form view on a "noCache" model', async function (assert) {
         assert.expect(4);
 
         testUtils.mock.patch(BasicModel, {
             noCacheModels: BasicModel.prototype.noCacheModels.concat(['partner']),
         });
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6716,14 +6730,14 @@ QUnit.module('Views', {
         testUtils.mock.unpatch(BasicModel);
     });
 
-    QUnit.test('creation in form view on a "noCache" model', function (assert) {
+    QUnit.test('creation in form view on a "noCache" model', async function (assert) {
         assert.expect(4);
 
         testUtils.mock.patch(BasicModel, {
             noCacheModels: BasicModel.prototype.noCacheModels.concat(['partner']),
         });
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6750,14 +6764,14 @@ QUnit.module('Views', {
         testUtils.mock.unpatch(BasicModel);
     });
 
-    QUnit.test('deletion in form view on a "noCache" model', function (assert) {
+    QUnit.test('deletion in form view on a "noCache" model', async function (assert) {
         assert.expect(4);
 
         testUtils.mock.patch(BasicModel, {
             noCacheModels: BasicModel.prototype.noCacheModels.concat(['partner']),
         });
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6789,7 +6803,7 @@ QUnit.module('Views', {
         testUtils.mock.unpatch(BasicModel);
     });
 
-    QUnit.test('a popup window should automatically close after a do_action event', function (assert) {
+    QUnit.test('a popup window should automatically close after a do_action event', async function (assert) {
 
         // Having clicked on a one2many in a form view and clicked on a many2one
         // field in the resulting popup window that popup window should automatically close.
@@ -6799,7 +6813,7 @@ QUnit.module('Views', {
         this.data.partner.records[0].product_ids = [37];
         this.data.product.records[0].partner_type_id = 12;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6832,7 +6846,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('all popup windows should automatically close after a do_action event', function (assert) {
+    QUnit.test('all popup windows should automatically close after a do_action event', async function (assert) {
 
         // Having clicked successively on two different one2many in form views
         // and clicked on a many2one in the last popup window all popup
@@ -6844,7 +6858,7 @@ QUnit.module('Views', {
         this.data.partner.records[1].product_ids = [37];
         this.data.product.records[0].partner_type_id = 12;
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6976,7 +6990,7 @@ QUnit.module('Views', {
         def1.resolve();
     });
 
-    QUnit.test('no deadlock when saving with uncommitted changes', function (assert) {
+    QUnit.test('no deadlock when saving with uncommitted changes', async function (assert) {
         // Before saving a record, all field widgets are asked to commit their changes (new values
         // that they wouldn't have sent to the model yet). This test is added alongside a bug fix
         // ensuring that we don't end up in a deadlock when a widget actually has some changes to
@@ -6989,7 +7003,7 @@ QUnit.module('Views', {
         // on 'Save'.
         assert.expect(6);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -6998,8 +7012,8 @@ QUnit.module('Views', {
                 assert.step(args.method);
                 return this._super.apply(this, arguments);
             },
-             // we set a fieldDebounce to precisely mock the behavior of the webclient: changes are
-             // not sent to the model at keystrokes, but when the input is left
+                // we set a fieldDebounce to precisely mock the behavior of the webclient: changes are
+                // not sent to the model at keystrokes, but when the input is left
             fieldDebounce: 5000,
         });
 
@@ -7017,7 +7031,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('save record with onchange on one2many with required field', function (assert) {
+    QUnit.test('save record with onchange on one2many with required field', async function (assert) {
         // in this test, we have a one2many with a required field, whose value is
         // set by an onchange on another field ; we manually set the value of that
         // first field, and directly click on Save (before the onchange RPC returns
@@ -7032,7 +7046,7 @@ QUnit.module('Views', {
         };
 
         var onchangeDef;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7081,10 +7095,10 @@ QUnit.module('Views', {
 
     QUnit.module('FormViewTABMainButtons');
 
-    QUnit.test('using tab in an empty required string field should not move to the next field',function(assert) {
+    QUnit.test('using tab in an empty required string field should not move to the next field', async function(assert) {
         assert.expect(3);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7109,10 +7123,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('using tab in an empty required date field should not move to the next field',function(assert) {
+    QUnit.test('using tab in an empty required date field should not move to the next field', async function(assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7136,10 +7150,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('Edit button get the focus when pressing TAB from form', function (assert) {
+    QUnit.test('Edit button get the focus when pressing TAB from form', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7161,9 +7175,9 @@ QUnit.module('Views', {
 
     QUnit.module('FormViewTABFormButtons');
 
-    QUnit.test('In Edition mode, after navigating to the last field, the default button when pressing TAB is SAVE', function (assert) {
+    QUnit.test('In Edition mode, after navigating to the last field, the default button when pressing TAB is SAVE', async function (assert) {
         assert.expect(1);
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7193,10 +7207,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('In READ mode, the default button with focus is the first primary button of the form', function (assert) {
+    QUnit.test('In READ mode, the default button with focus is the first primary button of the form', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7221,10 +7235,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('In READ mode, the default button when pressing TAB is EDIT when there is no primary button on the form', function (assert) {
+    QUnit.test('In READ mode, the default button when pressing TAB is EDIT when there is no primary button on the form', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7249,10 +7263,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('In Edition mode, when an attribute is dynamically required (and not required), TAB should navigate to the next field', function (assert) {
+    QUnit.test('In Edition mode, when an attribute is dynamically required (and not required), TAB should navigate to the next field', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7277,10 +7291,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('In Edition mode, when an attribute is dynamically required, TAB should stop on the field if it is required', function (assert) {
+    QUnit.test('In Edition mode, when an attribute is dynamically required, TAB should stop on the field if it is required', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7306,10 +7320,10 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('display tooltips for save and discard buttons', function (assert) {
+    QUnit.test('display tooltips for save and discard buttons', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7323,10 +7337,10 @@ QUnit.module('Views', {
             "should have rendered a tooltip");
         form.destroy();
     });
-    QUnit.test('if the focus is on the save button, hitting ENTER should save', function (assert) {
+    QUnit.test('if the focus is on the save button, hitting ENTER should save', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7345,14 +7359,14 @@ QUnit.module('Views', {
         });
 
         form.$buttons.find('.o_form_button_save')
-                     .focus()
-                     .trigger($.Event('keydown', {which: $.ui.keyCode.ENTER}));
+                        .focus()
+                        .trigger($.Event('keydown', {which: $.ui.keyCode.ENTER}));
         form.destroy();
     });
-    QUnit.test('if the focus is on the discard button, hitting ENTER should save', function (assert) {
+    QUnit.test('if the focus is on the discard button, hitting ENTER should save', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7371,14 +7385,14 @@ QUnit.module('Views', {
         });
 
         form.$buttons.find('.o_form_button_cancel')
-                     .focus()
-                     .trigger($.Event('keydown', {which: $.ui.keyCode.ENTER}));
+                        .focus()
+                        .trigger($.Event('keydown', {which: $.ui.keyCode.ENTER}));
         form.destroy();
     });
-    QUnit.test('if the focus is on the save button, hitting ESCAPE should discard', function (assert) {
+    QUnit.test('if the focus is on the save button, hitting ESCAPE should discard', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7397,14 +7411,14 @@ QUnit.module('Views', {
         });
 
         form.$buttons.find('.o_form_button_save')
-                     .focus()
-                     .trigger($.Event('keydown', {which: $.ui.keyCode.ESCAPE}));
+                        .focus()
+                        .trigger($.Event('keydown', {which: $.ui.keyCode.ESCAPE}));
         form.destroy();
     });
-    QUnit.test('if the focus is on the discard button, hitting ESCAPE should discard', function (assert) {
+    QUnit.test('if the focus is on the discard button, hitting ESCAPE should discard', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7423,18 +7437,18 @@ QUnit.module('Views', {
         });
 
         form.$buttons.find('.o_form_button_cancel')
-                     .focus()
-                     .trigger($.Event('keydown', {which: $.ui.keyCode.ESCAPE}));
+                        .focus()
+                        .trigger($.Event('keydown', {which: $.ui.keyCode.ESCAPE}));
         form.destroy();
     });
 
-    QUnit.test('if the focus is on the save button, hitting TAB should not move to the next button', function (assert) {
+    QUnit.test('if the focus is on the save button, hitting TAB should not move to the next button', async function (assert) {
         assert.expect(1);
         /*
         this test has only one purpose: to say that it is normal that the focus stays within a button primary even after the TAB key has been pressed.
         It is not possible here to execute the default action of the TAB on a button : https://stackoverflow.com/questions/32428993/why-doesnt-simulating-a-tab-keypress-move-focus-to-the-next-input-field
         so writing a test that will always succeed is not useful.
-         */
+            */
         assert.ok("Behavior can't be tested");
     });
 });
