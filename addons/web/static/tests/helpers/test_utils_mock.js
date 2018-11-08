@@ -233,7 +233,7 @@ function addMockEnvironment(widget, params) {
     // Note: some services could call other services at init,
     // Which is why we have to init services after that
     var services = {};
-    intercept(widget, 'call_service', async function (ev) {
+    intercept(widget, 'call_service', function (ev) {
         var args, result;
         if (services[ev.data.service]) {
             var service = services[ev.data.service];
@@ -243,13 +243,13 @@ function addMockEnvironment(widget, params) {
             // use ajax service that is mocked by the server
             var route = ev.data.args[0];
             args = ev.data.args[1];
-            result = await mockServer.performRpc(route, args);
+            result = mockServer.performRpc(route, args);
         }
         ev.data.callback(result);
     });
 
-    intercept(widget, 'load_action', async function (event) {
-        await mockServer.performRpc('/web/action/load', {
+    intercept(widget, 'load_action', function (event) {
+        mockServer.performRpc('/web/action/load', {
             kwargs: {
                 action_id: event.data.actionID,
                 additional_context: event.data.context,
@@ -259,8 +259,8 @@ function addMockEnvironment(widget, params) {
         });
     });
 
-    intercept(widget, "load_views", async function (event) {
-        await mockServer.performRpc('/web/dataset/call_kw/' + event.data.modelName, {
+    intercept(widget, "load_views", function (event) {
+        mockServer.performRpc('/web/dataset/call_kw/' + event.data.modelName, {
             args: [],
             kwargs: {
                 context: event.data.context,
