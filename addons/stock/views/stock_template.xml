@@ -5,6 +5,7 @@
         <xpath expr="." position="inside">
             <script type="text/javascript" src="/stock/static/tests/route_tour.js"></script>
             <link rel="stylesheet" type="text/scss" href="/stock/static/src/scss/stock_traceability_report.scss"/>
+            <link rel="stylesheet" type="text/scss" href="/stock/static/src/scss/report_stock_rule.scss"/>
         </xpath>
    </template>
 

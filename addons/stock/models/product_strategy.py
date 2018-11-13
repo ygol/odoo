@@ -29,7 +29,7 @@ class PutAwayStrategy(models.Model):
         put_away = self._get_putaway_rule(product)
         if put_away:
             return put_away.fixed_location_id
-        return self.env['stock.location']
+        return self.env['stock.fixed.putaway.strat']
 
     def _get_putaway_rule(self, product):
         if self.product_location_ids:
@@ -43,7 +43,7 @@ class PutAwayStrategy(models.Model):
                 if put_away:
                     return put_away[0]
                 categ = categ.parent_id
-        return self.env['stock.location']
+        return self.env['stock.fixed.putaway.strat']
 
 
 class FixedPutAwayStrategy(models.Model):

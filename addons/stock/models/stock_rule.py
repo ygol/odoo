@@ -70,6 +70,23 @@ class StockRule(models.Model):
              "With 'Automatic No Step Added', the location is replaced in the original move.")
     rule_message = fields.Html(compute='_compute_action_message')
 
+    product_idummy = fields.Many2one(
+        'product.template', store=False,
+        search='_search_product',
+        string="Applying to product"
+    )
+    warehouse_idummy = fields.Many2one('stock.warehouse', store=False, search='_search_wh', string="Applying to warehouse")
+
+    def _search_product(self, operator, value):
+        return [
+            ('route_id.product_ids', operator, value),
+        ]
+
+    def _search_wh(self, operator, value):
+        return [
+            ('route_id.warehouse_ids', operator, value),
+        ]
+
     @api.onchange('picking_type_id')
     def _onchange_picking_type(self):
         """ Modify locations to the default picking type's locations source and

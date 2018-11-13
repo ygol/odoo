@@ -7,7 +7,7 @@
     'summary': 'Manage your stock and logistics activities',
     'description': "",
     'website': 'https://www.odoo.com/page/warehouse',
-    'depends': ['product', 'barcodes'],
+    'depends': ['product', 'barcodes', 'web_qweb'],
     'category': 'Warehouse',
     'sequence': 13,
     'demo': [

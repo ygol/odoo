@@ -53,6 +53,102 @@
             </field>
         </record>
 
+        <record id="view_stock_rule_qweb" model="ir.ui.view">
+            <field name="name">Stock Rules Overview</field>
+            <field name="model">stock.rule</field>
+            <field name="type">qweb</field>
+            <field name="arch" type="xml">
+                <div class="article o_report_stock_rule">
+                    <t t-set="rules" t-value="records.sorted(lambda r: (r.route_id.sequence, r.sequence, r.id))"/>
+                    <!-- or if all rules apply to the same product? -->
+                    <t t-set="pid" t-value="context.get('product_id')"/>
+                    <t t-set="product" t-value="env['product.template'].browse(pid) if pid else env['product.template']"/>
+                    <t t-set="helpers" t-value="env['report.stock.report_stock_rule']"/>
+
+                    <!--
+                    dict(zip(
+                        rules.mapped('route_id'),
+                        itertools.cycle(helpers._get_route_colors())
+                    ))
+                    -->
+                    <t t-set="colors" t-value="helpers._get_route_colors()"/>
+                    <t t-set="colors" t-value="{
+                        route: colors[idx % len(colors)]
+                        for idx, route in enumerate(rules.mapped('route_id'))
+                    }"/>
+                    <t t-set="rules_and_loc" t-value="[helpers._get_rule_loc(rule, product) for rule in rules]"/>
+                    <t t-set="locations" t-value="helpers._sort_locations(
+                        rules_and_loc,
+                        rules.mapped('warehouse_id')
+                    )"/>
+                    <t t-set="indices" t-value="{loc: index for index, loc in enumerate(locations)}"/>
+
+                    <table class="table table-condensed table-bordered">
+                        <thead>
+                            <tr>
+                                <t t-foreach="locations" t-as="location">
+                                    <th class="o_report_stock_rule_location_header">
+                                        <a type="action" t-att-data-res-id="location.id" t-att-data-model="location._name">
+                                            <t t-esc="location.display_name"/>
+                                        </a>
+                                        <t t-if="product">
+                                            <t t-if="location.putaway_strategy_id">
+                                                <t t-set="strat" t-value="location.putaway_strategy_id._get_putaway_rule(product)"/>
+                                                <!-- TODO: link? But original is just the location name... -->
+                                                <div t-if="strat" class="o_report_stock_rule_putaway">
+                                                    <p>Putaway: <t t-esc="strat.fixed_location_id.display_name"/></p>
+                                                </div>
+                                            </t>
+                                            <t t-set="orderpoints" t-value="env['stock.warehouse.orderpoint'].search([
+                                                ('product_id', '=', product.id),
+                                                ('location_id', '=', location.id),
+                                            ])"/>
+                                            <t t-foreach="orderpoints" t-as="line">
+                                                <a type="action" class="o_report_stock_rule_putaway" t-att-data-res-id="line.id" t-att-data-model="line._name">
+                                                    <p>[<t t-esc="line.display_name"/>]<br/>min: <t t-esc="line.product_min_qty"/>, max:<t t-esc="line.product_max_qty"/></p>
+                                                </a>
+                                            </t>
+                                        </t>
+                                    </th>
+                                </t>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="rules_and_loc" t-as="r">
+                                <t t-set="rule" t-value="r['rule']"/>
+                                <t t-set="src" t-value="r['source']"/>
+                                <t t-set="dst" t-value="r['destination']"/>
+
+                                <!-- the builtins, they are missing! -->
+                                <t t-set="bounds" t-value="(src, dst) if indices[src] &lt;= indices[dst] else (dst, src)"/>
+                                <t t-set="span" t-value="indices[bounds[1]] - indices[bounds[0]] + 1"/>
+
+                                <t t-set="before" t-value="indices[bounds[0]]"/>
+                                <t t-set="after" t-value="len(locations) - indices[bounds[1]] - 1"/>
+
+                                <td t-if="before" t-att-colspan="before"/>
+                                <td t-att-colspan="span" class="o_report_stock_rule_rule_cell" t-att-title="rule.route_id.display_name">
+                                    <!-- rule display, probably has override bits -->
+                                    <a class="o_report_stock_rule_rule_main" type="action"
+                                       t-att-data-model="rule._name" t-att-data-res-id="rule.id"
+                                       t-att-title="rule.route_id.display_name"
+                                    >
+                                        <t t-call="stock.report_stock_rule_arrow">
+                                            <t t-set="padding" t-value="50 / span"/>
+                                            <t t-set="color" t-value="colors[r['rule'].route_id]"/>
+                                            <t t-set="rule" t-value="(rule, 'destination' if bounds[1] == r['destination'] else 'source', color)"/>
+                                        </t>
+                                    </a>
+                                </td>
+                                <td t-if="after" t-att-colspan="after"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <t t-call="stock.report_stock_rule_legend"/>
+                </div>
+            </field>
+        </record>
+
         <record id="view_stock_rule_form" model="ir.ui.view">
             <field name="name">stock.rule.form</field>
             <field name="model">stock.rule</field>
@@ -129,7 +225,7 @@
             <field name="res_model">stock.rule</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">tree,qweb,form</field>
         </record>
 
         <menuitem action="action_rules_form" id="menu_action_rules_form"
