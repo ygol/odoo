@@ -68,6 +68,9 @@
 
     // Readonly specific rules
     &.o_form_readonly {
+        .o_field_widget {
+            @include o-text-overflow(inline-block, 100%);
+        }
         .oe_edit_only {
             display: none!important;
         }
@@ -75,6 +78,26 @@
         .o_row:not(.o_row_readonly) {
             &, & > div {
                 display: inline-block;
+            }
+        }
+        .o_row {
+            .o_field_widget {
+                max-width: 995px;
+            }
+        }
+        .o_group {
+            &.o_inner_group {
+                > tbody > tr > td {
+                    .o_field_widget {
+                        width: 1px !important;
+                        min-width: 100%;
+                    }
+                }
+            }
+        }
+        .tab-content {
+            p {
+                white-space: normal;
             }
         }
     }
@@ -675,7 +698,6 @@
                 max-width: 100%;
                 padding: 0;
 
-                width: auto!important;  // !important is required to override the width computed in JS
                 &.o_td_label {
                     width: 94%!important; // The label must be on its own line except if the form field is small enough (checkbox)
                     line-height: $o-label-font-size-factor;

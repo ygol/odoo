@@ -46,6 +46,15 @@
     }
 
     .o_kanban_record {
+        div, span, h1, h2, h3 {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .oe_module_desc {
+            overflow: visible;
+            white-space: normal;
+        }
         position: relative;
         display: inline-block; // Force the creation of a block formatting context to clear float items
         border-color: gray('400');

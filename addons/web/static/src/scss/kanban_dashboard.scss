@@ -125,6 +125,7 @@
         // Provide enough room for the dropdown-toggle
         .o_primary {
             padding-right: $o-kanban-dashboard-hpadding*2;
+            max-width: 250px;
         }
 
         // Uniform titles

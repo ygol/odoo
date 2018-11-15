@@ -137,6 +137,9 @@
     .o_list_text {
         white-space: pre-wrap;
     }
+    .o_data_cell {
+        @include o-text-overflow(table-cell, 250px);
+    }
 
     .o_data_cell.o_invisible_modifier {
         // Override display: none to keep table cells aligned. Note: cannot use
