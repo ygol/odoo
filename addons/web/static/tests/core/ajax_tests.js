@@ -17,7 +17,7 @@ QUnit.module('core', function () {
         }
     });
 
-    QUnit.test('loadCSS', function (assert) {
+    QUnit.test('loadCSS', async function (assert) {
         var done = assert.async();
         assert.expect(2);
         ajax.loadCSS(test_css_url).then(function () {

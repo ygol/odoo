@@ -23,7 +23,7 @@ var testUtilsDom = require('web.test_utils_dom');
  * @param {PivotController} pivot
  * @param {string} measure
  */
-function clickMeasure(pivot, measure) {
+async function clickMeasure(pivot, measure) {
     testUtilsDom.click(pivot.$buttons.find(`.dropdown-item[data-field=${measure}]`));
 }
 
@@ -34,7 +34,7 @@ function clickMeasure(pivot, measure) {
  *
  * @param {PivotController} pivot
  */
-function toggleMeasuresDropdown(pivot) {
+async function toggleMeasuresDropdown(pivot) {
     testUtilsDom.click(pivot.$buttons.filter('.btn-group:first').find('> button'));
 }
 
@@ -44,7 +44,7 @@ function toggleMeasuresDropdown(pivot) {
  * @param {PivotController} pivot
  * @param {[Object]} params given to the controller reload method
  */
-function reload(pivot, params) {
+async function reload(pivot, params) {
     pivot.reload(params);
 }
 

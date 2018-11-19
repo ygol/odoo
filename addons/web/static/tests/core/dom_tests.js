@@ -32,7 +32,7 @@ QUnit.module('dom', {}, function () {
 
     QUnit.module('autoresize');
 
-    QUnit.test('autoresize (border-box): no padding + no border', function (assert) {
+    QUnit.test('autoresize (border-box): no padding + no border', async function (assert) {
         assert.expect(3);
         var $textarea = prepareAutoresizeTextArea();
         assert.strictEqual($('textarea').length, 2,
@@ -44,13 +44,13 @@ QUnit.module('dom', {}, function () {
             $fixedTextarea[0].scrollHeight + 'px',
             "autoresized textarea should have height of fixed textarea + padding (0 line)");
 
-        testUtils.fields.editInput($textarea, 'a\nb\nc\nd');
+        await testUtils.fields.editInput($textarea, 'a\nb\nc\nd');
         assert.strictEqual($textarea.css('height'),
             $fixedTextarea[0].scrollHeight + 'px',
             "autoresized textarea should have height of fixed textarea + padding (4 lines)");
     });
 
-    QUnit.test('autoresize (border-box): padding + no border', function (assert) {
+    QUnit.test('autoresize (border-box): padding + no border', async function (assert) {
         assert.expect(3);
         var $textarea = prepareAutoresizeTextArea({ padding: 10 });
         assert.strictEqual($('textarea').length, 2,
@@ -64,7 +64,7 @@ QUnit.module('dom', {}, function () {
             expectedTextAreaHeight + 'px',
             "autoresized textarea should have height of fixed textarea + padding (0 line)");
 
-        testUtils.fields.editInput($textarea, 'a\nb\nc\nd');
+        await testUtils.fields.editInput($textarea, 'a\nb\nc\nd');
         // twice the padding of 10px
         expectedTextAreaHeight = $fixedTextarea[0].scrollHeight + 2*10;
         assert.strictEqual($textarea.css('height'),
@@ -72,7 +72,7 @@ QUnit.module('dom', {}, function () {
             "autoresized textarea should have height of fixed textarea + padding (4 lines)");
     });
 
-    QUnit.test('autoresize (border-box): no padding + border', function (assert) {
+    QUnit.test('autoresize (border-box): no padding + border', async function (assert) {
         assert.expect(3);
         var $textarea = prepareAutoresizeTextArea({
             borderTopWidth: 2,
@@ -89,7 +89,7 @@ QUnit.module('dom', {}, function () {
             expectedTextAreaHeight + 'px',
             "autoresized textarea should have height of fixed textarea + border (0 line)");
 
-        testUtils.fields.editInput($textarea, 'a\nb\nc\nd');
+        await testUtils.fields.editInput($textarea, 'a\nb\nc\nd');
         // top (2px) + bottom (3px) borders
         expectedTextAreaHeight = $fixedTextarea[0].scrollHeight + (2 + 3);
         assert.strictEqual($textarea.css('height'),
@@ -97,7 +97,7 @@ QUnit.module('dom', {}, function () {
             "autoresized textarea should have height of fixed textarea + border (4 lines)");
     });
 
-    QUnit.test('autoresize (border-box): padding + border', function (assert) {
+    QUnit.test('autoresize (border-box): padding + border', async function (assert) {
         assert.expect(3);
         var $textarea = prepareAutoresizeTextArea({
             padding: 10,
@@ -115,7 +115,7 @@ QUnit.module('dom', {}, function () {
             expectedTextAreaHeight + 'px',
             "autoresized textarea should have height of fixed textarea + border (0 line)");
 
-        testUtils.fields.editInput($textarea, 'a\nb\nc\nd');
+        await testUtils.fields.editInput($textarea, 'a\nb\nc\nd');
         // twice padding (10px) + top (2px) + bottom (3px) borders
         expectedTextAreaHeight = $fixedTextarea[0].scrollHeight + (2*10 + 2 + 3);
         assert.strictEqual($textarea.css('height'),

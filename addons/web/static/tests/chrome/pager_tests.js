@@ -9,7 +9,7 @@ QUnit.module('chrome', {}, function () {
 
     QUnit.module('Pager');
 
-    QUnit.test('basic stuff', function (assert) {
+    QUnit.test('basic stuff', async function (assert) {
         assert.expect(2);
 
         var pager = new Pager(null, 10, 1, 4);
@@ -19,21 +19,21 @@ QUnit.module('chrome', {}, function () {
             "current_min should be set to 1");
 
         // click on next
-        testUtils.dom.click(pager.$('.o_pager_next'));
+        await testUtils.dom.click(pager.$('.o_pager_next'));
         assert.strictEqual(pager.state.current_min, 5,
             "current_min should now be 5");
 
         pager.destroy();
     });
 
-    QUnit.test('edit the pager', function (assert) {
+    QUnit.test('edit the pager', async function (assert) {
         assert.expect(5);
 
         var pager = new Pager(null, 10, 1, 4);
         pager.appendTo($('#qunit-fixture'));
 
         // enter edition
-        testUtils.dom.click(pager.$('.o_pager_value'));
+        await testUtils.dom.click(pager.$('.o_pager_value'));
         assert.containsOnce(pager, 'input',
             "the pager should contain an input");
         assert.strictEqual(pager.$('input').val(), '1-4',
@@ -53,7 +53,7 @@ QUnit.module('chrome', {}, function () {
         pager.destroy();
     });
 
-    QUnit.test('disabling the pager', function (assert) {
+    QUnit.test('disabling the pager', async function (assert) {
         var done = assert.async();
         assert.expect(4);
 
@@ -63,15 +63,15 @@ QUnit.module('chrome', {}, function () {
         pager.disable();
 
         // try to go to the next or previous pages
-        testUtils.dom.click(pager.$('.o_pager_next'));
+        await testUtils.dom.click(pager.$('.o_pager_next'));
         assert.strictEqual(pager.state.current_min, 1,
             "current_min should still be 1");
-        testUtils.dom.click(pager.$('.o_pager_previous'));
+        await testUtils.dom.click(pager.$('.o_pager_previous'));
         assert.strictEqual(pager.state.current_min, 1,
             "current_min should still be 1");
 
         // try to change the limit
-        testUtils.dom.click(pager.$('.o_pager_value'));
+        await testUtils.dom.click(pager.$('.o_pager_value'));
         assert.containsNone(pager, 'input',
             "the pager should not contain an input");
 
@@ -87,7 +87,7 @@ QUnit.module('chrome', {}, function () {
             });
         });
         pager.enable();
-        testUtils.dom.click(pager.$('.o_pager_next'));
+        await testUtils.dom.click(pager.$('.o_pager_next'));
 
     });
 });

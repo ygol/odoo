@@ -21,7 +21,7 @@ QUnit.module('core', function () {
 
     QUnit.module('py_utils');
 
-    QUnit.test('simple python expression', function(assert) {
+    QUnit.test('simple python expression', async function(assert) {
         assert.expect(2);
 
         var result = pyUtils.py_eval("True and False");
@@ -30,7 +30,7 @@ QUnit.module('core', function () {
         assert.strictEqual(result, 42, "should properly evaluate basic sum");
     });
 
-    QUnit.test('simple arithmetic', function(assert) {
+    QUnit.test('simple arithmetic', async function(assert) {
         assert.expect(2);
 
         var result = pyUtils.py_eval("1 + 2");
@@ -40,7 +40,7 @@ QUnit.module('core', function () {
     });
 
 
-    QUnit.test('not prefix', function (assert) {
+    QUnit.test('not prefix', async function (assert) {
         assert.expect(3);
 
         assert.ok(py.eval('not False'));
@@ -70,7 +70,7 @@ QUnit.module('core', function () {
         };
     }
 
-    QUnit.test('strftime', function (assert) {
+    QUnit.test('strftime', async function (assert) {
         assert.expect(3);
 
         var check = makeTimeCheck(assert);
@@ -90,7 +90,7 @@ QUnit.module('core', function () {
         });
     });
 
-    QUnit.test('context_today', function (assert) {
+    QUnit.test('context_today', async function (assert) {
         assert.expect(1);
 
         var check = makeTimeCheck(assert, pyUtils);
@@ -101,7 +101,7 @@ QUnit.module('core', function () {
         });
     });
 
-    QUnit.test('timedelta.test_constructor', function (assert) {
+    QUnit.test('timedelta.test_constructor', async function (assert) {
         assert.expect(16);
 
         var eq = makeEq(assert);
@@ -128,7 +128,7 @@ QUnit.module('core', function () {
         eq('td(milliseconds=0.001)', 'td(microseconds=1)');
     });
 
-    QUnit.test('timedelta.test_computations', function (assert) {
+    QUnit.test('timedelta.test_computations', async function (assert) {
         assert.expect(28);
 
         var c = pyUtils.context();
@@ -183,7 +183,7 @@ QUnit.module('core', function () {
             'td(0, 0, 1)');
     });
 
-    QUnit.test('timedelta.test_basic_attributes', function (assert) {
+    QUnit.test('timedelta.test_basic_attributes', async function (assert) {
         assert.expect(3);
 
         var ctx = pyUtils.context();
@@ -192,7 +192,7 @@ QUnit.module('core', function () {
         assert.strictEqual(py.eval('datetime.timedelta(1, 7, 31).microseconds', ctx), 31);
     });
 
-    QUnit.test('timedelta.test_total_seconds', function (assert) {
+    QUnit.test('timedelta.test_total_seconds', async function (assert) {
         assert.expect(6);
 
         var c = { timedelta: pyUtils.context().datetime.timedelta };
@@ -210,7 +210,7 @@ QUnit.module('core', function () {
             py.eval('timedelta(seconds=1000000).total_seconds()', c), 1e6);
     });
 
-    QUnit.test('timedelta.test_str', function (assert) {
+    QUnit.test('timedelta.test_str', async function (assert) {
         assert.expect(10);
 
         var c = { td: pyUtils.context().datetime.timedelta };
@@ -236,7 +236,7 @@ QUnit.module('core', function () {
             "999999999 days, 23:59:59.999999");
     });
 
-    QUnit.test('timedelta.test_massive_normalization', function (assert) {
+    QUnit.test('timedelta.test_massive_normalization', async function (assert) {
         assert.expect(3);
 
         var td = py.PY_call(
@@ -247,7 +247,7 @@ QUnit.module('core', function () {
         assert.strictEqual(td.microseconds, 999999);
     });
 
-    QUnit.test('timedelta.test_bool', function (assert) {
+    QUnit.test('timedelta.test_bool', async function (assert) {
         assert.expect(5);
 
         var c = { td: pyUtils.context().datetime.timedelta };
@@ -258,7 +258,7 @@ QUnit.module('core', function () {
         assert.ok(py.eval('bool(not td(0))', c));
     });
 
-    QUnit.test('date.test_computations', function (assert) {
+    QUnit.test('date.test_computations', async function (assert) {
         assert.expect(31);
 
         var d = pyUtils.context().datetime;
@@ -340,7 +340,7 @@ QUnit.module('core', function () {
 
     });
 
-    QUnit.test('add', function (assert) {
+    QUnit.test('add', async function (assert) {
         assert.expect(2);
         assert.strictEqual(
             py.eval("(datetime.datetime(2017, 4, 18, 9, 32, 15).add(hours=2, minutes=30, " +
@@ -354,7 +354,7 @@ QUnit.module('core', function () {
         );
     });
 
-    QUnit.test('subtract', function(assert) {
+    QUnit.test('subtract', async function(assert) {
         assert.expect(2);
         assert.strictEqual(
             py.eval("(datetime.datetime(2017, 4, 18, 9, 32, 15).subtract(hours=1, minutes=5, " +
@@ -368,7 +368,7 @@ QUnit.module('core', function () {
         );
     })
 
-    QUnit.test('start_of/end_of', function (assert) {
+    QUnit.test('start_of/end_of', async function (assert) {
         assert.expect(26);
 
         var datetime = pyUtils.context().datetime;
@@ -427,7 +427,7 @@ QUnit.module('core', function () {
         }, /^Error: ValueError:/);
     });
 
-    QUnit.test('relativedelta', function (assert) {
+    QUnit.test('relativedelta', async function (assert) {
         assert.expect(7);
 
         assert.strictEqual(
@@ -461,7 +461,7 @@ QUnit.module('core', function () {
     });
 
 
-    QUnit.test('timedelta', function (assert) {
+    QUnit.test('timedelta', async function (assert) {
         assert.expect(4);
         assert.strictEqual(
             py.eval("(datetime.datetime(2017, 2, 15, 1, 7, 31) + datetime.timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')",
@@ -481,7 +481,7 @@ QUnit.module('core', function () {
             "2012-02-15 02:47:31");
     });
 
-    QUnit.test('datetime.tojson', function (assert) {
+    QUnit.test('datetime.tojson', async function (assert) {
         assert.expect(7);
 
         var result = py.eval(
@@ -497,7 +497,7 @@ QUnit.module('core', function () {
         assert.strictEqual(result.getSeconds(), 31);
     });
 
-    QUnit.test('datetime.combine', function (assert) {
+    QUnit.test('datetime.combine', async function (assert) {
         assert.expect(2);
 
         var result = py.eval(
@@ -515,7 +515,7 @@ QUnit.module('core', function () {
         assert.strictEqual(result, '2012-02-15 00:00:00');
     });
 
-    QUnit.test('datetime.replace', function (assert) {
+    QUnit.test('datetime.replace', async function (assert) {
         assert.expect(1);
 
         var result = py.eval(
@@ -537,7 +537,7 @@ QUnit.module('core', function () {
     });
 
 
-    QUnit.test('empty, basic', function (assert) {
+    QUnit.test('empty, basic', async function (assert) {
         assert.expect(3);
 
         var result = pyUtils.eval_domains_and_contexts({
@@ -556,7 +556,7 @@ QUnit.module('core', function () {
     });
 
 
-    QUnit.test('context_merge_00', function (assert) {
+    QUnit.test('context_merge_00', async function (assert) {
         assert.expect(1);
 
         var ctx = [
@@ -612,7 +612,7 @@ QUnit.module('core', function () {
 
     });
 
-    QUnit.test('context_merge_01', function (assert) {
+    QUnit.test('context_merge_01', async function (assert) {
         assert.expect(1);
 
         var ctx = [{
@@ -651,7 +651,7 @@ QUnit.module('core', function () {
         });
     });
 
-    QUnit.test('domain with time', function (assert) {
+    QUnit.test('domain with time', async function (assert) {
         assert.expect(1);
 
         var result = pyUtils.eval_domains_and_contexts({
@@ -680,7 +680,7 @@ QUnit.module('core', function () {
         ]);
     });
 
-    QUnit.test('conditional context', function (assert) {
+    QUnit.test('conditional context', async function (assert) {
         assert.expect(2);
 
         var d = {
@@ -702,7 +702,7 @@ QUnit.module('core', function () {
         assert.deepEqual(result2.domain, [['company_id', '=', 42]]);
     });
 
-    QUnit.test('substitution in context', function (assert) {
+    QUnit.test('substitution in context', async function (assert) {
         assert.expect(1);
 
         // setup(session);
@@ -723,7 +723,7 @@ QUnit.module('core', function () {
         });
     });
 
-    QUnit.test('date', function (assert) {
+    QUnit.test('date', async function (assert) {
         assert.expect(1);
 
         var d = "[('state','!=','cancel'),('opening_date','>',context_today().strftime('%Y-%m-%d'))]";
@@ -741,7 +741,7 @@ QUnit.module('core', function () {
         ]);
     });
 
-    QUnit.test('delta', function (assert) {
+    QUnit.test('delta', async function (assert) {
         assert.expect(1);
 
         var d = "[('type','=','in'),('day','<=', time.strftime('%Y-%m-%d')),('day','>',(context_today()-datetime.timedelta(days=15)).strftime('%Y-%m-%d'))]";
@@ -762,7 +762,7 @@ QUnit.module('core', function () {
         ]);
     });
 
-    QUnit.test('horror from the deep', function (assert) {
+    QUnit.test('horror from the deep', async function (assert) {
         assert.expect(1);
 
         var cs = [
@@ -805,7 +805,7 @@ QUnit.module('core', function () {
 
     QUnit.module('py_utils (contexts)');
 
-    QUnit.test('context_recursive', function (assert) {
+    QUnit.test('context_recursive', async function (assert) {
         assert.expect(3);
 
         var context_to_eval = [{
@@ -823,7 +823,7 @@ QUnit.module('core', function () {
             {foo: 'qux'});
     });
 
-    QUnit.test('context_sequences', function (assert) {
+    QUnit.test('context_sequences', async function (assert) {
         assert.expect(1);
 
         // Context n should have base evaluation context + all of contexts
@@ -873,7 +873,7 @@ QUnit.module('core', function () {
         });
     });
 
-    QUnit.test('non-literal_eval_contexts', function (assert) {
+    QUnit.test('non-literal_eval_contexts', async function (assert) {
         assert.expect(1);
 
         var result = pyUtils.eval('contexts', [{
@@ -955,7 +955,7 @@ QUnit.module('core', function () {
         assert.deepEqual(result, {type: 'out_invoice'});
     });
 
-    QUnit.test('return-input-value', function (assert) {
+    QUnit.test('return-input-value', async function (assert) {
         assert.expect(1);
 
         var result = pyUtils.eval('contexts', [{
@@ -1024,7 +1024,7 @@ QUnit.module('core', function () {
 
     QUnit.module('py_utils (domains)');
 
-    QUnit.test('current_date', function (assert) {
+    QUnit.test('current_date', async function (assert) {
         assert.expect(1);
 
         var current_date = time.date_to_str(new Date());
@@ -1037,7 +1037,7 @@ QUnit.module('core', function () {
         ]);
     });
 
-    QUnit.test('context_freevar', function (assert) {
+    QUnit.test('context_freevar', async function (assert) {
         assert.expect(3);
 
         var domains_to_eval = [{
@@ -1057,7 +1057,7 @@ QUnit.module('core', function () {
 
     QUnit.module('py_utils (groupbys)');
 
-    QUnit.test('groupbys_00', function (assert) {
+    QUnit.test('groupbys_00', async function (assert) {
         assert.expect(1);
 
         var result = pyUtils.eval('groupbys', [
@@ -1069,7 +1069,7 @@ QUnit.module('core', function () {
         assert.deepEqual(result, ['foo', 'bar', 'qux', 'grault']);
     });
 
-    QUnit.test('groupbys_01', function (assert) {
+    QUnit.test('groupbys_01', async function (assert) {
         assert.expect(1);
 
         var result = pyUtils.eval('groupbys', [
@@ -1080,7 +1080,7 @@ QUnit.module('core', function () {
         assert.deepEqual(result, ['foo', 'bar', 'grault']);
     });
 
-    QUnit.test('groupbys_02', function (assert) {
+    QUnit.test('groupbys_02', async function (assert) {
         assert.expect(1);
 
         var result = pyUtils.eval('groupbys', [
@@ -1095,7 +1095,7 @@ QUnit.module('core', function () {
         assert.deepEqual(result, ['foo', 'bar', 'grault']);
     });
 
-    QUnit.test('groupbys_03', function (assert) {
+    QUnit.test('groupbys_03', async function (assert) {
         assert.expect(1);
 
         var result = pyUtils.eval('groupbys', [
@@ -1112,7 +1112,7 @@ QUnit.module('core', function () {
         assert.deepEqual(result, ['foo', 'bar', 'grault']);
     });
 
-    QUnit.test('groupbys_04', function (assert) {
+    QUnit.test('groupbys_04', async function (assert) {
         assert.expect(1);
 
         var result = pyUtils.eval('groupbys', [
@@ -1129,7 +1129,7 @@ QUnit.module('core', function () {
         assert.deepEqual(result, ['foo', 'bar', 'grault']);
     });
 
-    QUnit.test('groupbys_05', function (assert) {
+    QUnit.test('groupbys_05', async function (assert) {
         assert.expect(1);
 
         var result = pyUtils.eval('groupbys', [
@@ -1142,7 +1142,7 @@ QUnit.module('core', function () {
 
     QUnit.module('pyutils (_formatAST)');
 
-    QUnit.test("basic values", function (assert) {
+    QUnit.test("basic values", async function (assert) {
         assert.expect(6);
 
         assert.checkAST("1", "integer value");
@@ -1153,7 +1153,7 @@ QUnit.module('core', function () {
         assert.checkAST("None", "None");
     });
 
-    QUnit.test("dictionary", function (assert) {
+    QUnit.test("dictionary", async function (assert) {
         assert.expect(3);
 
         assert.checkAST("{}", "empty dictionary");
@@ -1161,21 +1161,21 @@ QUnit.module('core', function () {
         assert.checkAST("d['a']", "get a value in a dictionary");
     });
 
-    QUnit.test("list", function (assert) {
+    QUnit.test("list", async function (assert) {
         assert.expect(2);
 
         assert.checkAST("[]", "empty list");
         assert.checkAST("[1]", "list with one value");
     });
 
-    QUnit.test("tuple", function (assert) {
+    QUnit.test("tuple", async function (assert) {
         assert.expect(2);
 
         assert.checkAST("()", "empty tuple");
         assert.checkAST("(1, 2)", "basic tuple");
     });
 
-    QUnit.test("simple arithmetic", function (assert) {
+    QUnit.test("simple arithmetic", async function (assert) {
         assert.expect(15);
 
         assert.checkAST("1 + 2", "addition");
@@ -1195,7 +1195,7 @@ QUnit.module('core', function () {
         assert.checkAST("a // 10", "integer division");
     });
 
-    QUnit.test("boolean operators", function (assert) {
+    QUnit.test("boolean operators", async function (assert) {
         assert.expect(6);
 
         assert.checkAST("True and False", "boolean operator");
@@ -1206,7 +1206,7 @@ QUnit.module('core', function () {
         assert.checkAST("not a in b", "not prefix with expression");
     });
 
-    QUnit.test("other operators", function (assert) {
+    QUnit.test("other operators", async function (assert) {
         assert.expect(7);
 
         assert.checkAST("x == y", "== operator");
@@ -1218,25 +1218,25 @@ QUnit.module('core', function () {
         assert.checkAST("x not in y", "not in operator");
     });
 
-    QUnit.test("equality", function (assert) {
+    QUnit.test("equality", async function (assert) {
         assert.expect(1);
         assert.checkAST("a == b", "simple equality");
     });
 
-    QUnit.test("strftime", function (assert) {
+    QUnit.test("strftime", async function (assert) {
         assert.expect(3);
         assert.checkAST("time.strftime('%Y')", "strftime with year");
         assert.checkAST("time.strftime('%Y') + '-01-30'", "strftime with year");
         assert.checkAST("time.strftime('%Y-%m-%d %H:%M:%S')", "strftime with year");
     });
 
-    QUnit.test("context_today", function (assert) {
+    QUnit.test("context_today", async function (assert) {
         assert.expect(1);
         assert.checkAST("context_today().strftime('%Y-%m-%d')", "context today call");
     });
 
 
-    QUnit.test("function call", function (assert) {
+    QUnit.test("function call", async function (assert) {
         assert.expect(5);
         assert.checkAST("td()", "simple call");
         assert.checkAST("td(a, b, c)", "simple call with args");
@@ -1245,7 +1245,7 @@ QUnit.module('core', function () {
         assert.checkAST('str(td(2))', "function call in function call");
     });
 
-    QUnit.test("various expressions", function (assert) {
+    QUnit.test("various expressions", async function (assert) {
         assert.expect(3);
         assert.checkAST('(a - b).days', "substraction and .days");
         assert.checkAST('a + day == date(2002, 3, 3)');
@@ -1267,7 +1267,7 @@ QUnit.module('core', function () {
     };
 
 
-    QUnit.test("return simple (normalized) domains", function (assert) {
+    QUnit.test("return simple (normalized) domains", async function (assert) {
         assert.expect(3);
 
         assert.checkNormalization("[]");
@@ -1275,7 +1275,7 @@ QUnit.module('core', function () {
         assert.checkNormalization("['!', ('a', '=', 1)]");
     });
 
-    QUnit.test("properly add the & in a non normalized domain", function (assert) {
+    QUnit.test("properly add the & in a non normalized domain", async function (assert) {
         assert.expect(1);
         assert.checkNormalization(
             "[('a', '=', 1), ('b', '=', 2)]",
@@ -1283,7 +1283,7 @@ QUnit.module('core', function () {
         );
     });
 
-    QUnit.test("normalize domain with ! operator", function (assert) {
+    QUnit.test("normalize domain with ! operator", async function (assert) {
         assert.expect(1);
         assert.checkNormalization(
             "['!', ('a', '=', 1), ('b', '=', 2)]",
@@ -1303,7 +1303,7 @@ QUnit.module('core', function () {
         });
     };
 
-    QUnit.test("assemble domains", function (assert) {
+    QUnit.test("assemble domains", async function (assert) {
         assert.expect(7);
 
         assert.checkAssemble([], '&', "[]");

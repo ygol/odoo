@@ -52,11 +52,11 @@ QUnit.module('MessagingMenu', {
     }
 });
 
-QUnit.test('messaging menu widget: rendering with OdooBot has a request', function (assert) {
+QUnit.test('messaging menu widget: rendering with OdooBot has a request', async function (assert) {
     assert.expect(5);
 
     var messagingMenu = new MessagingMenu();
-    testUtils.mock.addMockEnvironment(messagingMenu, {
+    await testUtils.mock.addMockEnvironment(messagingMenu, {
         data: this.data,
         services: this.services,
     });
@@ -67,7 +67,7 @@ QUnit.test('messaging menu widget: rendering with OdooBot has a request', functi
     assert.strictEqual(messagingMenu.$('.o_notification_counter').text(), '1',
         "should display a counter of '1' next to the messaging menu");
 
-    testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
+    await testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
     assert.containsOnce(messagingMenu, '.o_preview_info',
         "should display a preview in the messaging menu");
     assert.strictEqual(messagingMenu.$('.o_preview_name').text().trim(),
@@ -79,13 +79,13 @@ QUnit.test('messaging menu widget: rendering with OdooBot has a request', functi
     messagingMenu.destroy();
 });
 
-QUnit.test('messaging menu widget: rendering without OdooBot has a request', function (assert) {
+QUnit.test('messaging menu widget: rendering without OdooBot has a request', async function (assert) {
     assert.expect(3);
 
     this.hasMailbotRequest = false;
 
     var messagingMenu = new MessagingMenu();
-    testUtils.mock.addMockEnvironment(messagingMenu, {
+    await testUtils.mock.addMockEnvironment(messagingMenu, {
         data: this.data,
         services: this.services,
     });
@@ -95,7 +95,7 @@ QUnit.test('messaging menu widget: rendering without OdooBot has a request', fun
         "should display a notification counter next to the messaging menu");
     assert.strictEqual(messagingMenu.$('.o_notification_counter').text(), '0',
         "should display a counter of '0' next to the messaging menu");
-    testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
+    await testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
     assert.containsNone(messagingMenu, '.o_preview_info',
         "should display no preview in the messaging menu");
 

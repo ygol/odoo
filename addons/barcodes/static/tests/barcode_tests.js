@@ -11,7 +11,7 @@ var testUtils = require('web.test_utils');
 var NotificationService = require('web.NotificationService');
 
 var createView = testUtils.createView;
-var triggerKeypressEvent = testUtils.dom.triggerKeypressEvent;
+var triggerKeypressEvent = await testUtils.dom.triggerKeypressEvent;
 
 QUnit.module('Barcodes', {
     beforeEach: function () {
@@ -51,10 +51,10 @@ QUnit.module('Barcodes', {
     }
 });
 
-QUnit.test('Button with barcode_trigger', function (assert) {
+QUnit.test('Button with barcode_trigger', async function (assert) {
     assert.expect(2);
 
-    var form = createView({
+    var form = await createView({
         View: FormView,
         model: 'product',
         data: this.data,
@@ -90,10 +90,10 @@ QUnit.test('Button with barcode_trigger', function (assert) {
     form.destroy();
 });
 
-QUnit.test('edit, save and cancel buttons', function (assert) {
+QUnit.test('edit, save and cancel buttons', async function (assert) {
     assert.expect(6);
 
-    var form = createView({
+    var form = await createView({
         View: FormView,
         model: 'product',
         data: this.data,
@@ -112,7 +112,7 @@ QUnit.test('edit, save and cancel buttons', function (assert) {
     assert.containsOnce(form, ".o_form_editable",
         "should have switched to 'edit' mode");
     // dummy change to check that it actually saves
-    testUtils.fields.editInput(form.$('.o_field_widget'), 'test');
+    await testUtils.fields.editInput(form.$('.o_field_widget'), 'test');
     // O-CMD.SAVE
     _.each(["O","-","C","M","D",".","S","A","V","E","Enter"], triggerKeypressEvent);
     assert.containsOnce(form, ".o_form_readonly",
@@ -122,7 +122,7 @@ QUnit.test('edit, save and cancel buttons', function (assert) {
     // O-CMD.EDIT
     _.each(["O","-","C","M","D",".","E","D","I","T","Enter"], triggerKeypressEvent);
     // dummy change to check that it correctly discards
-    testUtils.fields.editInput(form.$('.o_field_widget'), 'test');
+    await testUtils.fields.editInput(form.$('.o_field_widget'), 'test');
     // O-CMD.CANCEL
     _.each(["O","-","C","M","D",".","D","I","S","C","A","R","D","Enter"], triggerKeypressEvent);
     assert.containsOnce(form, ".o_form_readonly",
@@ -132,10 +132,10 @@ QUnit.test('edit, save and cancel buttons', function (assert) {
     form.destroy();
 });
 
-QUnit.test('pager buttons', function (assert) {
+QUnit.test('pager buttons', async function (assert) {
     assert.expect(5);
 
-    var form = createView({
+    var form = await createView({
         View: FormView,
         model: 'product',
         data: this.data,
@@ -164,7 +164,7 @@ QUnit.test('pager buttons', function (assert) {
     form.destroy();
 });
 
-QUnit.test('do no update form twice after a command barcode scanned', function (assert) {
+QUnit.test('do no update form twice after a command barcode scanned', async function (assert) {
     assert.expect(7);
 
     var delay = barcodeEvents.BarcodeEvents.max_time_between_keys_in_ms;
@@ -176,7 +176,7 @@ QUnit.test('do no update form twice after a command barcode scanned', function (
         },
     });
 
-    var form = createView({
+    var form = await createView({
         View: FormView,
         model: 'product',
         data: this.data,
@@ -215,7 +215,7 @@ QUnit.test('do no update form twice after a command barcode scanned', function (
     testUtils.mock.unpatch(FormController);
 });
 
-QUnit.test('widget field_float_scannable', function (assert) {
+QUnit.test('widget field_float_scannable', async function (assert) {
     var done = assert.async();
     assert.expect(11);
 
@@ -227,7 +227,7 @@ QUnit.test('widget field_float_scannable', function (assert) {
         int_field: function () {},
     };
 
-    var form = createView({
+    var form = await createView({
         View: FormView,
         model: 'product',
         data: this.data,
@@ -250,7 +250,7 @@ QUnit.test('widget field_float_scannable', function (assert) {
     assert.strictEqual(form.$('.o_field_widget[name=int_field]').text(), '4',
         "should display the correct value in readonly");
 
-    testUtils.form.clickEdit(form);
+    await testUtils.form.clickEdit(form);
 
     assert.strictEqual(form.$('.o_field_widget[name=int_field]').val(), '4',
         "should display the correct value in edit");
@@ -284,7 +284,7 @@ QUnit.test('widget field_float_scannable', function (assert) {
     });
 });
 
-QUnit.test('widget barcode_handler', function (assert) {
+QUnit.test('widget barcode_handler', async function (assert) {
     assert.expect(4);
 
     var delay = barcodeEvents.BarcodeEvents.max_time_between_keys_in_ms;
@@ -299,7 +299,7 @@ QUnit.test('widget barcode_handler', function (assert) {
         },
     };
 
-    var form = createView({
+    var form = await createView({
         View: FormView,
         model: 'product',
         data: this.data,
@@ -333,7 +333,7 @@ QUnit.test('widget barcode_handler', function (assert) {
     barcodeEvents.BarcodeEvents.max_time_between_keys_in_ms = delay;
 });
 
-QUnit.test('specification of widget barcode_handler', function (assert) {
+QUnit.test('specification of widget barcode_handler', async function (assert) {
     assert.expect(5);
 
     var delay = barcodeEvents.BarcodeEvents.max_time_between_keys_in_ms;
@@ -356,7 +356,7 @@ QUnit.test('specification of widget barcode_handler', function (assert) {
     });
     fieldRegistry.add('test_barcode_handler', TestBarcodeHandler);
 
-    var form = createView({
+    var form = await createView({
         View: FormView,
         model: 'order',
         data: this.data,
@@ -403,14 +403,14 @@ QUnit.test('specification of widget barcode_handler', function (assert) {
     assert.strictEqual(form.$('.o_data_row:nth(1) .o_data_cell:nth(1)').text(), '1',
         "quantity of line one should have been incremented");
 
-    testUtils.form.clickSave(form);
+    await testUtils.form.clickSave(form);
 
     form.destroy();
     barcodeEvents.BarcodeEvents.max_time_between_keys_in_ms = delay;
     delete fieldRegistry.map.test_barcode_handler;
 });
 
-QUnit.test('specification of widget barcode_handler with keypress and notifyChange', function (assert) {
+QUnit.test('specification of widget barcode_handler with keypress and notifyChange', async function (assert) {
     assert.expect(6);
     var done = assert.async();
 
@@ -440,7 +440,7 @@ QUnit.test('specification of widget barcode_handler with keypress and notifyChan
     });
     fieldRegistry.add('test_barcode_handler', TestBarcodeHandler);
 
-    var form = createView({
+    var form = await createView({
         View: FormView,
         model: 'order',
         data: this.data,
@@ -487,12 +487,12 @@ QUnit.test('specification of widget barcode_handler with keypress and notifyChan
         done();
     });
 });
-QUnit.test('barcode_scanned only trigger error for active view', function (assert) {
+QUnit.test('barcode_scanned only trigger error for active view', async function (assert) {
     assert.expect(2);
 
     this.data.order_line.fields._barcode_scanned = {string: 'Barcode scanned', type: 'char'};
 
-    var form = createView({
+    var form = await createView({
         View: FormView,
         model: 'order',
         data: this.data,
@@ -526,7 +526,7 @@ QUnit.test('barcode_scanned only trigger error for active view', function (asser
         },
     });
 
-    testUtils.dom.click(form.$('.o_data_row:first'));
+    await testUtils.dom.click(form.$('.o_data_row:first'));
 
     // We do not trigger on the body since modal and
     // form view are both inside it.

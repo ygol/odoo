@@ -18,7 +18,7 @@ var core = require('web.core');
  *
  * @param {string} text (in english: this method will perform the translation)
  */
-function clickButton(text) {
+async function clickButton(text) {
     var selector = `.modal-footer button:contains(${core._t(text)})`;
     var $button = $(selector);
     if ($button.length !== 1) {

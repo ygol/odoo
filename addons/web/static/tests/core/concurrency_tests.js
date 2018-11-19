@@ -8,7 +8,7 @@ QUnit.module('core', {}, function () {
     QUnit.module('concurrency');
 
 
-    QUnit.test('mutex: simple scheduling', function (assert) {
+    QUnit.test('mutex: simple scheduling', async function (assert) {
         assert.expect(6);
 
         var m = new concurrency.Mutex();
@@ -31,7 +31,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(p2.state(), "resolved");
     });
 
-    QUnit.test('mutex: simpleScheduling2', function (assert) {
+    QUnit.test('mutex: simpleScheduling2', async function (assert) {
         assert.expect(6);
 
         var m = new concurrency.Mutex();
@@ -54,7 +54,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(p2.state(), "resolved");
     });
 
-    QUnit.test('mutex: reject', function (assert) {
+    QUnit.test('mutex: reject', async function (assert) {
         assert.expect(12);
 
         var m = new concurrency.Mutex();
@@ -87,7 +87,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(p3.state(), "resolved");
     });
 
-    QUnit.test('mutex: getUnlockedDef checks', function (assert) {
+    QUnit.test('mutex: getUnlockedDef checks', async function (assert) {
         assert.expect(5);
 
         var m = new concurrency.Mutex();
@@ -116,7 +116,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(unlockedDef.state(), "resolved");
     });
 
-    QUnit.test('DropPrevious: basic usecase', function (assert) {
+    QUnit.test('DropPrevious: basic usecase', async function (assert) {
         assert.expect(5);
 
         var dp = new concurrency.DropPrevious();
@@ -139,7 +139,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(r2.state(), "resolved");
     });
 
-    QUnit.test('DropMisordered: resolve all correctly ordered, sync', function (assert) {
+    QUnit.test('DropMisordered: resolve all correctly ordered, sync', async function (assert) {
         assert.expect(1);
 
         var dm = new concurrency.DropMisordered(),
@@ -161,7 +161,7 @@ QUnit.module('core', {}, function () {
         assert.ok(flag);
     });
 
-    QUnit.test("DropMisordered: don't resolve mis-ordered, sync", function (assert) {
+    QUnit.test("DropMisordered: don't resolve mis-ordered, sync", async function (assert) {
         assert.expect(4);
 
         var dm = new concurrency.DropMisordered(),
@@ -190,7 +190,7 @@ QUnit.module('core', {}, function () {
         assert.ok(!fail2);
     });
 
-    QUnit.test('DropMisordered: fail mis-ordered flag, sync', function (assert) {
+    QUnit.test('DropMisordered: fail mis-ordered flag, sync', async function (assert) {
         assert.expect(4);
 
         var dm = new concurrency.DropMisordered(true),
@@ -219,7 +219,7 @@ QUnit.module('core', {}, function () {
         assert.ok(!fail2);
     });
 
-    QUnit.test('DropMisordered: resolve all correctly ordered, async', function (assert) {
+    QUnit.test('DropMisordered: resolve all correctly ordered, async', async function (assert) {
         var done = assert.async();
         assert.expect(1);
 
@@ -240,7 +240,7 @@ QUnit.module('core', {}, function () {
         });
     });
 
-    QUnit.test("DropMisordered: don't resolve mis-ordered, async", function (assert) {
+    QUnit.test("DropMisordered: don't resolve mis-ordered, async", async function (assert) {
         var done = assert.async();
         assert.expect(4);
 
@@ -271,7 +271,7 @@ QUnit.module('core', {}, function () {
         }, 30);
     });
 
-    QUnit.test('DropMisordered: fail mis-ordered flag, async', function (assert) {
+    QUnit.test('DropMisordered: fail mis-ordered flag, async', async function (assert) {
         var done = assert.async();
         assert.expect(4);
 
@@ -302,7 +302,7 @@ QUnit.module('core', {}, function () {
         }, 30);
     });
 
-    QUnit.test('MutexedDropPrevious: simple', function (assert) {
+    QUnit.test('MutexedDropPrevious: simple', async function (assert) {
         assert.expect(3);
 
         var m = new concurrency.MutexedDropPrevious();
@@ -318,7 +318,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(p1.state(), "resolved");
     });
 
-    QUnit.test('MutexedDropPrevious: 2 arrives after 1 resolution', function (assert) {
+    QUnit.test('MutexedDropPrevious: 2 arrives after 1 resolution', async function (assert) {
         assert.expect(6);
 
         var m = new concurrency.MutexedDropPrevious();
@@ -344,7 +344,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(p2.state(), "resolved");
     });
 
-    QUnit.test('MutexedDropPrevious: 1 does not return a deferred', function (assert) {
+    QUnit.test('MutexedDropPrevious: 1 does not return a deferred', async function (assert) {
         assert.expect(5);
 
         var m = new concurrency.MutexedDropPrevious();
@@ -366,7 +366,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(p2.state(), "resolved");
     });
 
-    QUnit.test('MutexedDropPrevious: 2 arrives before 1 resolution', function (assert) {
+    QUnit.test('MutexedDropPrevious: 2 arrives before 1 resolution', async function (assert) {
         assert.expect(13);
 
         var m = new concurrency.MutexedDropPrevious();
@@ -403,7 +403,7 @@ QUnit.module('core', {}, function () {
         assert.verifySteps(['p1', 'd1 resolved', 'p2', 'd2 resolved']);
     });
 
-    QUnit.test('MutexedDropPrevious: 3 arrives before 2 initialization', function (assert) {
+    QUnit.test('MutexedDropPrevious: 3 arrives before 2 initialization', async function (assert) {
         assert.expect(13);
 
         var m = new concurrency.MutexedDropPrevious();
@@ -440,7 +440,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(p3.state(), "resolved");
     });
 
-    QUnit.test('MutexedDropPrevious: 3 arrives after 2 initialization', function (assert) {
+    QUnit.test('MutexedDropPrevious: 3 arrives after 2 initialization', async function (assert) {
         assert.expect(19);
 
         var m = new concurrency.MutexedDropPrevious();
@@ -490,7 +490,7 @@ QUnit.module('core', {}, function () {
         assert.verifySteps(['p1', 'd1 resolved', 'p2', 'd2 resolved', 'p3', 'd3 resolved']);
     });
 
-    QUnit.test('MutexedDropPrevious: 2 in then of 1 with 3', function (assert) {
+    QUnit.test('MutexedDropPrevious: 2 in then of 1 with 3', async function (assert) {
         assert.expect(6);
 
         var m = new concurrency.MutexedDropPrevious();

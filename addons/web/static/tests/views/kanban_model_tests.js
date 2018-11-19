@@ -62,11 +62,11 @@ QUnit.module('Views', {
 
     QUnit.module('KanbanModel');
 
-    QUnit.test('load grouped + add a new group', function (assert) {
+    QUnit.test('load grouped + add a new group', async function (assert) {
         assert.expect(22);
 
         var calledRoutes = {};
-        var model = createModel({
+        var model = await createModel({
             Model: KanbanModel,
             data: this.data,
             mockRPC: function (route) {
@@ -126,10 +126,10 @@ QUnit.module('Views', {
         });
     });
 
-    QUnit.test('archive/restore a column', function (assert) {
+    QUnit.test('archive/restore a column', async function (assert) {
         assert.expect(4);
 
-        var model = createModel({
+        var model = await createModel({
             Model: KanbanModel,
             data: this.data,
         });
@@ -158,10 +158,10 @@ QUnit.module('Views', {
         });
     });
 
-    QUnit.test('kanban model does not allow nested groups', function (assert) {
+    QUnit.test('kanban model does not allow nested groups', async function (assert) {
         assert.expect(2);
 
-        var model = createModel({
+        var model = await createModel({
             Model: KanbanModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -188,7 +188,7 @@ QUnit.module('Views', {
         });
     });
 
-    QUnit.test('resequence columns and records', function (assert) {
+    QUnit.test('resequence columns and records', async function (assert) {
         var done = assert.async();
         assert.expect(8);
 
@@ -197,7 +197,7 @@ QUnit.module('Views', {
         this.data.partner.records.push({id: 3, foo: 'aaa', product_id: 37});
 
         var nbReseq = 0;
-        var model = createModel({
+        var model = await createModel({
             Model: KanbanModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -252,11 +252,11 @@ QUnit.module('Views', {
             });
     });
 
-    QUnit.test('add record to group', function (assert) {
+    QUnit.test('add record to group', async function (assert) {
         assert.expect(8);
 
         var self = this;
-        var model = createModel({
+        var model = await createModel({
             Model: KanbanModel,
             data: this.data,
         });

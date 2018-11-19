@@ -591,11 +591,11 @@ QUnit.module('account', {
 }, function () {
     QUnit.module('Reconciliation');
 
-    QUnit.test('Reconciliation basic rendering', function (assert) {
+    QUnit.test('Reconciliation basic rendering', async function (assert) {
         assert.expect(11);
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             'data': this.params.data,
         });
         clientAction.appendTo($('#qunit-fixture'));
@@ -624,11 +624,11 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation fields', function (assert) {
+    QUnit.test('Reconciliation fields', async function (assert) {
         assert.expect(6);
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             session: {
                 currencies: {
@@ -659,11 +659,11 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation basic data', function (assert) {
+    QUnit.test('Reconciliation basic data', async function (assert) {
         assert.expect(17);
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             session: {
                 currencies: {
@@ -743,11 +743,11 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation validate without proposition', function (assert) {
+    QUnit.test('Reconciliation validate without proposition', async function (assert) {
         assert.expect(1);
         // Test added to prevent this issue happening again: https://github.com/odoo/odoo/commit/3549688b21eb65e16b9c3f2b6462eb8d8b52cd47
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             session: {
                 currencies: {
@@ -787,11 +787,11 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation validate with proposition', function (assert) {
+    QUnit.test('Reconciliation validate with proposition', async function (assert) {
         assert.expect(1);
         // Test added to check this functionality: https://github.com/odoo/odoo/commit/2f3b469dee6f18cbccce1cdf2a81cfe57960c533
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             session: {
                 currencies: {
@@ -843,11 +843,11 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation partial', function (assert) {
+    QUnit.test('Reconciliation partial', async function (assert) {
         assert.expect(10);
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             mockRPC: function (route, args) {
                 console.log(args.method);
@@ -906,11 +906,11 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation title', function (assert) {
+    QUnit.test('Reconciliation title', async function (assert) {
         assert.expect(6);
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             'data': this.params.data,
         });
 
@@ -920,7 +920,7 @@ QUnit.module('account', {
         clientAction.$('h1.statement_name').trigger('click');
         assert.containsNone(clientAction, 'h1.statement_name:visible', "Should hide the statement name title to edit the content");
         assert.containsOnce(clientAction, 'h1.statement_name_edition:visible', "Should show the edition field of statement name");
-        testUtils.fields.editAndTrigger(clientAction.$('h1.statement_name_edition input'), 'BNK/2014/001-BB', ['input', 'blur']);
+        await testUtils.fields.editAndTrigger(clientAction.$('h1.statement_name_edition input'), 'BNK/2014/001-BB', ['input', 'blur']);
         assert.containsNone(clientAction, 'h1.statement_name_edition:visible', "Should hide the edition field of statement name");
         assert.containsOnce(clientAction, 'h1.statement_name:visible', "Should show the statement name");
         assert.strictEqual(clientAction.$('h1.statement_name:visible').text(), "BNK/2014/001-BB", "Should update the statement name");
@@ -928,12 +928,12 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation currencies', function (assert) {
+    QUnit.test('Reconciliation currencies', async function (assert) {
         assert.expect(2);
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
 
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             'data': this.params.data,
             session: this.params.session,
             translateParameters: {
@@ -961,12 +961,12 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation change partner', function (assert) {
+    QUnit.test('Reconciliation change partner', async function (assert) {
         assert.expect(17);
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
 
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             archs: {
                 'res.partner,false,list': '<tree string="Partners"><field name="display_name"/></tree>',
@@ -1008,7 +1008,7 @@ QUnit.module('account', {
         widget.$('.o_input_dropdown input').trigger('click');
         $('.ui-autocomplete .ui-menu-item a:contains(Search More):eq(1)').trigger('mouseenter').trigger('click');
         assert.strictEqual($('.modal').length, 1, "should open a SelectCreateDialog");
-        testUtils.dom.click($('.modal table.o_list_view td:contains(Camptocamp)'));
+        await testUtils.dom.click($('.modal table.o_list_view td:contains(Camptocamp)'));
         assert.strictEqual(widget.$('.o_input_dropdown input').val(), "Camptocamp", "the partner many2one should display Camptocamp");
 
         widget = clientAction.widgets[2];
@@ -1028,12 +1028,12 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation create line', function (assert) {
+    QUnit.test('Reconciliation create line', async function (assert) {
         assert.expect(23);
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
 
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             session: {
                 currencies: {
@@ -1077,7 +1077,7 @@ QUnit.module('account', {
         });
         widget.$('.create .reconcile_model_edit').trigger('click');
 
-        testUtils.fields.editInput(widget.$('.create .create_amount input'), '1100.00');
+        await testUtils.fields.editInput(widget.$('.create .create_amount input'), '1100.00');
 
         assert.strictEqual(widget.$('.accounting_view tbody .cell_right').text().trim().replace(/[\n\r\s\u00a0]+/g, ' '), "$ 1100.00", "should display the value 1100.00 in right column");
         assert.strictEqual(widget.$('.accounting_view tfoot .cell_right').text(), "$ 75.00", "should display 'Open Balance' line because the rest to reconcile is 75.00");
@@ -1087,10 +1087,10 @@ QUnit.module('account', {
         assert.ok(widget.$('caption button.btn-secondary:visible').length, "should display the 'validate' button");
 
         widget.$('.create .add_line').trigger('click').trigger('click');
-        testUtils.fields.editInput(widget.$('.create .create_amount input'), '-100');
+        await testUtils.fields.editInput(widget.$('.create .create_amount input'), '-100');
         widget.$('.create .create_account_id input').trigger('click');
         $('.ui-autocomplete .ui-menu-item a:contains(101000 Current Assets)').trigger('mouseenter').trigger('click');
-        testUtils.fields.editInput(widget.$('.create .create_label input'), 'test0');
+        await testUtils.fields.editInput(widget.$('.create .create_label input'), 'test0');
 
         assert.strictEqual(widget.$('.accounting_view tbody .cell_left:last').text().trim().replace(/[\n\r\s\u00a0]+/g, ' '), "$ 100.00", "should display the value 100.00 in left column");
         assert.strictEqual(widget.$('.accounting_view tfoot .cell_label').text(), "Open balance", "should display 'Open Balance'");
@@ -1104,10 +1104,10 @@ QUnit.module('account', {
 
         assert.strictEqual(widget.$('.create .create_amount input').val(), "175.00", "should have '175.00' as default amount value");
 
-        testUtils.fields.editInput(widget.$('.create .create_amount input'), '200');
+        await testUtils.fields.editInput(widget.$('.create .create_amount input'), '200');
         widget.$('.create .create_account_id input').trigger('click');
         $('.ui-autocomplete .ui-menu-item a:contains(101000 Current Assets)').trigger('mouseenter').trigger('click');
-        testUtils.fields.editInput(widget.$('.create .create_label input'), 'test1');
+        await testUtils.fields.editInput(widget.$('.create .create_label input'), 'test1');
 
         assert.strictEqual(widget.$('.accounting_view tbody .cell_right:last').text().trim().replace(/[\n\r\s\u00a0]+/g, ' '), "$ 200.00", "should display the value 200.00 in left column");
         assert.strictEqual(widget.$('.accounting_view tfoot .cell_label').text(), "Open balance", "should display 'Open balance'");
@@ -1117,13 +1117,13 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation create line (many2one test)', function (assert) {
+    QUnit.test('Reconciliation create line (many2one test)', async function (assert) {
         assert.expect(5);
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
         var def = $.Deferred();
 
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             session: {
                 currencies: {
@@ -1163,7 +1163,7 @@ QUnit.module('account', {
         widget.$('.create .create_account_id input').trigger('click');
         $('.ui-autocomplete .ui-menu-item a:contains(Search)').trigger('mouseenter').trigger('click');
         // select the account who does not appear in the drop drown
-        testUtils.dom.click($('.modal tr.o_data_row:contains(502)'));
+        await testUtils.dom.click($('.modal tr.o_data_row:contains(502)'));
         assert.strictEqual(widget.$('.create .create_account_id input').val(), "101200 Account Receivable", "Selected account does not change");
         // wait the name_get to render the changes
         def.resolve();
@@ -1172,12 +1172,12 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation create line with taxes', function (assert) {
+    QUnit.test('Reconciliation create line with taxes', async function (assert) {
         assert.expect(13);
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
 
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             session: {
                 currencies: {
@@ -1196,8 +1196,8 @@ QUnit.module('account', {
         widget.$('.accounting_view tfoot td:first').trigger('click');
         widget.$('.create .create_account_id input').trigger('click');
         $('.ui-autocomplete .ui-menu-item a:contains(101000 Current Assets)').trigger('mouseenter').trigger('click');
-        testUtils.fields.editInput(widget.$('.create .create_label input'), 'test1');
-        testUtils.fields.editInput(widget.$('.create .create_amount input'), '1100');
+        await testUtils.fields.editInput(widget.$('.create .create_label input'), 'test1');
+        await testUtils.fields.editInput(widget.$('.create .create_amount input'), '1100');
 
         assert.strictEqual(widget.$('.accounting_view tbody .cell_right:last').text().trim().replace(/[\n\r\s\u00a0]+/g, ' '), "$ 1100.00", "should display the value 1100.00 in left column");
         assert.strictEqual(widget.$('.accounting_view tfoot .cell_label').text(), "Open balance", "should display 'Open Balance'");
@@ -1224,12 +1224,12 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation create line from reconciliation model', function (assert) {
+    QUnit.test('Reconciliation create line from reconciliation model', async function (assert) {
         assert.expect(6);
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
 
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
         });
         clientAction.appendTo($('#qunit-fixture'));
@@ -1244,7 +1244,7 @@ QUnit.module('account', {
         assert.strictEqual(widget.$('.accounting_view tfoot .cell_label, .accounting_view tfoot .cell_left').text().replace(/[\n\r\s$,]+/g, ' '),
             "Open balance229.12", "should display the 'Open balance' line with value in left column");
 
-        testUtils.fields.editInput(widget.$('.create .create_amount input'), '100');
+        await testUtils.fields.editInput(widget.$('.create .create_amount input'), '100');
 
         assert.strictEqual(widget.$('.accounting_view tbody').text().replace(/[\n\r\s$,]+/g, ' '),
             " 101120 New ATOS Banque 1075.00 101120 New Tax 20.00% 215.00 101130 New ATOS Frais 90.91 101300 New Tax 10.00% include 9.09 ",
@@ -1266,12 +1266,12 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation manual', function (assert) {
+    QUnit.test('Reconciliation manual', async function (assert) {
         assert.expect(13);
 
         var clientAction = new ReconciliationClientAction.ManualAction(null, this.params.options);
 
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             session: this.params.session,
         });
@@ -1317,7 +1317,7 @@ QUnit.module('account', {
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation: Payment < inv1 + inv2(partial)', function (assert) {
+    QUnit.test('Reconciliation: Payment < inv1 + inv2(partial)', async function (assert) {
         assert.expect(4);
 
         /*
@@ -1336,7 +1336,7 @@ QUnit.module('account', {
              amount_str: "$ 999.00", debit: 999.0, account_code: "101200", ref: "", already_paid: false};
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             mockRPC: function (route, args) {
                 if (args.method === 'process_bank_statement_line') {
@@ -1391,19 +1391,19 @@ QUnit.module('account', {
         assert.ok($reconciliationAlert.length,
             "should display the partial reconciliation alert");
 
-        testUtils.dom.click($reconciliationAlert);
+        await testUtils.dom.click($reconciliationAlert);
 
         var $buttonReconcile = widget.$('button.o_reconcile:not(hidden)');
 
         assert.equal($buttonReconcile.length, 1,
             'The reconcile button must be visible');
 
-        testUtils.dom.click($buttonReconcile);
+        await testUtils.dom.click($buttonReconcile);
 
         clientAction.destroy();
     });
 
-    QUnit.test('Reconciliation: payment and 2 partials', function (assert) {
+    QUnit.test('Reconciliation: payment and 2 partials', async function (assert) {
         assert.expect(6);
 
         /*
@@ -1429,7 +1429,7 @@ QUnit.module('account', {
              amount_str: "$ 1200.00", debit: 1200.0, account_code: "101200", ref: "", already_paid: false};
 
         var clientAction = new ReconciliationClientAction.StatementAction(null, this.params.options);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             mockRPC: function (route, args) {
                 if (args.method === 'process_bank_statement_line') {
@@ -1498,20 +1498,20 @@ QUnit.module('account', {
         assert.equal(writeOffCreate.find('input[name=amount]').val(), -1225,
             'The right amount should be proposed for the write-off');
 
-        testUtils.dom.click(writeOffCreate.find('.create_account_id input.ui-autocomplete-input'));
-        testUtils.dom.click($('ul.ui-autocomplete li a:first'));
+        await testUtils.dom.click(writeOffCreate.find('.create_account_id input.ui-autocomplete-input'));
+        await testUtils.dom.click($('ul.ui-autocomplete li a:first'));
 
         var $buttonReconcile = widget.$('button.o_reconcile:not(hidden)');
 
         assert.equal($buttonReconcile.length, 1,
             'The reconcile button must be visible');
 
-        testUtils.dom.click($buttonReconcile);
+        await testUtils.dom.click($buttonReconcile);
 
         clientAction.destroy();
     });
 
-    QUnit.test('Manual Reconciliation: remove a prop to attain balance and reconcile', function (assert) {
+    QUnit.test('Manual Reconciliation: remove a prop to attain balance and reconcile', async function (assert) {
         assert.expect(5);
 
         // tweak the data to fit our needs
@@ -1524,7 +1524,7 @@ QUnit.module('account', {
         ];
 
         var clientAction = new ReconciliationClientAction.ManualAction(null, this.params.options);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             mockRPC: function (route, args) {
                 if (args.method === 'process_move_lines') {
@@ -1572,22 +1572,22 @@ QUnit.module('account', {
             'The right amount should be proposed for the write-off');
 
         // remove the first line, the other two will balance one another
-        testUtils.dom.click(widget.$('tr[data-line-id="999"] td:first'));
+        await testUtils.dom.click(widget.$('tr[data-line-id="999"] td:first'));
 
         var $buttonReconcile = widget.$('button.o_reconcile:not(hidden)');
         assert.equal($buttonReconcile.length, 1,
             'The reconcile button must be visible');
 
-        testUtils.dom.click($buttonReconcile);
+        await testUtils.dom.click($buttonReconcile);
 
         clientAction.destroy();
     });
 
-    QUnit.test('Manual Reconciliation: No lines for account', function (assert) {
+    QUnit.test('Manual Reconciliation: No lines for account', async function (assert) {
         assert.expect(2);
 
         var clientAction = new ReconciliationClientAction.ManualAction(null, this.params.options);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.params.data,
             session: {
                 currencies: {
@@ -1610,7 +1610,7 @@ QUnit.module('account', {
         assert.notOk('data-line-id' in emptyLine.getAttributes(),
             'Empty line should be empty');
 
-        testUtils.dom.click(emptyLine.find('td:first'));
+        await testUtils.dom.click(emptyLine.find('td:first'));
 
         // Check that a create form is here
         var writeOffCreate = widget.$('div.create .create_account_id');

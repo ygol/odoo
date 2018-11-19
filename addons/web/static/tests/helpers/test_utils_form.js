@@ -19,7 +19,7 @@ var testUtilsDom = require('web.test_utils_dom');
  *
  * @param {FormController} form
  */
-function clickEdit(form) {
+async function clickEdit(form) {
     testUtilsDom.click(form.$buttons.find('.o_form_button_edit'));
 }
 
@@ -29,7 +29,7 @@ function clickEdit(form) {
  *
  * @param {FormController} form
  */
-function clickSave(form) {
+async function clickSave(form) {
     testUtilsDom.click(form.$buttons.find('.o_form_button_save'));
 }
 
@@ -39,7 +39,7 @@ function clickSave(form) {
  *
  * @param {FormController} form
  */
-function clickCreate(form) {
+async function clickCreate(form) {
     testUtilsDom.click(form.$buttons.find('.o_form_button_create'));
 }
 
@@ -49,7 +49,7 @@ function clickCreate(form) {
  *
  * @param {FormController} form
  */
-function clickDiscard(form) {
+async function clickDiscard(form) {
     testUtilsDom.click(form.$buttons.find('.o_form_button_cancel'));
 }
 
@@ -59,7 +59,7 @@ function clickDiscard(form) {
  * @param {FormController} form
  * @param {[Object]} params given to the controller reload method
  */
-function reload(form, params) {
+async function reload(form, params) {
     form.reload(params);
 }
 

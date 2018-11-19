@@ -62,13 +62,13 @@ QUnit.module('Views', {
 }, function () {
     QUnit.module('BasicModel');
 
-    QUnit.test('can load a record', function (assert) {
+    QUnit.test('can load a record', async function (assert) {
         assert.expect(7);
 
         this.params.fieldNames = ['foo'];
         this.params.context = {active_field: 2};
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -99,12 +99,12 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('rejects loading a record with invalid id', function (assert) {
+    QUnit.test('rejects loading a record with invalid id', async function (assert) {
         assert.expect(1);
 
         this.params.res_id = 99;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -116,12 +116,12 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('notify change with many2one', function (assert) {
+    QUnit.test('notify change with many2one', async function (assert) {
         assert.expect(2);
 
         this.params.fieldNames = ['foo', 'qux'];
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -137,13 +137,13 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('notify change on many2one: unset and reset same value', function (assert) {
+    QUnit.test('notify change on many2one: unset and reset same value', async function (assert) {
         assert.expect(3);
 
         this.data.partner.records[1].qux = 1;
 
         this.params.fieldNames = ['qux'];
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -163,7 +163,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('write on a many2one', function (assert) {
+    QUnit.test('write on a many2one', async function (assert) {
         assert.expect(4);
         var self = this;
 
@@ -171,7 +171,7 @@ QUnit.module('Views', {
 
         var rpcCount = 0;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -200,7 +200,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('basic onchange', function (assert) {
+    QUnit.test('basic onchange', async function (assert) {
         assert.expect(5);
 
         this.data.partner.fields.foo.onChange = true;
@@ -211,7 +211,7 @@ QUnit.module('Views', {
         this.params.fieldNames = ['foo', 'bar'];
         this.params.context = {hello: 'world'};
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -238,7 +238,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('onchange with a many2one', function (assert) {
+    QUnit.test('onchange with a many2one', async function (assert) {
         assert.expect(5);
 
         this.data.partner.fields.product_id.onChange = true;
@@ -252,7 +252,7 @@ QUnit.module('Views', {
 
         var rpcCount = 0;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -279,7 +279,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('onchange on a one2many not in view (fieldNames)', function (assert) {
+    QUnit.test('onchange on a one2many not in view (fieldNames)', async function (assert) {
         assert.expect(6);
 
         this.data.partner.fields.foo.onChange = true;
@@ -290,7 +290,7 @@ QUnit.module('Views', {
 
         this.params.fieldNames = ['foo'];
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -312,13 +312,13 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('notifyChange on a one2many', function (assert) {
+    QUnit.test('notifyChange on a one2many', async function (assert) {
         assert.expect(9);
 
         this.data.partner.records[1].product_ids = [37];
         this.params.fieldNames = ['product_ids'];
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -395,12 +395,12 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('notifyChange on a many2one, without display_name', function (assert) {
+    QUnit.test('notifyChange on a many2one, without display_name', async function (assert) {
         assert.expect(3);
 
         this.params.fieldNames = ['product_id'];
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -425,7 +425,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('onchange on a char with an unchanged many2one', function (assert) {
+    QUnit.test('onchange on a char with an unchanged many2one', async function (assert) {
         assert.expect(2);
 
         this.data.partner.fields.foo.onChange = true;
@@ -435,7 +435,7 @@ QUnit.module('Views', {
 
         this.params.fieldNames = ['foo', 'product_id'];
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -454,7 +454,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('onchange on a char with another many2one not set to a value', function (assert) {
+    QUnit.test('onchange on a char with another many2one not set to a value', async function (assert) {
         assert.expect(2);
         this.data.partner.records[0].product_id = false;
         this.data.partner.fields.foo.onChange = true;
@@ -465,7 +465,7 @@ QUnit.module('Views', {
         this.params.fieldNames = ['foo', 'product_id'];
         this.params.res_id = 1;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -481,7 +481,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('can get a many2many', function (assert) {
+    QUnit.test('can get a many2many', async function (assert) {
         assert.expect(3);
 
         this.params.res_id = 1;
@@ -495,7 +495,7 @@ QUnit.module('Views', {
             },
         };
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -513,7 +513,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('can use command add and get many2many value with date field', function (assert) {
+    QUnit.test('can use command add and get many2many value with date field', async function (assert) {
         assert.expect(2);
 
         this.params.fieldsInfo = {
@@ -526,7 +526,7 @@ QUnit.module('Views', {
             },
         };
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -545,7 +545,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('many2many with ADD_M2M command and context with parent key', function (assert) {
+    QUnit.test('many2many with ADD_M2M command and context with parent key', async function (assert) {
         assert.expect(1);
 
         this.data.partner_type.fields.some_char = {type: "char"};
@@ -560,7 +560,7 @@ QUnit.module('Views', {
             },
         };
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -579,7 +579,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('can fetch a list', function (assert) {
+    QUnit.test('can fetch a list', async function (assert) {
         assert.expect(4);
 
         this.params.fieldNames = ['foo'];
@@ -588,7 +588,7 @@ QUnit.module('Views', {
         this.params.res_id = undefined;
         this.params.context = {active_field: 2};
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -608,7 +608,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('fetch x2manys in list, with not too many rpcs', function (assert) {
+    QUnit.test('fetch x2manys in list, with not too many rpcs', async function (assert) {
         assert.expect(3);
 
         this.data.partner.records[0].category = [12, 15];
@@ -619,7 +619,7 @@ QUnit.module('Views', {
         this.params.groupedBy = [];
         this.params.res_id = undefined;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -639,7 +639,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('can make a default_record, no onchange', function (assert) {
+    QUnit.test('can make a default_record, no onchange', async function (assert) {
         assert.expect(5);
 
         this.params.context = {};
@@ -647,7 +647,7 @@ QUnit.module('Views', {
         this.params.res_id = undefined;
         this.params.type = 'record';
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -669,7 +669,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('default_get returning a non requested field', function (assert) {
+    QUnit.test('default_get returning a non requested field', async function (assert) {
         // 'default_get' returns a default value for the fields given in
         // arguments. It should not return a value for fields that have not be
         // requested. However, it happens (e.g. res.users), and the webclient
@@ -682,7 +682,7 @@ QUnit.module('Views', {
         this.params.res_id = undefined;
         this.params.type = 'record';
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -705,7 +705,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('can make a default_record with default relational values', function (assert) {
+    QUnit.test('can make a default_record with default relational values', async function (assert) {
         assert.expect(7);
 
         this.data.partner.fields.product_id.default = 37;
@@ -735,7 +735,7 @@ QUnit.module('Views', {
         };
         this.params.viewType = 'form';
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -762,7 +762,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('default_record, with onchange on many2one', function (assert) {
+    QUnit.test('default_record, with onchange on many2one', async function (assert) {
         assert.expect(1);
 
         // the onchange is done by the mockRPC because we want to return a value
@@ -774,7 +774,7 @@ QUnit.module('Views', {
         this.params.res_id = undefined;
         this.params.type = 'record';
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -792,7 +792,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('default record: batch namegets on same model and res_id', function (assert) {
+    QUnit.test('default record: batch namegets on same model and res_id', async function (assert) {
         assert.expect(3);
 
         var rpcCount = 0;
@@ -801,7 +801,7 @@ QUnit.module('Views', {
         fields.product_id.default = 37;
         fields.other_product_id.default = 41;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -829,12 +829,12 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('undoing a change makes the record not dirty', function (assert) {
+    QUnit.test('undoing a change makes the record not dirty', async function (assert) {
         assert.expect(4);
 
         this.params.fieldNames = ['foo'];
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -851,13 +851,13 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('isDirty works correctly on list made empty', function (assert) {
+    QUnit.test('isDirty works correctly on list made empty', async function (assert) {
         assert.expect(3);
 
         this.params.fieldNames = ['category'];
         this.params.res_id = 1;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -876,12 +876,12 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('can duplicate a record', function (assert) {
+    QUnit.test('can duplicate a record', async function (assert) {
         assert.expect(4);
 
         this.params.fieldNames = ['foo'];
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -901,13 +901,13 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('record with many2one set to some value, then set it to none', function (assert) {
+    QUnit.test('record with many2one set to some value, then set it to none', async function (assert) {
         assert.expect(3);
 
         this.params.fieldNames = ['product_id'];
 
         var self = this;
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -928,7 +928,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('internal state of groups remains when reloading', function (assert) {
+    QUnit.test('internal state of groups remains when reloading', async function (assert) {
         assert.expect(10);
 
         this.params.fieldNames = ['foo'];
@@ -938,7 +938,7 @@ QUnit.module('Views', {
         this.params.res_id = undefined;
 
         var filterEnabled = false;
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -997,14 +997,14 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('group on date field with magic grouping method', function (assert) {
+    QUnit.test('group on date field with magic grouping method', async function (assert) {
         assert.expect(1);
 
         this.params.fieldNames = ['foo'];
         this.params.groupedBy = ['date:month'];
         this.params.res_id = undefined;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1021,7 +1021,7 @@ QUnit.module('Views', {
     });
 
 
-    QUnit.test('read group when grouped by a selection field', function (assert) {
+    QUnit.test('read group when grouped by a selection field', async function (assert) {
         assert.expect(5);
 
         this.data.partner.fields.selection = {
@@ -1030,7 +1030,7 @@ QUnit.module('Views', {
         };
         this.data.partner.records[0].selection = 'a';
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -1058,7 +1058,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('create record, then save', function (assert) {
+    QUnit.test('create record, then save', async function (assert) {
         assert.expect(5);
 
         this.params.fieldNames = ['product_ids'];
@@ -1067,7 +1067,7 @@ QUnit.module('Views', {
         this.params.context = {active_field: 2};
 
         var id;
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1099,14 +1099,14 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('write commands on a one2many', function (assert) {
+    QUnit.test('write commands on a one2many', async function (assert) {
         assert.expect(4);
 
         this.data.partner.records[1].product_ids = [37];
 
         this.params.fieldNames = ['product_ids'];
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1142,10 +1142,10 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('create commands on a one2many', function (assert) {
+    QUnit.test('create commands on a one2many', async function (assert) {
         assert.expect(3);
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1190,7 +1190,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('onchange with a one2many on a new record', function (assert) {
+    QUnit.test('onchange with a one2many on a new record', async function (assert) {
         assert.expect(4);
 
         this.data.partner.fields.total.default = 50;
@@ -1223,7 +1223,7 @@ QUnit.module('Views', {
             type: 'record',
         };
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1259,10 +1259,10 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('dates are properly loaded and parsed (record)', function (assert) {
+    QUnit.test('dates are properly loaded and parsed (record)', async function (assert) {
         assert.expect(2);
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -1290,10 +1290,10 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('dates are properly loaded and parsed (list)', function (assert) {
+    QUnit.test('dates are properly loaded and parsed (list)', async function (assert) {
         assert.expect(2);
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -1317,10 +1317,10 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('dates are properly loaded and parsed (default_get)', function (assert) {
+    QUnit.test('dates are properly loaded and parsed (default_get)', async function (assert) {
         assert.expect(1);
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -1339,12 +1339,12 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('default_get on x2many may return a list of ids', function (assert) {
+    QUnit.test('default_get on x2many may return a list of ids', async function (assert) {
         assert.expect(1);
 
         this.data.partner.fields.category.default = [12, 14];
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -1365,7 +1365,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('default_get: fetch many2one with default (empty & not) inside x2manys', function (assert) {
+    QUnit.test('default_get: fetch many2one with default (empty & not) inside x2manys', async function (assert) {
         assert.expect(4);
 
         this.data.partner.fields.o2m = {
@@ -1377,7 +1377,7 @@ QUnit.module('Views', {
         };
         this.data.partner.fields.category.type = 'many2one';
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1423,14 +1423,14 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('default_get: fetch x2manys inside x2manys', function (assert) {
+    QUnit.test('default_get: fetch x2manys inside x2manys', async function (assert) {
         assert.expect(3);
 
         this.data.partner.fields.o2m = {
             string: "O2M", type: 'one2many', relation: 'partner', default: [[6, 0, [1]]],
         };
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -1471,13 +1471,13 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('contexts and domains can be properly fetched', function (assert) {
+    QUnit.test('contexts and domains can be properly fetched', async function (assert) {
         assert.expect(8);
 
         this.data.partner.fields.product_id.context = "{'hello': 'world', 'test': foo}";
         this.data.partner.fields.product_id.domain = "[['hello', 'like', 'world'], ['test', 'like', foo]]";
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -1506,7 +1506,7 @@ QUnit.module('Views', {
         model.destroy();
 
         // Try again with xml override of field domain and context
-        model = createModel({
+        model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -1535,7 +1535,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('dont write on readonly fields (write and create)', function (assert) {
+    QUnit.test('dont write on readonly fields (write and create)', async function (assert) {
         assert.expect(6);
 
         this.params.fieldNames = ['foo', 'bar'];
@@ -1554,7 +1554,7 @@ QUnit.module('Views', {
             }
         };
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1601,7 +1601,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('dont write on readonly fields unless save attribute is set', function (assert) {
+    QUnit.test('dont write on readonly fields unless save attribute is set', async function (assert) {
         assert.expect(6);
 
         this.params.fieldNames = ['foo', 'bar'];
@@ -1621,7 +1621,7 @@ QUnit.module('Views', {
             }
         };
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1669,10 +1669,10 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('default_get with one2many values', function (assert) {
+    QUnit.test('default_get with one2many values', async function (assert) {
         assert.expect(1);
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1708,11 +1708,11 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('call makeRecord with a pre-fetched many2one field', function (assert) {
+    QUnit.test('call makeRecord with a pre-fetched many2one field', async function (assert) {
         assert.expect(3);
         var rpcCount = 0;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1743,11 +1743,11 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('call makeRecord with a many2many field', function (assert) {
+    QUnit.test('call makeRecord with a many2many field', async function (assert) {
         assert.expect(5);
         var rpcCount = 0;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1783,11 +1783,11 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('call makeRecord with a pre-fetched many2many field', function (assert) {
+    QUnit.test('call makeRecord with a pre-fetched many2many field', async function (assert) {
         assert.expect(5);
         var rpcCount = 0;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1829,12 +1829,12 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('check id, active_id, active_ids, active_model values in record\'s context', function (assert) {
+    QUnit.test('check id, active_id, active_ids, active_model values in record\'s context', async function (assert) {
         assert.expect(2);
 
         this.data.partner.fields.product_id.context = "{'id': id, 'active_id': active_id, 'active_ids': active_ids, 'active_model': active_model}";
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -1863,13 +1863,13 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('load model with many2many field properly fetched', function (assert) {
+    QUnit.test('load model with many2many field properly fetched', async function (assert) {
         assert.expect(2);
 
         this.params.fieldNames = ['category'];
         this.params.res_id = 1;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -1884,7 +1884,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('data should contain all fields in view, default being false', function (assert) {
+    QUnit.test('data should contain all fields in view, default being false', async function (assert) {
         assert.expect(1);
 
         this.data.partner.fields.product_ids.default = [
@@ -1911,7 +1911,7 @@ QUnit.module('Views', {
             viewType: 'form',
         };
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -1925,13 +1925,13 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('changes are discarded when reloading from a new record', function (assert) {
+    QUnit.test('changes are discarded when reloading from a new record', async function (assert) {
         // practical use case: click on 'Create' to open a form view in edit
         // mode (new record), click on 'Discard', then open an existing record
         assert.expect(2);
 
         this.data.partner.fields.foo.default = 'default';
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -1958,13 +1958,13 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('has a proper evaluation context', function (assert) {
+    QUnit.test('has a proper evaluation context', async function (assert) {
         assert.expect(1);
 
         this.params.fieldNames = Object.keys(this.data.partner.fields);
         this.params.res_id = 1;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -1992,7 +1992,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('x2manys in contexts and domains are correctly evaluated', function (assert) {
+    QUnit.test('x2manys in contexts and domains are correctly evaluated', async function (assert) {
         assert.expect(4);
 
         this.data.partner.records[0].product_ids = [37, 41];
@@ -2015,7 +2015,7 @@ QUnit.module('Views', {
         this.params.viewType = 'form';
         this.params.res_id = 1;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -2043,7 +2043,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('fetch references in list, with not too many rpcs', function (assert) {
+    QUnit.test('fetch references in list, with not too many rpcs', async function (assert) {
         assert.expect(5);
 
         this.data.partner.records[0].reference = 'product,37';
@@ -2054,7 +2054,7 @@ QUnit.module('Views', {
         this.params.groupedBy = [];
         this.params.res_id = undefined;
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -2078,7 +2078,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('reload a new record', function (assert) {
+    QUnit.test('reload a new record', async function (assert) {
         assert.expect(6);
 
         this.params.context = {};
@@ -2086,7 +2086,7 @@ QUnit.module('Views', {
         this.params.res_id = undefined;
         this.params.type = 'record';
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route, args) {
@@ -2112,7 +2112,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('default_get with value false for a one2many', function (assert) {
+    QUnit.test('default_get with value false for a one2many', async function (assert) {
         assert.expect(1);
 
         this.data.partner.fields.product_ids.default = false;
@@ -2120,7 +2120,7 @@ QUnit.module('Views', {
         this.params.res_id = undefined;
         this.params.type = 'record';
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });
@@ -2133,14 +2133,14 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('only x2many lists (static) should be sorted client-side', function (assert) {
+    QUnit.test('only x2many lists (static) should be sorted client-side', async function (assert) {
         assert.expect(1);
 
         this.params.modelName = 'partner_type';
         this.params.res_id = undefined;
         this.params.orderedBy = [{name: 'display_name', asc: true}];
 
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
             mockRPC: function (route) {
@@ -2167,7 +2167,7 @@ QUnit.module('Views', {
         model.destroy();
     });
 
-    QUnit.test('onchange on a boolean field', function (assert) {
+    QUnit.test('onchange on a boolean field', async function (assert) {
         assert.expect(2);
 
         var newFields = {
@@ -2195,7 +2195,7 @@ QUnit.module('Views', {
         this.params.res_id = 1;
         this.params.fieldNames = ['foobool', 'foobool2'];
         this.params.fields = this.data.partner.fields;
-        var model = createModel({
+        var model = await createModel({
             Model: BasicModel,
             data: this.data,
         });

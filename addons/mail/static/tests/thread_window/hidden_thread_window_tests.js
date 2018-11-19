@@ -31,7 +31,7 @@ QUnit.module('Hidden', {
         this.services = mailTestUtils.getMailServices();
         this.ORIGINAL_THREAD_WINDOW_APPENDTO = this.services.mail_service.prototype.THREAD_WINDOW_APPENDTO;
 
-        this.createParent = function (params) {
+        this.createParent = async function (params) {
             var widget = new Widget();
 
             // in non-debug mode, append thread windows in qunit-fixture
@@ -43,7 +43,7 @@ QUnit.module('Hidden', {
                 self.services.mail_service.prototype.THREAD_WINDOW_APPENDTO = '#qunit-fixture';
             }
 
-            testUtils.mock.addMockEnvironment(widget, params);
+            await testUtils.mock.addMockEnvironment(widget, params);
             return widget;
         };
     },
@@ -53,7 +53,7 @@ QUnit.module('Hidden', {
     },
 });
 
-QUnit.test('hidden thread windows dropdown when not enough horizontal space (version 1)', function (assert) {
+QUnit.test('hidden thread windows dropdown when not enough horizontal space (version 1)', async function (assert) {
     // This test has hard-set global width, so that it does not depend on
     // the width of the screen: at most 2 thread windows visible at the
     // same time, and additional thread windows are in hidden while and
@@ -83,7 +83,7 @@ QUnit.test('hidden thread windows dropdown when not enough horizontal space (ver
         },
     };
 
-    var parent = this.createParent({
+    var parent = await this.createParent({
         data: this.data,
         services: this.services,
     });
@@ -131,7 +131,7 @@ QUnit.test('hidden thread windows dropdown when not enough horizontal space (ver
     testUtils.mock.unpatch(this.services.mail_service);
 });
 
-QUnit.test('hidden thread windows dropdown when not enough horizontal space (version 2)', function (assert) {
+QUnit.test('hidden thread windows dropdown when not enough horizontal space (version 2)', async function (assert) {
     // This is almost the same test as the one before, except there are
     // at most 3 thread windows visible, and 2 thread windows are visible
     // when it shows the 'hidden thread window' button.
@@ -167,7 +167,7 @@ QUnit.test('hidden thread windows dropdown when not enough horizontal space (ver
         },
     };
 
-    var parent = this.createParent({
+    var parent = await this.createParent({
         data: this.data,
         services: this.services,
     });

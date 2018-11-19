@@ -32,7 +32,7 @@ QUnit.module('Basic', {
         this.services = mailTestUtils.getMailServices();
         this.ORIGINAL_THREAD_WINDOW_APPENDTO = this.services.mail_service.prototype.THREAD_WINDOW_APPENDTO;
 
-        this.createParent = function (params) {
+        this.createParent = async function (params) {
             var widget = new Widget();
 
             // in non-debug mode, append thread windows in qunit-fixture
@@ -44,7 +44,7 @@ QUnit.module('Basic', {
                 self.services.mail_service.prototype.THREAD_WINDOW_APPENDTO = '#qunit-fixture';
             }
 
-            testUtils.mock.addMockEnvironment(widget, params);
+            await testUtils.mock.addMockEnvironment(widget, params);
             return widget;
         };
     },
@@ -54,7 +54,7 @@ QUnit.module('Basic', {
     },
 });
 
-QUnit.test('basic rendering thread window', function (assert) {
+QUnit.test('basic rendering thread window', async function (assert) {
     assert.expect(10);
 
     var parent = this.createParent({
@@ -97,7 +97,7 @@ QUnit.test('basic rendering thread window', function (assert) {
     parent.destroy();
 });
 
-QUnit.test('close thread window using ESCAPE key', function (assert) {
+QUnit.test('close thread window using ESCAPE key', async function (assert) {
     assert.expect(5);
 
     var parent = this.createParent({
@@ -121,7 +121,7 @@ QUnit.test('close thread window using ESCAPE key', function (assert) {
         "there should be a thread window that is opened");
 
     // focus on the thread window and press ESCAPE
-    testUtils.dom.click($('.o_thread_window .o_composer_text_field'));
+    await testUtils.dom.click($('.o_thread_window .o_composer_text_field'));
     assert.strictEqual(document.activeElement,
         $('.o_thread_window .o_composer_text_field')[0],
         "thread window's input should now be focused");
@@ -135,7 +135,7 @@ QUnit.test('close thread window using ESCAPE key', function (assert) {
     parent.destroy();
 });
 
-QUnit.test('thread window\'s input can still be focused when the UI is blocked', function (assert) {
+QUnit.test('thread window\'s input can still be focused when the UI is blocked', async function (assert) {
     assert.expect(2);
 
     var parent = this.createParent({
@@ -150,7 +150,7 @@ QUnit.test('thread window\'s input can still be focused when the UI is blocked',
     channel.detach();
 
     var $input = $('<input/>', {type: 'text'}).appendTo($dom);
-    testUtils.dom.click($input.focus());
+    await testUtils.dom.click($input.focus());
     assert.strictEqual(document.activeElement, $input[0],
         "fake input should be focused");
 
@@ -159,7 +159,7 @@ QUnit.test('thread window\'s input can still be focused when the UI is blocked',
     // makes no sense, this test is just about
     // making sure that the code which forces the
     // focus on click is not removed
-    testUtils.dom.click($('.o_thread_window .o_composer_text_field'));
+    await testUtils.dom.click($('.o_thread_window .o_composer_text_field'));
     assert.strictEqual(document.activeElement,
         $('.o_thread_window .o_composer_text_field')[0],
         "thread window's input should now be focused");
@@ -168,7 +168,7 @@ QUnit.test('thread window\'s input can still be focused when the UI is blocked',
     parent.destroy();
 });
 
-QUnit.test('emoji popover should open correctly in thread windows', function (assert) {
+QUnit.test('emoji popover should open correctly in thread windows', async function (assert) {
     assert.expect(1);
 
     var parent = this.createParent({
@@ -181,7 +181,7 @@ QUnit.test('emoji popover should open correctly in thread windows', function (as
     channel.detach();
 
     var $emojiButton = $('.o_composer_button_emoji');
-    testUtils.dom.click($emojiButton.trigger('focusin').focus());
+    await testUtils.dom.click($emojiButton.trigger('focusin').focus());
     var $popover = $('.o_mail_emoji_container');
 
     var done = assert.async();
@@ -193,7 +193,7 @@ QUnit.test('emoji popover should open correctly in thread windows', function (as
     }, 0);
 });
 
-QUnit.test('do not increase unread counter when receiving message with myself as author', function (assert) {
+QUnit.test('do not increase unread counter when receiving message with myself as author', async function (assert) {
     assert.expect(4);
 
     var parent = this.createParent({
@@ -235,7 +235,7 @@ QUnit.test('do not increase unread counter when receiving message with myself as
     parent.destroy();
 });
 
-QUnit.test('do not increment unread counter with focus on thread window', function (assert) {
+QUnit.test('do not increment unread counter with focus on thread window', async function (assert) {
     // 'hard' focus means that the user has clicked on the thread window in
     // order to set the focus on it.
     assert.expect(2);
@@ -254,7 +254,7 @@ QUnit.test('do not increment unread counter with focus on thread window', functi
         "thread should have unread counter to 0 initially");
 
     // hard focus on thread window composer
-    testUtils.dom.click($('.o_composer_text_field'));
+    await testUtils.dom.click($('.o_composer_text_field'));
 
     // simulate receiving message from someone else
     var messageData = {
@@ -274,7 +274,7 @@ QUnit.test('do not increment unread counter with focus on thread window', functi
     parent.destroy();
 });
 
-QUnit.test('do not mark as read the newly open thread window from received message', function (assert) {
+QUnit.test('do not mark as read the newly open thread window from received message', async function (assert) {
     assert.expect(5);
 
     this.data['mail.channel'] = {
@@ -346,14 +346,14 @@ QUnit.test('do not mark as read the newly open thread window from received messa
     assert.strictEqual($threadWindow.find('.o_thread_window_title').text().replace(/\s/g, ''), '#DM(1)',
         "open DM chat window should have one unread message");
 
-    testUtils.dom.click($threadWindow.find('.o_thread_composer'));
+    await testUtils.dom.click($threadWindow.find('.o_thread_composer'));
     assert.strictEqual($threadWindow.find('.o_thread_window_title').text().replace(/\s/g, ''), '#DM',
         "open DM chat window should have message marked as read on composer focus");
 
     parent.destroy();
 });
 
-QUnit.test('show document link of message linked to a document', function (assert) {
+QUnit.test('show document link of message linked to a document', async function (assert) {
     assert.expect(6);
 
     this.data['mail.channel'] = {

@@ -9,7 +9,7 @@ QUnit.module('fields', {}, function () {
 
 QUnit.module('field_utils');
 
-QUnit.test('format integer', function(assert) {
+QUnit.test('format integer', async function(assert) {
     assert.expect(5);
 
     var originalGrouping = core._t.database.parameters.grouping;
@@ -29,7 +29,7 @@ QUnit.test('format integer', function(assert) {
     core._t.database.parameters.grouping = originalGrouping;
 });
 
-QUnit.test('format float', function(assert) {
+QUnit.test('format float', async function(assert) {
     assert.expect(5);
 
     var originalParameters = $.extend(true, {}, core._t.database.parameters);
@@ -54,7 +54,7 @@ QUnit.test('format float', function(assert) {
     core._t.database.parameters = originalParameters;
 });
 
-QUnit.test("format_datetime", function (assert) {
+QUnit.test("format_datetime", async function (assert) {
     assert.expect(1);
 
     var date_string = "2009-05-04 12:34:23";
@@ -63,7 +63,7 @@ QUnit.test("format_datetime", function (assert) {
     assert.strictEqual(str, moment(date).format("MM/DD/YYYY HH:mm:ss"));
 });
 
-QUnit.test("format_datetime (with different timezone offset)", function (assert) {
+QUnit.test("format_datetime (with different timezone offset)", async function (assert) {
     assert.expect(2);
 
     // mock the date format to avoid issues due to localisation
@@ -88,7 +88,7 @@ QUnit.test("format_datetime (with different timezone offset)", function (assert)
     core._t.database.parameters.date_format = dateFormat;
 });
 
-QUnit.test("format_many2one", function (assert) {
+QUnit.test("format_many2one", async function (assert) {
     assert.expect(2);
 
     assert.strictEqual('', fieldUtils.format.many2one(null));
@@ -97,20 +97,20 @@ QUnit.test("format_many2one", function (assert) {
     }));
 });
 
-QUnit.test('format monetary', function(assert) {
+QUnit.test('format monetary', async function(assert) {
     assert.expect(1);
 
     assert.strictEqual(fieldUtils.format.monetary(false), '');
 });
 
-QUnit.test('format char', function(assert) {
+QUnit.test('format char', async function(assert) {
     assert.expect(1);
 
     assert.strictEqual(fieldUtils.format.char(), '',
         "undefined char should be formatted as an empty string");
 });
 
-QUnit.test('format many2many', function(assert) {
+QUnit.test('format many2many', async function(assert) {
     assert.expect(3);
 
     assert.strictEqual(fieldUtils.format.many2many({data: []}), 'No records');
@@ -118,7 +118,7 @@ QUnit.test('format many2many', function(assert) {
     assert.strictEqual(fieldUtils.format.many2many({data: [1, 2]}), '2 records');
 });
 
-QUnit.test('format one2many', function(assert) {
+QUnit.test('format one2many', async function(assert) {
     assert.expect(3);
 
     assert.strictEqual(fieldUtils.format.one2many({data: []}), 'No records');
@@ -126,7 +126,7 @@ QUnit.test('format one2many', function(assert) {
     assert.strictEqual(fieldUtils.format.one2many({data: [1, 2]}), '2 records');
 });
 
-QUnit.test('format binary', function (assert) {
+QUnit.test('format binary', async function (assert) {
     assert.expect(1);
 
     // base64 estimated size (bytes) = value.length / 1.37 (http://en.wikipedia.org/wiki/Base64#MIME)
@@ -134,7 +134,7 @@ QUnit.test('format binary', function (assert) {
     assert.strictEqual(fieldUtils.format.binary('Cg=='), '2.92 Bytes');
 });
 
-QUnit.test('format percentage', function (assert) {
+QUnit.test('format percentage', async function (assert) {
     assert.expect(9);
 
     assert.strictEqual(fieldUtils.format.percentage(0), '0%');
@@ -153,7 +153,7 @@ QUnit.test('format percentage', function (assert) {
     );
 });
 
-QUnit.test('parse float', function(assert) {
+QUnit.test('parse float', async function(assert) {
     assert.expect(10);
 
     var originalParameters = _.clone(core._t.database.parameters);
@@ -189,7 +189,7 @@ QUnit.test('parse float', function(assert) {
     _.extend(core._t.database.parameters, originalParameters);
 });
 
-QUnit.test('parse integer', function(assert) {
+QUnit.test('parse integer', async function(assert) {
     assert.expect(11);
 
     var originalParameters = _.clone(core._t.database.parameters);
@@ -230,7 +230,7 @@ QUnit.test('parse integer', function(assert) {
     _.extend(core._t.database.parameters, originalParameters);
 });
 
-QUnit.test('parse monetary', function(assert) {
+QUnit.test('parse monetary', async function(assert) {
     assert.expect(11);
     var originalCurrencies = session.currencies;
     session.currencies = {
@@ -261,7 +261,7 @@ QUnit.test('parse monetary', function(assert) {
     session.currencies = originalCurrencies;
 });
 
-QUnit.test('parse percentage', function(assert) {
+QUnit.test('parse percentage', async function(assert) {
     assert.expect(7);
 
     assert.strictEqual(fieldUtils.parse.percentage(""), 0);

@@ -52,10 +52,10 @@ QUnit.module('lunch', {
     },
 }, function () {
 
-    QUnit.test("empty previous_order widget", function (assert) {
+    QUnit.test("empty previous_order widget", async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             arch: '<form>' +
                     '<sheet>' +
@@ -83,10 +83,10 @@ QUnit.module('lunch', {
         form.destroy();
     });
 
-    QUnit.test("add an order line with previous_order widget", function (assert) {
+    QUnit.test("add an order line with previous_order widget", async function (assert) {
         assert.expect(4);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             arch: '<form>' +
                     '<sheet>' +
@@ -132,7 +132,7 @@ QUnit.module('lunch', {
             "there should be a vignette");
 
         // add an order
-        testUtils.dom.click(form.$('.o_lunch_vignette .o_add_button'));
+        await testUtils.dom.click(form.$('.o_lunch_vignette .o_add_button'));
 
         assert.containsOnce(form, '.o_list_view tr.o_data_row',
             "there should be one new row in the one2many list");

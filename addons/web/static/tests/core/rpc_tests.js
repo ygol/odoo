@@ -7,7 +7,7 @@ QUnit.module('core', {}, function () {
 
     QUnit.module('RPC Builder');
 
-    QUnit.test('basic rpc (route)', function (assert) {
+    QUnit.test('basic rpc (route)', async function (assert) {
         assert.expect(1);
 
         var query = rpc.buildQuery({
@@ -16,7 +16,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(query.route, '/my/route', "should have the proper route");
     });
 
-    QUnit.test('rpc on route with parameters', function (assert) {
+    QUnit.test('rpc on route with parameters', async function (assert) {
         assert.expect(1);
 
         var query = rpc.buildQuery({
@@ -28,7 +28,7 @@ QUnit.module('core', {}, function () {
                     "should transfer the proper parameters");
     });
 
-    QUnit.test('basic rpc, with no context', function (assert) {
+    QUnit.test('basic rpc, with no context', async function (assert) {
         assert.expect(1);
 
         var query = rpc.buildQuery({
@@ -40,7 +40,7 @@ QUnit.module('core', {}, function () {
             "does not automatically add a context");
     });
 
-    QUnit.test('basic rpc, with context', function (assert) {
+    QUnit.test('basic rpc, with context', async function (assert) {
         assert.expect(1);
 
         var query = rpc.buildQuery({
@@ -53,7 +53,7 @@ QUnit.module('core', {}, function () {
             "properly transfer the context");
     });
 
-    QUnit.test('basic rpc, with context, part 2', function (assert) {
+    QUnit.test('basic rpc, with context, part 2', async function (assert) {
         assert.expect(1);
 
         var query = rpc.buildQuery({
@@ -67,7 +67,7 @@ QUnit.module('core', {}, function () {
 
     });
 
-    QUnit.test('basic rpc (method of model)', function (assert) {
+    QUnit.test('basic rpc (method of model)', async function (assert) {
         assert.expect(3);
 
         var query = rpc.buildQuery({
@@ -84,7 +84,7 @@ QUnit.module('core', {}, function () {
             "should correctly specify the method");
     });
 
-    QUnit.test('rpc with args and kwargs', function (assert) {
+    QUnit.test('rpc with args and kwargs', async function (assert) {
         assert.expect(4);
         var query = rpc.buildQuery({
             model: 'partner',
@@ -103,7 +103,7 @@ QUnit.module('core', {}, function () {
             "should call with correct kargs");
     });
 
-    QUnit.test('search_read controller', function (assert) {
+    QUnit.test('search_read controller', async function (assert) {
         assert.expect(1);
         var query = rpc.buildQuery({
             route: '/web/dataset/search_read',
@@ -125,7 +125,7 @@ QUnit.module('core', {}, function () {
         }, "should have correct args");
     });
 
-    QUnit.test('search_read method', function (assert) {
+    QUnit.test('search_read method', async function (assert) {
         assert.expect(1);
         var query = rpc.buildQuery({
             model: 'partner',
@@ -150,7 +150,7 @@ QUnit.module('core', {}, function () {
         }, "should have correct kwargs");
     });
 
-    QUnit.test('search_read with args', function (assert) {
+    QUnit.test('search_read with args', async function (assert) {
         assert.expect(1);
         var query = rpc.buildQuery({
             model: 'partner',
@@ -171,7 +171,7 @@ QUnit.module('core', {}, function () {
         }, "should have correct args");
     });
 
-    QUnit.test('read_group', function (assert) {
+    QUnit.test('read_group', async function (assert) {
         assert.expect(2);
 
         var query = rpc.buildQuery({
@@ -200,7 +200,7 @@ QUnit.module('core', {}, function () {
             "should call correct route");
     });
 
-    QUnit.test('read_group with kwargs', function (assert) {
+    QUnit.test('read_group with kwargs', async function (assert) {
         assert.expect(1);
 
         var query = rpc.buildQuery({
@@ -227,7 +227,7 @@ QUnit.module('core', {}, function () {
         }, "should have correct args");
     });
 
-    QUnit.test('read_group with no domain, nor fields', function (assert) {
+    QUnit.test('read_group with no domain, nor fields', async function (assert) {
         assert.expect(7);
         var query = rpc.buildQuery({
             model: 'partner',
@@ -243,7 +243,7 @@ QUnit.module('core', {}, function () {
         assert.deepEqual(query.params.kwargs.lazy, undefined, "should not enforce a default value for lazy");
     });
 
-    QUnit.test('read_group with args and kwargs', function (assert) {
+    QUnit.test('read_group with args and kwargs', async function (assert) {
         assert.expect(9);
         var query = rpc.buildQuery({
             model: 'partner',
@@ -284,7 +284,7 @@ QUnit.module('core', {}, function () {
         assert.deepEqual(query.params.kwargs.groupby, undefined, "should not enforce a default value for  groupby");
     });
 
-    QUnit.test('search_read with no domain, nor fields', function (assert) {
+    QUnit.test('search_read with no domain, nor fields', async function (assert) {
         assert.expect(5);
         var query = rpc.buildQuery({
             model: 'partner',
@@ -298,7 +298,7 @@ QUnit.module('core', {}, function () {
         assert.deepEqual(query.params.kwargs.order, undefined, "should not enforce a default value for orderby");
     });
 
-    QUnit.test('search_read controller with no domain, nor fields', function (assert) {
+    QUnit.test('search_read controller with no domain, nor fields', async function (assert) {
         assert.expect(5);
         var query = rpc.buildQuery({
             model: 'partner',

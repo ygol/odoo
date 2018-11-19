@@ -89,10 +89,10 @@ QUnit.module('Views', {
 }, function () {
     QUnit.module('PivotView');
 
-    QUnit.test('simple pivot rendering', function (assert) {
+    QUnit.test('simple pivot rendering', async function (assert) {
         assert.expect(3);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -113,10 +113,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('pivot rendering with widget', function (assert) {
+    QUnit.test('pivot rendering with widget', async function (assert) {
         assert.expect(1);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -130,10 +130,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('pivot view without "string" attribute', function (assert) {
+    QUnit.test('pivot view without "string" attribute', async function (assert) {
         assert.expect(1);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -147,10 +147,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('pivot view add computed fields explicitly defined as measure', function (assert) {
+    QUnit.test('pivot view add computed fields explicitly defined as measure', async function (assert) {
         assert.expect(1);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -163,10 +163,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('clicking on a cell triggers a do_action', function (assert) {
+    QUnit.test('clicking on a cell triggers a do_action', async function (assert) {
         assert.expect(2);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -208,15 +208,15 @@ QUnit.module('Views', {
 
         assert.hasClass(pivot.$el,'o_enable_linking',
             "root node should have classname 'o_enable_linking'");
-        testUtils.dom.click(pivot.$('.o_pivot_cell_value:contains(12)')); // should trigger a do_action
+        await testUtils.dom.click(pivot.$('.o_pivot_cell_value:contains(12)')); // should trigger a do_action
 
         pivot.destroy();
     });
 
-    QUnit.test('pivot view with disable_linking="True"', function (assert) {
+    QUnit.test('pivot view with disable_linking="True"', async function (assert) {
         assert.expect(2);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -234,16 +234,16 @@ QUnit.module('Views', {
             "root node should not have classname 'o_enable_linking'");
         assert.containsOnce(pivot, '.o_pivot_cell_value',
             "should have one cell");
-        testUtils.dom.click(pivot.$('.o_pivot_cell_value')); // should not trigger a do_action
+        await testUtils.dom.click(pivot.$('.o_pivot_cell_value')); // should not trigger a do_action
 
         pivot.destroy();
     });
 
-    QUnit.test('pivot view grouped by date field', function (assert) {
+    QUnit.test('pivot view grouped by date field', async function (assert) {
         assert.expect(2);
 
         var data = this.data;
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -262,10 +262,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('without measures, pivot view uses __count by default', function (assert) {
+    QUnit.test('without measures, pivot view uses __count by default', async function (assert) {
         assert.expect(2);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -284,11 +284,11 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('pivot view can be reloaded', function (assert) {
+    QUnit.test('pivot view can be reloaded', async function (assert) {
         assert.expect(4);
         var readGroupCount = 0;
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -305,17 +305,17 @@ QUnit.module('Views', {
                     "should contain a pivot cell with the number of all records");
         assert.strictEqual(readGroupCount, 1, "should have done 1 rpc");
 
-        testUtils.pivot.reload(pivot, {domain: [['foo', '>', 10]]});
+        await testUtils.pivot.reload(pivot, {domain: [['foo', '>', 10]]});
         assert.strictEqual(pivot.$('td.o_pivot_cell_value:contains(2)').length, 1,
                     "should contain a pivot cell with the number of remaining records");
         assert.strictEqual(readGroupCount, 2, "should have done 2 rpcs");
         pivot.destroy();
     });
 
-    QUnit.test('pivot view grouped by many2one field', function (assert) {
+    QUnit.test('pivot view grouped by many2one field', async function (assert) {
         assert.expect(3);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -334,12 +334,12 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('basic folding/unfolding', function (assert) {
+    QUnit.test('basic folding/unfolding', async function (assert) {
         assert.expect(7);
 
         var rpcCount = 0;
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -357,12 +357,12 @@ QUnit.module('Views', {
             "should have 3 rows: 1 for the opened header, and 2 for data");
 
         // click on the opened header to close it
-        testUtils.dom.click(pivot.$('.o_pivot_header_cell_opened'));
+        await testUtils.dom.click(pivot.$('.o_pivot_header_cell_opened'));
 
         assert.containsOnce(pivot, 'tbody tr', "should have 1 row");
 
         // click on closed header to open dropdown
-        testUtils.dom.click(pivot.$('tbody .o_pivot_header_cell_closed'));
+        await testUtils.dom.click(pivot.$('tbody .o_pivot_header_cell_closed'));
 
         assert.containsOnce(pivot, '.o_pivot_field_menu .dropdown-item[data-field="date"]:first',
             "should have the date field as proposition");
@@ -372,7 +372,7 @@ QUnit.module('Views', {
             "should not have the non_stored_m2o field as proposition");
 
 
-        testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="date"]:first'));
+        await testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="date"]:first'));
 
         assert.containsN(pivot, 'tbody tr', 4,
             "should have 4 rows: one for header, 3 for data");
@@ -381,10 +381,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('more folding/unfolding', function (assert) {
+    QUnit.test('more folding/unfolding', async function (assert) {
         assert.expect(1);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -395,25 +395,25 @@ QUnit.module('Views', {
         });
 
         // open dropdown to zoom into first row
-        testUtils.dom.clickFirst(pivot.$('tbody .o_pivot_header_cell_closed'));
+        await testUtils.dom.clickFirst(pivot.$('tbody .o_pivot_header_cell_closed'));
         // click on date by day
         pivot.$('.dropdown-menu.show .o_inline_dropdown .dropdown-menu').toggle(); // unfold inline dropdown
-        testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="date"][data-interval="day"]'));
+        await testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="date"][data-interval="day"]'));
 
         // open dropdown to zoom into second row
-        testUtils.dom.clickLast(pivot.$('tbody td.o_pivot_header_cell_closed'));
+        await testUtils.dom.clickLast(pivot.$('tbody td.o_pivot_header_cell_closed'));
 
         assert.containsN(pivot, 'tbody tr', 7,
             "should have 7 rows (1 for total, 1 for xphone, 1 for xpad, 4 for data)");
         pivot.destroy();
     });
 
-    QUnit.test('pivot view can be flipped', function (assert) {
+    QUnit.test('pivot view can be flipped', async function (assert) {
         assert.expect(3);
 
         var rpcCount = 0;
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -430,7 +430,7 @@ QUnit.module('Views', {
             "should have 3 rows: 1 for the open header, and 2 for data");
 
         rpcCount = 0;
-        testUtils.dom.click(pivot.$buttons.find('.o_pivot_flip_button'));
+        await testUtils.dom.click(pivot.$buttons.find('.o_pivot_flip_button'));
 
         assert.strictEqual(rpcCount, 0, "should not have done any rpc");
         assert.containsOnce(pivot, 'tbody tr',
@@ -438,12 +438,12 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('can toggle extra measure', function (assert) {
+    QUnit.test('can toggle extra measure', async function (assert) {
         assert.expect(8);
 
         var rpcCount = 0;
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -463,8 +463,8 @@ QUnit.module('Views', {
             "the __count measure should not be selected");
 
         rpcCount = 0;
-        testUtils.pivot.toggleMeasuresDropdown(pivot);
-        testUtils.pivot.clickMeasure(pivot, '__count');
+        await testUtils.pivot.toggleMeasuresDropdown(pivot);
+        await testUtils.pivot.clickMeasure(pivot, '__count');
 
         assert.hasClass(pivot.$buttons.find('.dropdown-item[data-field=__count]:first'),'selected',
             "the __count measure should be selected");
@@ -473,7 +473,7 @@ QUnit.module('Views', {
         assert.strictEqual(rpcCount, 2,
             "should have done 2 rpcs to reload data");
 
-        testUtils.pivot.clickMeasure(pivot, '__count');
+        await testUtils.pivot.clickMeasure(pivot, '__count');
 
         assert.doesNotHaveClass(pivot.$buttons.find('.dropdown-item[data-field=__count]:first'), 'selected',
             "the __count measure should not be selected");
@@ -485,10 +485,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('no content helper when no active measure', function (assert) {
+    QUnit.test('no content helper when no active measure', async function (assert) {
         assert.expect(4);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -501,8 +501,8 @@ QUnit.module('Views', {
         assert.containsOnce(pivot, 'table',
             "should have a table in DOM");
 
-        testUtils.pivot.toggleMeasuresDropdown(pivot);
-        testUtils.pivot.clickMeasure(pivot, '__count');
+        await testUtils.pivot.toggleMeasuresDropdown(pivot);
+        await testUtils.pivot.clickMeasure(pivot, '__count');
 
         assert.containsOnce(pivot, '.o_view_nocontent',
             "should have a no_content_helper");
@@ -511,10 +511,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('no content helper when no data', function (assert) {
+    QUnit.test('no content helper when no data', async function (assert) {
         assert.expect(4);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -527,7 +527,7 @@ QUnit.module('Views', {
         assert.containsOnce(pivot, 'table',
             "should have a table in DOM");
 
-        testUtils.pivot.reload(pivot, {domain: [['foo', '=', 12345]]});
+        await testUtils.pivot.reload(pivot, {domain: [['foo', '=', 12345]]});
 
         assert.containsOnce(pivot, '.o_view_nocontent',
             "should have a no_content_helper");
@@ -536,12 +536,12 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('no content helper when no data, part 2', function (assert) {
+    QUnit.test('no content helper when no data, part 2', async function (assert) {
         assert.expect(1);
 
         this.data.partner.records = [];
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -553,10 +553,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('no content helper when no data, part 3', function (assert) {
+    QUnit.test('no content helper when no data, part 3', async function (assert) {
         assert.expect(4);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -568,27 +568,27 @@ QUnit.module('Views', {
 
         assert.containsOnce(pivot, '.o_view_nocontent',
             "should have a no_content_helper");
-        testUtils.pivot.reload(pivot, {domain: [['foo', '=', 12345]]});
+        await testUtils.pivot.reload(pivot, {domain: [['foo', '=', 12345]]});
         assert.containsOnce(pivot, '.o_view_nocontent',
             "should still have a no_content_helper");
-        testUtils.pivot.reload(pivot, {domain: []});
+        await testUtils.pivot.reload(pivot, {domain: []});
         assert.containsNone(pivot, '.o_view_nocontent',
             "should not have a no_content_helper");
 
         // tries to open a field selection menu, to make sure it was not
         // removed from the dom.
-        testUtils.dom.clickFirst(pivot.$('.o_pivot_header_cell_closed'));
+        await testUtils.dom.clickFirst(pivot.$('.o_pivot_header_cell_closed'));
         assert.containsOnce(pivot, '.o_pivot_field_menu',
             "the field selector menu exists");
         pivot.destroy();
     });
 
-    QUnit.test('tries to restore previous state after domain change', function (assert) {
+    QUnit.test('tries to restore previous state after domain change', async function (assert) {
         assert.expect(5);
 
         var rpcCount = 0;
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -607,10 +607,10 @@ QUnit.module('Views', {
         assert.strictEqual(pivot.$('.o_pivot_measure_row:contains(Foo)').length, 1,
             "should have 1 row for measure Foo");
 
-        testUtils.pivot.reload(pivot, {domain: [['foo', '=', 12345]]});
+        await testUtils.pivot.reload(pivot, {domain: [['foo', '=', 12345]]});
 
         rpcCount = 0;
-        testUtils.pivot.reload(pivot, {domain: []});
+        await testUtils.pivot.reload(pivot, {domain: []});
 
         assert.equal(rpcCount, 2, "should have reloaded data");
         assert.containsN(pivot, '.o_pivot_cell_value', 3,
@@ -620,10 +620,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('can be grouped with the update function', function (assert) {
+    QUnit.test('can be grouped with the update function', async function (assert) {
         assert.expect(4);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -637,7 +637,7 @@ QUnit.module('Views', {
         assert.containsOnce(pivot, 'tbody tr',
             "should have 1 rows");
 
-        testUtils.pivot.reload(pivot, {groupBy: ['product_id']});
+        await testUtils.pivot.reload(pivot, {groupBy: ['product_id']});
 
         assert.containsN(pivot, '.o_pivot_cell_value', 3,
             "should have 3 cells");
@@ -646,10 +646,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('can sort data in a column by clicking on header', function (assert) {
+    QUnit.test('can sort data in a column by clicking on header', async function (assert) {
         assert.expect(3);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -662,12 +662,12 @@ QUnit.module('Views', {
         assert.strictEqual($('td.o_pivot_cell_value').text(), "321220",
             "should have proper values in cells (total, result 1, result 2");
 
-        testUtils.dom.click(pivot.$('th.o_pivot_measure_row'));
+        await testUtils.dom.click(pivot.$('th.o_pivot_measure_row'));
 
         assert.strictEqual($('td.o_pivot_cell_value').text(), "322012",
             "should have proper values in cells (total, result 2, result 1");
 
-        testUtils.dom.click(pivot.$('th.o_pivot_measure_row'));
+        await testUtils.dom.click(pivot.$('th.o_pivot_measure_row'));
 
         assert.strictEqual($('td.o_pivot_cell_value').text(), "321220",
             "should have proper values in cells (total, result 1, result 2");
@@ -675,11 +675,11 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('can expand all rows', function (assert) {
+    QUnit.test('can expand all rows', async function (assert) {
         assert.expect(7);
 
         var nbReadGroups = 0;
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -701,22 +701,22 @@ QUnit.module('Views', {
 
         // expand on date:days, product
         nbReadGroups = 0;
-        testUtils.pivot.reload(pivot, {groupBy: ['date:days', 'product_id']});
+        await testUtils.pivot.reload(pivot, {groupBy: ['date:days', 'product_id']});
 
         assert.strictEqual(nbReadGroups, 3, "should have done 3 read_group RPCS");
         assert.containsN(pivot, 'tbody tr', 8,
             "should have 7 rows (total + 3 for December and 2 for October and April)");
 
         // collapse the last two rows
-        testUtils.dom.clickLast(pivot.$('.o_pivot_header_cell_opened'));
-        testUtils.dom.clickLast(pivot.$('.o_pivot_header_cell_opened'));
+        await testUtils.dom.clickLast(pivot.$('.o_pivot_header_cell_opened'));
+        await testUtils.dom.clickLast(pivot.$('.o_pivot_header_cell_opened'));
 
         assert.containsN(pivot, 'tbody tr', 6,
             "should have 6 rows now");
 
         // expand all
         nbReadGroups = 0;
-        testUtils.dom.click(pivot.$buttons.find('.o_pivot_expand_button'));
+        await testUtils.dom.click(pivot.$buttons.find('.o_pivot_expand_button'));
 
         assert.strictEqual(nbReadGroups, 3, "should have done 3 read_group RPCS");
         assert.containsN(pivot, 'tbody tr', 8,
@@ -725,11 +725,11 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('expand all with a delay', function (assert) {
+    QUnit.test('expand all with a delay', async function (assert) {
         assert.expect(3);
 
         var def;
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -747,21 +747,21 @@ QUnit.module('Views', {
         });
 
         // expand on date:days, product
-        testUtils.pivot.reload(pivot, {groupBy: ['date:days', 'product_id']});
+        await testUtils.pivot.reload(pivot, {groupBy: ['date:days', 'product_id']});
 
         assert.containsN(pivot, 'tbody tr', 8,
             "should have 7 rows (total + 3 for December and 2 for October and April)");
 
         // collapse the last two rows
-        testUtils.dom.clickLast(pivot.$('.o_pivot_header_cell_opened'));
-        testUtils.dom.clickLast(pivot.$('.o_pivot_header_cell_opened'));
+        await testUtils.dom.clickLast(pivot.$('.o_pivot_header_cell_opened'));
+        await testUtils.dom.clickLast(pivot.$('.o_pivot_header_cell_opened'));
 
         assert.containsN(pivot, 'tbody tr', 6,
             "should have 6 rows now");
 
         // expand all
         def = $.Deferred();
-        testUtils.dom.click(pivot.$buttons.find('.o_pivot_expand_button'));
+        await testUtils.dom.click(pivot.$buttons.find('.o_pivot_expand_button'));
         def.resolve();
 
         assert.containsN(pivot, 'tbody tr', 8,
@@ -770,10 +770,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('can download a file', function (assert) {
+    QUnit.test('can download a file', async function (assert) {
         assert.expect(1);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -790,16 +790,16 @@ QUnit.module('Views', {
             },
         });
 
-        testUtils.dom.click(pivot.$buttons.find('.o_pivot_download'));
+        await testUtils.dom.click(pivot.$buttons.find('.o_pivot_download'));
         pivot.destroy();
     });
 
-    QUnit.test('download button is disabled when there is no data', function (assert) {
+    QUnit.test('download button is disabled when there is no data', async function (assert) {
         assert.expect(1);
 
         this.data.partner.records = [];
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -814,10 +814,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('getContext correctly returns measures and groupbys', function (assert) {
+    QUnit.test('getContext correctly returns measures and groupbys', async function (assert) {
         assert.expect(3);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -834,8 +834,8 @@ QUnit.module('Views', {
         }, "context should be correct");
 
         // expand header on field customer
-        testUtils.dom.click(pivot.$('thead .o_pivot_header_cell_closed:nth(1)'));
-        testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="customer"]:first'));
+        await testUtils.dom.click(pivot.$('thead .o_pivot_header_cell_closed:nth(1)'));
+        await testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="customer"]:first'));
         assert.deepEqual(pivot.getContext(), {
             pivot_column_groupby: ['date:day', 'customer'],
             pivot_measures: ['foo'],
@@ -843,8 +843,8 @@ QUnit.module('Views', {
         }, "context should be correct");
 
         // expand row on field product_id
-        testUtils.dom.click(pivot.$('tbody .o_pivot_header_cell_closed'));
-        testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="product_id"]:first'));
+        await testUtils.dom.click(pivot.$('tbody .o_pivot_header_cell_closed'));
+        await testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="product_id"]:first'));
         assert.deepEqual(pivot.getContext(), {
             pivot_column_groupby: ['date:day', 'customer'],
             pivot_measures: ['foo'],
@@ -854,12 +854,12 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('correctly uses pivot_ keys from the context', function (assert) {
+    QUnit.test('correctly uses pivot_ keys from the context', async function (assert) {
         assert.expect(7);
 
         this.data.partner.fields.amount = {string: "Amount", type: "float"};
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -896,12 +896,12 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('correctly uses pivot_ keys from the context (at reload)', function (assert) {
+    QUnit.test('correctly uses pivot_ keys from the context (at reload)', async function (assert) {
         assert.expect(8);
 
         this.data.partner.fields.amount = {string: "Amount", type: "float"};
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -921,7 +921,7 @@ QUnit.module('Views', {
                 pivot_row_groupby: ['product_id'],
             },
         };
-        testUtils.pivot.reload(pivot, reloadParams);
+        await testUtils.pivot.reload(pivot, reloadParams);
 
         assert.containsOnce(pivot, 'thead .o_pivot_header_cell_opened',
             "column: should have one opened header");
@@ -943,10 +943,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('correctly use group_by key from the context', function (assert) {
+    QUnit.test('correctly use group_by key from the context', async function (assert) {
         assert.expect(7);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: 'partner',
             data: this.data,
@@ -977,12 +977,12 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('pivot still handles __count__ measure', function (assert) {
+    QUnit.test('pivot still handles __count__ measure', async function (assert) {
         // for retro-compatibility reasons, the pivot view still handles
         // '__count__' measure.
         assert.expect(2);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -1007,10 +1007,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('not use a many2one as a measure by default', function (assert) {
+    QUnit.test('not use a many2one as a measure by default', async function (assert) {
         assert.expect(1);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -1024,10 +1024,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('use a many2one as a measure with specified additional measure', function (assert) {
+    QUnit.test('use a many2one as a measure with specified additional measure', async function (assert) {
         assert.expect(1);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -1044,10 +1044,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('pivot view with many2one field as a measure', function (assert) {
+    QUnit.test('pivot view with many2one field as a measure', async function (assert) {
         assert.expect(1);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -1062,10 +1062,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('m2o as measure, drilling down into data', function (assert) {
+    QUnit.test('m2o as measure, drilling down into data', async function (assert) {
         assert.expect(1);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -1073,20 +1073,20 @@ QUnit.module('Views', {
                         '<field name="product_id" type="measure"/>' +
                 '</pivot>',
         });
-        testUtils.dom.click(pivot.$('tbody .o_pivot_header_cell_closed'));
+        await testUtils.dom.click(pivot.$('tbody .o_pivot_header_cell_closed'));
         // click on date by month
         pivot.$('.dropdown-menu.show .o_inline_dropdown .dropdown-menu').toggle(); // unfold inline dropdown
-        testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="date"][data-interval="month"]'));
+        await testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="date"][data-interval="month"]'));
 
         assert.strictEqual(pivot.$('.o_pivot_cell_value').text(), '2211',
             'should have loaded the proper data');
         pivot.destroy();
     });
 
-    QUnit.test('pivot view with same many2one field as a measure and grouped by', function (assert) {
+    QUnit.test('pivot view with same many2one field as a measure and grouped by', async function (assert) {
         assert.expect(1);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -1098,17 +1098,17 @@ QUnit.module('Views', {
             },
         });
 
-        testUtils.pivot.toggleMeasuresDropdown(pivot);
-        testUtils.pivot.clickMeasure(pivot, 'product_id');
+        await testUtils.pivot.toggleMeasuresDropdown(pivot);
+        await testUtils.pivot.clickMeasure(pivot, 'product_id');
         assert.strictEqual(pivot.$('.o_pivot_cell_value').text(), '421131',
             'should have loaded the proper data');
         pivot.destroy();
     });
 
-    QUnit.test('pivot view with same many2one field as a measure and grouped by (and drill down)', function (assert) {
+    QUnit.test('pivot view with same many2one field as a measure and grouped by (and drill down)', async function (assert) {
         assert.expect(1);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -1117,19 +1117,19 @@ QUnit.module('Views', {
                 '</pivot>',
         });
 
-        testUtils.dom.click(pivot.$('tbody .o_pivot_header_cell_closed'));
+        await testUtils.dom.click(pivot.$('tbody .o_pivot_header_cell_closed'));
 
-        testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="product_id"]:first'));
+        await testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="product_id"]:first'));
 
         assert.strictEqual(pivot.$('.o_pivot_cell_value').text(), '211',
             'should have loaded the proper data');
         pivot.destroy();
     });
 
-    QUnit.test('Row and column groupbys plus a domain', function (assert) {
+    QUnit.test('Row and column groupbys plus a domain', async function (assert) {
         assert.expect(3);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -1139,15 +1139,15 @@ QUnit.module('Views', {
         });
 
         // Set a column groupby
-        testUtils.dom.click(pivot.$('thead .o_pivot_header_cell_closed'));
-        testUtils.dom.click(pivot.$('.o_field_selection .dropdown-item[data-field=customer]:first'));
+        await testUtils.dom.click(pivot.$('thead .o_pivot_header_cell_closed'));
+        await testUtils.dom.click(pivot.$('.o_field_selection .dropdown-item[data-field=customer]:first'));
 
         // Set a Row groupby
-        testUtils.dom.click(pivot.$('tbody .o_pivot_header_cell_closed'));
-        testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field=product_id]:first'));
+        await testUtils.dom.click(pivot.$('tbody .o_pivot_header_cell_closed'));
+        await testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field=product_id]:first'));
 
         // Set a domain
-        testUtils.pivot.reload(pivot, {domain: [['product_id', '=', 41]]});
+        await testUtils.pivot.reload(pivot, {domain: [['product_id', '=', 41]]});
 
         var expectedContext = {pivot_column_groupby: ['customer'],
                                pivot_measures: ['foo'],
@@ -1167,12 +1167,12 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('parallel data loading should discard all but the last one', function (assert) {
+    QUnit.test('parallel data loading should discard all but the last one', async function (assert) {
         assert.expect(2);
 
         var def;
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -1189,8 +1189,8 @@ QUnit.module('Views', {
         });
 
         def = $.Deferred();
-        testUtils.pivot.reload(pivot, {groupBy: ['product_id']});
-        testUtils.pivot.reload(pivot, {groupBy: ['product_id', 'customer']});
+        await testUtils.pivot.reload(pivot, {groupBy: ['product_id']});
+        await testUtils.pivot.reload(pivot, {groupBy: ['product_id', 'customer']});
         def.resolve();
 
         assert.containsN(pivot, '.o_pivot_cell_value', 6,
@@ -1200,7 +1200,7 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('pivot measures should be alphabetically sorted', function (assert) {
+    QUnit.test('pivot measures should be alphabetically sorted', async function (assert) {
         assert.expect(2);
 
         var data = this.data;
@@ -1210,7 +1210,7 @@ QUnit.module('Views', {
         data.partner.fields.modd = {string: "modd", type: "integer"};
         data.partner.fields.zip = {string: "Zip", type: "integer"};
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: data,
@@ -1229,10 +1229,10 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('pivot view should use default order for auto sorting', function (assert) {
+    QUnit.test('pivot view should use default order for auto sorting', async function (assert) {
         assert.expect(1);
 
-        var pivot = createView({
+        var pivot = await createView({
             View: PivotView,
             model: "partner",
             data: this.data,
@@ -1247,7 +1247,7 @@ QUnit.module('Views', {
         pivot.destroy();
     });
 
-    QUnit.test('rendering of pivot view with comparison', function (assert) {
+    QUnit.test('rendering of pivot view with comparison', async function (assert) {
         assert.expect(91);
 
         this.data.partner.records[0].date = '2016-12-15';
@@ -1301,17 +1301,17 @@ QUnit.module('Views', {
 
         // with no data
 
-        testUtils.dom.click($('.o_time_range_menu_button'));
-        testUtils.dom.click($('.o_time_range_menu .o_comparison_checkbox'));
+        await testUtils.dom.click($('.o_time_range_menu_button'));
+        await testUtils.dom.click($('.o_time_range_menu .o_comparison_checkbox'));
         $('.o_time_range_selector').val('today');
-        testUtils.dom.click($('.o_time_range_menu .o_apply_range'));
+        await testUtils.dom.click($('.o_time_range_menu .o_apply_range'));
 
         assert.strictEqual($('.o_pivot p.o_view_nocontent_empty_folder').length, 1);
 
         // with data, no row groupby
-        testUtils.dom.click($('.o_time_range_menu_button'));
+        await testUtils.dom.click($('.o_time_range_menu_button'));
         $('.o_time_range_selector').val('this_month');
-        testUtils.dom.click($('.o_time_range_menu .o_apply_range'));
+        await testUtils.dom.click($('.o_time_range_menu .o_apply_range'));
         results = [
             "13", "0", "100%", "0", "19", "-100%", "13", "19", "-31.58%"
         ];
@@ -1319,8 +1319,8 @@ QUnit.module('Views', {
 
         // with data, with row groupby
 
-        testUtils.dom.click($('.o_pivot .o_pivot_header_cell_closed').eq(2));
-        testUtils.dom.click($('.o_pivot .o_field_selection a[data-field="product_id"]'));
+        await testUtils.dom.click($('.o_pivot .o_pivot_header_cell_closed').eq(2));
+        await testUtils.dom.click($('.o_pivot .o_field_selection a[data-field="product_id"]'));
         results = [
             "13", "0", "100%", "0", "19", "-100%", "13", "19", "-31.58%" ,
             "12", "0", "100%",                     "12", "0" , "100%"    ,
@@ -1328,9 +1328,9 @@ QUnit.module('Views', {
         ];
         checkCellValues(results);
 
-        testUtils.pivot.toggleMeasuresDropdown(actionManager.getCurrentController().widget);
-        testUtils.dom.click($('.o_control_panel div.o_pivot_measures_list a[data-field="foo"]'));
-        testUtils.dom.click($('.o_control_panel div.o_pivot_measures_list a[data-field="product_id"]'));
+        await testUtils.pivot.toggleMeasuresDropdown(actionManager.getCurrentController().widget);
+        await testUtils.dom.click($('.o_control_panel div.o_pivot_measures_list a[data-field="foo"]'));
+        await testUtils.dom.click($('.o_control_panel div.o_pivot_measures_list a[data-field="product_id"]'));
         results = [
             "2", "0", "100%", "0", "1", "-100%", "2", "1", "100%" ,
             "1", "0", "100%",                     "1", "0" , "100%"    ,
@@ -1338,8 +1338,8 @@ QUnit.module('Views', {
         ];
         checkCellValues(results);
 
-        testUtils.dom.click($('.o_control_panel div.o_pivot_measures_list a[data-field="__count"]'));
-        testUtils.dom.click($('.o_control_panel div.o_pivot_measures_list a[data-field="product_id"]'));
+        await testUtils.dom.click($('.o_control_panel div.o_pivot_measures_list a[data-field="__count"]'));
+        await testUtils.dom.click($('.o_control_panel div.o_pivot_measures_list a[data-field="product_id"]'));
         results = [
             "2", "0", "100%", "0", "2", "-100%", "2", "2", "0%" ,
             "1", "0", "100%",                     "1", "0" , "100%"    ,
@@ -1347,7 +1347,7 @@ QUnit.module('Views', {
         ];
         checkCellValues(results);
 
-        testUtils.dom.clickFirst($('.o_pivot .o_pivot_header_cell_opened'));
+        await testUtils.dom.clickFirst($('.o_pivot .o_pivot_header_cell_opened'));
         results = [
             "2", "2", "0%"     ,
             "1", "0", "100%"   ,
@@ -1359,7 +1359,7 @@ QUnit.module('Views', {
         actionManager.destroy();
     });
 
-   QUnit.test('export data in excel with comparison', function (assert) {
+   QUnit.test('export data in excel with comparison', async function (assert) {
         assert.expect(10);
 
         this.data.partner.records[0].date = '2016-12-15';
@@ -1402,13 +1402,13 @@ QUnit.module('Views', {
         });
 
         // open time range menu
-        testUtils.dom.click($('.o_control_panel .o_time_range_menu_button'));
+        await testUtils.dom.click($('.o_control_panel .o_time_range_menu_button'));
         // select 'Today' as range
         $('.o_control_panel .o_time_range_selector').val('today');
         // check checkbox 'Compare To'
-        testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_comparison_checkbox'));
+        await testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_comparison_checkbox'));
         // Click on 'Apply' button
-        testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_apply_range'));
+        await testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_apply_range'));
 
         // the time range menu configuration is by now: Date, Today, checkbox checked, Previous Period
         // With the data above, the time ranges contain no record.
@@ -1418,16 +1418,16 @@ QUnit.module('Views', {
         assert.ok($('.o_control_panel button.o_pivot_download').prop('disabled'));
 
         // open time range menu
-        testUtils.dom.click($('.o_control_panel .o_time_range_menu_button'));
+        await testUtils.dom.click($('.o_control_panel .o_time_range_menu_button'));
         // select 'This Month' as date range
         $('.o_control_panel .o_time_range_selector').val('this_month');
 
         // Click on 'Apply' button
-        testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_apply_range'));
+        await testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_apply_range'));
         // the time range menu configuration is by now: Date, This Month, checkbox checked, Previous Period
         // With the data above, the time ranges contain some records.
         // export data. Should execute 'get_file'
-        testUtils.dom.click($('.o_control_panel button.o_pivot_download'));
+        await testUtils.dom.click($('.o_control_panel button.o_pivot_download'));
 
         assert.verifySteps([
             // Headers
@@ -1449,7 +1449,7 @@ QUnit.module('Views', {
         actionManager.destroy();
     });
 
-    QUnit.test('rendering of pivot view with comparison and count measure', function (assert) {
+    QUnit.test('rendering of pivot view with comparison and count measure', async function (assert) {
         assert.expect(10);
 
         var mockMock = false;
@@ -1495,10 +1495,10 @@ QUnit.module('Views', {
         mockMock = true;
 
         // activate 'This Month' and 'Previous Period' in time range menu
-        testUtils.dom.click($('.o_control_panel .o_time_range_menu_button'));
+        await testUtils.dom.click($('.o_control_panel .o_time_range_menu_button'));
         $('.o_control_panel .o_time_range_selector').val('this_month');
-        testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_comparison_checkbox'));
-        testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_apply_range'));
+        await testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_comparison_checkbox'));
+        await testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_apply_range'));
 
         var results = [
             "4", "0", "100%",

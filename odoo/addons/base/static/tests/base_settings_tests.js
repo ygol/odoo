@@ -6,7 +6,7 @@ var view_registry = require('web.view_registry');
 
 var createView = testUtils.createView;
 var BaseSettingsView = view_registry.get('base_settings');
-var createActionManager = testUtils.createActionManager;
+var  createActionManager =  testUtils.createActionManager;
 
 
 QUnit.module('base_settings_tests', {
@@ -24,10 +24,10 @@ QUnit.module('base_settings_tests', {
 
     QUnit.module('BaseSetting');
 
-    QUnit.test('change setting on nav bar click in base settings', function (assert) {
+    QUnit.test('change setting on nav bar click in base settings', async function (assert) {
         assert.expect(4);
 
-        var form = createView({
+        var form = await createView({
             View: BaseSettingsView,
             model: 'project',
             data: this.data,
@@ -85,7 +85,7 @@ QUnit.module('base_settings_tests', {
         form.destroy();
     });
 
-    QUnit.test('settings views does not read existing id when coming back in breadcrumbs', function (assert) {
+    QUnit.test('settings views does not read existing id when coming back in breadcrumbs', async function (assert) {
         assert.expect(8);
 
         var actions = [{
@@ -111,7 +111,7 @@ QUnit.module('base_settings_tests', {
             'project,false,search': '<search></search>',
         };
 
-        var actionManager = createActionManager({
+        var actionManager = await createActionManager({
             actions: actions,
             archs: archs,
             data: this.data,
@@ -124,8 +124,8 @@ QUnit.module('base_settings_tests', {
         });
 
         actionManager.doAction(1);
-        testUtils.dom.click(actionManager.$('button[name="4"]'));
-        testUtils.dom.click($('.o_control_panel .breadcrumb-item a'));
+        await testUtils.dom.click(actionManager.$('button[name="4"]'));
+        await testUtils.dom.click($('.o_control_panel .breadcrumb-item a'));
         assert.hasClass(actionManager.$('.o_form_view'), 'o_form_editable');
         assert.verifySteps([
             'load_views', // initial setting action
@@ -140,10 +140,10 @@ QUnit.module('base_settings_tests', {
         actionManager.destroy();
     });
 
-    QUnit.test('settings view does not display other settings after reload', function (assert) {
+    QUnit.test('settings view does not display other settings after reload', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createView({
             View: BaseSettingsView,
             model: 'project',
             data: this.data,

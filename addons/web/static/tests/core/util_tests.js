@@ -8,7 +8,7 @@ QUnit.module('core', {}, function () {
     QUnit.module('utils');
 
 
-    QUnit.test('intersperse', function (assert) {
+    QUnit.test('intersperse', async function (assert) {
         assert.expect(27);
 
         var intersperse = utils.intersperse;
@@ -44,7 +44,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(intersperse("12345678", [3,0], '.'), '12.345.678');
     });
 
-    QUnit.test('is_bin_size', function (assert) {
+    QUnit.test('is_bin_size', async function (assert) {
         assert.expect(3);
 
         var is_bin_size = utils.is_bin_size;

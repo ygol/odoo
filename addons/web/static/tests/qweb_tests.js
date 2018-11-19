@@ -64,25 +64,25 @@ function loadTest(assert, template, context) {
 }
 
 QUnit.module('QWeb', {}, function () {
-    QUnit.test('Output', function (assert) {
+    QUnit.test('Output', async function (assert) {
         loadTest(assert, 'qweb-test-output.xml');
     });
-    QUnit.test('Context-setting', function (assert) {
+    QUnit.test('Context-setting', async function (assert) {
         loadTest(assert, 'qweb-test-set.xml');
     });
-    QUnit.test('Conditionals', function (assert) {
+    QUnit.test('Conditionals', async function (assert) {
         loadTest(assert, 'qweb-test-conditionals.xml');
     });
-    QUnit.test('Attributes manipulation', function (assert) {
+    QUnit.test('Attributes manipulation', async function (assert) {
         loadTest(assert, 'qweb-test-attributes.xml');
     });
-    QUnit.test('Template calling (to the faraway pages)', function (assert) {
+    QUnit.test('Template calling (to the faraway pages)', async function (assert) {
         loadTest(assert, 'qweb-test-call.xml', {True: true});
     });
-    QUnit.test('Foreach', function (assert) {
+    QUnit.test('Foreach', async function (assert) {
         loadTest(assert, 'qweb-test-foreach.xml');
     });
-    QUnit.test('Global', function (assert) {
+    QUnit.test('Global', async function (assert) {
         // test use python syntax
         var WORD_REPLACEMENT = window.QWeb2.WORD_REPLACEMENT;
         window.QWeb2.WORD_REPLACEMENT = _.extend({not: '!', None: 'undefined'}, WORD_REPLACEMENT);
@@ -91,7 +91,7 @@ QUnit.module('QWeb', {}, function () {
                 window.QWeb2.WORD_REPLACEMENT = WORD_REPLACEMENT;
             });
     });
-    QUnit.test('Template inheritance', function (assert) {
+    QUnit.test('Template inheritance', async function (assert) {
         loadTest(assert, 'qweb-test-extend.xml');
     });
 });

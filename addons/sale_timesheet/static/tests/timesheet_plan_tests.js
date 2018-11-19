@@ -10,7 +10,7 @@ function createPlan(params) {
         do_push_state: function () {},
     });
     var parent = new Parent();
-    testUtils.mock.addMockEnvironment(parent, params);
+    await testUtils.mock.addMockEnvironment(parent, params);
     var plan = new ProjectPlan(parent, params.action);
     var selector = params.debug ? 'body' : '#qunit-fixture';
     plan.appendTo($(selector));
@@ -36,7 +36,7 @@ QUnit.module('Timesheet Plan', {
     }
 }, function () {
 
-    QUnit.test('basic timesheet plan rendering', function (assert) {
+    QUnit.test('basic timesheet plan rendering', async function (assert) {
         assert.expect(5);
 
         var plan = createPlan({
@@ -70,7 +70,7 @@ QUnit.module('Timesheet Plan', {
         plan.destroy();
     });
 
-    QUnit.test('timesheet action takes action name into account', function (assert) {
+    QUnit.test('timesheet action takes action name into account', async function (assert) {
         assert.expect(1);
 
         var plan = createPlan({

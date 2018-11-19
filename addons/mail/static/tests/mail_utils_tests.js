@@ -7,7 +7,7 @@ QUnit.module('mail', {}, function () {
 
 QUnit.module('Mail utils');
 
-QUnit.test('add_link utility function', function (assert) {
+QUnit.test('add_link utility function', async function (assert) {
     assert.expect(15);
 
     var testInputs = {

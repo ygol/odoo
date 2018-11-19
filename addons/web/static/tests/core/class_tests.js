@@ -8,7 +8,7 @@ QUnit.module('core', {}, function () {
     QUnit.module('Class');
 
 
-    QUnit.test('Basic class creation', function (assert) {
+    QUnit.test('Basic class creation', async function (assert) {
         assert.expect(2);
 
         var C = Class.extend({
@@ -23,7 +23,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(i.foo(), 3);
     });
 
-    QUnit.test('Class initialization', function (assert) {
+    QUnit.test('Class initialization', async function (assert) {
         assert.expect(2);
 
         var C1 = Class.extend({
@@ -44,7 +44,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(i2.foo, 42);
     });
 
-    QUnit.test('Inheritance', function (assert) {
+    QUnit.test('Inheritance', async function (assert) {
         assert.expect(3);
 
         var C0 = Class.extend({
@@ -68,7 +68,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(new C2().foo(), 3);
     });
 
-    QUnit.test('In-place extension', function (assert) {
+    QUnit.test('In-place extension', async function (assert) {
         assert.expect(4);
 
         var C0 = Class.extend({
@@ -98,7 +98,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(new C0().qux(), 5);
     });
 
-    QUnit.test('In-place extension and inheritance', function (assert) {
+    QUnit.test('In-place extension and inheritance', async function (assert) {
         assert.expect(4);
 
         var C0 = Class.extend({
@@ -119,7 +119,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(new C1().bar(), 2);
     });
 
-    QUnit.test('In-place extensions alter existing instances', function (assert) {
+    QUnit.test('In-place extensions alter existing instances', async function (assert) {
         assert.expect(4);
 
         var C0 = Class.extend({
@@ -138,7 +138,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(i.bar(), 3);
     });
 
-    QUnit.test('In-place extension of subclassed types', function (assert) {
+    QUnit.test('In-place extension of subclassed types', async function (assert) {
         assert.expect(3);
 
         var C0 = Class.extend({

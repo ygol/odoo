@@ -14,7 +14,7 @@ var Widget = require('web.Widget');
  * @param {boolean} [params.debug]
  * @returns {DocumentViewer}
  */
-var createViewer = function (params) {
+var createViewer = async function (params) {
     var parent = new Widget();
     var viewer = new DocumentViewer(parent, params.attachments, params.attachmentID);
 
@@ -32,7 +32,7 @@ var createViewer = function (params) {
             return $.when();
         }
     };
-    testUtils.mock.addMockEnvironment(parent, {
+    await testUtils.mock.addMockEnvironment(parent, {
         mockRPC: function () {
             if (params.mockRPC) {
                 var _super = this._super;
@@ -74,10 +74,10 @@ QUnit.module('DocumentViewer', {
     },
 }, function () {
 
-    QUnit.test('basic rendering', function (assert) {
+    QUnit.test('basic rendering', async function (assert) {
         assert.expect(7);
 
-        var viewer = createViewer({
+        var viewer = await createViewer({
             attachmentID: 1,
             attachments: this.attachments,
         });
@@ -100,10 +100,10 @@ QUnit.module('DocumentViewer', {
         viewer.destroy();
     });
 
-    QUnit.test('Document Viewer PDF', function (assert) {
+    QUnit.test('Document Viewer PDF', async function (assert) {
         assert.expect(6);
 
-        var viewer = createViewer({
+        var viewer = await createViewer({
             attachmentID: 1,
             attachments: this.attachments,
             mockRPC: function (route, args) {
@@ -127,16 +127,16 @@ QUnit.module('DocumentViewer', {
         assert.containsOnce(viewer, '.o_split_btn',
             "pdf should have a split button");
 
-        testUtils.dom.click(viewer.$('.o_split_btn'));
+        await testUtils.dom.click(viewer.$('.o_split_btn'));
 
         assert.ok(viewer.isDestroyed(), 'viewer should be destroyed');
     });
 
-    QUnit.test('Document Viewer Youtube', function (assert) {
+    QUnit.test('Document Viewer Youtube', async function (assert) {
         assert.expect(3);
 
         var youtubeURL = 'https://www.youtube.com/embed/FYqW0Gdwbzk';
-        var viewer = createViewer({
+        var viewer = await createViewer({
             attachmentID: 2,
             attachments: this.attachments,
             mockRPC: function (route) {
@@ -155,10 +155,10 @@ QUnit.module('DocumentViewer', {
         viewer.destroy();
     });
 
-    QUnit.test('Document Viewer html/(txt)', function (assert) {
+    QUnit.test('Document Viewer html/(txt)', async function (assert) {
         assert.expect(2);
 
-        var viewer = createViewer({
+        var viewer = await createViewer({
             attachmentID: 4,
             attachments: this.attachments,
         });
@@ -171,10 +171,10 @@ QUnit.module('DocumentViewer', {
         viewer.destroy();
     });
 
-    QUnit.test('Document Viewer mp4', function (assert) {
+    QUnit.test('Document Viewer mp4', async function (assert) {
         assert.expect(2);
 
-        var viewer = createViewer({
+        var viewer = await createViewer({
             attachmentID: 5,
             attachments: this.attachments,
         });
@@ -187,10 +187,10 @@ QUnit.module('DocumentViewer', {
         viewer.destroy();
     });
 
-    QUnit.test('Document Viewer jpg', function (assert) {
+    QUnit.test('Document Viewer jpg', async function (assert) {
         assert.expect(2);
 
-        var viewer = createViewer({
+        var viewer = await createViewer({
             attachmentID: 6,
             attachments: this.attachments,
         });
@@ -203,10 +203,10 @@ QUnit.module('DocumentViewer', {
         viewer.destroy();
     });
 
-    QUnit.test('is closable by button', function (assert) {
+    QUnit.test('is closable by button', async function (assert) {
         assert.expect(3);
 
-        var viewer = createViewer({
+        var viewer = await createViewer({
             attachmentID: 6,
             attachments: this.attachments,
         });
@@ -216,15 +216,15 @@ QUnit.module('DocumentViewer', {
         assert.containsOnce(viewer, '.o_close_btn',
             "should have a close button");
 
-        testUtils.dom.click(viewer.$('.o_close_btn'));
+        await testUtils.dom.click(viewer.$('.o_close_btn'));
 
         assert.ok(viewer.isDestroyed(), 'viewer should be destroyed');
     });
 
-    QUnit.test('is closable by clicking on the wrapper', function (assert) {
+    QUnit.test('is closable by clicking on the wrapper', async function (assert) {
         assert.expect(3);
 
-        var viewer = createViewer({
+        var viewer = await createViewer({
             attachmentID: 6,
             attachments: this.attachments,
         });
@@ -234,7 +234,7 @@ QUnit.module('DocumentViewer', {
         assert.containsOnce(viewer, '.o_viewer_img_wrapper',
             "should have a wrapper");
 
-        testUtils.dom.click(viewer.$('.o_viewer_img_wrapper'));
+        await testUtils.dom.click(viewer.$('.o_viewer_img_wrapper'));
 
         assert.ok(viewer.isDestroyed(), 'viewer should be destroyed');
     });

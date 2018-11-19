@@ -57,7 +57,7 @@
         if (isEnterprise) {
             console.log("Odoo flavor: Enterprise")
             var $homeMenu = $("nav.o_main_navbar > a.o_menu_toggle.fa-th");
-            testUtils.dom.click($homeMenu);
+            await testUtils.dom.click($homeMenu);
             $listOfAppMenuItems = $(".o_app, .o_menuitem")
         } else {
             console.log("Odoo flavor: Community")
@@ -101,7 +101,7 @@
         }).then(function(){
                 // no effect in community
                 var $homeMenu = $("nav.o_main_navbar > a.o_menu_toggle.fa-th");
-                testUtils.dom.click($homeMenu);
+                await testUtils.dom.click($homeMenu);
         });
     }
 
@@ -119,7 +119,7 @@
         console.log("Testing menu", element.innerText.trim(), " ", element.dataset.menuXmlid);
         testedMenus.push(element.dataset.menuXmlid);
         var startActionCount = clientActionCount;
-        testUtils.dom.click(element);
+        await testUtils.dom.click(element);
         var isModal = false;
         return waitForCondition(function() {
             // sometimes, the app is just a modal that needs to be closed
@@ -173,7 +173,7 @@
         setTimeout(function() {
             var $element = $("nav.o_cp_switch_buttons > button[data-view-type=" + viewType + "]");
             console.log('Clicking on: ', $element[0].dataset.viewType,  ' view switcher');
-            testUtils.dom.click($element);
+            await testUtils.dom.click($element);
         },250);
         var waitViewSwitch = waitForCondition(function(){
             return $('.o_content > .o_view_controller').data('view-type') === viewType;
@@ -203,16 +203,16 @@
                     return $.Deferred().resolve();
                 };
                 console.log('Clicking on filter "', $filter.text().trim(), '"');
-                testUtils.dom.click($filter[0]);
+                await testUtils.dom.click($filter[0]);
                 setTimeout(function() {
                     var $filterOption = $('.o_menu_item .o_item_option[data-item_id="' + filter_id + '"]:not(.selected) a');
                     // In case the filter is a date filter, we need to click on the first filter option (like 'today','This week' ...)
                     if ($filterOption.length > 0) {
                         console.log('Clicking on filter option "', $filterOption[0], '"');
-                        testUtils.dom.click($filterOption[0]);
+                        await testUtils.dom.click($filterOption[0]);
                         console.log('And now on filter again');
                         $filter = $('.o_menu_item[data-id="' + filter_id + '"] a');
-                        testUtils.dom.click($filter[0]);
+                        await testUtils.dom.click($filter[0]);
                     }
                 }, 250);
                 return waitForCondition(function() {

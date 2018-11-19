@@ -8,12 +8,12 @@ var Widget = require('web.Widget');
 
 var Dashboard = webSettingsDashboard.Dashboard;
 
-function createDashboard(params) {
+async function createDashboard(params) {
     var widget = new Widget();
     var dashboard = new Dashboard(widget);
     dashboard.all_dashboards = params.dashboards || ['invitations']; // test only user invitations
 
-    testUtils.mock.addMockEnvironment(widget, params);
+    await testUtils.mock.addMockEnvironment(widget, params);
 
     var originalDestroy = Dashboard.prototype.destroy;
     dashboard.destroy = function () {
@@ -31,7 +31,7 @@ function createDashboard(params) {
 }
 
 QUnit.module('settings_dashboard', function () {
-    QUnit.test('Dashboard: Invite new user', function (assert) {
+    QUnit.test('Dashboard: Invite new user', async function (assert) {
         assert.expect(4);
 
         var dashboardData = {
@@ -39,7 +39,7 @@ QUnit.module('settings_dashboard', function () {
             pending_counts: 0,
             pending_users: [],
         };
-        var dashboard = createDashboard({
+        var dashboard = await createDashboard({
             mockRPC: function (route, args) {
                 if (route === '/web_settings_dashboard/data') {
                     return $.when({
@@ -66,7 +66,7 @@ QUnit.module('settings_dashboard', function () {
             'input should have been cleared');
 
         // send invitation
-        testUtils.dom.click(dashboard.$('.o_web_settings_dashboard_invite'));
+        await testUtils.dom.click(dashboard.$('.o_web_settings_dashboard_invite'));
         assert.strictEqual(dashboard.$('.o_web_settings_dashboard_user').text().trim(), 'lagan@odoo.com',
             'should have created a badge in pending invitations');
         assert.containsNone(dashboard, '.o_badge_text',
@@ -75,10 +75,10 @@ QUnit.module('settings_dashboard', function () {
         dashboard.destroy();
     });
 
-    QUnit.test('Dashboard: Invite new user (warnings)', function (assert) {
+    QUnit.test('Dashboard: Invite new user (warnings)', async function (assert) {
         assert.expect(8);
 
-        var dashboard = createDashboard({
+        var dashboard = await createDashboard({
             mockRPC: function (route) {
                 if (route === '/web_settings_dashboard/data') {
                     return $.when({
@@ -124,10 +124,10 @@ QUnit.module('settings_dashboard', function () {
         dashboard.destroy();
     });
 
-    QUnit.test('Dashboard: Invite a list of users', function (assert) {
+    QUnit.test('Dashboard: Invite a list of users', async function (assert) {
         assert.expect(2);
 
-        var dashboard = createDashboard({
+        var dashboard = await createDashboard({
             mockRPC: function (route) {
                 if (route === '/web_settings_dashboard/data') {
                     return $.when({
@@ -156,10 +156,10 @@ QUnit.module('settings_dashboard', function () {
         dashboard.destroy();
     });
 
-    QUnit.test('Dashboard: Invite a list of users (with warnings)', function (assert) {
+    QUnit.test('Dashboard: Invite a list of users (with warnings)', async function (assert) {
         assert.expect(5);
 
-        var dashboard = createDashboard({
+        var dashboard = await createDashboard({
             mockRPC: function (route) {
                 if (route === '/web_settings_dashboard/data') {
                     return $.when({
@@ -196,10 +196,10 @@ QUnit.module('settings_dashboard', function () {
         dashboard.destroy();
     });
 
-    QUnit.test('Prevent default behaviour when clicking on load translation', function (assert) {
+    QUnit.test('Prevent default behaviour when clicking on load translation', async function (assert) {
         assert.expect(3);
 
-        var dashboard = createDashboard({
+        var dashboard = await createDashboard({
             dashboards: ['translations'],
             mockRPC: function (route, args) {
                 if (route === '/web_settings_dashboard/data') {
@@ -225,17 +225,17 @@ QUnit.module('settings_dashboard', function () {
             ev.preventDefault();
         });
 
-        testUtils.dom.click($loadTranslation);
+        await testUtils.dom.click($loadTranslation);
 
         $(document.body).off('click.o_test');
 
         dashboard.destroy();
     });
 
-    QUnit.test('Prevent default behaviour when clicking on set up company', function (assert) {
+    QUnit.test('Prevent default behaviour when clicking on set up company', async function (assert) {
         assert.expect(3);
 
-        var dashboard = createDashboard({
+        var dashboard = await createDashboard({
             dashboards: ['company'],
             mockRPC: function (route, args) {
                 if (route === '/web_settings_dashboard/data') {
@@ -265,17 +265,17 @@ QUnit.module('settings_dashboard', function () {
             ev.preventDefault();
         });
 
-        testUtils.dom.click($setupCompany);
+        await testUtils.dom.click($setupCompany);
 
         $(document.body).off('click.o_test');
 
         dashboard.destroy();
     });
 
-    QUnit.test('Prevent default behaviour when clicking on browse apps', function (assert) {
+    QUnit.test('Prevent default behaviour when clicking on browse apps', async function (assert) {
         assert.expect(3);
 
-        var dashboard = createDashboard({
+        var dashboard = await createDashboard({
             dashboards: ['apps'],
             mockRPC: function (route, args) {
                 if (route === '/web_settings_dashboard/data') {
@@ -306,7 +306,7 @@ QUnit.module('settings_dashboard', function () {
         assert.strictEqual($browseAppsButton.length, 1,
             "should have button to browse apps");
 
-        testUtils.dom.click($browseAppsButton);
+        await testUtils.dom.click($browseAppsButton);
 
         $(document.body).off('click.o_test');
         dashboard.destroy();

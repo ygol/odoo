@@ -73,7 +73,7 @@ QUnit.module('Discuss', {
     }
 });
 
-QUnit.test('basic rendering', function (assert) {
+QUnit.test('basic rendering', async function (assert) {
     assert.expect(5);
     var done = assert.async();
 
@@ -107,7 +107,7 @@ QUnit.test('basic rendering', function (assert) {
     });
 });
 
-QUnit.test('searchview options visibility', function (assert) {
+QUnit.test('searchview options visibility', async function (assert) {
     assert.expect(4);
     var done = assert.async();
 
@@ -118,7 +118,7 @@ QUnit.test('searchview options visibility', function (assert) {
         data: this.data,
         services: this.services,
     })
-    .then(function (discuss) {
+    .then(async function (discuss) {
         var $searchviewOptions = $('.o_search_options > div');
         var $searchviewOptionsToggler = $('.o_searchview_more.fa.fa-search-minus');
         assert.strictEqual($searchviewOptions.length, 1,
@@ -128,7 +128,7 @@ QUnit.test('searchview options visibility', function (assert) {
         assert.strictEqual($searchviewOptions.css('display'), 'block',
             "search options should be visible by default");
 
-        testUtils.dom.click($searchviewOptionsToggler);
+        await testUtils.dom.click($searchviewOptionsToggler);
         assert.strictEqual($searchviewOptions.css('display'), 'none',
             "search options should be hidden after clicking on search option toggler");
 
@@ -137,7 +137,7 @@ QUnit.test('searchview options visibility', function (assert) {
     });
 });
 
-QUnit.test('searchview filter messages', function (assert) {
+QUnit.test('searchview filter messages', async function (assert) {
     assert.expect(10);
     var done = assert.async();
 
@@ -171,7 +171,7 @@ QUnit.test('searchview filter messages', function (assert) {
                 '</search>',
         },
     })
-    .then(function (discuss) {
+    .then(async function (discuss) {
         assert.containsN(discuss, '.o_thread_message', 2,
             "there should be two messages in the inbox mailbox");
         assert.strictEqual($('.o_searchview_input').length, 1,
@@ -191,7 +191,7 @@ QUnit.test('searchview filter messages', function (assert) {
             "there should be a single message after filter");
 
         // interact with search view so that there are no matching messages
-        testUtils.dom.click($('.o_facet_remove'));
+        await testUtils.dom.click($('.o_facet_remove'));
         $('.o_searchview_input').val("abcd").trigger('keyup');
         $('.o_searchview').trigger($.Event('keydown', { which: $.ui.keyCode.ENTER }));
 
@@ -210,7 +210,7 @@ QUnit.test('searchview filter messages', function (assert) {
     });
 });
 
-QUnit.test('unescape channel name in the sidebar', function (assert) {
+QUnit.test('unescape channel name in the sidebar', async function (assert) {
     // When the user creates a channel, the channel's name is escaped, this in
     // order to prevent XSS attacks. However, the user should see visually the
     // unescaped name of the channel. For instance, when the user creates a
@@ -250,7 +250,7 @@ QUnit.test('unescape channel name in the sidebar', function (assert) {
     });
 });
 
-QUnit.test('@ mention in channel', function (assert) {
+QUnit.test('@ mention in channel', async function (assert) {
     assert.expect(34);
     var done = assert.async();
 
@@ -297,7 +297,7 @@ QUnit.test('@ mention in channel', function (assert) {
             return this._super.apply(this, arguments);
         },
     })
-    .then(function (discuss) {
+    .then(async function (discuss) {
         objectDiscuss = discuss;
 
         var $general = discuss.$('.o_mail_discuss_sidebar')
@@ -308,7 +308,7 @@ QUnit.test('@ mention in channel', function (assert) {
             "should have the title 'general'");
 
         // click on general
-        testUtils.dom.click($general);
+        await testUtils.dom.click($general);
         var $input = discuss.$('textarea.o_composer_text_field').first();
         assert.ok($input.length, "should display a composer input");
 
@@ -396,7 +396,7 @@ QUnit.test('@ mention in channel', function (assert) {
                 assert.doesNotHaveClass($mention3, 'active',
                     "third partner mention should not be active");
 
-//                testUtils.dom.click( equivalent to $mentionPropositions.find('active'));
+//                await testUtils.dom.click( equivalent to $mentionPropositions.find('active'));
                 $input.trigger($.Event('keyup', {which: $.ui.keyCode.ENTER}));
                 assert.containsNone(discuss, '.o_mention_proposition',
                     "should not have any partner mention proposition after ENTER");
@@ -423,7 +423,7 @@ QUnit.test('@ mention in channel', function (assert) {
     });
 });
 
-QUnit.test('no crash focusout emoji button', function (assert) {
+QUnit.test('no crash focusout emoji button', async function (assert) {
     assert.expect(3);
     var done = assert.async();
 
@@ -444,7 +444,7 @@ QUnit.test('no crash focusout emoji button', function (assert) {
         data: this.data,
         services: this.services,
     })
-    .then(function (discuss) {
+    .then(async function (discuss) {
         var $general = discuss.$('.o_mail_discuss_sidebar')
             .find('.o_mail_discuss_item[data-thread-id=1]');
         assert.strictEqual($general.length, 1,
@@ -453,7 +453,7 @@ QUnit.test('no crash focusout emoji button', function (assert) {
             "should have the title 'general'");
 
         // click on general
-        testUtils.dom.click($general);
+        await testUtils.dom.click($general);
         discuss.$('.o_composer_button_emoji').focus();
         try {
             discuss.$('.o_composer_button_emoji').focusout();
@@ -465,7 +465,7 @@ QUnit.test('no crash focusout emoji button', function (assert) {
     });
 });
 
-QUnit.test('older messages are loaded on scroll', function (assert) {
+QUnit.test('older messages are loaded on scroll', async function (assert) {
     assert.expect(10);
     var done = assert.async();
 
@@ -515,7 +515,7 @@ QUnit.test('older messages are loaded on scroll', function (assert) {
             }
             return this._super.apply(this, arguments);
         },
-    }).then(function (discuss) {
+    }).then(async function (discuss) {
 
         assert.verifySteps(['message_fetch'],
             "should fetch messages once for needaction messages (Inbox)");
@@ -525,7 +525,7 @@ QUnit.test('older messages are loaded on scroll', function (assert) {
             "should have a channel item with id 1");
 
         // switch to 'general'
-        testUtils.dom.click($general);
+        await testUtils.dom.click($general);
 
         assert.verifySteps(['message_fetch', 'message_fetch'],
             "should fetch a second time for general channel messages (30 last messages)");
@@ -550,7 +550,7 @@ QUnit.test('older messages are loaded on scroll', function (assert) {
     });
 });
 
-QUnit.test('"Unstar all" button should reset the starred counter', function (assert) {
+QUnit.test('"Unstar all" button should reset the starred counter', async function (assert) {
     assert.expect(2);
     var done = assert.async();
 
@@ -601,19 +601,19 @@ QUnit.test('"Unstar all" button should reset the starred counter', function (ass
         },
         session: {partner_id: 1},
     })
-    .then(function (discuss) {
+    .then(async function (discuss) {
         objectDiscuss = discuss;
 
         var $starred = discuss.$('.o_mail_discuss_sidebar').find('.o_mail_mailbox_title_starred');
         var $starredCounter = $('.o_mail_mailbox_title_starred > .o_mail_sidebar_needaction');
 
         // Go to Starred channel
-        testUtils.dom.click($starred);
+        await testUtils.dom.click($starred);
         // Test Initial Value
         assert.strictEqual($starredCounter.text().trim(), "40", "40 messages should be starred");
 
         // Unstar all and wait 'update_starred'
-        testUtils.dom.click($('.o_control_panel .o_mail_discuss_button_unstar_all'));
+        await testUtils.dom.click($('.o_control_panel .o_mail_discuss_button_unstar_all'));
         $starredCounter = $('.o_mail_mailbox_title_starred > .o_mail_sidebar_needaction');
         assert.strictEqual($starredCounter.text().trim(), "0",
             "All messages should be unstarred");
@@ -623,7 +623,7 @@ QUnit.test('"Unstar all" button should reset the starred counter', function (ass
     });
 });
 
-QUnit.test('do not crash when destroyed before start is completed', function (assert) {
+QUnit.test('do not crash when destroyed before start is completed', async function (assert) {
     assert.expect(3);
     var discuss;
 
@@ -660,7 +660,7 @@ QUnit.test('do not crash when destroyed before start is completed', function (as
     testUtils.mock.unpatch(Discuss);
 });
 
-QUnit.test('do not crash when destroyed between start en end of _renderSearchView', function (assert) {
+QUnit.test('do not crash when destroyed between start en end of _renderSearchView', async function (assert) {
     assert.expect(2);
     var discuss;
 
@@ -704,7 +704,7 @@ QUnit.test('do not crash when destroyed between start en end of _renderSearchVie
     testUtils.mock.unpatch(SearchView);
 });
 
-QUnit.test('confirm dialog when administrator leave (not chat) channel', function (assert) {
+QUnit.test('confirm dialog when administrator leave (not chat) channel', async function (assert) {
     assert.expect(2);
     var done = assert.async();
 
@@ -729,9 +729,9 @@ QUnit.test('confirm dialog when administrator leave (not chat) channel', functio
             uid: 3,
         },
     })
-    .then(function (discuss) {
+    .then(async function (discuss) {
         // Unsubscribe on MyChannel as administrator
-        testUtils.dom.click(discuss.$('.o_mail_partner_unpin'));
+        await testUtils.dom.click(discuss.$('.o_mail_partner_unpin'));
 
         assert.strictEqual($('.modal-dialog').length, 1,
             "should display a dialog");
@@ -743,7 +743,7 @@ QUnit.test('confirm dialog when administrator leave (not chat) channel', functio
     });
 });
 
-QUnit.test('convert emoji sources to unicodes on message_post', function (assert) {
+QUnit.test('convert emoji sources to unicodes on message_post', async function (assert) {
     assert.expect(2);
     var done = assert.async();
 
@@ -784,14 +784,14 @@ QUnit.test('convert emoji sources to unicodes on message_post', function (assert
             return this._super.apply(this, arguments);
         },
     })
-    .then(function (discuss) {
+    .then(async function (discuss) {
         objectDiscuss= discuss;
 
         var $general = discuss.$('.o_mail_discuss_sidebar')
                         .find('.o_mail_discuss_item[data-thread-id=1]');
 
         // click on general
-        testUtils.dom.click($general);
+        await testUtils.dom.click($general);
         var $input = discuss.$('textarea.o_composer_text_field').first();
 
         $input.focus();
@@ -811,7 +811,7 @@ QUnit.test('convert emoji sources to unicodes on message_post', function (assert
     });
 });
 
-QUnit.test('mark all messages as read from Inbox', function (assert) {
+QUnit.test('mark all messages as read from Inbox', async function (assert) {
     var done = assert.async();
     assert.expect(9);
 
@@ -860,7 +860,7 @@ QUnit.test('mark all messages as read from Inbox', function (assert) {
             return this._super.apply(this, arguments);
         },
     })
-    .then(function (discuss) {
+    .then(async function (discuss) {
         objectDiscuss = discuss;
 
         var $inbox = discuss.$('.o_mail_discuss_item[data-thread-id="mailbox_inbox"]');
@@ -882,7 +882,7 @@ QUnit.test('mark all messages as read from Inbox', function (assert) {
         assert.notOk($markAllReadButton.prop('disabled'),
             "the 'Mark All As Read' button should not be disabled");
 
-        testUtils.dom.click($markAllReadButton);
+        await testUtils.dom.click($markAllReadButton);
 
         markAllReadDef.then(function () {
             // immediately jump to end of the fadeout animation on messages

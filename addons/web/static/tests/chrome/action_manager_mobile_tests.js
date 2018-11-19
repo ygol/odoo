@@ -53,10 +53,10 @@ QUnit.module('ActionManager', {
         };
     },
 }, function () {
-    QUnit.test('uses a mobile-friendly view by default (if possible)', function (assert) {
+    QUnit.test('uses a mobile-friendly view by default (if possible)', async function (assert) {
         assert.expect(4);
 
-        var actionManager = createActionManager({
+        var actionManager = await createActionManager({
             actions: this.actions,
             archs: this.archs,
             data: this.data,
@@ -77,10 +77,10 @@ QUnit.module('ActionManager', {
         actionManager.destroy();
     });
 
-    QUnit.test('lazy load mobile-friendly view', function (assert) {
+    QUnit.test('lazy load mobile-friendly view', async function (assert) {
         assert.expect(11);
 
-        var actionManager = createActionManager({
+        var actionManager = await createActionManager({
             actions: this.actions,
             archs: this.archs,
             data: this.data,
@@ -99,7 +99,7 @@ QUnit.module('ActionManager', {
         assert.containsOnce(actionManager, '.o_form_view');
 
         // go back to lazy loaded view
-        testUtils.dom.click($('.o_control_panel .breadcrumb .breadcrumb-item:first'));
+        await testUtils.dom.click($('.o_control_panel .breadcrumb .breadcrumb-item:first'));
         assert.containsNone(actionManager, '.o_form_view');
         assert.containsNone(actionManager, '.o_list_view');
         assert.containsOnce(actionManager, '.o_kanban_view');
@@ -114,10 +114,10 @@ QUnit.module('ActionManager', {
         actionManager.destroy();
     });
 
-    QUnit.test('view switcher button should be displayed in dropdown on mobile screens', function (assert) {
+    QUnit.test('view switcher button should be displayed in dropdown on mobile screens', async function (assert) {
         assert.expect(3);
 
-        var actionManager = createActionManager({
+        var actionManager = await createActionManager({
             actions: this.actions,
             archs: this.archs,
             data: this.data,

@@ -37,11 +37,11 @@ QUnit.module('ActivityMenu', {
     }
 });
 
-QUnit.test('activity menu widget:today meetings', function (assert) {
+QUnit.test('activity menu widget:today meetings', async function (assert) {
     assert.expect(8);
     var self = this;
     var activityMenu = new ActivityMenu();
-    testUtils.mock.addMockEnvironment(activityMenu, {
+    await testUtils.mock.addMockEnvironment(activityMenu, {
         services: this.services,
         mockRPC: function (route, args) {
             if (args.method === 'systray_get_activities') {
@@ -59,13 +59,13 @@ QUnit.test('activity menu widget:today meetings', function (assert) {
         assert.ok(true, "should have triggered a do_action");
         assert.strictEqual(event.data.action.res_id,  activityMenu.$('.o_meeting_filter').eq(0).data('res_id'), 'should open particular meeting form view');
     });
-    testUtils.dom.click(activityMenu.$('.dropdown-toggle'));
-    testUtils.dom.click(activityMenu.$('.o_meeting_filter').eq(0));
+    await testUtils.dom.click(activityMenu.$('.dropdown-toggle'));
+    await testUtils.dom.click(activityMenu.$('.o_meeting_filter').eq(0));
 
     testUtils.mock.intercept(activityMenu, 'do_action', function (event) {
         assert.strictEqual(event.data.action,  "calendar.action_calendar_event", 'should open meeting calendar view in day mode');
     });
-    testUtils.dom.click(activityMenu.$('.o_mail_preview'));
+    await testUtils.dom.click(activityMenu.$('.o_mail_preview'));
 
     assert.ok(activityMenu.$('.o_meeting_filter'), "should be a meeting");
     assert.containsN(activityMenu, '.o_meeting_filter', 2, 'there should be 2 meetings');

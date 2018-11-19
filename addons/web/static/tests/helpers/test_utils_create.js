@@ -30,7 +30,7 @@ var Widget = require('web.Widget');
  * @param {function} [params.mockRPC]
  * @returns {ActionManager}
  */
-function createActionManager (params) {
+async function createActionManager (params) {
     params = params || {};
     var $target = $('#qunit-fixture');
     if (params.debug) {
@@ -55,7 +55,7 @@ function createActionManager (params) {
             return this._super.apply(this, arguments);
         },
     });
-    testUtilsMock.addMockEnvironment(widget, _.defaults(params, { debounce: false }));
+    await testUtilsMock.addMockEnvironment(widget, _.defaults(params, { debounce: false }));
     widget.prependTo($target);
     widget.$el.addClass('o_web_client');
     if (config.device.isMobile) {
@@ -106,7 +106,7 @@ function createActionManager (params) {
  *   after this method returns
  * @returns {Deferred<AbstractView>} resolves with the instance of the view
  */
-function createAsyncView(params) {
+async function createView(params) {
     var $target = $('#qunit-fixture');
     var widget = new Widget();
     if (params.debug) {
@@ -115,8 +115,8 @@ function createAsyncView(params) {
     }
 
     // add mock environment: mock server, session, fieldviewget, ...
-    var mockServer = testUtilsMock.addMockEnvironment(widget, params);
-    var viewInfo = testUtilsMock.fieldsViewGet(mockServer, params);
+    var mockServer = await testUtilsMock.addMockEnvironment(widget, params);
+    var viewInfo = await testUtilsMock.fieldsViewGet(mockServer, params);
     // create the view
     var viewOptions = {
         modelName: params.model || 'foo',
@@ -183,7 +183,7 @@ function createAsyncView(params) {
  *
  * @param {Object} [params={}]
  */
-function createDebugManager (params) {
+async function createDebugManager (params) {
     params = params || {};
     var mockRPC = params.mockRPC;
     _.extend(params, {
@@ -209,7 +209,7 @@ function createDebugManager (params) {
         },
     });
     var debugManager = new DebugManager();
-    testUtilsMock.addMockEnvironment(debugManager, params);
+    await estUtilsMock.addMockEnvironment(debugManager, params);
     return debugManager;
 }
 
@@ -221,12 +221,12 @@ function createDebugManager (params) {
  * @param {Class} params.Model the model class to use
  * @returns {Model}
  */
-function createModel(params) {
+async function createModel(params) {
     var widget = new Widget();
 
     var model = new params.Model(widget);
 
-    testUtilsMock.addMockEnvironment(widget, params);
+    await testUtilsMock.addMockEnvironment(widget, params);
 
     // override the model's 'destroy' so that it calls 'destroy' on the widget
     // instead, as the widget is the parent of the model and the mockServer.
@@ -247,38 +247,15 @@ function createModel(params) {
  *   any parameters from that method applies
  * @returns {Widget}
  */
-function createParent(params) {
+async function createParent(params) {
     var widget = new Widget();
-    testUtilsMock.addMockEnvironment(widget, params);
+    await testUtilsMock.addMockEnvironment(widget, params);
     return widget;
-}
-
-/**
- * create a view synchronously.  This method uses the createAsyncView method.
- * Most views are synchronous, so the deferred can be resolved immediately and
- * this method will work.
- *
- * Be careful, if for some reason a view is async, this method will crash.
- * @see createAsyncView
- *
- * @param {Object} params will be given to createAsyncView
- * @returns {AbstractView}
- */
-function createView(params) {
-    var view;
-    createAsyncView(params).then(function (result) {
-        view = result;
-    });
-    if (!view) {
-        throw "The view that you are trying to create is async. Please use createAsyncView instead";
-    }
-    return view;
 }
 
 
 return {
     createActionManager: createActionManager,
-    createAsyncView: createAsyncView,
     createDebugManager: createDebugManager,
     createModel: createModel,
     createParent: createParent,

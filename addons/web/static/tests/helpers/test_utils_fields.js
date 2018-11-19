@@ -27,7 +27,7 @@ var concurrency = require('web.concurrency');
  * @param {string|number} value
  * @param {string[]} events
  */
-function editAndTrigger($el, value, events) {
+async function editAndTrigger($el, value, events) {
     if ($el.length !== 1) {
         throw new Error(`target ${$el.selector} has length ${$el.length} instead of 1`);
     }
@@ -48,7 +48,7 @@ function editAndTrigger($el, value, events) {
  * @param {jQuery} $el
  * @param {string|number} value
  */
-function editInput($el, value) {
+async function editInput($el, value) {
     editAndTrigger($el, value, ['input']);
 }
 
@@ -63,7 +63,7 @@ function editInput($el, value) {
  * @param {jQuery} $el
  * @param {string|number} value
  */
-function editSelect($el, value) {
+async function editSelect($el, value) {
     editAndTrigger($el, value, ['change']);
 }
 
@@ -75,7 +75,7 @@ function editSelect($el, value) {
  *    input
  * @returns {HTMLInputElement} the main many2one input
  */
-function clickOpenM2ODropdown(fieldName, selector) {
+async function clickOpenM2ODropdown(fieldName, selector) {
     var m2oSelector = `${selector || ''} .o_field_many2one[name=${fieldName}] input`;
     var matches = document.querySelectorAll(m2oSelector);
     if (matches.length !== 1) {
@@ -92,7 +92,7 @@ function clickOpenM2ODropdown(fieldName, selector) {
  * @param {[string]} selector if set, this will restrict the search for the m2o
  *    input
  */
-function clickM2OHighlightedItem(fieldName, selector) {
+async function clickM2OHighlightedItem(fieldName, selector) {
     var m2oSelector = `${selector || ''} .o_field_many2one[name=${fieldName}] input`;
     var $dropdown = $(m2oSelector).autocomplete('widget');
     // clicking on an li (no matter which one), will select the focussed one
@@ -110,7 +110,7 @@ function clickM2OHighlightedItem(fieldName, selector) {
  * @param {string} fieldName
  * @param {string} searchText
  */
-function clickM2OItem(fieldName, searchText) {
+async function clickM2OItem(fieldName, searchText) {
     var m2oSelector = `.o_field_many2one[name=${fieldName}] input`;
     var $dropdown = $(m2oSelector).autocomplete('widget');
     var $target = $dropdown.find(`li:contains(${searchText})`).first();
@@ -136,7 +136,7 @@ function clickM2OItem(fieldName, searchText) {
  * @param {[string]} options.search
  * @returns {Promise}
  */
-function searchAndClickM2OItem(fieldName, options) {
+async function searchAndClickM2OItem(fieldName, options) {
     options = options || {};
 
     var input = clickOpenM2ODropdown(fieldName, options.selector);

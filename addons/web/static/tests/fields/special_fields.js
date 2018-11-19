@@ -141,7 +141,7 @@ QUnit.module('special_fields', {
 
     QUnit.module('FieldTimezoneMismatch');
 
-    QUnit.test('widget timezone_mismatch in a list view', function (assert) {
+    QUnit.test('widget timezone_mismatch in a list view', async function (assert) {
         assert.expect(5);
 
         this.data.partner.fields.tz_offset = {
@@ -158,7 +158,7 @@ QUnit.module('special_fields', {
             }
         };
 
-        var list = createView({
+        var list = await createView({
             View: ListView,
             model: 'partner',
             data: this.data,
@@ -184,7 +184,7 @@ QUnit.module('special_fields', {
         list.destroy();
     });
 
-    QUnit.test('widget timezone_mismatch in a form view', function (assert) {
+    QUnit.test('widget timezone_mismatch in a form view', async function (assert) {
         assert.expect(1);
 
         this.data.partner.fields.tz_offset = {
@@ -198,7 +198,7 @@ QUnit.module('special_fields', {
         this.data.partner.records[0].tz = false;
         this.data.partner.records[0].tz_offset = '+4800';
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'partner',
             res_id: 1,
@@ -213,7 +213,7 @@ QUnit.module('special_fields', {
         form.destroy();
     });
 
-    QUnit.test('widget timezone_mismatch in a form view edit mode with mismatch', function (assert) {
+    QUnit.test('widget timezone_mismatch in a form view edit mode with mismatch', async function (assert) {
         assert.expect(3);
 
         this.data.partner.fields.tz_offset = {
@@ -227,7 +227,7 @@ QUnit.module('special_fields', {
         this.data.partner.records[0].tz = 'America/Los_Angeles';
         this.data.partner.records[0].tz_offset = '+4800';
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'partner',
             res_id: 1,
@@ -256,7 +256,7 @@ QUnit.module('special_fields', {
 
     QUnit.module('FieldReportLayout');
 
-    QUnit.test('report_layout widget in form view', function (assert) {
+    QUnit.test('report_layout widget in form view', async function (assert) {
         assert.expect(3);
 
         this.data['report.layout'] = {
@@ -279,7 +279,7 @@ QUnit.module('special_fields', {
         };
         this.data.partner.records[1].product_id = false;
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'partner',
             data: this.data,

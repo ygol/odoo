@@ -4,7 +4,7 @@ odoo.define('web.calendar_mobile_tests', function (require) {
 var CalendarView = require('web.CalendarView');
 var testUtils = require('web.test_utils');
 
-var createAsyncView = testUtils.createAsyncView;
+var createAsyncView = testUtils.createView;
 
 var initialDate = new Date(2016, 11, 12, 8, 0, 0);
 initialDate = new Date(initialDate.getTime() - initialDate.getTimezoneOffset()*60*1000);
@@ -33,7 +33,7 @@ QUnit.module('Views', {
 
     QUnit.module('CalendarView Mobile');
 
-    QUnit.test('simple calendar rendering in mobile', function (assert) {
+    QUnit.test('simple calendar rendering in mobile', async function (assert) {
         assert.expect(3);
         var done = assert.async();
 

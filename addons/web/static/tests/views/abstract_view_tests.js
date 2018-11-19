@@ -6,7 +6,7 @@ var ajax = require('web.ajax');
 var ListView = require('web.ListView');
 var testUtils = require('web.test_utils');
 
-var createAsyncView = testUtils.createAsyncView;
+var createAsyncView = testUtils.createView;
 
 QUnit.module('Views', {
     beforeEach: function () {
@@ -31,7 +31,7 @@ QUnit.module('Views', {
 
     QUnit.module('AbstractView');
 
-    QUnit.test('lazy loading of js libs (in parallel)', function (assert) {
+    QUnit.test('lazy loading of js libs (in parallel)', async function (assert) {
         var done = assert.async();
         assert.expect(6);
 
@@ -65,7 +65,7 @@ QUnit.module('Views', {
         def.resolve();
     });
 
-    QUnit.test('lazy loading of js libs (sequentially)', function (assert) {
+    QUnit.test('lazy loading of js libs (sequentially)', async function (assert) {
         var done = assert.async();
         assert.expect(10);
 
@@ -112,10 +112,10 @@ QUnit.module('Views', {
         defs.c.resolve();
     });
 
-    QUnit.test('groupBy attribute can be a string, instead of a list of strings', function (assert) {
+    QUnit.test('groupBy attribute can be a string, instead of a list of strings', async function (assert) {
         assert.expect(2);
 
-        var list = testUtils.createView({
+        var list = await testUtils.createView({
             View: ListView,
             model: 'foo',
             data: this.data,

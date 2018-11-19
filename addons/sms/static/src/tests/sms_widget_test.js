@@ -24,9 +24,9 @@ QUnit.module('fields', {
 
     QUnit.module('SmsWidget');
 
-    QUnit.test('Sms widgets are correctly rendered', function (assert) {
+    QUnit.test('Sms widgets are correctly rendered', async function (assert) {
         assert.expect(9);
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'partner',
             data: this.data,

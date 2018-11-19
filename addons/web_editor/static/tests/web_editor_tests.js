@@ -27,11 +27,11 @@ QUnit.module('web_editor', {
     }
 });
 
-QUnit.test('field html widget', function (assert) {
+QUnit.test('field html widget', async function (assert) {
     var done = assert.async();
     assert.expect(3);
 
-    var form = testUtils.createView({
+    var form = await testUtils.createView({
         View: FormView,
         model: 'mass.mailing',
         data: this.data,
@@ -46,7 +46,7 @@ QUnit.test('field html widget', function (assert) {
     assert.hasAttrValue(form.$('div[name=body]'), 'style', 'height: 100px',
         "should have applied the style correctly");
 
-    testUtils.form.clickEdit(form);
+    await testUtils.form.clickEdit(form);
 
     assert.strictEqual(form.$('.note-editable').html(), '<div class="field_body">yep</div>',
             "should have rendered the field correctly in edit");
@@ -59,11 +59,11 @@ QUnit.test('field html widget', function (assert) {
     }, 0);
 });
 
-QUnit.test('field html widget (with options inline-style)', function (assert) {
+QUnit.test('field html widget (with options inline-style)', async function (assert) {
     var done = assert.async();
     assert.expect(3);
 
-    var form = testUtils.createView({
+    var form = await testUtils.createView({
         View: FormView,
         model: 'mass.mailing',
         data: this.data,
@@ -78,7 +78,7 @@ QUnit.test('field html widget (with options inline-style)', function (assert) {
     assert.hasAttrValue(form.$('div[name=body]'), 'style', 'height: 100px',
         "should have applied the style correctly");
 
-    testUtils.form.clickEdit(form);
+    await testUtils.form.clickEdit(form);
 
     assert.strictEqual(form.$('.note-editable').html(), '<div class="field_body">yep</div>',
             "should have rendered the field correctly in edit");
@@ -91,7 +91,7 @@ QUnit.test('field html widget (with options inline-style)', function (assert) {
     }, 0);
 });
 
-QUnit.test('field html translatable', function (assert) {
+QUnit.test('field html translatable', async function (assert) {
     assert.expect(3);
 
     var multiLang = _t.database.multi_lang;
@@ -99,7 +99,7 @@ QUnit.test('field html translatable', function (assert) {
 
     this.data['mass.mailing'].fields.body.translate = true;
 
-    var form = testUtils.createView({
+    var form = await testUtils.createView({
         View: FormView,
         model: 'mass.mailing',
         data: this.data,
@@ -119,19 +119,19 @@ QUnit.test('field html translatable', function (assert) {
     assert.containsNone(form, '.oe_form_field_html_text .o_field_translate',
         "should not have a translate button in readonly mode");
 
-    testUtils.form.clickEdit(form);
+    await testUtils.form.clickEdit(form);
     var $button = form.$('.oe_form_field_html_text .o_field_translate');
     assert.strictEqual($button.length, 1, "should have a translate button");
-    testUtils.dom.click($button);
+    await testUtils.dom.click($button);
 
     form.destroy();
     _t.database.multi_lang = multiLang;
 });
 
-QUnit.test('field html_frame widget', function (assert) {
+QUnit.test('field html_frame widget', async function (assert) {
     assert.expect(6);
 
-    var form = testUtils.createView({
+    var form = await testUtils.createView({
         View: FormView,
         model: 'mass.mailing',
         data: this.data,
@@ -155,17 +155,17 @@ QUnit.test('field html_frame widget', function (assert) {
 
     assert.containsOnce(form, 'iframe', "should have rendered an iframe without crashing");
 
-    testUtils.form.clickEdit(form);
+    await testUtils.form.clickEdit(form);
 
     assert.containsOnce(form, 'iframe', "should have rendered an iframe without crashing");
 
     form.destroy();
 });
 
-QUnit.test('field htmlsimple does not crash when commitChanges is called in mode=readonly', function (assert) {
+QUnit.test('field htmlsimple does not crash when commitChanges is called in mode=readonly', async function (assert) {
     assert.expect(1);
 
-    var form = testUtils.createView({
+    var form = await testUtils.createView({
         View: FormView,
         model: 'mass.mailing',
         data: this.data,
@@ -185,16 +185,16 @@ QUnit.test('field htmlsimple does not crash when commitChanges is called in mode
         },
     });
 
-    testUtils.dom.click(form.$('button:contains(Do it)'));
+    await testUtils.dom.click(form.$('button:contains(Do it)'));
     form.destroy();
 });
 
-QUnit.test('html_frame does not crash when saving in readonly', function (assert) {
+QUnit.test('html_frame does not crash when saving in readonly', async function (assert) {
     // The 'Save' action may be triggered even in readonly (e.g. when clicking
     // on a button in the form view)
     assert.expect(2);
 
-    var form = testUtils.createView({
+    var form = await testUtils.createView({
         View: FormView,
         model: 'mass.mailing',
         data: this.data,
@@ -225,12 +225,12 @@ QUnit.test('html_frame does not crash when saving in readonly', function (assert
     form.destroy();
 });
 
-QUnit.test('html_frame does not crash when saving in edit mode (editor not loaded)', function (assert) {
+QUnit.test('html_frame does not crash when saving in edit mode (editor not loaded)', async function (assert) {
     // The 'Save' action may be triggered when saving in edit mode very fast
     // so that the editor may be not loaded, even though the content is!
     assert.expect(2);
 
-    var form = testUtils.createView({
+    var form = await testUtils.createView({
         View: FormView,
         model: 'mass.mailing',
         data: this.data,
@@ -255,16 +255,16 @@ QUnit.test('html_frame does not crash when saving in edit mode (editor not loade
         },
     });
 
-    testUtils.form.clickEdit(form);
-    testUtils.fields.editInput(form.$('input'), 'trululu');
-    testUtils.form.clickSave(form); // crash without editor fully loaded
+    await testUtils.form.clickEdit(form);
+    await testUtils.fields.editInput(form.$('input'), 'trululu');
+    await testUtils.form.clickSave(form); // crash without editor fully loaded
 
     assert.verifySteps(['read']);
 
     form.destroy();
 });
 
-QUnit.test('html_frame saving in edit mode (editor and content fully loaded)', function (assert) {
+QUnit.test('html_frame saving in edit mode (editor and content fully loaded)', async function (assert) {
     var done = assert.async();
     assert.expect(4);
 
@@ -272,7 +272,7 @@ QUnit.test('html_frame saving in edit mode (editor and content fully loaded)', f
     var loadDeferred = $.Deferred();
     var writeDeferred = $.Deferred();
 
-    var form = testUtils.createView({
+    var form = await testUtils.createView({
         View: FormView,
         model: 'mass.mailing',
         data: this.data,
@@ -307,9 +307,9 @@ QUnit.test('html_frame saving in edit mode (editor and content fully loaded)', f
         },
     });
 
-    testUtils.form.clickEdit(form);
-    testUtils.fields.editInput(form.$('input'), 'trululu');
-    testUtils.form.clickSave(form);
+    await testUtils.form.clickEdit(form);
+    await testUtils.fields.editInput(form.$('input'), 'trululu');
+    await testUtils.form.clickSave(form);
 
     loadDeferred.resolve(); // simulate late loading of html frame
 

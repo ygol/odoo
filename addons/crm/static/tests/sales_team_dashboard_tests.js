@@ -36,11 +36,11 @@ QUnit.module('CRM Sales Team Dashboard', {
     }
 });
 
-QUnit.test('dashboard basic rendering', function (assert) {
+QUnit.test('dashboard basic rendering', async function (assert) {
     assert.expect(2);
 
     var dashboard_data = this.dashboard_data;
-    var kanban = createView({
+    var kanban = await createView({
         View: view_registry.get('sales_team_dashboard'),
         model: 'partner',
         data: this.data,
@@ -62,11 +62,11 @@ QUnit.test('dashboard basic rendering', function (assert) {
             "should render the dashboard");
 });
 
-QUnit.test('dashboard set a new target', function (assert) {
+QUnit.test('dashboard set a new target', async function (assert) {
     assert.expect(4);
 
     var dashboard_data = this.dashboard_data;
-    var kanban = createView({
+    var kanban = await createView({
         View: view_registry.get('sales_team_dashboard'),
         model: 'partner',
         data: this.data,
@@ -90,7 +90,7 @@ QUnit.test('dashboard set a new target', function (assert) {
         },
     });
 
-    testUtils.dom.click(kanban.$('.o_target_to_set').first());
+    await testUtils.dom.click(kanban.$('.o_target_to_set').first());
     kanban.$('.o_sales_dashboard input')
         .val('20000')
         .trigger($.Event('keyup', {which: $.ui.keyCode.ENTER})); // set the target
@@ -99,11 +99,11 @@ QUnit.test('dashboard set a new target', function (assert) {
         "dashboard should have been correctly re-rendered after target update");
 });
 
-QUnit.test('dashboard: click on a button to execute an action', function (assert) {
+QUnit.test('dashboard: click on a button to execute an action', async function (assert) {
     assert.expect(2);
 
     var dashboard_data = this.dashboard_data;
-    var kanban = createView({
+    var kanban = await createView({
         View: view_registry.get('sales_team_dashboard'),
         model: 'partner',
         data: this.data,
@@ -131,15 +131,15 @@ QUnit.test('dashboard: click on a button to execute an action', function (assert
             'execute_action should have been triggered with the correct data');
     });
 
-    testUtils.dom.click(kanban.$('.my_button:first()'));
+    await testUtils.dom.click(kanban.$('.my_button:first()'));
     kanban.destroy();
 });
 
-QUnit.test('dashboard should be displayed even if there is no content', function (assert) {
+QUnit.test('dashboard should be displayed even if there is no content', async function (assert) {
     assert.expect(2);
 
     var dashboardData = this.dashboard_data;
-    var kanban = createView({
+    var kanban = await createView({
         View: view_registry.get('sales_team_dashboard'),
         model: 'partner',
         data: this.data,

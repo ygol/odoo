@@ -43,7 +43,7 @@ QUnit.module('Views', {
 
     QUnit.module('FormView');
 
-    QUnit.test('switching to next/previous record on swipe in readonly mode', function (assert) {
+    QUnit.test('switching to next/previous record on swipe in readonly mode', async function (assert) {
         assert.expect(6);
 
         // mimic touchSwipe library's swipe method
@@ -54,7 +54,7 @@ QUnit.module('Views', {
             swipeRight = params.swipeRight.bind(this);
         };
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'partner',
             data: this.data,

@@ -28,7 +28,7 @@ odoo.define('web.test_utils_dom', function () {
  *   mousedown action (will only work after another call of this function with
  *   without this option)
  */
-function dragAndDrop($el, $to, options) {
+async function dragAndDrop($el, $to, options) {
     var position = (options && options.position) || 'center';
     var elementCenter = $el.offset();
     var toOffset = $to.offset();
@@ -100,7 +100,7 @@ function dragAndDrop($el, $to, options) {
  * @param {jqueryElement} $el
  * @param {string} type a mouse event type, such as 'mousedown' or 'mousemove'
  */
-function triggerMouseEvent($el, type) {
+async function triggerMouseEvent($el, type) {
     var pos = $el.offset();
     var e = new $.Event(type);
     e.pageX = e.layerX = e.screenX = pos.left;
@@ -118,7 +118,7 @@ function triggerMouseEvent($el, type) {
  * @param {integer} y
  * @param {string} type a mouse event type, such as 'mousedown' or 'mousemove'
  */
-function triggerPositionalMouseEvent(x, y, type) {
+async function triggerPositionalMouseEvent(x, y, type) {
     var ev = document.createEvent("MouseEvent");
     var el = document.elementFromPoint(x, y);
     ev.initMouseEvent(
@@ -139,7 +139,7 @@ function triggerPositionalMouseEvent(x, y, type) {
  *
  * @param {string} char the character, or 'ENTER'
  */
-function triggerKeypressEvent(char) {
+async function triggerKeypressEvent(char) {
     var keycode;
     if (char === "Enter") {
         keycode = $.ui.keyCode.ENTER;
@@ -154,7 +154,7 @@ function triggerKeypressEvent(char) {
  *
  * @param {jQuery} $datepickerEl element to which a datepicker is attached
  */
-function openDatepicker($datepickerEl) {
+async function openDatepicker($datepickerEl) {
     $datepickerEl.find('.o_datepicker_input').trigger('focus.datetimepicker');
 }
 
@@ -167,7 +167,7 @@ function openDatepicker($datepickerEl) {
  * @param {boolean} [options.first=false] if true, clicks on the first element
  * @param {boolean} [options.last=false] if true, clicks on the last element
  */
-function click(el, options) {
+async function click(el, options) {
     options = options || {};
     var matches = typeof el === 'string' ? $(el) : el;
     var selectorMsg = el.selector ? `(selector: ${el.selector})` : '';
@@ -206,7 +206,7 @@ function click(el, options) {
  *
  * @param {string|NodeList|jQuery} el (if string: it is a (jquery) selector)
  */
-function clickFirst(el) {
+async function clickFirst(el) {
     click(el, {first: true});
 }
 
@@ -217,7 +217,7 @@ function clickFirst(el) {
  *
  * @param {string|NodeList|jQuery} el
  */
-function clickLast(el) {
+async function clickLast(el) {
     click(el, {last: true});
 }
 

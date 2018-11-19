@@ -7,7 +7,7 @@ odoo.__DEBUG__.didLogInfo.then(function() {
 
     QUnit.module('Odoo JS Modules');
 
-    QUnit.test('all modules are properly loaded', function(assert) {
+    QUnit.test('all modules are properly loaded', async function(assert) {
         assert.expect(2);
 
         assert.deepEqual(modulesInfo.missing, [],

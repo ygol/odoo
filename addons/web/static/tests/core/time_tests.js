@@ -7,7 +7,7 @@ QUnit.module('core', {}, function () {
 
     QUnit.module('Time utils');
 
-    QUnit.test('Parse server datetime', function (assert) {
+    QUnit.test('Parse server datetime', async function (assert) {
         assert.expect(4);
 
         var date = time.str_to_datetime("2009-05-04 12:34:23");
@@ -33,7 +33,7 @@ QUnit.module('core', {}, function () {
             [2009, 5 - 1, 4, 12, 34, 23, 845]);
     });
 
-    QUnit.test('Parse server datetime on 31', function (assert) {
+    QUnit.test('Parse server datetime on 31', async function (assert) {
         assert.expect(1);
 
         var wDate = window.Date;
@@ -57,7 +57,7 @@ QUnit.module('core', {}, function () {
         }
     });
 
-    QUnit.test('Parse server date', function (assert) {
+    QUnit.test('Parse server date', async function (assert) {
         assert.expect(1);
 
         var date = time.str_to_date("2009-05-04");
@@ -66,7 +66,7 @@ QUnit.module('core', {}, function () {
             [2009, 5 - 1, 4]);
     });
 
-    QUnit.test('Parse server date on 31', function (assert) {
+    QUnit.test('Parse server date on 31', async function (assert) {
         assert.expect(1);
 
         var wDate = window.Date;
@@ -89,7 +89,7 @@ QUnit.module('core', {}, function () {
         }
     });
 
-    QUnit.test('Parse server time', function (assert) {
+    QUnit.test('Parse server time', async function (assert) {
         assert.expect(2);
 
         var date = time.str_to_time("12:34:23");
@@ -103,7 +103,7 @@ QUnit.module('core', {}, function () {
             [12, 34, 23, 546]);
     });
 
-    QUnit.test('Format server datetime', function (assert) {
+    QUnit.test('Format server datetime', async function (assert) {
         assert.expect(1);
 
         var date = new Date();
@@ -116,7 +116,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(time.datetime_to_str(date), "2009-05-04 12:34:23");
     });
 
-    QUnit.test('Format server date', function (assert) {
+    QUnit.test('Format server date', async function (assert) {
         assert.expect(1);
 
         var date = new Date();
@@ -129,7 +129,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(time.date_to_str(date), "2009-05-04");
     });
 
-    QUnit.test('Format server time', function (assert) {
+    QUnit.test('Format server time', async function (assert) {
         assert.expect(1);
 
         var date = new Date();

@@ -8,7 +8,7 @@ QUnit.module('mail', {}, function () {
 QUnit.module('model', {}, function () {
 QUnit.module('Timers');
 
-QUnit.test('register timers', function (assert) {
+QUnit.test('register timers', async function (assert) {
     assert.expect(4);
 
     // patch Timer so that there are immediate
@@ -41,7 +41,7 @@ QUnit.test('register timers', function (assert) {
     Timer.prototype.start = this.ORIGINAL_TIMER_START;
 });
 
-QUnit.test('register timers once per ID', function (assert) {
+QUnit.test('register timers once per ID', async function (assert) {
     var done = assert.async();
     assert.expect(2);
 
@@ -63,7 +63,7 @@ QUnit.test('register timers once per ID', function (assert) {
     }, 0);
 });
 
-QUnit.test('unregister timers', function (assert) {
+QUnit.test('unregister timers', async function (assert) {
     var done = assert.async();
     assert.expect(1);
 

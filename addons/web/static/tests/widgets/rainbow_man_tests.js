@@ -13,7 +13,7 @@ QUnit.module('RainbowMan', {
     },
 }, function () {
 
-    QUnit.test("rendering a rainbowman", function (assert) {
+    QUnit.test("rendering a rainbowman", async function (assert) {
         var done = assert.async();
         assert.expect(2);
 

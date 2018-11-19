@@ -19,7 +19,7 @@ var testUtilsFields = require('web.test_utils_fields');
  *
  * @param {KanbanController} kanban
  */
-function clickCreate(kanban) {
+async function clickCreate(kanban) {
     testUtilsDom.click(kanban.$buttons.find('.o-kanban-button-new'));
 }
 
@@ -28,7 +28,7 @@ function clickCreate(kanban) {
  *
  * @param {jQuery} $column
  */
-function toggleGroupSettings($column) {
+async function toggleGroupSettings($column) {
     var $dropdownToggler = $column.find('.o_kanban_config > a.dropdown-toggle');
     if (!$dropdownToggler.is(':visible')) {
         $dropdownToggler.css('display', 'block');
@@ -44,7 +44,7 @@ function toggleGroupSettings($column) {
  * @param {string|number} value
  * @param {[string]} fieldName
  */
-function quickCreate(kanban, value, fieldName) {
+async function quickCreate(kanban, value, fieldName) {
     var additionalSelector = fieldName ? ('[name=' + fieldName + ']'): '';
     var enterEvent = $.Event(
         'keydown',
@@ -66,7 +66,7 @@ function quickCreate(kanban, value, fieldName) {
  * @param {KanbanController} kanban
  * @param {[Object]} params given to the controller reload method
  */
-function reload(kanban, params) {
+async function reload(kanban, params) {
     kanban.reload(params);
 }
 
@@ -77,7 +77,7 @@ function reload(kanban, params) {
  *
  * @param {jQuery} $record
  */
-function toggleRecordDropdown($record) {
+async function toggleRecordDropdown($record) {
     var $dropdownToggler = $record.find('.o_dropdown_kanban > a.dropdown-toggle');
     if (!$dropdownToggler.is(':visible')) {
         $dropdownToggler.css('display', 'block');

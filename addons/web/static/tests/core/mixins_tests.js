@@ -8,7 +8,7 @@ QUnit.module('core', {}, function () {
 
     QUnit.module('mixins');
 
-    QUnit.test('perform a do_action properly', function (assert) {
+    QUnit.test('perform a do_action properly', async function (assert) {
         assert.expect(3);
 
         var widget = new Widget();

@@ -12,7 +12,7 @@ QUnit.module('core', {}, function () {
 
     QUnit.module('Widget');
 
-    QUnit.test('proxy (String)', function (assert) {
+    QUnit.test('proxy (String)', async function (assert) {
         assert.expect(1);
 
         var W = Widget.extend({
@@ -26,7 +26,7 @@ QUnit.module('core', {}, function () {
         assert.ok(w.executed, 'should execute the named method in the right context');
     });
 
-    QUnit.test('proxy (String)(*args)', function (assert) {
+    QUnit.test('proxy (String)(*args)', async function (assert) {
         assert.expect(2);
 
         var W = Widget.extend({
@@ -41,7 +41,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(w.executed, 42, "should be passed the proxy's arguments");
     });
 
-    QUnit.test('proxy (String), include', function (assert) {
+    QUnit.test('proxy (String), include', async function (assert) {
         assert.expect(1);
 
         // the proxy function should handle methods being changed on the class
@@ -61,7 +61,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(w.executed, 2, "should be lazily resolved");
     });
 
-    QUnit.test('proxy (Function)', function (assert) {
+    QUnit.test('proxy (Function)', async function (assert) {
         assert.expect(1);
 
         var w = new (Widget.extend({ }))();
@@ -71,7 +71,7 @@ QUnit.module('core', {}, function () {
         assert.ok(w.executed, "should set the function's context (like Function#bind)");
     });
 
-    QUnit.test('proxy (Function)(*args)', function (assert) {
+    QUnit.test('proxy (Function)(*args)', async function (assert) {
         assert.expect(1);
 
         var w = new (Widget.extend({ }))();
@@ -83,7 +83,7 @@ QUnit.module('core', {}, function () {
 
 
 
-    QUnit.test('renderElement, no template, default', function (assert) {
+    QUnit.test('renderElement, no template, default', async function (assert) {
         assert.expect(7);
 
         var widget = new (Widget.extend({ }))();
@@ -101,7 +101,7 @@ QUnit.module('core', {}, function () {
         assert.ok(_.isEmpty(widget.$el.html(), "should not have generated any content"));
     });
 
-    QUnit.test('no template, custom tag', function (assert) {
+    QUnit.test('no template, custom tag', async function (assert) {
         assert.expect(1);
 
 
@@ -113,7 +113,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(widget.el.nodeName, 'UL', "should have generated the custom element tag");
     });
 
-    QUnit.test('no template, @id', function (assert) {
+    QUnit.test('no template, @id', async function (assert) {
         assert.expect(3);
 
         var widget = new (Widget.extend({
@@ -126,7 +126,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(widget.el.id, 'foo', "should also be available via property");
     });
 
-    QUnit.test('no template, @className', function (assert) {
+    QUnit.test('no template, @className', async function (assert) {
         assert.expect(2);
 
         var widget = new (Widget.extend({
@@ -138,7 +138,7 @@ QUnit.module('core', {}, function () {
         assert.hasAttrValue(widget.$el, 'class', 'oe_some_class', "should have the right attribute");
     });
 
-    QUnit.test('no template, bunch of attributes', function (assert) {
+    QUnit.test('no template, bunch of attributes', async function (assert) {
         assert.expect(9);
 
         var widget = new (Widget.extend({
@@ -168,7 +168,7 @@ QUnit.module('core', {}, function () {
         assert.hasAttrValue(widget.$el, 'spoiler', 'snape kills dumbledore');
     });
 
-    QUnit.test('template', function (assert) {
+    QUnit.test('template', async function (assert) {
         assert.expect(3);
 
         core.qweb.add_template(
@@ -195,7 +195,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(widget.el.textContent, '01234');
     });
 
-    QUnit.test('repeated', function (assert) {
+    QUnit.test('repeated', async function (assert) {
         assert.expect(4);
         var $fix = $( "#qunit-fixture");
 
@@ -246,7 +246,7 @@ QUnit.module('core', {}, function () {
         },
     });
 
-    QUnit.test('basic-alias', function (assert) {
+    QUnit.test('basic-alias', async function (assert) {
         assert.expect(1);
 
 
@@ -260,7 +260,7 @@ QUnit.module('core', {}, function () {
     });
 
 
-    QUnit.test('delegate', function (assert) {
+    QUnit.test('delegate', async function (assert) {
         assert.expect(5);
 
         var a = [];
@@ -287,7 +287,7 @@ QUnit.module('core', {}, function () {
         }
     });
 
-    QUnit.test('undelegate', function (assert) {
+    QUnit.test('undelegate', async function (assert) {
         assert.expect(4);
 
         var clicked = false;
@@ -314,7 +314,7 @@ QUnit.module('core', {}, function () {
 
     QUnit.module('Widget, and async stuff');
 
-    QUnit.test("alive(alive)", function (assert) {
+    QUnit.test("alive(alive)", async function (assert) {
         assert.expect(1);
 
         var widget = new (Widget.extend({}));
@@ -324,7 +324,7 @@ QUnit.module('core', {}, function () {
             .then(function () { assert.ok(true); });
     });
 
-    QUnit.test("alive(dead)", function (assert) {
+    QUnit.test("alive(dead)", async function (assert) {
         assert.expect(1);
         var widget = new (Widget.extend({}));
 
@@ -350,7 +350,7 @@ QUnit.module('core', {}, function () {
         });
     });
 
-    QUnit.test("alive(alive, true)", function (assert) {
+    QUnit.test("alive(alive, true)", async function (assert) {
         assert.expect(1);
         var widget = new (Widget.extend({}));
         return concurrency.asyncWhen(widget.start())
@@ -358,7 +358,7 @@ QUnit.module('core', {}, function () {
         .then(function () { assert.ok(true); });
     });
 
-    QUnit.test("alive(dead, true)", function (assert) {
+    QUnit.test("alive(dead, true)", async function (assert) {
         assert.expect(1);
         var done = assert.async();
 
@@ -378,12 +378,12 @@ QUnit.module('core', {}, function () {
         });
     });
 
-    QUnit.test("calling _rpc on destroyed widgets", function (assert) {
+    QUnit.test("calling _rpc on destroyed widgets", async function (assert) {
         assert.expect(3);
 
         var def;
         var parent = new Widget();
-        testUtils.mock.addMockEnvironment(parent, {
+        await testUtils.mock.addMockEnvironment(parent, {
             session: {
                 rpc: function () {
                     def = $.Deferred();
@@ -424,7 +424,7 @@ QUnit.module('core', {}, function () {
         parent.destroy();
     });
 
-    QUnit.test('start is not called when widget is destroyed', function (assert) {
+    QUnit.test('start is not called when widget is destroyed', async function (assert) {
         assert.expect(0);
         var slowWillStartDef = $.Deferred();
         var $fix = $( "#qunit-fixture");

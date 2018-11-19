@@ -7,7 +7,7 @@ QUnit.module('chrome', {}, function () {
 
     QUnit.module('Search View');
 
-    QUnit.test('Adding a facet to the query creates a facet and a value', function (assert) {
+    QUnit.test('Adding a facet to the query creates a facet and a value', async function (assert) {
         assert.expect(3);
 
         var query = new SearchView.SearchQuery();
@@ -24,7 +24,7 @@ QUnit.module('chrome', {}, function () {
         assert.deepEqual(facet.get('values'), [{label: 'Value', value: 3}]);
     });
 
-    QUnit.test('Adding two facets', function (assert) {
+    QUnit.test('Adding two facets', async function (assert) {
         assert.expect(3);
 
         var query = new SearchView.SearchQuery();
@@ -38,7 +38,7 @@ QUnit.module('chrome', {}, function () {
         assert.strictEqual(query.at(1).values.length, 1);
     });
 
-    QUnit.test('If a facet already exists, add values to it', function (assert) {
+    QUnit.test('If a facet already exists, add values to it', async function (assert) {
         assert.expect(2);
 
         var query = new SearchView.SearchQuery();
@@ -54,7 +54,7 @@ QUnit.module('chrome', {}, function () {
         ]);
     });
 
-    QUnit.test('Facet being implicitly changed should trigger change, not add', function (assert) {
+    QUnit.test('Facet being implicitly changed should trigger change, not add', async function (assert) {
         assert.expect(2);
 
         var query = new SearchView.SearchQuery();
@@ -68,7 +68,7 @@ QUnit.module('chrome', {}, function () {
         assert.ok(changed, "query.add adding values to a facet should not trigger a change");
     });
 
-    QUnit.test('Toggling a facet, value which does not exist should add it', function (assert) {
+    QUnit.test('Toggling a facet, value which does not exist should add it', async function (assert) {
         assert.expect(3);
 
         var query = new SearchView.SearchQuery();
@@ -82,7 +82,7 @@ QUnit.module('chrome', {}, function () {
                     "Facet's value should match input");
     });
 
-    QUnit.test('Toggling a facet which exists with a value which does not should add the value to the facet', function (assert) {
+    QUnit.test('Toggling a facet which exists with a value which does not should add the value to the facet', async function (assert) {
         assert.expect(3);
 
         var field = {};
@@ -99,7 +99,7 @@ QUnit.module('chrome', {}, function () {
         ]);
     });
 
-    QUnit.test('Toggling a facet which exists with a value which does as well should remove the value from the facet', function (assert) {
+    QUnit.test('Toggling a facet which exists with a value which does as well should remove the value from the facet', async function (assert) {
         assert.expect(3);
 
         var field = {};
@@ -117,7 +117,7 @@ QUnit.module('chrome', {}, function () {
         ]);
     });
 
-    QUnit.test('Toggling off the last value of a facet should remove the facet', function (assert) {
+    QUnit.test('Toggling off the last value of a facet should remove the facet', async function (assert) {
         assert.expect(1);
 
         var field = {};
@@ -129,7 +129,7 @@ QUnit.module('chrome', {}, function () {
         assert.strictEqual(query.length, 0, 'Should have removed the facet');
     });
 
-    QUnit.test('Intermediate emptiness should not remove the facet', function (assert) {
+    QUnit.test('Intermediate emptiness should not remove the facet', async function (assert) {
         assert.expect(3);
 
         var field = {};
@@ -149,7 +149,7 @@ QUnit.module('chrome', {}, function () {
         ]);
     });
 
-    QUnit.test('Reseting with multiple facets should still work to load defaults', function (assert) {
+    QUnit.test('Reseting with multiple facets should still work to load defaults', async function (assert) {
         assert.expect(3);
 
         var query = new SearchView.SearchQuery();

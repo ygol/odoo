@@ -8,10 +8,10 @@ var createDebugManager = testUtils.createDebugManager;
 
 QUnit.module('DebugManager', {}, function () {
 
-    QUnit.test("list: edit view menu item", function (assert) {
+    QUnit.test("list: edit view menu item", async function (assert) {
         assert.expect(3);
 
-        var debugManager = createDebugManager();
+        var debugManager = await createDebugManager();
 
         debugManager.appendTo($('#qunit-fixture'));
 
@@ -39,10 +39,10 @@ QUnit.module('DebugManager', {}, function () {
         debugManager.destroy();
     });
 
-    QUnit.test("form: Manage Attachments option", function (assert) {
+    QUnit.test("form: Manage Attachments option", async function (assert) {
         assert.expect(3);
 
-        var debugManager = createDebugManager({
+        var debugManager = await createDebugManager({
             intercepts: {
                 do_action: function (event) {
                     assert.deepEqual(event.data.action, {
@@ -81,13 +81,13 @@ QUnit.module('DebugManager', {}, function () {
         assert.strictEqual($attachmentMenu.length, 1, "should have Manage Attachments menu item");
         assert.strictEqual($attachmentMenu.text().trim(), "Manage Attachments",
             "should have correct menu item text");
-        testUtils.dom.click(debugManager.$('> a')); // open dropdown
-        testUtils.dom.click($attachmentMenu);
+        await testUtils.dom.click(debugManager.$('> a')); // open dropdown
+        await testUtils.dom.click($attachmentMenu);
 
         debugManager.destroy();
     });
 
-    QUnit.test("Debug: Set defaults with right model", function (assert) {
+    QUnit.test("Debug: Set defaults with right model", async function (assert) {
         assert.expect(2);
 
         /*  Click on debug > set default,
@@ -111,7 +111,7 @@ QUnit.module('DebugManager', {}, function () {
             },
         }
 
-        var form = testUtils.createView({
+        var form = await testUtils.createView({
             View: FormView,
             model: 'partner',
             data: data,
@@ -122,7 +122,7 @@ QUnit.module('DebugManager', {}, function () {
         });
 
         // Now the real tested component
-        var debugManager = createDebugManager({
+        var debugManager = await createDebugManager({
             data: data,
             mockRPC: function (route, args) {
                 if (route == "/web/dataset/call_kw/ir.default/set") {
@@ -153,15 +153,15 @@ QUnit.module('DebugManager', {}, function () {
         debugManager.update('action', action, form);
 
         // click on set_defaults dropdown
-        testUtils.dom.click(debugManager.$('> a')); // open dropdown
-        testUtils.dom.click(debugManager.$('a[data-action="set_defaults"]'));
+        await testUtils.dom.click(debugManager.$('> a')); // open dropdown
+        await testUtils.dom.click(debugManager.$('a[data-action="set_defaults"]'));
         var $modal = $('.modal-content');
         assert.strictEqual($modal.length, 1, 'One modal present');
 
         $modal.find('select[id=formview_default_fields] option[value=foo]').prop('selected', true);
 
         // Save
-        testUtils.dom.click($modal.find('.modal-footer button').eq(1));
+        await testUtils.dom.click($modal.find('.modal-footer button').eq(1));
 
         form.destroy();
         debugManager.destroy();

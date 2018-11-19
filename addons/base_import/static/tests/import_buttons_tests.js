@@ -22,10 +22,10 @@ QUnit.module('Base Import Tests', {
     }
 });
 
-QUnit.test('add import button in list', function(assert) {
+QUnit.test('add import button in list', async function(assert) {
     assert.expect(2);
 
-    var list = createView({
+    var list = await createView({
         View: ListView,
         model: 'foo',
         data: this.data,
@@ -39,14 +39,14 @@ QUnit.test('add import button in list', function(assert) {
         assert.ok(true, "should have triggered a do_action");
     });
 
-    testUtils.dom.click(list.$buttons.find('.o_button_import:contains(Import)'));
+    await testUtils.dom.click(list.$buttons.find('.o_button_import:contains(Import)'));
     list.destroy();
 });
 
-QUnit.test('list without import button', function(assert) {
+QUnit.test('list without import button', async function(assert) {
     assert.expect(1);
 
-    var list = createView({
+    var list = await createView({
         View: ListView,
         model: 'foo',
         data: this.data,
@@ -60,10 +60,10 @@ QUnit.test('list without import button', function(assert) {
     list.destroy();
 });
 
-QUnit.test('add import button in kanban', function(assert) {
+QUnit.test('add import button in kanban', async function(assert) {
     assert.expect(2);
 
-    var kanban = createView({
+    var kanban = await createView({
         View: KanbanView,
         model: 'foo',
         data: this.data,
@@ -81,14 +81,14 @@ QUnit.test('add import button in kanban', function(assert) {
         assert.ok(true, "should have triggered a do_action");
     });
 
-    testUtils.dom.click(kanban.$buttons.find('.o_button_import:contains(Import)'));
+    await testUtils.dom.click(kanban.$buttons.find('.o_button_import:contains(Import)'));
     kanban.destroy();
 });
 
-QUnit.test('kanban without import button', function(assert) {
+QUnit.test('kanban without import button', async function(assert) {
     assert.expect(1);
 
-    var kanban = createView({
+    var kanban = await createView({
         View: KanbanView,
         model: 'foo',
         data: this.data,

@@ -34,11 +34,11 @@ QUnit.module("ActivityMenu", {
     }
 });
 
-QUnit.test('note activity menu widget: create note from activity menu', function (assert) {
+QUnit.test('note activity menu widget: create note from activity menu', async function (assert) {
     assert.expect(15);
     var self = this;
     var activityMenu = new ActivityMenu();
-    testUtils.mock.addMockEnvironment(activityMenu, {
+    await testUtils.mock.addMockEnvironment(activityMenu, {
         services: this.services,
         mockRPC: function (route, args) {
             if (args.method === 'systray_get_activities') {
@@ -78,12 +78,12 @@ QUnit.test('note activity menu widget: create note from activity menu', function
         "should not have any activity notification initially");
 
     // toggle quick create for note
-    testUtils.dom.click(activityMenu.$('.dropdown-toggle'));
+    await testUtils.dom.click(activityMenu.$('.dropdown-toggle'));
     assert.containsOnce(activityMenu, '.o_no_activity',
         "should not have any activity preview");
     assert.doesNotHaveClass(activityMenu.$('.o_note_show'), 'd-none',
         'ActivityMenu should have Add new note CTA');
-    testUtils.dom.click(activityMenu.$('.o_note_show'));
+    await testUtils.dom.click(activityMenu.$('.o_note_show'));
     assert.hasClass(activityMenu.$('.o_note_show'), 'd-none',
         'ActivityMenu should hide CTA when entering a new note');
     assert.doesNotHaveClass(activityMenu.$('.o_note'), 'd-none',
@@ -91,7 +91,7 @@ QUnit.test('note activity menu widget: create note from activity menu', function
 
     // creating quick note without date
     activityMenu.$("input.o_note_input").val("New Note");
-    testUtils.dom.click(activityMenu.$(".o_note_save"));
+    await testUtils.dom.click(activityMenu.$(".o_note_save"));
     assert.strictEqual(activityMenu.$('.o_notification_counter').text(), '1',
         "should increment activity notification counter after creating a note");
     assert.containsOnce(activityMenu, '.o_mail_preview[data-res_model="note.note"]',
@@ -106,10 +106,10 @@ QUnit.test('note activity menu widget: create note from activity menu', function
         'ActivityMenu add note input should be hidden');
 
     // creating quick note with date
-    testUtils.dom.click(activityMenu.$('.o_note_show'));
+    await testUtils.dom.click(activityMenu.$('.o_note_show'));
     activityMenu.$('input.o_note_input').val("New Note");
-    testUtils.dom.click(activityMenu.$('.o_note_set_datetime'));
-    testUtils.dom.click(activityMenu.$(".o_note_save"));
+    await testUtils.dom.click(activityMenu.$('.o_note_set_datetime'));
+    await testUtils.dom.click(activityMenu.$(".o_note_save"));
     assert.strictEqual(activityMenu.$('.o_notification_counter').text(), '2',
         "should increment activity notification counter after creating a second note");
     assert.strictEqual(activityMenu.$('.o_activity_filter_button[data-filter="today"]').text().trim(),

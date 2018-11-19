@@ -25,10 +25,10 @@ QUnit.module('account', {
 }, function () {
     QUnit.module('Reconciliation');
 
-    QUnit.test('Reconciliation form field', function (assert) {
+    QUnit.test('Reconciliation form field', async function (assert) {
         assert.expect(5);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'account.invoice',
             data: this.data,

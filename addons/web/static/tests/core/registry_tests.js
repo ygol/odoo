@@ -7,7 +7,7 @@ QUnit.module('core', {}, function () {
 
     QUnit.module('Registry');
 
-    QUnit.test('key set', function (assert) {
+    QUnit.test('key set', async function (assert) {
         assert.expect(1);
 
         var registry = new Registry();
@@ -19,7 +19,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(registry.get('foo'), foo);
     });
 
-    QUnit.test('extension', function (assert) {
+    QUnit.test('extension', async function (assert) {
         assert.expect(2);
 
         var foo = {};
@@ -32,7 +32,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(registry2.get('foo'), foo2);
     });
 
-    QUnit.test('remain-linked', function (assert) {
+    QUnit.test('remain-linked', async function (assert) {
         assert.expect(2);
 
         var foo = {};
@@ -49,7 +49,7 @@ QUnit.module('core', {}, function () {
         assert.strictEqual(registry2.get('foo2'), foo2);
     });
 
-    QUnit.test('multiget', function (assert) {
+    QUnit.test('multiget', async function (assert) {
         assert.expect(1);
 
         var foo = {};
@@ -64,7 +64,7 @@ QUnit.module('core', {}, function () {
             "Registry getAny should find first defined key");
     });
 
-    QUnit.test('extended-multiget', function (assert) {
+    QUnit.test('extended-multiget', async function (assert) {
         assert.expect(1);
 
         var foo = {};

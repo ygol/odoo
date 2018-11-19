@@ -5,7 +5,7 @@ var AbstractRenderer = require('web.AbstractRenderer');
 var AbstractView = require('web.AbstractView');
 
 var testUtils = require('web.test_utils');
-var createAsyncView = testUtils.createAsyncView;
+var createAsyncView = testUtils.createView;
 
 var TestRenderer = AbstractRenderer.extend({
     _renderView: function () {
@@ -38,7 +38,7 @@ QUnit.module('Views', {
     }, function () {
         QUnit.module('BasicRenderer');
 
-        QUnit.test("The banner should be fetched from the route", function (assert) {
+        QUnit.test("The banner should be fetched from the route", async function (assert) {
             var done = assert.async();
             assert.expect(5);
 

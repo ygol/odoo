@@ -154,7 +154,7 @@ QUnit.module('Discuss (Typing Notifications)', {
     }
 });
 
-QUnit.test('notify is typing', function (assert) {
+QUnit.test('notify is typing', async function (assert) {
     assert.expect(11);
     var done = assert.async();
 
@@ -190,7 +190,7 @@ QUnit.test('notify is typing', function (assert) {
             return this._super.apply(this, arguments);
         },
         session: { partner_id: this.myPartnerID },
-    }).then(function (discuss) {
+    }).then(async function (discuss) {
 
         var $general = discuss.$('.o_mail_discuss_sidebar')
                         .find('.o_mail_discuss_item[data-thread-id=1]');
@@ -200,7 +200,7 @@ QUnit.test('notify is typing', function (assert) {
             "should have the title 'general'");
 
         // click on general
-        testUtils.dom.click($general);
+        await testUtils.dom.click($general);
 
         var $input = discuss.$('textarea.o_composer_text_field').first();
         assert.ok($input.length, "should display a composer input");
@@ -208,13 +208,13 @@ QUnit.test('notify is typing', function (assert) {
         // STEP 1: current user is typing something
         step = 1;
         $input.focus();
-        testUtils.fields.editInput($input, '1');
+        await testUtils.fields.editInput($input, '1');
 
         assert.verifySteps(['notify_typing']);
 
         // STEP 2: current user clears input
         step = 2;
-        testUtils.fields.editInput($input, '');
+        await testUtils.fields.editInput($input, '');
 
         assert.verifySteps(['notify_typing', 'notify_typing']);
 
@@ -223,7 +223,7 @@ QUnit.test('notify is typing', function (assert) {
     });
 });
 
-QUnit.test('receive is typing notification', function (assert) {
+QUnit.test('receive is typing notification', async function (assert) {
     assert.expect(7);
     var done = assert.async();
 
@@ -249,7 +249,7 @@ QUnit.test('receive is typing notification', function (assert) {
             return this._super.apply(this, arguments);
         },
         session: { partner_id: this.myPartnerID },
-    }).then(function (discuss) {
+    }).then(async function (discuss) {
         var $general = discuss.$('.o_mail_discuss_sidebar')
                         .find('.o_mail_discuss_item[data-thread-id=1]');
         assert.strictEqual($general.length, 1,
@@ -258,7 +258,7 @@ QUnit.test('receive is typing notification', function (assert) {
             "should have the title 'general'");
 
         // click on general
-        testUtils.dom.click($general);
+        await testUtils.dom.click($general);
         assert.containsOnce(discuss, '.o_thread_typing_notification_bar',
                 "there should be a typing notification bar on the thread");
         assert.isNotVisible(discuss.$('.o_thread_typing_notification_bar'),
@@ -293,7 +293,7 @@ QUnit.test('receive is typing notification', function (assert) {
     });
 });
 
-QUnit.test('receive message of someone that was typing something', function (assert) {
+QUnit.test('receive message of someone that was typing something', async function (assert) {
     assert.expect(4);
     var done = assert.async();
 
@@ -319,10 +319,10 @@ QUnit.test('receive message of someone that was typing something', function (ass
             return this._super.apply(this, arguments);
         },
         session: { partner_id: this.myPartnerID },
-    }).then(function (discuss) {
+    }).then(async function (discuss) {
         // click on general channel
         var $general = discuss.$('.o_mail_discuss_sidebar .o_mail_discuss_item[data-thread-id=1]');
-        testUtils.dom.click($general);
+        await testUtils.dom.click($general);
 
         assert.isNotVisible(discuss.$('.o_thread_typing_notification_bar'),
                 "the typing notification bar should be hidden by default");
@@ -362,7 +362,7 @@ QUnit.test('receive message of someone that was typing something', function (ass
     });
 });
 
-QUnit.test('do not display myself as typing', function (assert) {
+QUnit.test('do not display myself as typing', async function (assert) {
     assert.expect(3);
     var done = assert.async();
 
@@ -387,11 +387,11 @@ QUnit.test('do not display myself as typing', function (assert) {
             return this._super.apply(this, arguments);
         },
         session: { partner_id: this.myPartnerID },
-    }).then(function (discuss) {
+    }).then(async function (discuss) {
         // click on general
         var $general = discuss.$('.o_mail_discuss_sidebar')
                         .find('.o_mail_discuss_item[data-thread-id=1]');
-        testUtils.dom.click($general);
+        await testUtils.dom.click($general);
         assert.containsOnce(discuss, '.o_thread_typing_notification_bar',
                 "there should be a typing notification bar on the thread");
         assert.isNotVisible(discuss.$('.o_thread_typing_notification_bar'),
@@ -414,7 +414,7 @@ QUnit.test('do not display myself as typing', function (assert) {
     });
 });
 
-QUnit.test('several users typing something at the same time', function (assert) {
+QUnit.test('several users typing something at the same time', async function (assert) {
     // The order to display several typing partners name is not random:
     // it shows at most 2 typing partners, which are the typing partners that
     // have been typing something for the longest time.
@@ -447,7 +447,7 @@ QUnit.test('several users typing something at the same time', function (assert) 
             return this._super.apply(this, arguments);
         },
         session: { partner_id: this.myPartnerID },
-    }).then(function (discuss) {
+    }).then(async function (discuss) {
 
         var $general = discuss.$('.o_mail_discuss_sidebar')
                         .find('.o_mail_discuss_item[data-thread-id=1]');
@@ -457,7 +457,7 @@ QUnit.test('several users typing something at the same time', function (assert) 
             "should have the title 'general'");
 
         // click on general
-        testUtils.dom.click($general);
+        await testUtils.dom.click($general);
         assert.containsOnce(discuss, '.o_thread_typing_notification_bar',
                 "there should be a typing notification bar on the thread");
         assert.isNotVisible(discuss.$('.o_thread_typing_notification_bar'),
@@ -516,7 +516,7 @@ QUnit.test('several users typing something at the same time', function (assert) 
 });
 
 
-QUnit.test('long typing partner A and in-between short typing partner B', function (assert) {
+QUnit.test('long typing partner A and in-between short typing partner B', async function (assert) {
     // Let's suppose that A is typing a very long message. If B types a short
     // and sends it, it should display that B is typing, remove B from display
     // when receiving the message, but still keep A in the typing notification.
@@ -546,10 +546,10 @@ QUnit.test('long typing partner A and in-between short typing partner B', functi
             return this._super.apply(this, arguments);
         },
         session: { partner_id: this.myPartnerID },
-    }).then(function (discuss) {
+    }).then(async function (discuss) {
         // click on general channel
         var $general = discuss.$('.o_mail_discuss_sidebar .o_mail_discuss_item[data-thread-id=1]');
-        testUtils.dom.click($general);
+        await testUtils.dom.click($general);
 
         self.simulateIsTyping({
             channelID: self.generalChannelID,

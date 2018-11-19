@@ -34,10 +34,10 @@ QUnit.module('pad widget', {
     },
 });
 
-    QUnit.test('pad widget display help if server not configured', function (assert) {
+    QUnit.test('pad widget display help if server not configured', async function (assert) {
         assert.expect(4);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'task',
             data: this.data,
@@ -60,7 +60,7 @@ QUnit.module('pad widget', {
             "help message should be visible");
         assert.notOk(form.$('p.oe_pad_content').is(':visible'),
             "content should not be visible");
-        testUtils.form.clickEdit(form);
+        await testUtils.form.clickEdit(form);
         assert.ok(form.$('p.oe_unconfigured').is(':visible'),
             "help message should be visible");
         assert.notOk(form.$('p.oe_pad_content').is(':visible'),
@@ -69,10 +69,10 @@ QUnit.module('pad widget', {
         delete FieldPad.prototype.isPadConfigured;
     });
 
-    QUnit.test('pad widget works, basic case', function (assert) {
+    QUnit.test('pad widget works, basic case', async function (assert) {
         assert.expect(5);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'task',
             data: this.data,
@@ -102,7 +102,7 @@ QUnit.module('pad widget', {
         assert.strictEqual(form.$('.oe_pad_content:contains(This pad will be)').length, 1,
             "content should display a message when not initialized");
 
-        testUtils.form.clickEdit(form);
+        await testUtils.form.clickEdit(form);
 
         assert.containsOnce(form, '.oe_pad_content iframe',
             "should have an iframe");
@@ -111,12 +111,12 @@ QUnit.module('pad widget', {
         delete FieldPad.prototype.isPadConfigured;
     });
 
-    QUnit.test('pad widget works, with existing data', function (assert) {
+    QUnit.test('pad widget works, with existing data', async function (assert) {
         assert.expect(3);
 
         var contentDef = $.Deferred();
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'task',
             data: this.data,
@@ -152,16 +152,16 @@ QUnit.module('pad widget', {
         assert.strictEqual(form.$('.oe_pad_content').text(), "we should rewrite this server in haskell",
             "should display proper value");
 
-        testUtils.form.clickEdit(form);
-        testUtils.form.clickSave(form);
+        await testUtils.form.clickEdit(form);
+        await testUtils.form.clickSave(form);
         form.destroy();
         delete FieldPad.prototype.isPadConfigured;
     });
 
-    QUnit.test('pad widget is not considered dirty at creation', function (assert) {
+    QUnit.test('pad widget is not considered dirty at creation', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'task',
             data: this.data,
@@ -193,10 +193,10 @@ QUnit.module('pad widget', {
         delete FieldPad.prototype.isPadConfigured;
     });
 
-    QUnit.test('pad widget is not considered dirty at edition', function (assert) {
+    QUnit.test('pad widget is not considered dirty at edition', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'task',
             data: this.data,
@@ -218,7 +218,7 @@ QUnit.module('pad widget', {
                 userName: "batman",
             },
         });
-        testUtils.form.clickEdit(form);
+        await testUtils.form.clickEdit(form);
         var def = form.canBeDiscarded();
 
         assert.strictEqual($('.modal').length, 0,
@@ -230,10 +230,10 @@ QUnit.module('pad widget', {
         delete FieldPad.prototype.isPadConfigured;
     });
 
-    QUnit.test('record should be discarded properly even if only pad has changed', function (assert) {
+    QUnit.test('record should be discarded properly even if only pad has changed', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'task',
             data: this.data,
@@ -255,8 +255,8 @@ QUnit.module('pad widget', {
                 userName: "batman",
             },
         });
-        testUtils.form.clickEdit(form);
-        testUtils.form.clickDiscard(form);
+        await testUtils.form.clickEdit(form);
+        await testUtils.form.clickDiscard(form);
         assert.strictEqual(form.$('.oe_pad_readonly').text(), this.data.task.pad_get_content(),
             "pad content should not have changed");
         form.destroy();

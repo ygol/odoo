@@ -7,7 +7,7 @@ QUnit.module('mail', {}, function () {
 QUnit.module('model', {}, function () {
 QUnit.module('Timer');
 
-QUnit.test('start()', function (assert) {
+QUnit.test('start()', async function (assert) {
     var done = assert.async();
     assert.expect(2);
 
@@ -29,7 +29,7 @@ QUnit.test('start()', function (assert) {
     });
 });
 
-QUnit.test('clear()', function (assert) {
+QUnit.test('clear()', async function (assert) {
     var done = assert.async();
     assert.expect(1);
 
@@ -51,7 +51,7 @@ QUnit.test('clear()', function (assert) {
     }, 0);
 });
 
-QUnit.test('reset()', function (assert) {
+QUnit.test('reset()', async function (assert) {
     var done = assert.async();
     assert.expect(4);
 

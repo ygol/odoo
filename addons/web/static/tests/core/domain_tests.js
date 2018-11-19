@@ -7,7 +7,7 @@ QUnit.module('core', {}, function () {
 
     QUnit.module('domain');
 
-    QUnit.test("basic", function (assert) {
+    QUnit.test("basic", async function (assert) {
         assert.expect(3);
 
         var fields = {
@@ -21,7 +21,7 @@ QUnit.module('core', {}, function () {
         assert.ok(new Domain([['select1','=','day'], ['rrule_type','=','monthly']]).compute(fields));
     });
 
-    QUnit.test("or", function (assert) {
+    QUnit.test("or", async function (assert) {
         assert.expect(3);
 
         var web = {
@@ -41,7 +41,7 @@ QUnit.module('core', {}, function () {
         assert.ok(new Domain(currentDomain).compute(_.extend({}, web, {member_ids: 3})));
     });
 
-    QUnit.test("not", function (assert) {
+    QUnit.test("not", async function (assert) {
         assert.expect(2);
 
         var fields = {
@@ -52,14 +52,14 @@ QUnit.module('core', {}, function () {
         assert.ok(new Domain(['!', ['group_method','=','count']]).compute(fields));
     });
 
-    QUnit.test("domains initialized with a number", function (assert) {
+    QUnit.test("domains initialized with a number", async function (assert) {
         assert.expect(2);
 
         assert.ok(new Domain(1).compute({}));
         assert.notOk(new Domain(0).compute({}));
     });
 
-    QUnit.test("domain <=> condition", function (assert) {
+    QUnit.test("domain <=> condition", async function (assert) {
         assert.expect(3);
 
         var domain = [
@@ -80,7 +80,7 @@ QUnit.module('core', {}, function () {
             ['|', '&', ['doc', '!=', false], ['toto', '=', null], ['tata', '=', false]]);
     });
 
-    QUnit.test("condition 'a field is set' does not convert to a domain", function (assert) {
+    QUnit.test("condition 'a field is set' does not convert to a domain", async function (assert) {
         assert.expect(1);
         var expected = [["doc.blabla","!=",false]];
         var condition = "doc.blabla";
@@ -90,21 +90,21 @@ QUnit.module('core', {}, function () {
         assert.deepEqual(actual, expected);
     });
 
-    QUnit.test("condition with a function should fail", function (assert) {
+    QUnit.test("condition with a function should fail", async function (assert) {
         assert.expect(1);
         var condition = "doc.blabla()";
 
         assert.throws(function() { Domain.prototype.conditionToDomain(condition); });
     });
 
-    QUnit.test("empty condition should not fail", function (assert) {
+    QUnit.test("empty condition should not fail", async function (assert) {
         assert.expect(2);
         var condition = "";
         var actual = Domain.prototype.conditionToDomain(condition);
         assert.strictEqual(typeof(actual),typeof([]));
         assert.strictEqual(actual.length, 0);
     });
-    QUnit.test("undefined condition should not fail", function (assert) {
+    QUnit.test("undefined condition should not fail", async function (assert) {
         assert.expect(2);
         var condition = undefined;
         var actual = Domain.prototype.conditionToDomain(condition);

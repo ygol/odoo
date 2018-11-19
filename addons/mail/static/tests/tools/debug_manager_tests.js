@@ -7,10 +7,10 @@ var createDebugManager = testUtils.createDebugManager;
 
 QUnit.module('Mail DebugManager', {}, function () {
 
-    QUnit.test("Manage Messages", function (assert) {
+    QUnit.test("Manage Messages", async function (assert) {
         assert.expect(3);
 
-        var debugManager = createDebugManager({
+        var debugManager = await createDebugManager({
             intercepts: {
                 do_action: function (event) {
                     assert.deepEqual(event.data.action, {
@@ -50,8 +50,8 @@ QUnit.module('Mail DebugManager', {}, function () {
         assert.strictEqual($messageMenu.text().trim(), "Manage Messages",
             "should have correct menu item text");
 
-        testUtils.dom.click(debugManager.$('> a')); // open dropdown
-        testUtils.dom.click($messageMenu);
+        await testUtils.dom.click(debugManager.$('> a')); // open dropdown
+        await testUtils.dom.click($messageMenu);
 
         debugManager.destroy();
     });

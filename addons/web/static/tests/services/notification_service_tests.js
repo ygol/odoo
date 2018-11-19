@@ -36,11 +36,11 @@ QUnit.module('Services', {
 }, function () {
     QUnit.module('Notification');
 
-    QUnit.test('Display a simple notification', function (assert) {
+    QUnit.test('Display a simple notification', async function (assert) {
         var done = assert.async();
         assert.expect(4);
 
-        var view = createView(this.viewParams);
+        var view = await createView(this.viewParams);
         view.call('notification', 'notify', {
             title: 'a',
             message: 'b',
@@ -58,11 +58,11 @@ QUnit.module('Services', {
         });
     });
 
-    QUnit.test('Display a warning', function (assert) {
+    QUnit.test('Display a warning', async function (assert) {
         var done = assert.async();
         assert.expect(1);
 
-        var view = createView(this.viewParams);
+        var view = await createView(this.viewParams);
         view.call('notification', 'notify', {
             title: 'a',
             message: 'b',
@@ -76,11 +76,11 @@ QUnit.module('Services', {
         setTimeout(done);
     });
 
-    QUnit.test('Display a sticky notification', function (assert) {
+    QUnit.test('Display a sticky notification', async function (assert) {
         var done = assert.async();
         assert.expect(3);
 
-        var view = createView(this.viewParams);
+        var view = await createView(this.viewParams);
         view.call('notification', 'notify', {
             title: 'a',
             message: 'b',
@@ -89,9 +89,9 @@ QUnit.module('Services', {
         var $notification = $('body .o_notification_manager .o_notification');
         assert.strictEqual($notification.find('.o_close').length, 1, "should display the close button in notification");
 
-        setTimeout(function () {
+        setTimeout(async function () {
             assert.strictEqual($notification.is(':hidden'), false, "should not hide the notification automatically");
-            testUtils.dom.click($notification.find('.o_close'));
+            await testUtils.dom.click($notification.find('.o_close'));
             setTimeout(function () {
                 assert.strictEqual($('body .o_notification_manager .o_notification').length, 0, "should destroy the notification");
                 view.destroy();
@@ -100,12 +100,12 @@ QUnit.module('Services', {
         });
     });
 
-    QUnit.test('Display a simple notification with onClose callback when automatically close', function (assert) {
+    QUnit.test('Display a simple notification with onClose callback when automatically close', async function (assert) {
         var done = assert.async();
         assert.expect(2);
 
         var close = 0;
-        var view = createView(this.viewParams);
+        var view = await createView(this.viewParams);
         view.call('notification', 'notify', {
             title: 'a',
             message: 'b',
@@ -121,7 +121,7 @@ QUnit.module('Services', {
         });
     });
 
-    QUnit.test('Display a sticky notification with onClose callback', function (assert) {
+    QUnit.test('Display a sticky notification with onClose callback', async function (assert) {
         var done = assert.async();
         assert.expect(2);
 
@@ -130,7 +130,7 @@ QUnit.module('Services', {
             _autoCloseDelay: 2500,
             _animationDelay: 0,
         });
-        var view = createView(this.viewParams);
+        var view = await createView(this.viewParams);
 
         var close = 0;
         view.call('notification', 'notify', {
@@ -142,7 +142,7 @@ QUnit.module('Services', {
             }
         });
         assert.strictEqual(close, 0, "should wait to call onClose method once");
-        testUtils.dom.click($('body .o_notification_manager .o_notification .o_close'));
+        await testUtils.dom.click($('body .o_notification_manager .o_notification .o_close'));
         setTimeout(function () {
             assert.strictEqual(close, 1, "should call onClose method once");
             view.destroy();
@@ -150,11 +150,11 @@ QUnit.module('Services', {
         });
     });
 
-    QUnit.test('Display a question', function (assert) {
+    QUnit.test('Display a question', async function (assert) {
         var done = assert.async();
         assert.expect(8);
 
-        var view = createView(this.viewParams);
+        var view = await createView(this.viewParams);
         function notification (inc) {
             return {
                 title: 'a' + inc,
@@ -189,9 +189,9 @@ QUnit.module('Services', {
             "<a aria-label=\"Close\" class=\"fa fa-times o_close\" href=\"#\" title=\"Close\"></a> <div class=\"o_notification_title\"> <span role=\"img\" aria-label=\"Notification undefined\" class=\"o_icon fa fa-3x fa-question-circle-o\" title=\"Notification undefined\"></span> a0 </div> <div class=\"o_notification_content\">b0</div> <div class=\"o_buttons\"> <button class=\"btn btn-primary\" type=\"button\"> <span>accept0</span> </button><button class=\"btn btn-secondary\" type=\"button\"> <span>refuse0</span> </button> </div>",
             "should display notification");
 
-        testUtils.dom.click($notification.find('.o_buttons button:contains(accept0)'));
-        testUtils.dom.click($notification.find('.o_buttons button:contains(refuse1)'));
-        testUtils.dom.click($notification.eq(2).find('.o_close'));
+        await testUtils.dom.click($notification.find('.o_buttons button:contains(accept0)'));
+        await testUtils.dom.click($notification.find('.o_buttons button:contains(refuse1)'));
+        await testUtils.dom.click($notification.eq(2).find('.o_close'));
 
         setTimeout(function () {
             assert.strictEqual($notification.is(':hidden'), true, "should hide the notification");
@@ -202,7 +202,7 @@ QUnit.module('Services', {
         });
     });
 
-    QUnit.test('call close notification service', function (assert) {
+    QUnit.test('call close notification service', async function (assert) {
         var done = assert.async();
         assert.expect(2);
 
@@ -211,7 +211,7 @@ QUnit.module('Services', {
             _autoCloseDelay: 2500,
             _animationDelay: 0,
         });
-        var view = createView(this.viewParams);
+        var view = await createView(this.viewParams);
 
         var close = 0;
         var notificationId0 = view.call('notification', 'notify', {
@@ -241,7 +241,7 @@ QUnit.module('Services', {
         });
     });
 
-    QUnit.test('Display a custom notification', function (assert) {
+    QUnit.test('Display a custom notification', async function (assert) {
         var done = assert.async();
         assert.expect(3);
 
@@ -258,7 +258,7 @@ QUnit.module('Services', {
             },
         });
 
-        var view = createView(this.viewParams);
+        var view = await createView(this.viewParams);
         view.call('notification', 'notify', {
             Notification: Custom,
             customParams: true,

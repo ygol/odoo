@@ -22,10 +22,10 @@ QUnit.module('Sales Team Dashboard', {
     }
 });
 
-QUnit.test('edit target with several o_kanban_primary_bottom divs [REQUIRE FOCUS]', function (assert) {
+QUnit.test('edit target with several o_kanban_primary_bottom divs [REQUIRE FOCUS]', async function (assert) {
     assert.expect(4);
 
-    var kanban = createView({
+    var kanban = await createView({
         View: KanbanView,
         model: 'crm.team',
         data: this.data,
@@ -55,7 +55,7 @@ QUnit.test('edit target with several o_kanban_primary_bottom divs [REQUIRE FOCUS
     assert.containsN(kanban, '.o_kanban_primary_bottom', 2,
         "should have two divs with classname 'o_kanban_primary_bottom'");
 
-    testUtils.dom.click(kanban.$('a.sales_team_target_definition'));
+    await testUtils.dom.click(kanban.$('a.sales_team_target_definition'));
     assert.containsOnce(kanban, '.o_kanban_primary_bottom:last input',
         "should have rendered an input in the last o_kanban_primary_bottom div");
 

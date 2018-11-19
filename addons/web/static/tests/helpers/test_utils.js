@@ -95,7 +95,6 @@ return $.when(
 
         createActionManager: testUtilsCreate.createActionManager,
         createDebugManager: testUtilsCreate.createDebugManager,
-        createAsyncView: testUtilsCreate.createAsyncView,
         createView: testUtilsCreate.createView,
         createModel: testUtilsCreate.createModel,
         createParent: testUtilsCreate.createParent,

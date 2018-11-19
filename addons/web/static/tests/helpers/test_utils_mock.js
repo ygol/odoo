@@ -125,7 +125,7 @@ function removeSrcAttribute(el, widget) {
  *   function. It is necessary for createAsyncView so that method can call some
  *   other methods on it.
  */
-function addMockEnvironment(widget, params) {
+async function addMockEnvironment(widget, params) {
     var Server = MockServer;
     params.services = params.services || {};
     if (params.mockRPC) {

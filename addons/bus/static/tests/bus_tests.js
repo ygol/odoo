@@ -21,13 +21,13 @@ QUnit.module('Bus', {
         LocalStorageServiceMock = AbstractStorageService.extend({storage: new RamStorage()});
     },
 }, function () {
-    QUnit.test('notifications received from the longpolling channel', function (assert) {
+    QUnit.test('notifications received from the longpolling channel', async function (assert) {
         assert.expect(6);
 
         var pollDeferred = $.Deferred();
 
         var parent = new Widget();
-        testUtils.mock.addMockEnvironment(parent, {
+        await testUtils.mock.addMockEnvironment(parent, {
             data: {},
             services: {
                 bus_service: BusService,
@@ -77,7 +77,7 @@ QUnit.module('Bus', {
         parent.destroy();
     });
 
-    QUnit.test('provide notification ID of 0 by default', function (assert) {
+    QUnit.test('provide notification ID of 0 by default', async function (assert) {
         // This test is important in order to ensure that we provide the correct
         // sentinel value 0 when we are not aware of the last notification ID
         // that we have received. We cannot provide an ID of -1, otherwise it
@@ -98,7 +98,7 @@ QUnit.module('Bus', {
 
         var pollDeferred = $.Deferred();
         var parent = new Widget();
-        testUtils.mock.addMockEnvironment(parent, {
+        await testUtils.mock.addMockEnvironment(parent, {
             data: {},
             services: {
                 bus_service: BusService,
@@ -131,7 +131,7 @@ QUnit.module('Bus', {
         parent.destroy();
     });
 
-    QUnit.test('cross tab bus share message from a channel', function (assert) {
+    QUnit.test('cross tab bus share message from a channel', async function (assert) {
         var done = assert.async();
         assert.expect(5);
 
@@ -140,7 +140,7 @@ QUnit.module('Bus', {
         var pollDeferredMaster = $.Deferred();
 
         var parentMaster = new Widget();
-        testUtils.mock.addMockEnvironment(parentMaster, {
+        await testUtils.mock.addMockEnvironment(parentMaster, {
             data: {},
             services: {
                 bus_service: BusService,
@@ -170,9 +170,9 @@ QUnit.module('Bus', {
 
         // slave
 
-        setTimeout(function () {
+        setTimeout(async function () {
             var parentSlave = new Widget();
-            testUtils.mock.addMockEnvironment(parentSlave, {
+            await testUtils.mock.addMockEnvironment(parentSlave, {
                 data: {},
                 services: {
                     bus_service: BusService,

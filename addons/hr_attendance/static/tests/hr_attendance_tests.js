@@ -53,12 +53,12 @@ QUnit.module('HR Attendance', {
 }, function () {
     QUnit.module('My attendances (client action)');
 
-    QUnit.test('simple rendering', function (assert) {
+    QUnit.test('simple rendering', async function (assert) {
         assert.expect(1);
 
         var $target = $('#qunit-fixture');
         var clientAction = new MyAttendances(null);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.data,
             session: {
                 uid: 1,
@@ -72,14 +72,14 @@ QUnit.module('HR Attendance', {
         clientAction.destroy();
     });
 
-    QUnit.test('Attendance Kiosk Mode Test', function (assert) {
+    QUnit.test('Attendance Kiosk Mode Test', async function (assert) {
         assert.expect(2);
 
         var $target = $('#qunit-fixture');
         var self = this;
         var rpcCount = 0;
         var clientAction = new KioskMode(null);
-        testUtils.mock.addMockEnvironment(clientAction, {
+        await testUtils.mock.addMockEnvironment(clientAction, {
             data: this.data,
             session: {
                 uid: 1,
@@ -105,7 +105,7 @@ QUnit.module('HR Attendance', {
         clientAction.destroy();
     });
 
-    QUnit.test('Attendance Greeting Message Test', function (assert) {
+    QUnit.test('Attendance Greeting Message Test', async function (assert) {
         assert.expect(10);
 
         var $target = $('#qunit-fixture');
@@ -123,7 +123,7 @@ QUnit.module('HR Attendance', {
                 barcode: barcode,
             }
             var clientAction = new GreetingMessage(null, action);
-            testUtils.mock.addMockEnvironment(clientAction, {
+            await testUtils.mock.addMockEnvironment(clientAction, {
                 data: self.data,
                 session: {
                     uid: 1,

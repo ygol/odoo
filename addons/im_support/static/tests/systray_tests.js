@@ -29,7 +29,7 @@ QUnit.module('systray', {
     },
 });
 
-QUnit.test('messaging menu displays the Support channel', function (assert) {
+QUnit.test('messaging menu displays the Support channel', async function (assert) {
     assert.expect(1);
 
     var messagingMenu = new MessagingMenu();
@@ -40,13 +40,13 @@ QUnit.test('messaging menu displays the Support channel', function (assert) {
     });
     messagingMenu.appendTo($('#qunit-fixture'));
 
-    testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
+    await testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
     assert.containsOnce(messagingMenu, '.o_mail_systray_dropdown_bottom .o_mail_preview[data-preview-id=SupportChannel]', "should display the Support channel");
 
     messagingMenu.destroy();
 });
 
-QUnit.test('clicking on Support channel: channel not available', function (assert) {
+QUnit.test('clicking on Support channel: channel not available', async function (assert) {
     assert.expect(9);
 
     var messagingMenu = new MessagingMenu();
@@ -73,10 +73,10 @@ QUnit.test('clicking on Support channel: channel not available', function (asser
     });
     messagingMenu.appendTo($('#qunit-fixture'));
 
-    testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
+    await testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
     assert.containsOnce(messagingMenu, '.o_mail_systray_dropdown_bottom .o_mail_preview[data-preview-id=SupportChannel]');
 
-    testUtils.dom.click(messagingMenu.$('.o_mail_preview[data-preview-id=SupportChannel]'));
+    await testUtils.dom.click(messagingMenu.$('.o_mail_preview[data-preview-id=SupportChannel]'));
     assert.strictEqual($('.o_thread_window').length, 1,
         "should have open a chat window");
     assert.strictEqual($('.o_thread_window .o_thread_window_title').text().trim(), 'Support (offline)',
@@ -94,7 +94,7 @@ QUnit.test('clicking on Support channel: channel not available', function (asser
     messagingMenu.destroy();
 });
 
-QUnit.test('clicking on Support channel: channel available', function (assert) {
+QUnit.test('clicking on Support channel: channel available', async function (assert) {
     assert.expect(9);
 
     var messagingMenu = new MessagingMenu();
@@ -117,10 +117,10 @@ QUnit.test('clicking on Support channel: channel available', function (assert) {
     });
     messagingMenu.appendTo($('#qunit-fixture'));
 
-    testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
+    await testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
     assert.containsOnce(messagingMenu, '.o_mail_systray_dropdown_bottom .o_mail_preview[data-preview-id=SupportChannel]');
 
-    testUtils.dom.click(messagingMenu.$('.o_mail_preview[data-preview-id=SupportChannel]'));
+    await testUtils.dom.click(messagingMenu.$('.o_mail_preview[data-preview-id=SupportChannel]'));
     assert.strictEqual($('.o_thread_window').length, 1,
         "should have open a chat window");
     assert.strictEqual($('.o_thread_window .o_thread_window_title').text().trim(), 'Support',
@@ -138,7 +138,7 @@ QUnit.test('clicking on Support channel: channel available', function (assert) {
     messagingMenu.destroy();
 });
 
-QUnit.test('post messages in Support channel', function (assert) {
+QUnit.test('post messages in Support channel', async function (assert) {
     assert.expect(8);
 
     var messagingMenu = new MessagingMenu();
@@ -161,10 +161,10 @@ QUnit.test('post messages in Support channel', function (assert) {
     });
     messagingMenu.appendTo($('#qunit-fixture'));
 
-    testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
+    await testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
     assert.containsOnce(messagingMenu, '.o_mail_systray_dropdown_bottom .o_mail_preview[data-preview-id=SupportChannel]');
 
-    testUtils.dom.click(messagingMenu.$('.o_mail_preview[data-preview-id=SupportChannel]'));
+    await testUtils.dom.click(messagingMenu.$('.o_mail_preview[data-preview-id=SupportChannel]'));
     assert.strictEqual($('.o_thread_window .o_composer_input').length, 1,
         "should have a composer");
 
@@ -183,7 +183,7 @@ QUnit.test('post messages in Support channel', function (assert) {
     messagingMenu.destroy();
 });
 
-QUnit.test('fold Support channel', function (assert) {
+QUnit.test('fold Support channel', async function (assert) {
     assert.expect(11);
 
     var messagingMenu = new MessagingMenu();
@@ -211,17 +211,17 @@ QUnit.test('fold Support channel', function (assert) {
     }, true);
     messagingMenu.appendTo($('#qunit-fixture'));
 
-    testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
+    await testUtils.dom.click(messagingMenu.$('.dropdown-toggle'));
     assert.containsOnce(messagingMenu, '.o_mail_systray_dropdown_bottom .o_mail_preview[data-preview-id=SupportChannel]');
 
-    testUtils.dom.click(messagingMenu.$('.o_mail_preview[data-preview-id=SupportChannel]'));
+    await testUtils.dom.click(messagingMenu.$('.o_mail_preview[data-preview-id=SupportChannel]'));
     assert.strictEqual($('.o_thread_window').length, 1,
         "should have open a chat window");
 
     // fold, re-open and close channel
-    testUtils.dom.click($('.o_thread_window .o_thread_window_title'));
-    testUtils.dom.click($('.o_thread_window .o_thread_window_title'));
-    testUtils.dom.click($('.o_thread_window .o_thread_window_close'));
+    await testUtils.dom.click($('.o_thread_window .o_thread_window_title'));
+    await testUtils.dom.click($('.o_thread_window .o_thread_window_title'));
+    await testUtils.dom.click($('.o_thread_window .o_thread_window_close'));
 
     assert.verifySteps([
         '/mail/init_messaging',
@@ -237,7 +237,7 @@ QUnit.test('fold Support channel', function (assert) {
     messagingMenu.destroy();
 });
 
-QUnit.test('restore Support channel if necessary', function (assert) {
+QUnit.test('restore Support channel if necessary', async function (assert) {
     assert.expect(5);
 
     var messagingMenu = new MessagingMenu();
@@ -273,7 +273,7 @@ QUnit.test('restore Support channel if necessary', function (assert) {
     messagingMenu.destroy();
 });
 
-QUnit.test('receive messages in the Support channel', function (assert) {
+QUnit.test('receive messages in the Support channel', async function (assert) {
     assert.expect(10);
 
     var supportChannelID;
