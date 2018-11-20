@@ -406,7 +406,7 @@ var NumericField = InputField.extend({
 });
 
 var FieldChar = InputField.extend(TranslatableFieldMixin, {
-    className: 'o_field_char',
+    className: 'o_field_char o_text_overflow',
     tagName: 'span',
     supportedFieldTypes: ['char'],
 
@@ -1101,7 +1101,7 @@ var FieldPercentage = FieldFloat.extend({
 });
 
 var FieldText = InputField.extend(TranslatableFieldMixin, {
-    className: 'o_field_text',
+    className: 'o_field_text o_text_overflow',
     supportedFieldTypes: ['text'],
     tagName: 'span',
 

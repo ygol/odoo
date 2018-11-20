@@ -46,15 +46,6 @@
     }
 
     .o_kanban_record {
-        div, span, h1, h2, h3 {
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-        .oe_module_desc {
-            overflow: visible;
-            white-space: normal;
-        }
         position: relative;
         display: inline-block; // Force the creation of a block formatting context to clear float items
         border-color: gray('400');
@@ -103,7 +94,7 @@
         }
 
         .o_kanban_record_subtitle {
-            display: block;
+            @include o-text-overflow(block);
             margin-top: $o-kanban-inner-hmargin*0.5;
         }
 
@@ -178,7 +169,8 @@
 
                 // Reset immedialy after div padding
                 + div {
-                    padding-left: 0
+                    padding-left: 0;
+                    overflow: hidden;
                 }
             }
 
@@ -341,6 +333,7 @@
 
                 li {
                     margin-bottom: 2px;
+                    @include o-text-overflow(block);
                 }
             }
         }
