@@ -11,6 +11,7 @@ class BaseModel(models.Model):
     name = fields.Char()
     value = fields.Integer()
     value_pc = fields.Float(compute="_value_pc", store=True)
+    value_percent = fields.Float(compute="_value_percent")
     partner_id = fields.Many2one('res.partner', string='Customer')
 
     line_ids = fields.One2many('test_performance.line', 'base_id')
@@ -21,6 +22,11 @@ class BaseModel(models.Model):
     def _value_pc(self):
         for record in self:
             record.value_pc = float(record.value) / 100
+
+    @api.depends('value')
+    def _value_percent(self):
+        for record in self:
+            record.value_percent = float(record.value) / 100
 
     @api.depends('line_ids.value')
     def _total(self):

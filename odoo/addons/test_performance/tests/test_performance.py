@@ -32,6 +32,15 @@ class TestPerformance(TransactionCase):
             for record in records:
                 record.value_pc
 
+        # now use read() with regular and computed fields
+        records.invalidate_cache()
+        with self.assertQueryCount(__system__=1, demo=1):
+            records.read(['name'])
+
+        records.invalidate_cache()
+        with self.assertQueryCount(__system__=2, demo=2):
+            records.read(['name', 'value_percent'])
+
     @users('__system__', 'demo')
     @warmup
     def test_write_base(self):
