@@ -38,7 +38,8 @@ class TestPerformance(TransactionCase):
             records.read(['name'])
 
         records.invalidate_cache()
-        with self.assertQueryCount(__system__=2, demo=2):
+        with self.assertQueryCount(__system__=1, demo=1):
+            # the dependency of 'value_percent' must be read with 'name'
             records.read(['name', 'value_percent'])
 
     @users('__system__', 'demo')

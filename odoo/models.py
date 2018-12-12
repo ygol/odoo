@@ -2755,7 +2755,19 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
 
         # fetch stored fields from the database to the cache; this should feed
         # the prefetching of secondary records
-        self._read_from_database(stored, inherited)
+        read_stored = set(stored)
+        read_inherited = set(inherited)
+        # also read the stored dependencies of computed fields
+        for name in computed:
+            field = self._fields[name]
+            for dotnames in field.depends:
+                dep_name = dotnames.split('.', 1)[0]
+                dep_field = self._fields[dep_name]
+                if dep_field.store:
+                    read_stored.add(dep_name)
+                elif dep_field.base_field.store:
+                    read_inherited.add(dep_name)
+        self._read_from_database(list(read_stored), list(read_inherited))
 
         # retrieve results from records; this takes values from the cache and
         # computes remaining fields
