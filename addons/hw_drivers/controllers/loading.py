@@ -2,6 +2,7 @@ import importlib.util
 import os
 from .driver import BtManager
 from .driver import USBDeviceManager
+from .driver import PaymentServiceManager
 from odoo import modules
 
 driversList = os.listdir("/home/pi/odoo/addons/hw_drivers/drivers")
@@ -28,6 +29,10 @@ if not getattr(modules, '_iot_daemon_started', False):
     udm = USBDeviceManager()
     udm.daemon = True
     udm.start()
+
+    psm = PaymentServiceManager()
+    psm.deamon = True
+    psm.start()
 
     # Did this because of the
     modules._iot_daemon_started = True
