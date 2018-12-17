@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+    #!/usr/bin/env bash
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -39,6 +39,7 @@ PKGS_TO_INSTALL="
     rsync \
     console-data \
     lightdm \
+    libboost-all-dev \
     xserver-xorg-video-fbdev \
     xserver-xorg-input-evdev \
     iceweasel \
