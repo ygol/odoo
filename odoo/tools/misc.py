@@ -25,7 +25,8 @@ import types
 import unicodedata
 import werkzeug.utils
 import zipfile
-from collections import defaultdict, Iterable, Mapping, MutableMapping, MutableSet, OrderedDict
+from collections import defaultdict, deque, Iterable, Mapping, MutableMapping, \
+                        MutableSet, OrderedDict
 from itertools import islice, groupby as itergroupby, repeat
 from lxml import etree
 
@@ -1241,3 +1242,52 @@ def wrap_module(module, attr_list):
             raise AttributeError(attrib)
     # module and attr_list are in the closure
     return WrappedModule()
+
+
+########################################################################
+# A small parser for field sequences.
+#
+# "foo,bar.{baz,quux}"   ->   {'foo': {}, 'bar': {'baz': {}, 'quux':{}}}
+
+# a regexp for getting ".", ",", "{" and "}" out of text
+TOKENS_RE = re.compile(r"[.,{}]|[^.,{}]+")
+
+
+def parse_field_sequences(spec):
+    """ Parse a comma-separated list of field sequences, and return a tree of
+        the corresponding fields (implemented as a dict). The parameter ``spec``
+        must follow the syntax::
+
+            expr ::= "" | term ("," term)*
+            term ::= text ("." term)* | "{" expr "}"
+    """
+    tokens = deque(match.group() for match in TOKENS_RE.finditer(spec))
+
+    def parse_expr(tree):
+        # expr ::= "" | term ("," term)*
+        if tokens and tokens[0] != "}":
+            parse_term(tree)
+            while tokens and tokens[0] == ",":
+                tokens.popleft()
+                parse_term(tree)
+
+    def parse_term(tree):
+        # term ::= text ("." term)* | "{" expr "}"
+        token = tokens.popleft()
+        if token in (".", ",", "}"):
+            raise ValueError("Unexpected %r" % token)
+        elif token == "{":
+            parse_expr(tree)
+            token = tokens.popleft()
+            if token != "}":
+                raise ValueError("Unexpected %r" % token)
+        else:
+            subtree = tree.setdefault(token, {})
+            if tokens and tokens[0] == ".":
+                tokens.popleft()
+                parse_term(subtree)
+
+    tree = {}
+    parse_expr(tree)
+    assert not tokens
+    return tree

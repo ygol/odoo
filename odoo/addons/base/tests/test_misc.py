@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 import pytz
 import unittest
 
-from odoo.tools import misc, date_utils
+from odoo.tools import misc, date_utils, parse_field_sequences
 from odoo.tests.common import TransactionCase, tagged
 
 
@@ -195,3 +195,29 @@ class TestFormatLangDate(TransactionCase):
 
         # Change 3 parameters
         self.assertEqual(misc.format_date(lang.with_context(lang='zh_CN').env, date_str, lang_code='en_US', date_format='MMM d, y'), 'Jan 31, 2017')
+
+
+@tagged('standard', 'at_install')
+class TestFieldSequences(unittest.TestCase):
+    def test_parse_field_sequences(self):
+        tree = parse_field_sequences("")
+        self.assertEqual(tree, {})
+
+        tree = parse_field_sequences("a")
+        self.assertEqual(tree, {'a': {}})
+
+        tree = parse_field_sequences("a,b,c")
+        self.assertEqual(tree, {'a': {}, 'b': {}, 'c': {}})
+
+        tree = parse_field_sequences("a.b.c")
+        self.assertEqual(tree, {'a': {'b': {'c': {}}}})
+
+        tree = parse_field_sequences("a.b,a.c,a.d")
+        self.assertEqual(tree, {'a': {'b': {}, 'c': {}, 'd':{}}})
+
+        tree = parse_field_sequences("a.{}")
+        self.assertEqual(tree, {'a': {}})
+
+        tree = parse_field_sequences("a.{b,c.d},e.{f,g.{h,i}}")
+        self.assertEqual(tree, {'a': {'b': {}, 'c': {'d': {}}},
+                                'e': {'f': {}, 'g': {'h': {}, 'i':{}}}})
