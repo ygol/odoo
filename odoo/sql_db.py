@@ -8,6 +8,7 @@ the database, *not* a database abstraction toolkit. Database abstraction is what
 the ORM does, in fact.
 """
 
+from collections import defaultdict
 from contextlib import contextmanager
 from functools import wraps
 import itertools
@@ -183,6 +184,12 @@ class Cursor(object):
         # event handlers, see method after() below
         self._event_handlers = {'commit': [], 'rollback': []}
 
+        # {recs: field_names}
+        self._prefetch_stats = defaultdict(set)
+
+    def notify_prefetch(self, records, field):
+        self._prefetch_stats[records].add(field.name)
+
     def __build_dict(self, row):
         return {d.name: row[i] for i, d in enumerate(self._obj.description)}
     def dictfetchone(self):
@@ -256,6 +263,14 @@ class Cursor(object):
 
     def print_log(self):
         global sql_counter
+
+        stats = ["prefetch"]
+        for recs, names in sorted(
+            self._prefetch_stats.items(),
+            key=lambda item: item[0]._name,
+        ):
+            stats.append("%s: %s" % (recs, ", ".join(sorted(names))))
+        _logger.info("\n".join(stats))
 
         if not self.sql_log:
             return

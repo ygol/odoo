@@ -2784,6 +2784,8 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         # discard records to recompute for field
         records -= self.env.field_todo(field)
 
+        self.env.cr.notify_prefetch(records, field)
+
         # fetch records with read()
         assert self in records
         records = records.with_prefetch(self._prefetch)
