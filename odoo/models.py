@@ -2778,43 +2778,21 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         """ Read from the database in order to fetch ``field`` (:class:`Field`
             instance) for ``self`` in cache.
         """
-        # fetch the records of this model without field_name in their cache
+        # consider recordss without field in their cache
         records = self._in_cache_without(field)
 
-        # determine which fields can be prefetched
-        fs = {field}
-        if self._context.get('prefetch_fields', True) and field.prefetch:
-            fs.update(
-                f
-                for f in self._fields.values()
-                # select fields that can be prefetched
-                if f.prefetch
-                # discard fields with groups that the user may not access
-                if not (f.groups and not self.user_has_groups(f.groups))
-                # discard fields that must be recomputed
-                if not (f.compute and self.env.field_todo(f))
-            )
-
-        # special case: discard records to recompute for field
+        # discard records to recompute for field
         records -= self.env.field_todo(field)
 
-        # in onchange mode, discard computed fields and fields in cache
-        if self.env.in_onchange:
-            for f in list(fs):
-                if f.compute or self.env.cache.contains(self, f):
-                    fs.discard(f)
-                else:
-                    records &= self._in_cache_without(f)
-
         # fetch records with read()
-        assert self in records and field in fs
+        assert self in records
         records = records.with_prefetch(self._prefetch)
         result = []
         try:
-            result = records.read([f.name for f in fs], load='_classic_write')
+            result = records.read([field.name], load='_classic_write')
         except AccessError:
             # not all prefetched records may be accessible, try with only the current recordset
-            result = self.read([f.name for f in fs], load='_classic_write')
+            result = self.read([field.name], load='_classic_write')
 
         # check the cache, and update it if necessary
         if not self.env.cache.contains_value(self, field):
