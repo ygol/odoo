@@ -1,21 +1,14 @@
-// Radio buttons and checkboxes flex layout
-.o_website_form_flex {
-    display: flex;
-    flex-wrap: wrap;
+// To align the radio / check-boxes with their label
+.o_website_form_selection {
+    padding-top: calc(#{$input-padding-y} + #{$input-border-width});
+    padding-bottom: calc(#{$input-padding-y} + #{$input-border-width});
+    margin-bottom: 0;
 }
 
-.o_website_form_flex_item {
-    // col-lg-4
-    flex-basis: 33%;
-
-    // col-md-6
-    @include media-breakpoint-down(md) {
-        flex-basis: 50%;
-    }
-
-    // col-12
-    @include media-breakpoint-down(sm) {
-        flex-basis: 100%;
+// Remove padding for vertically aligned radio / check-boxes
+.o_website_form_radio, .o_website_form_checkbox {
+    &:not(.row) .o_website_form_flex_item {
+        padding-left: 0;
     }
 }
 
