@@ -83,7 +83,8 @@ PKGS_TO_INSTALL="
     python3-qrcode \
     python3-html2text \
     python3-unittest2 \
-    python3-simplejson"
+    python3-simplejson \
+    libboost-all-dev"
 
 echo "Acquire::Retries "16";" > /etc/apt/apt.conf.d/99acquire-retries
 # KEEP OWN CONFIG FILES DURING PACKAGE CONFIGURATION

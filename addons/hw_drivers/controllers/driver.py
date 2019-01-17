@@ -127,6 +127,19 @@ class StatusController(http.Controller):
         send_iot_box_device(False)
         return 'ok'
 
+    @http.route('/hw_drivers/methodcall', type='json', auth='none', cors='*', csrf=False)
+    def device_method_call(self):
+        data = httprequest.jsonrequest
+        for device in drivers:
+            if device.find(data.get('identifier')) != -1:
+                method = getattr(drivers[device], data.get('method'))
+                if method:
+                    if data.get('param'):
+                        return method(data['param'])
+                    else:
+                        return method()
+        return False
+
 #----------------------------------------------------------
 # Driver common interface
 #----------------------------------------------------------
@@ -249,6 +262,52 @@ class BtDriver(Driver, metaclass=BtMetaClass):
         pass
 
 
+#----------------------------------------------------------
+# Payment Services
+#----------------------------------------------------------
+paymentServiceDriver = []
+
+class PaymentSerivceMetaClass(type):
+    def __new__(cls, clsname, bases, attrs):
+        newclass = super(PaymentSerivceMetaClass, cls).__new__(cls, clsname, bases, attrs)
+        paymentServiceDriver.append(newclass)
+        return newclass
+
+class PaymentSerivceDriver(Driver, metaclass=PaymentSerivceMetaClass):
+    def __init__(self):
+        super(PaymentSerivceDriver, self).__init__()
+        self.service = False
+        self.status = False
+        self.value = ''
+
+    def get_status(self):
+        return str(self.status)
+
+    def get_connection(self):
+        return 'network'
+
+    def is_connected(self):
+        pass
+
+    def get_name(self):
+        pass
+
+    def get_path(self):
+        pass
+
+class PaymentServiceManager(Thread):
+    devices = {}
+    def run(self):
+        for driverclass in paymentServiceDriver:
+            d = driverclass()
+            if d.get_path():
+                _logger.info('For payment service %s will be driven', d.get_path())
+                drivers[d.get_path()] = d
+                # launch thread
+                d.daemon = True
+                d.start()
+        time.sleep(3)
+        send_iot_box_device(False)
 
 
 
