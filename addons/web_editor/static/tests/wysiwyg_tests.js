@@ -3167,16 +3167,20 @@ var _clickMedia = function (wysiwyg, assert, callbackInit, test) {
     wysiwyg.$('.note-insert .fa-file-image-o').mousedown().click();
 
     defMediaDialogSave.then(function () {
+        var def = $.when();
         if (test.check) {
-            test.check();
+            def = $.when(test.check());
         }
-        if (test.content) {
-            assert.deepEqual(wysiwyg.getValue(), test.content, testName);
-        }
-        if (test.start) {
-            var range = weTestUtils.select(test.start, test.end, $editable);
-            assert.deepEqual(Wysiwyg.getRange($editable[0]), range, testName + carretTestSuffix);
-        }
+        def.then(function () {
+            if (test.content) {
+                assert.deepEqual(wysiwyg.getValue(), test.content, testName);
+            }
+            if (test.start) {
+                var range = weTestUtils.select(test.start, test.end, $editable);
+                assert.deepEqual(Wysiwyg.getRange($editable[0]), range, testName + carretTestSuffix);
+            }
+        });
+        return def;
     });
     return defMediaDialogInit.then(function () {
         callbackInit();

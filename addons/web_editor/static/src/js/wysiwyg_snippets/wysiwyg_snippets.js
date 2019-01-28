@@ -15,6 +15,7 @@ Wysiwyg.include({
         snippet_cloned: '_onSnippetCloned',
         snippet_dropped: '_onSnippetDropped',
         snippet_focused: '_onSnippetFocused',
+        reload_snippet_dropzones: '_onReloadSnippetDropzones',
     }),
 
     selectorEditableArea: '.note-editable',
@@ -171,6 +172,14 @@ Wysiwyg.include({
         var context = this._summernote;
         var target = context.invoke('editor.restoreTarget', target);
         context.invoke('MediaPlugin.hidePopovers');
+    },
+    /**
+     * trigger reload_snippet_dropzones on snippets
+     *
+     * @private
+     */
+    _onReloadSnippetDropzones: function () {
+        this.snippets.trigger('reload_snippet_dropzones');
     },
     /**
      * Triggered when a snippet is cloned in the editable area

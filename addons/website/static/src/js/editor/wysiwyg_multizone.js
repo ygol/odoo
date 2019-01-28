@@ -70,8 +70,6 @@ DropzonePlugin.include({
 
 
 
-
-
 /**
  * HtmlEditor
  * Intended to edit HTML content. This widget uses the Wysiwyg editor
