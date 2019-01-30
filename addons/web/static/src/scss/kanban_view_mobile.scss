@@ -36,6 +36,15 @@
             margin-left: 0; // override the margin-left: -1px of the desktop mode
             border: none;
 
+            &.o_current {
+                position: inherit;
+                top: 0;
+
+                &.o_kanban_no_records {
+                    min-height: $o-kanban-image-width; // set a default height for clarity when embedded in another view
+                }
+            }
+
             .o_kanban_header {
                 display: none;
             }
