@@ -241,6 +241,7 @@ var FieldMany2One = AbstractField.extend({
     _bindAutoComplete: function () {
         var self = this;
         this.$input.autocomplete({
+            appendTo: self.$input.parent(),
             source: function (req, resp) {
                 _.each(self._autocompleteSources, function (source) {
                     // Resets the results for this source

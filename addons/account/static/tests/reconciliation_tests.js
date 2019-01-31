@@ -1001,7 +1001,7 @@ QUnit.module('account', {
 
         // Similate changing partner to one that does not have propositions to see if create mode is open after
         widget.$('.o_input_dropdown input').trigger('click');
-        $('.ui-autocomplete .ui-menu-item a:contains(partner 1)').trigger('mouseenter').trigger('click');
+        widget.$('.ui-autocomplete .ui-menu-item a:contains(partner 1)').trigger('mouseenter').trigger('click');
         clientAction._onAction({target: widget, name: 'change_partner', data: {data: {display_name: 'partner 1', id: 1}}, stopped: false});
         assert.strictEqual(widget.$('.o_input_dropdown input').val(), "partner 1", "the partner many2one should display partner 1");
         assert.containsNone(widget, '.match table tr.mv_line', "partner 1 should have 0 propositions for reconciliation");
@@ -1009,7 +1009,7 @@ QUnit.module('account', {
 
         // Simulate changing partner
         widget.$('.o_input_dropdown input').trigger('click');
-        $('.ui-autocomplete .ui-menu-item a:contains(Camptocamp)').trigger('mouseenter').trigger('click');
+        widget.$('.ui-autocomplete .ui-menu-item a:contains(Camptocamp)').trigger('mouseenter').trigger('click');
         clientAction._onAction({target: widget, name: 'change_partner', data: {data: {display_name: 'Camptocamp', id: 12}}, stopped: false});
         assert.strictEqual(widget.$('.o_input_dropdown input').val(), "Camptocamp", "the partner many2one should display Camptocamp");
         assert.containsN(widget, '.match table tr.mv_line', 3, "camptocamp should have 3 propositions for reconciliation");
@@ -1018,7 +1018,7 @@ QUnit.module('account', {
         widget = clientAction.widgets[1];
         assert.strictEqual($('.modal').length, 0, "shouldn't have any opened modal");
         widget.$('.o_input_dropdown input').trigger('click');
-        $('.ui-autocomplete .ui-menu-item a:contains(Search More):eq(1)').trigger('mouseenter').trigger('click');
+        widget.$('.ui-autocomplete .ui-menu-item a:contains(Search More)').trigger('mouseenter').trigger('click');
         assert.strictEqual($('.modal').length, 1, "should open a SelectCreateDialog");
         testUtils.dom.click($('.modal table.o_list_view td:contains(Camptocamp)'));
         assert.strictEqual(widget.$('.o_input_dropdown input').val(), "Camptocamp", "the partner many2one should display Camptocamp");
