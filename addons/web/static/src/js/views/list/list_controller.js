@@ -249,7 +249,7 @@ var ListController = BasicController.extend({
                 .then(function () {
                     self.renderer.editRecord(recordID);
                 }).then(self._updatePager.bind(self));
-        }).then(this._enableButtons.bind(this)).catch(this._enableButtons.bind(this));
+        }).then(this._enableButtons.bind(this)).guardedCatch(this._enableButtons.bind(this));
     },
     /**
      * Archive the current selection
@@ -379,8 +379,10 @@ var ListController = BasicController.extend({
      * @returns {Promise}
      */
     _update: function () {
-        this._toggleSidebar();
-        return this._super.apply(this, arguments);
+        var self = this;
+        return this._super.apply(this, arguments).then(function() {
+            self._toggleSidebar();
+        });
     },
     /**
      * This helper simply makes sure that the control panel buttons matches the
@@ -527,7 +529,7 @@ var ListController = BasicController.extend({
         var recordID = ev.data.recordID;
         this.saveRecord(recordID)
             .then(ev.data.onSuccess)
-            .catch(ev.data.onFailure);
+            .guardedCatch(ev.data.onFailure);
     },
     /**
      * When the current selection changes (by clicking on the checkboxes on the

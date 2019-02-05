@@ -72,7 +72,7 @@ var Channel = SearchableThread.extend(ChannelSeenMixin, ThreadTypingMixin, {
         this._isMyselfModerator = data.is_moderator;
         this._lastMessageDate = undefined;
         this._members = data.members || [];
-        // Deferred that is resolved on fetched members of this channel.
+        // Promise that is resolved on fetched members of this channel.
         this._membersDef = undefined;
         // number of messages that are 'needaction', which is equivalent to the
         // number of messages in this channel that are in inbox.
@@ -131,13 +131,15 @@ var Channel = SearchableThread.extend(ChannelSeenMixin, ThreadTypingMixin, {
      * @pverride
      */
     detach: function () {
-        this._super.apply(this, arguments);
-        this._rpc({
-            model: 'mail.channel',
-            method: 'channel_minimize',
-            args: [this.getUUID(), true],
-        }, {
-            shadow: true,
+        var self = this;
+        return this._super.apply(this, arguments).then(function () {
+            self._rpc({
+                model: 'mail.channel',
+                method: 'channel_minimize',
+                args: [self.getUUID(), true],
+            }, {
+                shadow: true,
+            });
         });
     },
     /**

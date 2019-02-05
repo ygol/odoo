@@ -160,7 +160,7 @@ QUnit.module('Views', {
         assert.isNotVisible(list.sidebar.$el, 'sidebar should be invisible');
         assert.ok(list.$('tbody td.o_list_record_selector').length, 'should have at least one record');
 
-        testUtils.dom.click(list.$('tbody td.o_list_record_selector:first input'));
+        await testUtils.dom.click(list.$('tbody td.o_list_record_selector:first input'));
         assert.isVisible(list.sidebar.$el, 'sidebar should be visible');
         assert.notOk(list.sidebar.$('a:contains(Delete)').length, 'sidebar should not have Delete button');
 
@@ -395,11 +395,11 @@ QUnit.module('Views', {
         });
 
         // Descending order on Foo
-        list.$('th.o_column_sortable:contains("Foo")').click();
-        list.$('th.o_column_sortable:contains("Foo")').click();
+        await testUtils.dom.click(list.$('th.o_column_sortable:contains("Foo")'));
+        await testUtils.dom.click(list.$('th.o_column_sortable:contains("Foo")'));
 
         // Ascending order on Date
-        list.$('th.o_column_sortable:contains("Date")').click();
+        await testUtils.dom.click(list.$('th.o_column_sortable:contains("Date")'));
 
         var listContext = list.getOwnedQueryParams();
         assert.deepEqual(listContext,
@@ -445,7 +445,7 @@ QUnit.module('Views', {
             },
             intercepts: {
                 load_filters: function (event) {
-                    return $.when([
+                    return Promise.resolve([
                         {
                             context: "{}",
                             domain: "[]",
@@ -1184,7 +1184,7 @@ QUnit.module('Views', {
         assert.strictEqual($('.modal').length, 1, 'a confirm modal should be displayed');
         await testUtils.dom.click($('.modal-footer .btn-primary'));
         assert.containsN(list, 'tbody td.o_list_record_selector', 3, "should have 3 records");
-        assert.verifySteps(['/web/dataset/search_read', '/web/dataset/call_kw/foo/write', '/web/dataset/search_read']);
+        assert.verifySteps(['/web/dataset/call_kw/foo/write', '/web/dataset/search_read']);
         list.destroy();
     });
 
@@ -2341,7 +2341,7 @@ QUnit.module('Views', {
             "the foo field widget parent cell should not be readonly again");
 
         // Click outside to leave edition mode
-        testUtils.dom.click(list.$el);
+        await testUtils.dom.click(list.$el);
 
         assert.containsN(list, 'tbody td.o_readonly_modifier', 2,
             "there should be 2 readonly foo cells in readonly mode");
@@ -2696,7 +2696,6 @@ QUnit.module('Views', {
 
         list.destroy();
     });
-
 
     QUnit.test('navigation with tab and readonly field (with modification)', async function (assert) {
         // This test makes sure that if we have 2 cells in a row, the first in
@@ -3125,10 +3124,8 @@ QUnit.module('Views', {
         // row should switch it in edition
         await testUtils.dom.click(list.$('.o_data_cell:first'));
 
-        assert.verifySteps(['switch view form 1', 'switch view form false'],
-            "no more switch view should have been requested");
-        assert.containsOnce(list, '.o_selected_row',
-            "a row should be in edition");
+        assert.verifySteps([], "no more switch view should have been requested");
+        assert.containsOnce(list, '.o_selected_row', "a row should be in edition");
 
         // clicking on the body should leave the edition
         await testUtils.dom.click($('body'));
@@ -3899,7 +3896,7 @@ QUnit.module('Views', {
     });
 
     QUnit.test('concurrent reloads finishing in inverse order', async function (assert) {
-        assert.expect(3);
+        assert.expect(4);
 
         var blockSearchRead = false;
         var prom = testUtils.makeTestPromise();
@@ -3923,6 +3920,7 @@ QUnit.module('Views', {
         // reload with a domain (this request is blocked)
         blockSearchRead = true;
         list.reload({domain: [['foo', '=', 'yop']]});
+        await testUtils.nextTick();
 
         assert.containsN(list, '.o_list_view .o_data_row', 4,
             "list view should still contain 4 records (search_read being blocked)");
@@ -3930,9 +3928,15 @@ QUnit.module('Views', {
         // reload without the domain
         blockSearchRead = false;
         list.reload({domain: []});
+        await testUtils.nextTick();
+
+        assert.containsN(list, '.o_list_view .o_data_row', 4,
+            "list view should still contain 4 records");
 
         // unblock the RPC
         prom.resolve();
+        await testUtils.nextTick();
+
         assert.containsN(list, '.o_list_view .o_data_row', 4,
             "list view should still contain 4 records");
 
@@ -3940,7 +3944,7 @@ QUnit.module('Views', {
     });
 
     QUnit.test('list view on a "noCache" model', async function (assert) {
-        assert.expect(8);
+        assert.expect(9);
 
         testUtils.mock.patch(BasicModel, {
             noCacheModels: BasicModel.prototype.noCacheModels.concat(['foo']),
@@ -3992,6 +3996,8 @@ QUnit.module('Views', {
 
         list.destroy();
         testUtils.mock.unpatch(BasicModel);
+
+        assert.verifySteps(['clear_cache']); // triggered by the test environment on destroy
     });
 
     QUnit.test('list should ask to scroll to top on page changes', async function (assert) {
@@ -4022,18 +4028,16 @@ QUnit.module('Views', {
         // change the limit (should not ask to scroll)
         await testUtils.dom.click(list.pager.$('.o_pager_value'));
         await testUtils.fields.editAndTrigger(list.pager.$('.o_pager_value input'),
-            '1-2', ['change']);
+            '1-2', ['blur']);
         assert.strictEqual(list.pager.$('.o_pager_value').text(), '1-2',
             "should have changed the limit");
 
-        assert.verifySteps(['scroll', 'scroll'],
-            "should not ask to scroll when changing the limit");
+        assert.verifySteps([], "should not ask to scroll when changing the limit");
 
         // switch pages again (should still ask to scroll)
         await testUtils.dom.click(list.pager.$('.o_pager_next'));
 
-        assert.verifySteps(['scroll', 'scroll', 'scroll'],
-            "this is still working after a limit change");
+        assert.verifySteps(['scroll'], "this is still working after a limit change");
 
         list.destroy();
     });
@@ -4070,6 +4074,46 @@ QUnit.module('Views', {
         assert.strictEqual($('.o_data_cell').text(), "blipblipyopgnap" + inputText);
 
         list.destroy();
+    });
+
+    QUnit.test('grouped list with async widget', async function (assert) {
+        assert.expect(4);
+
+        var prom = testUtils.makeTestPromise();
+        var AsyncWidget = Widget.extend({
+            willStart: function () {
+                return prom;
+            },
+            start: function () {
+                this.$el.text('ready');
+            },
+        });
+        widgetRegistry.add('asyncWidget', AsyncWidget);
+
+        var list = await createAsyncView({
+            View: ListView,
+            model: 'foo',
+            data: this.data,
+            arch: '<tree><widget name="asyncWidget"/></tree>',
+            groupBy: ['int_field'],
+        });
+
+        assert.containsNone(list, '.o_data_row', "no group should be open");
+
+        await testUtils.dom.click(list.$('.o_group_header:first'));
+
+        assert.containsNone(list, '.o_data_row',
+            "should wait for async widgets before opening the group");
+
+        prom.resolve();
+        await testUtils.nextTick();
+
+        assert.containsN(list, '.o_data_row', 1, "group should be open");
+        assert.strictEqual(list.$('.o_data_row .o_data_cell').text(), 'ready',
+            "async widget should be correctly displayed");
+
+        list.destroy();
+        delete widgetRegistry.map.asyncWidget;
     });
 });
 

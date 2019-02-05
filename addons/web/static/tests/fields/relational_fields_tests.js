@@ -146,7 +146,7 @@ QUnit.module('relational_fields', {
                 }]
             },
         };
-    }
+    },
 }, function () {
 
     QUnit.test('search more pager is reset when doing a new search', async function (assert) {
@@ -158,13 +158,15 @@ QUnit.module('relational_fields', {
             });
         }
 
-        function stringToEvent ($element, string) {
+        async function stringToEvent ($element, string) {
             for (var i = 0; i < string.length; i++) {
                 var keyAscii = string.charCodeAt(i);
                 $element.val($element.val()+string[i]);
                 $element.trigger($.Event('keyup', {which: keyAscii, keyCode:keyAscii}));
+                await testUtils.nextTick();
             }
             $element.trigger($.Event('keyup', {which: $.ui.keyCode.ENTER, keyCode:$.ui.keyCode.ENTER}));
+            await testUtils.nextTick();
         }
 
         this.data.partner.fields.datetime.searchable = true;
@@ -186,17 +188,18 @@ QUnit.module('relational_fields', {
             res_id: 1,
         });
 
-        await testUtils.dom.click(form.$buttons.find('.o_form_button_edit'));
-        var $dropdown = form.$('.o_field_many2one input').autocomplete('widget');
-        form.$('.o_field_many2one input').click();
-        $dropdown.find('.o_m2o_dropdown_option:contains(Search)').mouseenter().click();
+        await testUtils.form.clickEdit(form);
+
+
+        await testUtils.fields.many2one.clickOpenDropdown('trululu');
+        await testUtils.fields.many2one.clickItem('trululu','Search');
         await testUtils.dom.click($('.modal .o_pager_next'));
 
         assert.strictEqual($('.o_pager_limit').text(), "1173", "there should be 173 records");
         assert.strictEqual($('.o_pager_value').text(), "181-160", "should display the second page");
         assert.strictEqual($('tr.o_data_row').length, 80, "should display 80 record");
 
-        stringToEvent($('.modal .o_searchview_input'), 'first');
+        await stringToEvent($('.modal .o_searchview_input'), 'first');
 
         assert.strictEqual($('.o_pager_limit').text(), "11", "there should be 1 record");
         assert.strictEqual($('.o_pager_value').text(), "11-1", "should display the first page");
@@ -285,7 +288,7 @@ QUnit.module('relational_fields', {
     QUnit.test('widget many2many_checkboxes in a subview', async function (assert) {
         assert.expect(2);
 
-        var form = await createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -310,7 +313,7 @@ QUnit.module('relational_fields', {
             res_id: 1,
         });
 
-        await testUtils.dom.click(form.$buttons.find('.o_form_button_edit'));
+        await testUtils.form.clickEdit(form);
         await testUtils.dom.click(form.$('.o_data_cell'));
         // edit the partner_ids field by (un)checking boxes on the widget
         var $firstCheckbox = $('.modal .custom-control-input').first();
@@ -333,7 +336,7 @@ QUnit.module('relational_fields', {
            obj.turtles = [[5]].concat(obj.turtles);
         };
 
-        var form = await createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -352,10 +355,10 @@ QUnit.module('relational_fields', {
             res_id: 1,
         });
 
-        await testUtils.dom.click(form.$buttons.find('.o_form_button_edit'));
+        await testUtils.form.clickEdit(form);
         // add a line (virtual record)
         await testUtils.dom.click(form.$('.o_field_x2many_list_row_add a'));
-        await testUtils.fields.editinput(form.$('.o_input'), 'pi');
+        await testUtils.fields.editInput(form.$('.o_input'), 'pi');
         // delete the line above it
         await testUtils.dom.click(form.$('.o_list_record_remove').first());
         // the next line should be displayed below the newly added one
@@ -502,13 +505,13 @@ QUnit.module('relational_fields', {
         form.destroy();
     });
 
-    QUnit.test('quickly switch between pages in one2many list', function (assert) {
+    QUnit.test('quickly switch between pages in one2many list', async function (assert) {
         assert.expect(2);
 
         this.data.partner.records[0].turtles = [1, 2, 3];
 
-        var readDefs = [$.when(), $.Deferred(), $.Deferred()];
-        var form = createView({
+        var readDefs = [Promise.resolve(), testUtils.makeTestPromise(), testUtils.makeTestPromise()];
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -523,34 +526,35 @@ QUnit.module('relational_fields', {
                 var result = this._super.apply(this, arguments);
                 if (args.method === 'read') {
                     var recordID = args.args[0][0];
-                    return $.when(readDefs[recordID - 1]).then(_.constant(result));
+                    return Promise.resolve(readDefs[recordID - 1]).then(_.constant(result));
                 }
                 return result;
             },
             res_id: 1,
         });
 
-        form.$('.o_field_widget[name=turtles] .o_pager_next').click();
-        form.$('.o_field_widget[name=turtles] .o_pager_next').click();
+        await testUtils.dom.click(form.$('.o_field_widget[name=turtles] .o_pager_next'));
+        await testUtils.dom.click(form.$('.o_field_widget[name=turtles] .o_pager_next'));
 
         readDefs[1].resolve();
-
+        await testUtils.nextTick();
         assert.strictEqual(form.$('.o_field_widget[name=turtles] .o_data_cell').text(), 'donatello');
 
         readDefs[2].resolve();
+        await testUtils.nextTick();
 
         assert.strictEqual(form.$('.o_field_widget[name=turtles] .o_data_cell').text(), 'raphael');
 
         form.destroy();
     });
 
-    QUnit.test('many2many read, field context is properly sent', function (assert) {
+    QUnit.test('many2many read, field context is properly sent', async function (assert) {
         assert.expect(4);
 
         this.data.partner.fields.timmy.context = {hello: 'world'};
         this.data.partner.records[0].timmy = [12];
 
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -568,11 +572,13 @@ QUnit.module('relational_fields', {
 
         assert.verifySteps(['world']);
 
-        form.$buttons.find('.o_form_button_edit').click();
+        await testUtils.form.clickEdit(form);
         var $m2mInput = form.$('.o_field_many2manytags input');
         $m2mInput.click();
+        await testUtils.nextTick();
         $m2mInput.autocomplete('widget').find('li:first()').click();
-        assert.verifySteps(['world', 'world']);
+        await testUtils.nextTick();
+        assert.verifySteps(['world']);
 
         form.destroy();
     });
@@ -831,7 +837,7 @@ QUnit.module('relational_fields', {
     });
 
     QUnit.test('widget selection, edition and on many2one field', async function (assert) {
-        assert.expect(18);
+        assert.expect(19);
 
         this.data.partner.onchanges = {product_id: function () {}};
         this.data.partner.records[0].product_id = 37;
@@ -886,6 +892,8 @@ QUnit.module('relational_fields', {
         count = 0;
         await form.reload();
         assert.strictEqual(count, 1, "should not reload product_id relation");
+        assert.verifySteps(['read']);
+
         form.destroy();
     });
 
@@ -1543,7 +1551,7 @@ QUnit.module('relational_fields', {
         assert.expect(4);
         this.data.turtle.records[0].partner_ids = [2];
 
-        var form = await createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1579,7 +1587,7 @@ QUnit.module('relational_fields', {
         assert.strictEqual(form.$('.o_field_one2many[name="turtles"] .o_list_view .o_field_many2manytags[name="partner_ids"]').text().replace(/\s/g, ''),
             "secondrecordaaa", "the tags should still be correctly rendered");
 
-        await testUtils.dom.click(form.$buttons.find('.o_form_button_edit'));
+        await testUtils.form.clickEdit(form);
         assert.strictEqual(form.$('.o_field_one2many[name="turtles"] .o_list_view .o_field_many2manytags[name="partner_ids"]').text().replace(/\s/g, ''),
             "secondrecordaaa", "the tags should still be correctly rendered");
 
@@ -2046,7 +2054,7 @@ QUnit.module('relational_fields', {
     QUnit.module('FieldMany2ManyBinaryMultiFiles');
 
     QUnit.test('widget many2many_binary', async function (assert) {
-        assert.expect(14);
+        assert.expect(15);
         this.data['ir.attachment'] = {
             fields: {
                 name: {string:"Name", type: "char"},
@@ -2119,6 +2127,11 @@ QUnit.module('relational_fields', {
 
         assert.strictEqual(form.$('div.o_field_widget.oe_fileupload .oe_attachments').children().length, 0,
             "there should be no attachment");
+
+        assert.verifySteps([
+            '/web/dataset/call_kw/turtle/write',
+            '/web/dataset/call_kw/turtle/read',
+        ]);
 
         form.destroy();
     });
@@ -2391,7 +2404,7 @@ QUnit.module('relational_fields', {
         // trigger onchange
         await testUtils.fields.editInput(form.$('.o_field_widget[name=int_field]'), 12);
 
-        assert.verifySteps(['product', 'partner_type'], "the second name_get should have been done");
+        assert.verifySteps(['partner_type'], "the second name_get should have been done");
         assert.strictEqual(form.$('.o_field_widget[name="reference"] select').val(), "partner_type",
             "reference field model should be correctly set");
         assert.strictEqual(form.$('.o_field_widget[name="reference"] input').val(), "gold",
@@ -2504,7 +2517,7 @@ QUnit.module('relational_fields', {
         assert.strictEqual(list.$('.o_data_row:eq(1) .o_field_widget[name="reference"] select')[0], document.activeElement,
             'select of second data row should be selected');
 
-        // list.destroy();
+        list.destroy();
     });
 
     QUnit.test('one2many with extra field from server not in form', async function (assert) {

@@ -133,7 +133,7 @@ odoo.define('portal.signature_form', function (require) {
                         window.location.reload();
                     }
                     // no resolve if we reload the page
-                    return $.Deferred();
+                    return new Promise(function() {});
                 }
             });
         },

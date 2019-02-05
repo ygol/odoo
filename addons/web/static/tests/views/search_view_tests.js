@@ -262,34 +262,34 @@ QUnit.module('Search View', {
         ];
     },
 }, function () {
-    QUnit.test('basic rendering', function (assert) {
+    QUnit.test('basic rendering', async function (assert) {
         assert.expect(1);
 
-        var actionManager = createActionManager({
+        var actionManager = await createActionManager({
             actions: this.actions,
             archs: this.archs,
             data: this.data,
         });
-        actionManager.doAction(1);
+        await actionManager.doAction(1);
 
         assert.strictEqual($('.o_searchview input.o_searchview_input')[0], document.activeElement,
             "searchview input should be focused");
 
         actionManager.destroy();
     });
-    QUnit.test('navigation with facets', function (assert) {
+    QUnit.test('navigation with facets', async function (assert) {
         assert.expect(4);
 
-        var actionManager = createActionManager({
+        var actionManager = await createActionManager({
             actions: this.actions,
             archs: this.archs,
             data: this.data,
         });
-        actionManager.doAction(1);
+        await actionManager.doAction(1);
 
         // add a facet
-        testUtils.dom.click(actionManager.$('.o_dropdown_toggler_btn:contains(Group By)'));
-        testUtils.dom.click(actionManager.$('.o_menu_item a'));
+        await testUtils.dom.click(actionManager.$('.o_dropdown_toggler_btn:contains(Group By)'));
+        await testUtils.dom.click(actionManager.$('.o_menu_item a'));
         assert.strictEqual(actionManager.$('.o_searchview .o_searchview_facet').length, 1,
             "there should be one facet");
         assert.strictEqual(actionManager.$('.o_searchview input.o_searchview_input')[0], document.activeElement,
@@ -581,8 +581,7 @@ QUnit.module('Search View', {
             'The format of the date in the facet should be in locale');
 
         // Close Facet
-        $('.o_searchview_facet .o_facet_remove').click();
-        await testUtils.nextTick();
+        await testUtils.dom.click($('.o_searchview_facet .o_facet_remove'));
 
         // DateTime case
         $autocomplete = $('.o_searchview_input');
@@ -697,14 +696,14 @@ QUnit.module('Search View', {
         window.Date = RealDate;
     });
 
-    QUnit.test('`context` key in <filter> is used', function (assert) {
+    QUnit.test('`context` key in <filter> is used', async function (assert) {
         assert.expect(3);
 
         this.archs['partner,4,search'] = '<search>'+
             '<filter string="AAA" name="some_filter" context="{\'coucou_1\': 1}"></filter>' +
         '</search>';
 
-        var actionManager = createActionManager({
+        var actionManager = await createActionManager({
             actions: this.actions,
             archs: this.archs,
             data: this.data,
@@ -716,11 +715,11 @@ QUnit.module('Search View', {
             },
         });
 
-        actionManager.doAction(5);
+        await actionManager.doAction(5);
 
         // select filter
-        testUtils.dom.click($('.o_search_options .fa-filter'));
-        testUtils.dom.click($('.o_menu_item:contains(AAA)'));
+        await testUtils.dom.click($('.o_search_options .fa-filter'));
+        await testUtils.dom.click($('.o_menu_item:contains(AAA)'));
 
         assert.verifySteps([
             "{}",
@@ -762,7 +761,7 @@ QUnit.module('Search View', {
         actionManager.destroy();
     });
 
-    QUnit.test('save search filter in modal', function (assert) {
+    QUnit.test('save search filter in modal', async function (assert) {
         assert.expect(5);
         this.data.partner.records.push({
             id: 7,
@@ -778,7 +777,7 @@ QUnit.module('Search View', {
             display_name: "Partner 9",
         });
         this.data.partner.fields.date_field.searchable = true;
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -796,39 +795,39 @@ QUnit.module('Search View', {
             res_id: 1,
         });
 
-        testUtils.form.clickEdit(form);
+        await testUtils.form.clickEdit(form);
 
-        testUtils.fields.many2one.clickOpenDropdown('bar');
-        testUtils.fields.many2one.clickItem('bar','Search');
+        await testUtils.fields.many2one.clickOpenDropdown('bar');
+        await testUtils.fields.many2one.clickItem('bar','Search');
 
         assert.strictEqual($('tr.o_data_row').length, 9, "should display 9 records");
 
-        testUtils.dom.click($('button:contains(Filters)'));
-        testUtils.dom.click($('.o_add_custom_filter:visible'));
+        await testUtils.dom.click($('button:contains(Filters)'));
+        await testUtils.dom.click($('.o_add_custom_filter:visible'));
         assert.strictEqual($('.o_filter_condition select.o_searchview_extended_prop_field').val(), 'date_field',
             "date field should be selected");
-        testUtils.dom.click($('.o_apply_filter'));
+        await testUtils.dom.click($('.o_apply_filter'));
 
         assert.strictEqual($('tr.o_data_row').length, 0, "should display 0 records");
 
         // Save this search
-        testUtils.mock.intercept(form, 'create_filter', function (event) {
+        await testUtils.mock.intercept(form, 'create_filter', function (event) {
             assert.strictEqual(event.data.filter.name, "Awesome Test Customer Filter", "filter name should be correct");
         });
-        testUtils.dom.click($('button:contains(Favorites)'));
-        testUtils.dom.click($('.o_add_favorite'));
+        await testUtils.dom.click($('button:contains(Favorites)'));
+        await testUtils.dom.click($('.o_add_favorite'));
         var filterNameInput = $('.o_favorite_name .o_input[type="text"]:visible');
         assert.strictEqual(filterNameInput.length, 1, "should display an input field for the filter name");
-        testUtils.fields.editInput(filterNameInput, 'Awesome Test Customer Filter');
-        testUtils.dom.click($('.o_save_favorite button'));
+        await testUtils.fields.editInput(filterNameInput, 'Awesome Test Customer Filter');
+        await testUtils.dom.click($('.o_save_favorite button'));
 
         form.destroy();
     });
 
-    QUnit.test('save filters created via autocompletion works', function (assert) {
+    QUnit.test('save filters created via autocompletion works', async function (assert) {
         assert.expect(2);
 
-        var actionManager = createActionManager({
+        var actionManager = await createActionManager({
             actions: this.actions,
             archs: this.archs,
             data: this.data,
@@ -839,37 +838,38 @@ QUnit.module('Search View', {
             },
         });
 
-        actionManager.doAction(10);
+        await actionManager.doAction(10);
 
         $('.o_searchview_input').trigger($.Event('keypress', {
             which: 97,
         }));
-
+        await testUtils.nextTick();
         $('.o_searchview_input').trigger($.Event('keyup', {
             which: $.ui.keyCode.ENTER,
             keyCode: $.ui.keyCode.ENTER,
         }));
+        await testUtils.nextTick();
 
         assert.strictEqual($('.o_searchview_input_container .o_facet_values span').text().trim(), "a");
 
-        testUtils.dom.click($('button .fa-star'));
-        testUtils.dom.click($('.o_favorites_menu .o_add_favorite'));
-        testUtils.fields.editInput($('div.o_favorite_name input'), 'name for favorite');
-        testUtils.dom.click($('.o_favorites_menu div.o_save_favorite button'));
+        await testUtils.dom.click($('button .fa-star'));
+        await testUtils.dom.click($('.o_favorites_menu .o_add_favorite'));
+        await testUtils.fields.editInput($('div.o_favorite_name input'), 'name for favorite');
+        await testUtils.dom.click($('.o_favorites_menu div.o_save_favorite button'));
 
         actionManager.destroy();
     });
 
-    QUnit.test('delete an active favorite remove it both in list of favorite and in search bar', function (assert) {
+    QUnit.test('delete an active favorite remove it both in list of favorite and in search bar', async function (assert) {
         assert.expect(2);
 
-        var actionManager = createActionManager({
+        var actionManager = await createActionManager({
             actions: this.actions,
             archs: this.archs,
             data: this.data,
             intercepts: {
                 load_filters: function (event) {
-                    return $.when([{
+                    return Promise.resolve([{
                         context: "{}",
                         domain: "[]",
                         id: 7,
@@ -885,11 +885,11 @@ QUnit.module('Search View', {
             },
         });
 
-        actionManager.doAction(6);
-        testUtils.dom.click(actionManager.$('.o_control_panel .o_search_options button.o_favorites_menu_button'));
+        await actionManager.doAction(6);
+        await testUtils.dom.click(actionManager.$('.o_control_panel .o_search_options button.o_favorites_menu_button'));
         assert.containsOnce(actionManager, '.o_control_panel .o_searchview_input_container .o_facet_values');
-        testUtils.dom.click(actionManager.$('.o_control_panel .o_search_options .o_favorites_menu span.o_trash_button'));
-        testUtils.modal.clickButton('Ok');
+        await testUtils.dom.click(actionManager.$('.o_control_panel .o_search_options .o_favorites_menu span.o_trash_button'));
+        await testUtils.modal.clickButton('Ok');
         assert.containsNone(actionManager, '.o_control_panel .o_searchview_input_container .o_facet_values');
         actionManager.destroy();
     });
@@ -903,7 +903,7 @@ QUnit.module('Search View', {
             data: this.data,
             intercepts: {
                 load_filters: function (event) {
-                    return $.when([{
+                    return Promise.resolve([{
                         context: "{}",
                         domain: "[]",
                         id: 7,
@@ -981,15 +981,14 @@ QUnit.module('Search View', {
         actionManager.destroy();
     });
 
-    QUnit.test('select an autocomplete field with `context` key', function (assert) {
+    QUnit.test('select an autocomplete field with `context` key', async function (assert) {
         assert.expect(9);
 
         var searchRead = 0;
-        var actionManager = createActionManager({
+        var actionManager = await createActionManager({
             actions: this.actions,
             archs: this.archs,
             data: this.data,
-            debug: 1,
             mockRPC: function (route, args) {
                 if (route === '/web/dataset/search_read') {
                     if (searchRead === 1) {
@@ -1005,16 +1004,20 @@ QUnit.module('Search View', {
             },
         });
 
-        actionManager.doAction(11);
+        await actionManager.doAction(11);
+        await testUtils.nextTick();
         assert.strictEqual(searchRead, 1, "there should be 1 search_read");
 
         // 'r' key to filter on bar "First Record"
         $('.o_searchview_input').val('r');
         $('.o_searchview_input').trigger($.Event('keypress', { which: 82, keyCode: 82 }));
+        await testUtils.nextTick();
         $('.o_searchview_input').trigger($.Event('keydown', { which: $.ui.keyCode.DOWN, keyCode: $.ui.keyCode.DOWN }));
         $('.o_searchview_input').trigger($.Event('keydown', { which: $.ui.keyCode.RIGHT, keyCode: $.ui.keyCode.RIGHT }));
+        await testUtils.nextTick();
         $('.o_searchview_input').trigger($.Event('keydown', { which: $.ui.keyCode.DOWN, keyCode: $.ui.keyCode.DOWN }));
         $('.o_searchview_input').trigger($.Event('keydown', { which: $.ui.keyCode.ENTER, keyCode: $.ui.keyCode.ENTER }));
+        await testUtils.nextTick();
 
         assert.strictEqual($('.o_searchview_input_container .o_facet_values').eq(0).text().trim(), "First record",
             "the autocompletion facet should be correct");
@@ -1023,11 +1026,14 @@ QUnit.module('Search View', {
         // 'r' key to filter on bar "Second Record"
         $('.o_searchview_input').val('r');
         $('.o_searchview_input').trigger($.Event('keypress', { which: 82, keyCode: 82 }));
+        await testUtils.nextTick();
         $('.o_searchview_input').trigger($.Event('keydown', { which: $.ui.keyCode.DOWN, keyCode: $.ui.keyCode.DOWN }));
         $('.o_searchview_input').trigger($.Event('keydown', { which: $.ui.keyCode.RIGHT, keyCode: $.ui.keyCode.RIGHT }));
+        await testUtils.nextTick();
         $('.o_searchview_input').trigger($.Event('keydown', { which: $.ui.keyCode.DOWN, keyCode: $.ui.keyCode.DOWN }));
         $('.o_searchview_input').trigger($.Event('keydown', { which: $.ui.keyCode.DOWN, keyCode: $.ui.keyCode.DOWN }));
         $('.o_searchview_input').trigger($.Event('keydown', { which: $.ui.keyCode.ENTER, keyCode: $.ui.keyCode.ENTER }));
+        await testUtils.nextTick();
 
         assert.strictEqual($('.o_searchview_input_container .o_facet_values').eq(0).text().trim(), "First record or Second record",
             "the autocompletion facet should be correct");
@@ -1036,10 +1042,10 @@ QUnit.module('Search View', {
         actionManager.destroy();
     });
 
-    QUnit.test('no search text triggers a reload', function (assert) {
+    QUnit.test('no search text triggers a reload', async function (assert) {
         assert.expect(2);
         var rpcs = 0;
-        var actionManager = createActionManager({
+        var actionManager = await createActionManager({
             actions: this.actions,
             archs: this.archs,
             data: this.data,
@@ -1049,7 +1055,7 @@ QUnit.module('Search View', {
             },
         });
 
-        actionManager.doAction(10);
+        await actionManager.doAction(10);
         rpcs = 0;
         $('.o_searchview_input').trigger($.Event('keydown', {
             which: $.ui.keyCode.ENTER,
@@ -1059,7 +1065,7 @@ QUnit.module('Search View', {
             which: $.ui.keyCode.ENTER,
             keyCode: $.ui.keyCode.ENTER,
         }));
-
+        await testUtils.nextTick();
         assert.containsNone(actionManager, '.o_searchview_facet_label');
         assert.strictEqual(rpcs, 2, "should have reloaded");
 
@@ -1194,7 +1200,7 @@ QUnit.module('Search View', {
         actionManager.destroy();
     });
 
-    QUnit.test('Customizing filter does not close the filter dropdown', function (assert) {
+    QUnit.test('Customizing filter does not close the filter dropdown', async function (assert) {
         assert.expect(3);
         var self = this;
 
@@ -1204,7 +1210,7 @@ QUnit.module('Search View', {
         });
 
         this.data.partner.fields.date_field.searchable = true;
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -1221,15 +1227,15 @@ QUnit.module('Search View', {
             res_id: 1,
         });
 
-        testUtils.fields.many2one.clickOpenDropdown('bar');
-        testUtils.fields.many2one.clickItem('bar', 'Search More');
+        await testUtils.fields.many2one.clickOpenDropdown('bar');
+        await testUtils.fields.many2one.clickItem('bar', 'Search More');
 
         assert.containsOnce(document.body, '.modal');
 
-        testUtils.dom.click($('.modal .o_filters_menu_button'));
+        await testUtils.dom.click($('.modal .o_filters_menu_button'));
 
         var $filterDropdown = $('.modal .o_filters_menu');
-        testUtils.dom.click($filterDropdown.find('.o_add_custom_filter'));
+        await testUtils.dom.click($filterDropdown.find('.o_add_custom_filter'));
 
         assert.containsN($filterDropdown, '.o_input', 3);
 

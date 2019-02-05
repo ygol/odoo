@@ -55,7 +55,7 @@ var BoardController = FormController.extend({
     /**
      * Actually save a dashboard
      *
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _saveDashboard: function () {
         var board = this.renderer.getBoard();
@@ -234,7 +234,7 @@ var BoardRenderer = FormRenderer.extend({
      * @param {Object} params.context
      * @param {any[]} params.domain
      * @param {string} params.viewType
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _createController: function (params) {
         var self = this;

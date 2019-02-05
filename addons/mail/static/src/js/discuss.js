@@ -1478,9 +1478,6 @@ var Discuss = AbstractAction.extend({
                 } else {
                     self._threadWidget.scrollToBottom();
                 }
-            })
-            .catch(function () {
-                // todo: display notifications
             });
     },
     /**

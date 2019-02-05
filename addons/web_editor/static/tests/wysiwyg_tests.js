@@ -1027,14 +1027,14 @@ QUnit.test('Text forecolor', function (assert) {
             },
         ];
 
-        var def = $.when();
+        var def = Promise.resolve();
         _.each(forecolorTests, function (test) {
             def = def.then(function () {
                 testName = test.name;
                 wysiwyg.setValue(test.content);
                 var range = weTestUtils.select(test.start, test.end, $editable);
                 Wysiwyg.setRange(range.sc, range.so, range.ec, range.eo);
-                return $.when(test.do($editable)).then(function () {
+                return Promise.resolve(test.do($editable)).then(function () {
                     if (!test.async) {
                         assert.deepEqual(wysiwyg.getValue(), test.test.content, testName);
                         assert.deepEqual(Wysiwyg.getRange($editable[0]), weTestUtils.select(test.test.start, test.test.end, $editable), testName + carretTestSuffix);
@@ -2552,7 +2552,7 @@ QUnit.test('Link', function (assert) {
         wysiwygOptions: {
 
         },
-    }).then(function (wysiwyg) {
+    }).then(async function (wysiwyg) {
         var $editable = wysiwyg.$('.note-editable');
 
         var $btnLink = wysiwyg.$('.note-insert .note-icon-link');
@@ -2561,30 +2561,38 @@ QUnit.test('Link', function (assert) {
         testUtils.mock.patch(LinkDialog, {
             init: function () {
                 this._super.apply(this, arguments);
-                defLinkDialogInit = $.Deferred();
-                this.opened(defLinkDialogInit.resolve.bind(defLinkDialogInit));
+                defLinkDialogInit = testUtils.makeTestPromise();
+                this.opened(function () {
+                    defLinkDialogInit.resolve();
+                });
             },
             save: function () {
                 defLinkDialogInit = null;
                 return this._super.apply(this, arguments);
             },
         });
-        var _clickLink = function (callbackInit, test) {
-            $btnLink.mousedown().click();
-            defLinkDialogInit.then(callbackInit).then(function () {
-                $('.modal-dialog .btn-primary:contains("Save")').mousedown().click();
-                if (test.check) {
-                    test.check();
-                }
-                if (test.content) {
-                    assert.deepEqual(wysiwyg.getValue(), test.content, testName);
-                }
-                if (test.start) {
-                    var range = weTestUtils.select(test.start, test.end, $editable);
-                    assert.deepEqual(Wysiwyg.getRange($editable[0]), range, testName + carretTestSuffix);
-                }
+        var _clickLink = async function (callbackInit, test) {
+            await testUtils.dom.click($btnLink.mousedown());
+
+            return new Promise(function (resolve, reject) {
+                defLinkDialogInit.then(callbackInit).then(async function () {
+
+                    await testUtils.dom.click($('.modal-dialog:visible .btn-primary:contains("Save")').mousedown());
+
+                    if (test.check) {
+                        await test.check();
+                    }
+                    if (test.content) {
+                        assert.deepEqual(wysiwyg.getValue(), test.content, testName);
+                    }
+                    if (test.start) {
+                        var range = weTestUtils.select(test.start, test.end, $editable);
+                        assert.deepEqual(Wysiwyg.getRange($editable[0]), range, testName + carretTestSuffix);
+                    }
+
+                    resolve();
+                });
             });
-            return defLinkDialogInit;
         };
 
         var linkTests = [{
@@ -2594,8 +2602,8 @@ QUnit.test('Link', function (assert) {
                 start: "p:contents()[0]->1",
                 end: "p:contents()[0]->5",
                 do: function () {
-                    assert.strictEqual($('.modal-dialog #o_link_dialog_label_input').val(), 'om t', testName + ' (label)');
-                    $('.modal-dialog #o_link_dialog_url_input').val('#');
+                    assert.strictEqual($('.modal-dialog:visible #o_link_dialog_label_input').val(), 'om t', testName + ' (label)');
+                    $('.modal-dialog:visible #o_link_dialog_url_input').val('#');
                 },
                 test: {
                     content: '<p>d<a href="#">om t</a>o edit</p>',
@@ -2609,8 +2617,8 @@ QUnit.test('Link', function (assert) {
                 content: '<p>do edit</p>',
                 start: 'p:contents()[0]->1',
                 do: function () {
-                    $('.modal-dialog #o_link_dialog_label_input').val('om t');
-                    $('.modal-dialog #o_link_dialog_url_input').val('#');
+                    $('.modal-dialog:visible #o_link_dialog_label_input').val('om t');
+                    $('.modal-dialog:visible #o_link_dialog_url_input').val('#');
                 },
                 test: {
                     content: '<p>d<a href="#">om t</a>o edit</p>',
@@ -2623,8 +2631,8 @@ QUnit.test('Link', function (assert) {
                 content: '<div><a href="#" class="btn btn-outline-alpha btn-lg">dom to edit</a></div>',
                 start: 'a:contents()[0]->5',
                 do: function () {
-                    assert.strictEqual($('.modal-dialog #o_link_dialog_label_input').val(), 'dom to edit', testName + ' (label)');
-                    $('.modal-dialog #o_link_dialog_url_input').val('#newlink');
+                    assert.strictEqual($('.modal-dialog:visible #o_link_dialog_label_input').val(), 'dom to edit', testName + ' (label)');
+                    $('.modal-dialog:visible #o_link_dialog_url_input').val('#newlink');
                 },
                 test: {
                     content: '<div><a href="#newlink" class="btn btn-outline-alpha btn-lg">dom to edit</a></div>',
@@ -2639,7 +2647,7 @@ QUnit.test('Link', function (assert) {
                 start: 'p:contents()[0]->1',
                 end: 'p:contents()[0]->5',
                 do: function () {
-                    $('.modal-dialog #o_link_dialog_url_input').val('john.coltrane@example.com');
+                    $('.modal-dialog:visible #o_link_dialog_url_input').val('john.coltrane@example.com');
                 },
                 test: {
                     content: '<p>d<a href="mailto:john.coltrane@example.com">om t</a>o edit</p>',
@@ -2654,8 +2662,8 @@ QUnit.test('Link', function (assert) {
                 start: 'p:contents()[0]->1',
                 end: 'p:contents()[0]->5',
                 do: function () {
-                    $('.modal-dialog #o_link_dialog_url_input').val('#');
-                    $('.modal-dialog [name="link_style_size"]').val("lg");
+                    $('.modal-dialog:visible #o_link_dialog_url_input').val('#');
+                    $('.modal-dialog:visible [name="link_style_size"]').val("lg");
                 },
                 test: {
                     content: '<p>d<a href="#" class="btn-lg">om t</a>o edit</p>',
@@ -2669,10 +2677,10 @@ QUnit.test('Link', function (assert) {
                 content: '<p><a href="#">dom to edit</a></p>',
                 start: 'a:contents()[0]->1',
                 do: function () {
-                    $('.modal-dialog #o_link_dialog_url_input').val('#');
-                    $('.modal-dialog [name="link_style_shape"]').val("outline");
-                    $('.modal-dialog .o_link_dialog_color .o_link_dialog_color_item.btn-alpha').mousedown().click();
-                    $('.modal-dialog .o_switch [name="is_new_window"]').mousedown().click();
+                    $('.modal-dialog:visible #o_link_dialog_url_input').val('#');
+                    $('.modal-dialog:visible [name="link_style_shape"]').val("outline");
+                    $('.modal-dialog:visible .o_link_dialog_color .o_link_dialog_color_item.btn-alpha').mousedown().click();
+                    $('.modal-dialog:visible .o_switch [name="is_new_window"]').mousedown().click();
                 },
                 test: {
                     content: '<p><a href="#" target="_blank" class="btn btn-outline-alpha">dom to edit</a></p>',
@@ -2688,16 +2696,17 @@ QUnit.test('Link', function (assert) {
                 start: "p:contents()[0]->1",
                 end: "p:contents()[0]->5",
                 do: function () {
-                    $('.modal-dialog #o_link_dialog_url_input').val('/link');
+                    $('.modal-dialog:visible #o_link_dialog_url_input').val('/link');
                 },
                 test: {
-                    check: function () {
-                        $('.note-link-popover .note-btn .note-icon-link').mousedown().click();
+                    check: async function () {
+                        await testUtils.dom.click($('.note-link-popover .note-btn .note-icon-link').mousedown());
+
                         defLinkDialogInit.then(function () {
-                            assert.strictEqual($('.modal-dialog #o_link_dialog_label_input').val(), 'om t', testName + ' (label)');
-                            assert.strictEqual($('.modal-dialog #o_link_dialog_url_input').val(), '/link', testName + ' (url)');
-                            $('.modal-dialog #o_link_dialog_url_input').val('/newlink');
-                            $('.modal-dialog .modal-footer .btn.btn-primary:contains("Save")').mousedown().click();
+                            assert.strictEqual($('.modal-dialog:visible #o_link_dialog_label_input').val(), 'om t', testName + ' (label)');
+                            assert.strictEqual($('.modal-dialog:visible #o_link_dialog_url_input').val(), '/link', testName + ' (url)');
+                            $('.modal-dialog:visible #o_link_dialog_url_input').val('/newlink');
+                            $('.modal-dialog:visible .modal-footer .btn.btn-primary:contains("Save")').mousedown().click();
                             assert.deepEqual(wysiwyg.getValue(), '<p>d<a href="/newlink">om t</a>o edit</p>', testName);
                         });
                     },
@@ -2710,12 +2719,13 @@ QUnit.test('Link', function (assert) {
                 start: "p:contents()[0]->1",
                 end: "p:contents()[0]->5",
                 do: function () {
-                    $('.modal-dialog #o_link_dialog_url_input').val('/link');
+                    $('.modal-dialog:visible #o_link_dialog_url_input').val('/link');
                 },
                 test: {
                     content: '<p>dom to edit</p>',
-                    check: function () {
-                        $('.note-link-popover .note-btn .note-icon-chain-broken').mousedown().click();
+                    check: async function () {
+                        await testUtils.dom.click($('.note-link-popover .note-btn .note-icon-chain-broken').mousedown());
+
                         var range = weTestUtils.select('p:contents()[0]->1', 'p:contents()[0]->5', $editable);
                         assert.deepEqual(Wysiwyg.getRange($editable[0]), range, testName + carretTestSuffix);
                     },
@@ -2723,7 +2733,7 @@ QUnit.test('Link', function (assert) {
             },
         ];
 
-        var def = $.when();
+        var def = Promise.resolve();
         _.each(linkTests, function (test) {
             def = def.then(function () {
                 testName = test.name;
@@ -2743,7 +2753,7 @@ QUnit.test('Link', function (assert) {
 
 QUnit.test('Table', function (assert) {
     var done = assert.async();
-    assert.expect(15);
+    assert.expect(13);
 
     function createTable(wysiwyg) {
         wysiwyg.$('.note-table button:first').mousedown().click();
@@ -2842,7 +2852,6 @@ QUnit.test('Table', function (assert) {
         Wysiwyg.setRange(range.sc, range.so, range.ec, range.eo);
 
         var $trash = $('.note-table-popover:visible button:has(.note-icon-trash)');
-        assert.strictEqual($trash.size(), 1, "should display the table popover");
 
         $trash.mousedown().click();
 
@@ -2878,7 +2887,6 @@ QUnit.test('Table', function (assert) {
         Wysiwyg.setRange(range.sc, range.so, range.ec, range.eo);
 
         $trash = $('.note-table-popover:visible button:has(.note-icon-trash)');
-        assert.strictEqual($trash.size(), 1, "should display the table popover");
         $trash.mousedown().click();
 
         assert.strictEqual($editable.html().replace(/\s+/g, ' '),
@@ -3051,12 +3059,12 @@ QUnit.module('Media', {
         testUtils.mock.patch(MediaDialog, {
             init: function () {
                 this._super.apply(this, arguments);
-                defMediaDialogInit = $.Deferred();
-                defMediaDialogSave = $.Deferred();
+                defMediaDialogInit = testUtils.makeTestPromise();
+                defMediaDialogSave = testUtils.makeTestPromise();
                 this.opened(defMediaDialogInit.resolve.bind(defMediaDialogInit));
             },
             save: function () {
-                $.when(this._super.apply(this, arguments)).then(function () {
+                Promise.resolve(this._super.apply(this, arguments)).then(function () {
                     var def = defMediaDialogSave;
                     defMediaDialogInit = null;
                     defMediaDialogSave = null;
@@ -3069,8 +3077,8 @@ QUnit.module('Media', {
                 $(arguments[2]).attr('src', $(arguments[2]).data('src'));
                 this._super.apply(this, arguments);
                 var self = this;
-                defCropDialogInit = $.Deferred();
-                defCropDialogSave = $.Deferred();
+                defCropDialogInit = testUtils.makeTestPromise();
+                defCropDialogSave = testUtils.makeTestPromise();
                 this.opened(function () {
                     var cropper = self.$cropperImage.data('cropper');
                     cropper.clone();
@@ -3086,7 +3094,7 @@ QUnit.module('Media', {
                 });
             },
             save: function () {
-                $.when(this._super.apply(this, arguments)).then(function () {
+                Promise.resolve(this._super.apply(this, arguments)).then(function () {
                     var def = defCropDialogSave;
                     defCropDialogInit = null;
                     defCropDialogSave = null;
@@ -3097,14 +3105,14 @@ QUnit.module('Media', {
         testUtils.mock.patch(AltDialog, {
             init: function () {
                 this._super.apply(this, arguments);
-                defAltDialogInit = $.Deferred();
-                defAltDialogSave = $.Deferred();
+                defAltDialogInit = testUtils.makeTestPromise();
+                defAltDialogSave = testUtils.makeTestPromise();
                 this.opened(function () {
                     defAltDialogInit.resolve();
                 });
             },
             save: function () {
-                $.when(this._super.apply(this, arguments)).then(function () {
+                Promise.resolve(this._super.apply(this, arguments)).then(function () {
                     var def = defAltDialogSave;
                     defAltDialogInit = null;
                     defAltDialogSave = null;
@@ -3144,11 +3152,11 @@ QUnit.module('Media', {
                     if (!args.length && route.indexOf('data:image/png;base64') === 0 ||
                         args.method === "search_read" &&
                         args.kwargs.domain[7][2].join(',') === "image/gif,image/jpe,image/jpeg,image/jpg,image/gif,image/png") {
-                        return $.when(this.data.records);
+                        return Promise.resolve(this.data.records);
                     }
                 }
                 if (route.indexOf('youtube') !== -1) {
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super(route, args);
             },
@@ -3450,7 +3458,7 @@ QUnit.test('Image', function (assert) {
             },
         ];
 
-        var def = $.when();
+        var def = Promise.resolve();
         _.each(mediaTests, function (test) {
             def = def.then(function () {
                 testName = test.name;
@@ -3563,7 +3571,7 @@ QUnit.test('Image crop', function (assert) {
             },
         ];
 
-        var def = $.when();
+        var def = Promise.resolve();
         _.each(mediaTests, function (test) {
             def = def.then(function () {
                 testName = test.name;
@@ -3695,7 +3703,7 @@ QUnit.test('Pictogram (fontawesome)', function (assert) {
             },
         ];
 
-        var def = $.when();
+        var def = Promise.resolve();
         _.each(mediaTests, function (test) {
             def = def.then(function () {
                 testName = test.name;
@@ -3838,7 +3846,7 @@ QUnit.test('Video', function (assert) {
             },
         ];
 
-        var def = $.when();
+        var def = Promise.resolve();
         _.each(mediaTests, function (test) {
             def = def.then(function () {
                 testName = test.name;

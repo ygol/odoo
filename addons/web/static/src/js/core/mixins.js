@@ -77,7 +77,7 @@ var ParentedMixin = {
                 if (!self.isDestroyed()) {
                     resolve(result);
                 }
-            }).catch(function (reason) {
+            }).guardedCatch(function (reason) {
                 if (!self.isDestroyed()) {
                     reject(reason);
                 }

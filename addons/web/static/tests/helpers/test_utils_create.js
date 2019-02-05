@@ -13,6 +13,7 @@ odoo.define('web.test_utils_create', function (require) {
 var ActionManager = require('web.ActionManager');
 var config = require('web.config');
 var ControlPanelView = require('web.ControlPanelView');
+var concurrency = require('web.concurrency');
 var DebugManager = require('web.DebugManager');
 var dom = require('web.dom');
 var testUtilsMock = require('web.test_utils_mock');
@@ -105,7 +106,7 @@ var createActionManager = async function (params) {
  *   Note that this is particularly useful if you want to intercept events going
  *   up in the init process of the view, because there are no other way to do it
  *   after this method returns
- * @returns {Promise<AbstractView>} resolves with the instance of the view
+ * @returns {Promise<AbstractController>} resolves with the instance of the view
  */
 async function createAsyncView(params) {
     var $target = $('#qunit-fixture');
@@ -162,9 +163,7 @@ async function createAsyncView(params) {
         });
     }
 
-    /*var view =*/ /*await*/
-    return view.getController(widget).then(async function(view){
-
+    return view.getController(widget).then(function(view){
         // override the view's 'destroy' so that it calls 'destroy' on the widget
         // instead, as the widget is the parent of the view and the mockServer.
         view.__destroy = view.destroy;
@@ -173,6 +172,7 @@ async function createAsyncView(params) {
             // when it will be called the second time (by its parent)
             delete view.destroy;
             widget.destroy();
+            $webClient.remove();
 
             testUtilsMock.unpatch(View);
         };
@@ -193,6 +193,37 @@ async function createAsyncView(params) {
         });
     });
 }
+
+/**
+ * Similar as createAsyncView, but specific for calendar views. Some calendar
+ * tests need to trigger positional clicks on the DOM produced by fullcalendar.
+ * Those tests must use this helper with option positionalClicks set to true.
+ * This will move the rendered calendar to the body (required to do positional
+ * clicks), and wait for a setTimeout(0) before returning, because fullcalendar
+ * makes the calendar scroll to 6:00 in a setTimeout(0), which might have an
+ * impact according to where we want to trigger positional clicks.
+ *
+ * @param {Object} params see @createAsyncView
+ * @param {Object} [options]
+ * @param {boolean} [options.positionalClicks=false]
+ * @returns {Promise<CalendarController>}
+ */
+async function createCalendarView(params, options) {
+    var calendar = await createAsyncView(params);
+    if (!options || !options.positionalClicks) {
+        return calendar;
+    }
+    var $view = $('#qunit-fixture').contents();
+    $view.prependTo('body');
+    var destroy = calendar.destroy;
+    calendar.destroy = function () {
+        $view.remove();
+        destroy();
+    };
+    await concurrency.delay(0);
+    return calendar;
+}
+
 /**
  * create a controlPanel from various parameters.
  *
@@ -225,7 +256,7 @@ async function createAsyncView(params) {
  * @param {boolean} [params.withSearchBar=true] if set to false, no default
  *   search bar will be rendered
  *
- * @returns {Deferred<ControlPanel>} resolves with an instance of the ControlPanelController
+ * @returns {Promise<ControlPanel>} resolves with an instance of the ControlPanelController
  */
 function createControlPanel(params) {
     params = params || {};
@@ -268,6 +299,7 @@ function createControlPanel(params) {
             // children when it will be called the second time (by its parent)
             delete controlPanel.destroy;
             widget.destroy();
+            $webClient.remove();
         };
 
         // render the controlPanel in a fragment as it must be able to render
@@ -361,6 +393,7 @@ function createParent(params) {
 return {
     createActionManager: createActionManager,
     createAsyncView: createAsyncView,
+    createCalendarView: createCalendarView,
     createControlPanel: createControlPanel,
     createDebugManager: createDebugManager,
     createModel: createModel,

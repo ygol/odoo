@@ -1098,7 +1098,7 @@ var BasicModel = AbstractModel.extend({
                                 _.extend(record.data, _changes);
                                 resolve(changedFields);
                             }
-                        }).catch(reject);
+                        }).guardedCatch(reject);
                 } else {
                     resolve(changedFields);
                 }
@@ -1376,7 +1376,7 @@ var BasicModel = AbstractModel.extend({
                     .then(function (result) {
                         delete record._warning;
                         resolve(_.keys(changes).concat(Object.keys(result && result.value || {})));
-                    }).catch(function () {
+                    }).guardedCatch(function () {
                         self._visitChildren(record, function (elem) {
                             _.extend(elem, initialData[elem.id]);
                         });
@@ -2392,7 +2392,7 @@ var BasicModel = AbstractModel.extend({
             defs.push(self._fetchReferenceData(datapoints, model, fieldName));
         });
 
-        return Promise.all($, defs);
+        return Promise.all(defs);
     },
     /**
      * Batch requests for all reference field in list's children.
@@ -3797,7 +3797,7 @@ var BasicModel = AbstractModel.extend({
                                 resolve();
                             };
                             self._performOnChange(record, fields_key)
-                            .then(always).catch(always);
+                            .then(always).guardedCatch(always);
                         });
                         return def;
                     })
@@ -4296,10 +4296,10 @@ var BasicModel = AbstractModel.extend({
                     }
                     return list;
                 }).then(function () {
-                    var fetchingDefs = [];
-                    fetchingDefs.push(self._fetchX2ManysSingleBatch(list));
-                    fetchingDefs.push(self._fetchReferencesSingleBatch(list));
-                    return $.when.apply($, fetchingDefs).then(function () {
+                    return Promise.all([
+                        self._fetchX2ManysSingleBatch(list),
+                        self._fetchReferencesSingleBatch(list)
+                    ]).then(function () {
                         return list;
                     });
                 });

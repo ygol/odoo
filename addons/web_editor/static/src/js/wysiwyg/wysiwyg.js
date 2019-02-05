@@ -78,7 +78,7 @@ var Wysiwyg = Widget.extend({
         if (this._summernote.invoke('HelperPlugin.hasJinja', value)) {
             this._summernote.invoke('codeview.forceActivate');
         }
-        return $.when();
+        return Promise.resolve();
     },
     /**
      * @override
@@ -224,7 +224,7 @@ var Wysiwyg = Widget.extend({
         } else {
             this.$target.html(html);
         }
-        return $.when(isDirty, html);
+        return Promise.resolve({isDirty:isDirty, html:html});
     },
     /**
      * @param {String} value
@@ -478,7 +478,7 @@ var Wysiwyg = Widget.extend({
 
         this.$el.removeClass('card');
 
-        return $.when();
+        return Promise.resolve();
     },
 
     //--------------------------------------------------------------------------
@@ -713,7 +713,7 @@ Wysiwyg.getRange = function (node) {
     };
 };
 /**
- * @param {Node} startNode 
+ * @param {Node} startNode
  * @param {Number} startOffset
  * @param {Node} endNode
  * @param {Number} endOffset

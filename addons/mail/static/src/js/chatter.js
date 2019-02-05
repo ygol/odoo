@@ -323,7 +323,7 @@ var Chatter = Widget.extend({
                             self._reloadAttachmentBox();
                             self.trigger_up('reload', {fieldNames: ['message_attachment_count'], keepChanges: true});
                         }
-                    }).catch(function () {
+                    }).guardedCatch(function () {
                         self._enableComposer();
                     });
                 });
@@ -382,8 +382,6 @@ var Chatter = Widget.extend({
         var $spinner = $(QWeb.render('Spinner'));
         concurrency.rejectAfter(concurrency.delay(500), def).then(function () {
             $spinner.appendTo(self.$el);
-        }).catch(function () {
-            // swallow the error
         });
         var always = function () {
             // disable widgets in create mode, otherwise enable
@@ -405,7 +403,7 @@ var Chatter = Widget.extend({
             if (self.fields.thread) {
                 self.fields.thread.$el.appendTo(self.$el);
             }
-        }).then(always).catch(always);
+        }).then(always).guardedCatch(always);
     },
     /**
      * @private
@@ -516,7 +514,7 @@ var Chatter = Widget.extend({
             if (!this._areAttachmentsLoaded) {
                 def = this._fetchAttachments();
             }
-            $.when(def).then(this._openAttachmentBox.bind(this));
+            Promise.resolve(def).then(this._openAttachmentBox.bind(this));
         }
     },
     /**

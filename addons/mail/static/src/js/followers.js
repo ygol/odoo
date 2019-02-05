@@ -55,15 +55,12 @@ var Followers = AbstractField.extend({
         // note: the rendering of this widget is asynchronous as it needs to
         // fetch the details of the followers, but it performs a first rendering
         // synchronously (_displayGeneric), and updates its rendering once it
-        // has fetched the required data, so this function doesn't return a deferred
+        // has fetched the required data, so this function doesn't return a promise
         // as we don't want to wait to the data to be loaded to display the widget
         var self = this;
         var fetch_def = this.dp.add(this._readFollowers());
 
-        concurrency.rejectAfter(concurrency.delay(0), fetch_def).then(this._displayGeneric.bind(this))
-        .catch(function () {
-            // swallow the error
-        });
+        concurrency.rejectAfter(concurrency.delay(0), fetch_def).then(this._displayGeneric.bind(this));
 
         return fetch_def.then(function () {
             self._displayButtons();
@@ -293,7 +290,7 @@ var Followers = AbstractField.extend({
 
         // If no more subtype followed, unsubscribe the follower
         if (!checklist.length) {
-            this._unfollow(ids).catch(function () {
+            this._unfollow(ids).guardedCatch(function () {
                 $(event.currentTarget).find('input').addBack('input').prop('checked', true);
             });
         } else {

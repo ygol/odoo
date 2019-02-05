@@ -101,7 +101,7 @@ var Query = Class.extend({
      * Fetches the first record matching the query, or null
      *
      * @param {Object} [options] additional options for the rpc() method
-     * @returns {jQuery.Deferred<Object|null>}
+     * @returns {Promise<Object|null>}
      */
     first: function (options) {
         var self = this;
@@ -115,7 +115,7 @@ var Query = Class.extend({
      * Fetches all records matching the query
      *
      * @param {Object} [options] additional options for the rpc() method
-     * @returns {jQuery.Deferred<Array<>>}
+     * @returns {Promise<Array<>>}
      */
     all: function (options) {
         return this._execute(options);
@@ -123,10 +123,10 @@ var Query = Class.extend({
     /**
      * Fetches the number of records matching the query in the database
      *
-     * @returns {jQuery.Deferred<Number>}
+     * @returns {Promise<Number>}
      */
     count: function () {
-        if (this._count !== undefined) { return $.when(this._count); }
+        if (this._count !== undefined) { return Promise.resolve(this._count); }
         return this._model.call(
             'search_count', [this._filter], {
                 context: this._model.context(this._context)});
@@ -167,6 +167,7 @@ var Query = Class.extend({
             limit: this._limit,
             orderby: serialize_sort(this._order_by) || false
         }).then(function (results) {
+            debugger; // SVS : need to check if results is still what we expect
             return _(results).map(function (result) {
                 // FIX: querygroup initialization
                 result.__context = result.__context || {};
@@ -370,8 +371,9 @@ var DataSet =  Class.extend(mixins.PropertiesMixin, {
      * @returns {Promise}
      */
     read_ids: function (ids, fields, options) {
-        if (_.isEmpty(ids))
-            return $.Deferred().resolve([]);
+        if (_.isEmpty(ids)) {
+            return Promise.resolve([]);
+        }
 
         options = options || {};
         var method = 'read';
@@ -414,9 +416,11 @@ var DataSet =  Class.extend(mixins.PropertiesMixin, {
                 .limit(options.limit || false)
                 .offset(options.offset || 0)
                 .all();
-        return this.orderer.add(query).done(function (records) {
+        var prom = this.orderer.add(query);
+        prom.then(function (records) {
             self.ids = _(records).pluck('id');
         });
+        return prom;
     },
     /**
      * Reads the current dataset record (from its index)
@@ -428,7 +432,7 @@ var DataSet =  Class.extend(mixins.PropertiesMixin, {
     read_index: function (fields, options) {
         options = options || {};
         return this.read_ids([this.ids[this.index]], fields, options).then(function (records) {
-            if (_.isEmpty(records)) { return $.Deferred().reject().promise(); }
+            if (_.isEmpty(records)) { return Promise.reject(); }
             return records[0];
         });
     },
@@ -455,11 +459,13 @@ var DataSet =  Class.extend(mixins.PropertiesMixin, {
      */
     create: function (data, options) {
         var self = this;
-        return this._model.call('create', [data], {
+        var prom = this._model.call('create', [data], {
             context: this.get_context()
-        }).done(function () {
+        });
+        prom.then(function () {
             self.trigger('dataset_changed', data, options);
         });
+        return prom;
     },
     /**
      * Saves the provided data in an existing db record
@@ -475,11 +481,13 @@ var DataSet =  Class.extend(mixins.PropertiesMixin, {
     write: function (id, data, options) {
         options = options || {};
         var self = this;
-        return this._model.call('write', [[id], data], {
+        var prom = this._model.call('write', [[id], data], {
             context: this.get_context(options.context)
-        }).done(function () {
+        });
+        prom.then(function () {
             self.trigger('dataset_changed', id, data, options);
         });
+        return prom;
     },
     /**
      * Deletes an existing record from the database
@@ -488,11 +496,13 @@ var DataSet =  Class.extend(mixins.PropertiesMixin, {
      */
     unlink: function (ids) {
         var self = this;
-        return this._model.call('unlink', [ids], {
+        var prom = this._model.call('unlink', [ids], {
             context: this.get_context()
-        }).done(function () {
+        });
+        prom.then(function () {
             self.trigger('dataset_changed', ids);
         });
+        return prom;
     },
     /**
      * Calls an arbitrary RPC method
@@ -643,7 +653,7 @@ var DataSetStatic =  DataSet.extend({
     unlink: function (ids) {
         this.set_ids(_.without.apply(null, [this.ids].concat(ids)));
         this.trigger('unlink', ids);
-        return $.Deferred().resolve({result: true});
+        return Promise.resolve({result: true});
     },
 });
 
@@ -686,11 +696,13 @@ var DataSetSearch = DataSet.extend({
             .limit(options.limit || false);
         q = q.order_by.apply(q, this._sort);
 
-        return this.orderer.add(q.all()).done(function (records) {
+        var prom = this.orderer.add(q.all());
+        prom.then(function (records) {
             // FIXME: not sure about that one, *could* have discarded count
-            q.count().done(function (count) { self._length = count; });
+            q.count().then(function (count) { self._length = count; });
             self.ids = _(records).pluck('id');
         });
+        return prom;
     },
     get_domain: function (other_domain) {
         return this._model.domain(other_domain);
@@ -717,10 +729,12 @@ var DataSetSearch = DataSet.extend({
     },
     unlink: function (ids, callback, error_callback) {
         var self = this;
-        return this._super(ids).done(function () {
+        var prom = this._super(ids);
+        prom.then(function () {
             self.remove_ids( ids);
             self.trigger("dataset_changed", ids, callback, error_callback);
         });
+        return prom;
     },
     size: function () {
         if (this._length !== null) {
@@ -801,7 +815,7 @@ var Model = Class.extend({
      * @param {Array} [args] positipyEvalonal arguments
      * @param {Object} [kwargs] keyword arguments
      * @param {Object} [options] additional options for the rpc() method
-     * @returns {jQuery.Deferred<>} call result
+     * @returns {Promise<>} call result
      */
     call: function (method, args, kwargs, options) {
         args = args || [];

@@ -223,6 +223,10 @@ var Session = core.Class.extend(mixins.EventDispatcherMixin, {
         }).then(function () {
             self.on_modules_loaded();
             self.trigger('module_loaded');
+       }).guardedCatch(function(reason) {
+            console.log("load_modules - mutex exec was rejected");
+            console.log(reason);
+            throw reason;
        });
     },
     load_translations: function () {
@@ -252,6 +256,10 @@ var Session = core.Class.extend(mixins.EventDispatcherMixin, {
                 if (!doc) { return; }
                 qweb.add_template(doc);
             });
+        }).guardedCatch(function(reason){
+            console.log("load_qweb mutex exec was rejected");
+            console.log(reason);
+            throw reason;
         });
         return lock;
     },
@@ -314,7 +322,7 @@ var Session = core.Class.extend(mixins.EventDispatcherMixin, {
                 self.session_id = result;
             }).then(function () {
                 self.avoid_recursion = false;
-            }).catch(function() {
+            }).guardedCatch(function() {
                 self.avoid_recursion = false;
             });
         }

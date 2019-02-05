@@ -1540,11 +1540,14 @@ QUnit.module('Views', {
                 get_file: function (args) {
                     var data = JSON.parse(args.data.data);
                     _.each(data.headers, function (l) {
-                        assert.step(l.map(function (o) {return o.title;}));
+                        var titles = l.map(function (o) {return o.title;});
+                        assert.step(JSON.stringify(titles));
                     });
-                    assert.step(data.measure_row.map(function (o) {return o.measure;}));
-                    assert.step(data.nbr_measures);
-                    assert.step(data.rows.map(function (o) {return o.values.length;}));
+                    var measures = data.measure_row.map(function (o) {return o.measure;});
+                    assert.step(JSON.stringify(measures));
+                    assert.step(String(data.nbr_measures));
+                    var valuesLength = data.rows.map(function (o) {return o.values.length;});
+                    assert.step(JSON.stringify(valuesLength));
                     assert.strictEqual(args.url, '/web/pivot/export_xls',
                         "should call get_file with correct parameters");
                     args.complete();
@@ -1588,18 +1591,15 @@ QUnit.module('Views', {
 
         assert.verifySteps([
             // Headers
-            ["Total", ""],
-            ["December 2016" , "November 2016"],
-            ["Foo", "Foo", "Foo"],
-            [
-                "This Month", "Previous Period", "Variation",
-                "This Month", "Previous Period", "Variation",
-                "This Month", "Previous Period", "Variation"
-            ],
+            '["Total",""]',
+            '["December 2016","November 2016"]',
+            '["Foo","Foo","Foo"]',
+            '["This Month","Previous Period","Variation","This Month","Previous Period"' +
+                ',"Variation","This Month","Previous Period","Variation"]',
             // number of 'measures'
-            3,
+            '3',
             // rows values length
-            [9]
+            '[9]',
         ]);
 
         unpatchDate();
@@ -1673,7 +1673,7 @@ QUnit.module('Views', {
     });
 
     QUnit.module('Sort in comparison mode', {
-        beforeEach: function () {
+        beforeEach: async function () {
             this.data.partner.records[0].date = '2016-12-15';
             this.data.partner.records[1].date = '2016-12-17';
             this.data.partner.records[2].date = '2016-11-22';
@@ -1697,7 +1697,7 @@ QUnit.module('Views', {
             };
 
             // create an action manager to test the interactions with the search view
-            this.actionManager = createActionManager({
+            this.actionManager = await createActionManager({
                 data: this.data,
                 archs: {
                     'partner,false,pivot': '<pivot>' +
@@ -1707,10 +1707,9 @@ QUnit.module('Views', {
                       '</pivot>',
                     'partner,false,search': '<search></search>',
                 },
-                debug: 1,
             });
 
-            this.actionManager.doAction({
+            await this.actionManager.doAction({
                 res_model: 'partner',
                 type: 'ir.actions.act_window',
                 views: [[false, 'pivot']],
@@ -1722,13 +1721,13 @@ QUnit.module('Views', {
             });
 
             // open time range menu
-            testUtils.dom.click($('.o_control_panel .o_time_range_menu_button'));
+            await testUtils.dom.click($('.o_control_panel .o_time_range_menu_button'));
             // select 'Today' as range
-            testUtils.fields.editInput($('.o_control_panel .o_time_range_selector'), 'this_month');
+            await testUtils.fields.editInput($('.o_control_panel .o_time_range_selector'), 'this_month');
             // check checkbox 'Compare To'
-            testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_comparison_checkbox'));
+            await testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_comparison_checkbox'));
             // Click on 'Apply' button
-            testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_apply_range'));
+            await testUtils.dom.click($('.o_control_panel .o_time_range_menu .o_apply_range'));
             // We are in comparison mode
         },
         afterEach: function () {
@@ -1736,11 +1735,11 @@ QUnit.module('Views', {
             this.actionManager.destroy();
         },
     }, function () {
-        QUnit.test('when clicking on measure, sort by "This Month" (period of interest)', function (assert) {
+        QUnit.test('when clicking on measure, sort by "This Month" (period of interest)', async function (assert) {
             assert.expect(1);
 
             // click on 'Foo' in column Total/Company
-            testUtils.dom.click($('.o_pivot_measure_row').eq(0));
+            await testUtils.dom.click($('.o_pivot_measure_row').eq(0));
             var results = [
                 "12", "17", "-29.41%", "1", "2", "-50%",  "13", "19", "-31.58%",
                 "12", "0",  "100%",                       "12", "0" , "100%",
@@ -1754,11 +1753,11 @@ QUnit.module('Views', {
         QUnit.test(
             'click on a period of interest header sort according to the appropriate column ' +
             'first in ascending order then in descending order',
-            function (assert) {
+            async function (assert) {
             assert.expect(2);
 
             // click on 'This Month' in column Total/Individual/Foo
-            testUtils.dom.click($('.o_pivot_measure_row').eq(6));
+            await testUtils.dom.click($('.o_pivot_measure_row').eq(6));
             var results = [
                 "12", "17", "-29.41%", "1", "2", "-50%",  "13", "19", "-31.58%",
                                        "1", "0", "100%",  "1" , "0",  "100%",
@@ -1770,7 +1769,7 @@ QUnit.module('Views', {
             assert.strictEqual(actualResult, results.join(''));
 
             // click once again on 'This Month' in column Total/Individual/Foo
-            testUtils.dom.click($('.o_pivot_measure_row').eq(6));
+            await testUtils.dom.click($('.o_pivot_measure_row').eq(6));
             results = [
                 "12", "17", "-29.41%", "1", "2", "-50%",  "13", "19", "-31.58%",
                 "12", "0",  "100%",                       "12", "0" , "100%",
@@ -1782,11 +1781,11 @@ QUnit.module('Views', {
         });
 
         QUnit.test('click on a period of comparison header sort according to appropriate column',
-            function (assert) {
+            async function (assert) {
             assert.expect(1);
 
             // click on 'Previous Period' in column Total/Individual/Foo
-            testUtils.dom.click($('.o_pivot_measure_row').eq(7));
+            await testUtils.dom.click($('.o_pivot_measure_row').eq(7));
             var results = [
                 "12", "17", "-29.41%", "1", "2", "-50%",  "13", "19", "-31.58%",
                                        "0", "2", "-100%", "0" , "2" , "-100%",
@@ -1798,11 +1797,11 @@ QUnit.module('Views', {
         });
 
         QUnit.test('click on a variation header sort according to appropriate column',
-            function (assert) {
+            async function (assert) {
             assert.expect(1);
 
             // click on 'Variation' in column Total/Individual/Foo
-            testUtils.dom.click($('.o_pivot_measure_row').eq(11));
+            await testUtils.dom.click($('.o_pivot_measure_row').eq(11));
             var results = [
                 "12", "17", "-29.41%", "1", "2", "-50%",  "13", "19", "-31.58%",
                 "12", "0",  "100%",                       "12", "0" , "100%",

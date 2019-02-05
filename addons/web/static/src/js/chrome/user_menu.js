@@ -67,7 +67,7 @@ var UserMenu = Widget.extend({
                     .then(function (url) {
                         framework.redirect(url);
                     })
-                    .catch(function (result, ev){
+                    .guardedCatch(function (result, ev){
                         ev.preventDefault();
                         framework.redirect('https://accounts.odoo.com/account');
                     });

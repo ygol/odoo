@@ -27,7 +27,7 @@ var SystrayMenu = Widget.extend({
         self._loadItems();
 
         return new Promise(function(resolve, reject) {
-            Promise.all(self.items).then(resolve).catch(resolve);
+            Promise.all(self.items).then(resolve).guardedCatch(resolve);
         });
     },
 

@@ -14,7 +14,7 @@ var AjaxService = AbstractService.extend({
                 if (!target.isDestroyed()) {
                     resolve(result);
                 }
-            }).catch(function (reason) {
+            }).guardedCatch(function (reason) {
                 if (!target.isDestroyed()) {
                     reject(reason);
                 }

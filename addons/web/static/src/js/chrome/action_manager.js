@@ -338,7 +338,7 @@ var ActionManager = Widget.extend({
 
                 return action;
             })
-            .catch(function () {
+            .guardedCatch(function () {
                 self._removeAction(action.jsID);
             });
     },
@@ -401,7 +401,7 @@ var ActionManager = Widget.extend({
 
                 return action;
             });
-        }).catch(function () {
+        }).guardedCatch(function () {
             self._removeAction(action.jsID);
         });
     },

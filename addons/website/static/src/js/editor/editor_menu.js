@@ -184,7 +184,7 @@ var EditorMenu = Widget.extend({
         } else {
             window.location.reload(true);
         }
-        return $.Deferred();
+        return new Promise(function() {});
     },
 
     //--------------------------------------------------------------------------

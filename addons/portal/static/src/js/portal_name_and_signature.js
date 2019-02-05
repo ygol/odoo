@@ -72,12 +72,12 @@ var NameAndSignature = Widget.extend({
      */
     willStart: function () {
         var self = this;
-        return $.when(
+        return Promise.all([
             this._super.apply(this, arguments),
             this._rpc({route: '/portal/sign/get_fonts'}).then(function (data) {
                 self.fonts = data;
             })
-        );
+        ]);
     },
     /**
      * Finds the DOM elements, initializes the signature area,
@@ -196,7 +196,7 @@ var NameAndSignature = Widget.extend({
     resetSignature: function () {
         if (!this.$signatureField) {
             // no action if called before start
-            return $.Deferred().reject();
+            return Promise.reject();
         }
         // recompute size based on the current width
         this.$signatureField.css({width: 'unset'});
@@ -227,7 +227,7 @@ var NameAndSignature = Widget.extend({
 
         this.focusName();
 
-        return $.Deferred().resolve();
+        return Promise.resolve();
     },
     /**
      * Changes the signature mode. Toggles the display of the relevant

@@ -46,7 +46,7 @@ sAnimations.registry.ProductWishlist = sAnimations.Class.extend(ProductConfigura
             self.wishlistProductIDs = JSON.parse(res);
         });
 
-        return $.when(def, wishDef);
+        return Promise.all([def, wishDef]);
     },
     /**
      * Updates the wishlist view (navbar) & the wishlist button (product page).
@@ -102,7 +102,7 @@ sAnimations.registry.ProductWishlist = sAnimations.Class.extend(ProductConfigura
             false
         );
 
-        productReady.done(function (productId) {
+        productReady.then(function (productId) {
             productId = parseInt(productId, 10);
 
             if (productId && !_.contains(self.wishlistProductIDs, productId)) {
@@ -115,11 +115,11 @@ sAnimations.registry.ProductWishlist = sAnimations.Class.extend(ProductConfigura
                     self.wishlistProductIDs.push(productId);
                     self._updateWishlistView();
                     wSaleUtils.animateClone($('#my_wish'), $el.closest('form'), 25, 40);
-                }).fail(function () {
+                }).guardedCatch(function () {
                     $el.prop("disabled", false).removeClass('disabled');
                 });
             }
-        }).fail(function () {
+        }).guardedCatch(function () {
             $el.prop("disabled", false).removeClass('disabled');
         });
     },
@@ -145,16 +145,17 @@ sAnimations.registry.ProductWishlist = sAnimations.Class.extend(ProductConfigura
 
         this._rpc({
             route: '/shop/wishlist/remove/' + wish,
-        }).done(function () {
+        }).then(function () {
             $(tr).hide();
         });
 
         this.wishlistProductIDs = _.without(this.wishlistProductIDs, product);
         if (this.wishlistProductIDs.length === 0) {
-            deferred_redirect = deferred_redirect ? deferred_redirect : $.Deferred();
-            deferred_redirect.then(function () {
-                self._redirectNoWish();
-            });
+            if (deferred_redirect) {
+                deferred_redirect.then(function () {
+                    self._redirectNoWish();
+                });
+            }
         }
         this._updateWishlistView();
     },

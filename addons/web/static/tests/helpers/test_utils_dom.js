@@ -183,17 +183,19 @@ function openDatepicker($datepickerEl) {
  * @param {Object} [options]
  * @param {boolean} [options.first=false] if true, clicks on the first element
  * @param {boolean} [options.last=false] if true, clicks on the last element
- * @param {boolean} [options.allowInvisible=false] if true, clicks on the element event if it is invisible
- * @param {boolean} [options.shouldTriggerClick=false] if true, trigger the click event without calling the function click of jquery
+ * @param {boolean} [options.allowInvisible=false] if true, clicks on the
+ *   element event if it is invisible
+ * @param {boolean} [options.shouldTriggerClick=false] if true, trigger the
+ *   click event without calling the function click of jquery
  */
 function click(el, options) {
     options = options || {};
     var matches = typeof el === 'string' ? $(el) : el;
-    var selectorMsg = el.selector ? `(selector: ${el.selector})` : '';
+    var selectorMsg = typeof el === 'string' ? `(selector: ${el})` : '';
     if (!matches.filter) { // it might be an array of dom elements
         matches = $(matches);
     }
-    var validMatches = options.allowInvisible ? matches :matches.filter(':visible') ;
+    var validMatches = options.allowInvisible ? matches : matches.filter(':visible');
 
     if (options.first) {
         if (validMatches.length === 1) {
@@ -230,10 +232,11 @@ function click(el, options) {
  * use the click helper instead.
  *
  * @param {string|NodeList|jQuery} el (if string: it is a (jquery) selector)
- * @param {boolean} [options.allowInvisible=false] if true, clicks on the element event if it is invisible
+ * @param {boolean} [options.allowInvisible=false] if true, clicks on the
+ *   element event if it is invisible
  */
 function clickFirst(el, options) {
-    return click(el, _.extend({},options, {first: true}));
+    return click(el, _.extend({}, options, {first: true}));
 }
 
 /**
@@ -242,10 +245,11 @@ function clickFirst(el, options) {
  * use the click helper instead.
  *
  * @param {string|NodeList|jQuery} el
- * @param {boolean} [options.allowInvisible=false] if true, clicks on the element event if it is invisible
+ * @param {boolean} [options.allowInvisible=false] if true, clicks on the
+ *   element event if it is invisible
  */
 function clickLast(el, options) {
-    return click(el, _.extend({},options, {last: true}));
+    return click(el, _.extend({}, options, {last: true}));
 }
 
 
@@ -257,7 +261,7 @@ function clickLast(el, options) {
  */
 function triggerEvents($el, events) {
     if ($el.length !== 1) {
-        throw new Error(`target ${$el.selector} has length ${$el.length} instead of 1`);
+        throw new Error(`target has length ${$el.length} instead of 1`);
     }
     if (typeof events === 'string') {
         events = [events];

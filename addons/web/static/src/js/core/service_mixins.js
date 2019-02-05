@@ -135,7 +135,7 @@ var ServicesMixin = {
         var query = rpc.buildQuery(params);
         var prom = this.call('ajax', 'rpc', query.route, query.params, options, this);
         if (!prom) {
-            var dummy = Promise.resolve();
+            var dummy = new Promise(function () {});
             dummy.abort = function () {};
             prom = dummy;
         }
@@ -164,8 +164,9 @@ var ServicesMixin = {
         });
     },
     loadFilters: function (modelName, actionId, context) {
+        var self = this;
         return new Promise(function(resolve, reject) {
-            this.trigger_up('load_filters', {
+            self.trigger_up('load_filters', {
                 modelName: modelName,
                 actionId: actionId,
                 context: context,
@@ -174,16 +175,18 @@ var ServicesMixin = {
         });
     },
     createFilter: function (filter) {
+        var self = this;
         return new Promise(function(resolve, reject) {
-            this.trigger_up('create_filter', {
+            self.trigger_up('create_filter', {
                 filter: filter,
                 on_success: resolve,
             });
         });
     },
     deleteFilter: function (filterId) {
+        var self = this;
         return new Promise(function(resolve, reject) {
-            this.trigger_up('delete_filter', {
+            self.trigger_up('delete_filter', {
                 filterId: filterId,
                 on_success: resolve,
             });

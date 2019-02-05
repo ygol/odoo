@@ -3,7 +3,6 @@ odoo.define('web.ajax', function (require) {
 
 var config = require('web.config');
 var core = require('web.core');
-var utils = require('web.utils');
 var time = require('web.time');
 var download = require('web.download');
 var contentdisposition = require('web.contentdisposition');
@@ -40,7 +39,13 @@ function _genericJsonRpc (fct_name, params, settings, fct) {
         }
     }, function() {
         //console.error("JsonRPC communication error", _.toArray(arguments));
-        return Promise.reject(["communication"].concat(_.toArray(arguments)));
+        var reason = {
+            type: 'communication',
+            error: arguments[0],
+            textStatus: arguments[1],
+            errorThrown: arguments[2],
+        };
+        return Promise.reject(reason);
     });
 
     var rejection;
@@ -93,10 +98,14 @@ function _genericJsonRpc (fct_name, params, settings, fct) {
             xhr.abort();
         }
     };
-    promise.catch(function (reason) { // Allow promise user to disable rpc_error call in case of failure
-        if (!reason.event.isDefaultPrevented()) {
-            core.bus.trigger('rpc_error', reason.message, reason.event);
-        }
+    promise.guardedCatch(function (reason) { // Allow promise user to disable rpc_error call in case of failure
+        setTimeout(function () {
+            // we want to execute this handler after all others (hence
+            // setTimeout) to let the other handlers prevent the event
+            if (!reason.event.isDefaultPrevented()) {
+                core.bus.trigger('rpc_error', reason.message, reason.event);
+            }
+        }, 0);
     });
     return promise;
 };
@@ -149,7 +158,7 @@ function jsonpRpc(url, fct_name, params, settings) {
                         .appendTo($('body'));
             var cleanUp = function() {
                 if ($iframe) {
-                    $iframe.unbind("load").remove();
+                    $iframe.off("load").remove();
                 }
                 $form.remove();
             };
@@ -157,7 +166,7 @@ function jsonpRpc(url, fct_name, params, settings) {
                 // the first bind is fired up when the iframe is added to the DOM
                 $iframe.bind('load', function() {
                     // the second bind is fired up when the result of the form submission is received
-                    $iframe.unbind('load').bind('load', function() {
+                    $iframe.off('load').bind('load', function() {
                         $.ajax({
                             url: url,
                             dataType: 'jsonp',
@@ -231,49 +240,45 @@ var loadCSS = (function () {
 })();
 
 var loadJS = (function () {
-    var urls = [];
-    var defs = [];
+    var dependenciesPromise = {};
 
     var load = function loadJS(url) {
         // Check the DOM to see if a script with the specified url is already there
         var alreadyRequired = ($('script[src="' + url + '"]').length > 0);
 
         // If loadJS was already called with the same URL, it will have a registered promise indicating if
-        // the script has been fully loaded. If not, the promise has to be initialized. This is initialized
-        // as already resolved if the script was already there without the need of loadJS.
-        var index = _.indexOf(urls, url);
-        if (index < 0) {
-            urls.push(url);
-
-            var scriptLoadedPromise = new Promise(function(resolve, reject) {
-                if (alreadyRequired) {
-                    resolve();
-                } else {
-                    // Get the script associated promise and returns it after initializing the script if needed. The
-                    // promise is marked to be resolved on script load and rejected on script error.
-                    var script = document.createElement('script');
-                    script.type = 'text/javascript';
-                    script.src = url;
-                    script.onload = script.onreadystatechange = function() {
-                        if ((script.readyState && script.readyState !== "loaded" && script.readyState !== "complete") || script.onload_done) {
-                            return;
-                        }
-                        script.onload_done = true;
-                        resolve(url);
-                    };
-                    script.onerror = function () {
-                        console.error("Error loading file", script.src);
-                        reject(url);
-                    };
-                    var head = document.head || document.getElementsByTagName('head')[0];
-                    head.appendChild(script);
-                }
-            });
-
-            index = defs.push(scriptLoadedPromise) - 1;
-            return scriptLoadedPromise;
+        // the script has been fully loaded. If not, the promise has to be initialized.
+        // This is initialized as already resolved if the script was already there without the need of loadJS.
+        if (url in dependenciesPromise) {
+            return dependenciesPromise[url];
         }
-        return Promise.resolve();
+        var scriptLoadedPromise = new Promise(function(resolve, reject) {
+            if (alreadyRequired) {
+                resolve();
+            } else {
+                // Get the script associated promise and returns it after initializing the script if needed. The
+                // promise is marked to be resolved on script load and rejected on script error.
+                var script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.src = url;
+                script.onload = script.onreadystatechange = function() {
+                    if ((script.readyState && script.readyState !== "loaded" && script.readyState !== "complete") || script.onload_done) {
+                        return;
+                    }
+                    script.onload_done = true;
+                    resolve(url);
+                };
+                script.onerror = function () {
+                    console.error("Error loading file", script.src);
+                    reject(url);
+                };
+                var head = document.head || document.getElementsByTagName('head')[0];
+                head.appendChild(script);
+            }
+        });
+
+        dependenciesPromise[url] = scriptLoadedPromise;
+        return scriptLoadedPromise;
     };
 
     return load;
@@ -473,7 +478,7 @@ var loadXML = (function () {
         newLoadingData.def = new Promise(function (resolve, reject) {
             newLoadingData.resolve = resolve;
             newLoadingData.reject = reject;
-        })
+        });
         loadingsData.push(newLoadingData);
 
         // If not already started, start the loading loop (reinitialize the
@@ -502,7 +507,7 @@ var loadAsset = (function () {
 
     var load = function loadAsset(xmlId) {
         if (cache[xmlId]) {
-            return $.when(cache[xmlId]);
+            return Promise.resolve(cache[xmlId]);
         }
         var params = {
             args: [xmlId, {

@@ -245,7 +245,7 @@ var KanbanController = BasicController.extend({
                             self.renderer.updateColumn(db_id, data);
                         });
                     });
-            }).catch(this.reload.bind(this));
+            }).guardedCatch(this.reload.bind(this));
     },
     /**
      * @private
@@ -419,7 +419,7 @@ var KanbanController = BasicController.extend({
 
         this.model.createRecordInGroup(column.db_id, values)
             .then(update)
-            .catch(function (reason) {
+            .guardedCatch(function (reason) {
                 reason.event.preventDefault();
                 var columnState = self.model.get(column.db_id, {raw: true});
                 var context = columnState.getContext();
@@ -478,11 +478,14 @@ var KanbanController = BasicController.extend({
      *
      * @private
      * @param {OdooEvent} ev
+     * @param {Function} [ev.data.onSuccess] callback to execute after applying changes
      */
     _onUpdateRecord: function (ev) {
+        var onSuccess = ev.data.onSuccess;
+        delete ev.data.onSuccess;
         var changes = _.clone(ev.data);
         ev.data.force_save = true;
-        this._applyChanges(ev.target.db_id, changes, ev);
+        this._applyChanges(ev.target.db_id, changes, ev).then(onSuccess);
     },
     /**
      * Allow the user to archive/restore all the records of a column.

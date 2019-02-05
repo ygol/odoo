@@ -105,12 +105,6 @@ QUnit.module('Views', {
             },
         };
     },
-    afterEach: function() {
-        var numberOfModalsOpened = $('.modal').length;
-        if ( numberOfModalsOpened > 0) {
-            throw new Error (`There are ${numberOfModalsOpened} modal(s) still open after the test`);
-        }
-    }
 }, function () {
 
     QUnit.module('FormView');
@@ -2022,7 +2016,7 @@ QUnit.module('Views', {
         });
 
         await testUtils.fields.editInput(form.$('input[name=foo]'), 'tralala');
-        await testUtils.dom.click(form.$('button'));
+        await testUtils.dom.click(form.$('button[special="save"]'));
         assert.verifySteps(['read', 'write', 'read', 'execute_action']);
 
         form.destroy();
@@ -2391,7 +2385,7 @@ QUnit.module('Views', {
         await testUtils.dom.click(form.sidebar.$('.o_dropdown_toggler_btn:contains(Action)'));
         await testUtils.dom.click(form.sidebar.$('a:contains(Duplicate)'));
 
-        assert.strictEqual(form.$('input').val(), 'tralala', 'input should contain ABC');
+        assert.strictEqual(form.$('input[name=foo]').val(), 'tralala', 'input should contain ABC');
 
         await testUtils.form.clickDiscard(form);
 
@@ -2400,7 +2394,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.skip("switching to another record from a dirty one  [!!! ATTENTION, ATTENTION !!! DON'T SKIP ME !!! DON'T FORGET TO FIX ME BEFORE MERGING !!!]", async function (assert) {
+    QUnit.test("switching to another record from a dirty one", async function (assert) {
         assert.expect(11);
 
         var nbWrite = 0;
@@ -2942,7 +2936,7 @@ QUnit.module('Views', {
             },
             intercepts: {
                 warning: function (event) {
-                    assert.step('warning');
+                    assert.ok(true, 'should trigger a warning');
                 },
             },
         });
@@ -2953,7 +2947,7 @@ QUnit.module('Views', {
     });
 
     QUnit.test('do nothing if add a line in one2many result in a onchange with a warning', async function (assert) {
-        assert.expect(2);
+        assert.expect(3);
 
         this.data.partner.onchanges = { foo: true };
 
@@ -2993,6 +2987,7 @@ QUnit.module('Views', {
         await testUtils.dom.click(form.$('.o_field_x2many_list_row_add a'));
         assert.containsNone(form, 'tr.o_data_row',
             "should not have added a line");
+        assert.verifySteps(["should have triggered a warning"]);
         form.destroy();
     });
 
@@ -3558,7 +3553,7 @@ QUnit.module('Views', {
     });
 
     QUnit.test('onchanges that complete after discarding', async function (assert) {
-        assert.expect(4);
+        assert.expect(5);
 
         var def1 = testUtils.makeTestPromise();
 
@@ -3606,6 +3601,7 @@ QUnit.module('Views', {
         await testUtils.nextTick();
         assert.strictEqual(form.$('span[name="foo"]').text(), "blip",
             "field foo should still be displayed to initial value");
+        assert.verifySteps(['onchange is done']);
 
         form.destroy();
     });
@@ -4210,6 +4206,37 @@ QUnit.module('Views', {
         form.destroy();
     });
 
+    QUnit.test('invisible fields are not considered as visible in a buttonbox', async function (assert) {
+        assert.expect(2);
+
+        var form = await createAsyncView({
+            View: FormView,
+            model: 'partner',
+            data: this.data,
+            arch: '<form>' +
+                '<div name="button_box" class="oe_button_box">' +
+                    '<field name="foo" invisible="1"/>' +
+                    '<field name="bar" invisible="1"/>' +
+                    '<field name="int_field" invisible="1"/>' +
+                    '<field name="qux" invisible="1"/>' +
+                    '<field name="display_name" invisible="1"/>' +
+                    '<field name="state" invisible="1"/>' +
+                    '<field name="date" invisible="1"/>' +
+                    '<field name="datetime" invisible="1"/>' +
+                    '<button type="object" class="oe_stat_button" icon="fa-check-square"/>' +
+                '</div>' +
+                '</form>',
+            res_id: 2,
+        });
+
+        assert.strictEqual(form.$('.oe_button_box').children().length, 9,
+            "button box should contain nine children");
+        assert.hasClass(form.$('.oe_button_box'), 'o_not_full',
+            "the buttonbox should not be full (only 1 visible child");
+
+        form.destroy();
+    });
+
     QUnit.test('display correctly buttonbox, in large size class', async function (assert) {
         assert.expect(1);
 
@@ -4785,7 +4812,7 @@ QUnit.module('Views', {
         assert.notStrictEqual(document.activeElement, form.$('input[name="int_field"]')[0],
             "int_field field should not have focus");
 
-        form.update({});
+        await form.update({});
 
         assert.notStrictEqual(document.activeElement, form.$('input[name="int_field"]')[0],
             "int_field field should not have focus");
@@ -5633,7 +5660,7 @@ QUnit.module('Views', {
         _t.database.multi_lang = multi_lang;
     });
 
-    QUnit.test('translation alerts preseved on reverse breadcrumb', function (assert) {
+    QUnit.test('translation alerts preseved on reverse breadcrumb', async function (assert) {
         assert.expect(2);
 
         this.data['ir.translation'] = {
@@ -5681,23 +5708,21 @@ QUnit.module('Views', {
             flags: {'search_view': true, 'action_buttons': true},
         }];
 
-        var actionManager = createActionManager({
+        var actionManager = await createActionManager({
             actions: actions,
             archs: archs,
             data: this.data,
         });
 
-        actionManager.doAction(1);
-
-        actionManager.$('.o_form_button_edit').click();
+        await actionManager.doAction(1);
         actionManager.$('input[name="foo"]').val("test").trigger("input");
-        actionManager.$('.o_form_button_save').click();
+        await testUtils.dom.click(actionManager.$('.o_form_button_save'));
 
         assert.strictEqual(actionManager.$('.o_form_view > .alert > div').length, 1,
             "should have a translation alert");
 
         var currentController = actionManager.getCurrentController().widget;
-        actionManager.doAction(2, {
+        await actionManager.doAction(2, {
             on_reverse_breadcrumb: function () {
                 if (!_.isEmpty(currentController.renderer.alertFields)) {
                     currentController.renderer.displayTranslationAlert();
@@ -5706,7 +5731,7 @@ QUnit.module('Views', {
             },
         });
 
-        $('.o_control_panel .breadcrumb a:first').click();
+        await testUtils.dom.click($('.o_control_panel .breadcrumb a:first'));
         assert.strictEqual(actionManager.$('.o_form_view > .alert > div').length, 1,
             "should have a translation alert");
 
@@ -5940,9 +5965,9 @@ QUnit.module('Views', {
 
         // click on button, and click on ok in confirm dialog
         await testUtils.dom.click(form.$('.o_statusbar_buttons button'));
-        assert.verifySteps(['default_get']);
+        assert.verifySteps([]);
         await testUtils.dom.click($('.modal-footer button.btn-primary'));
-        assert.verifySteps(['default_get', 'create', 'read', 'execute_action']);
+        assert.verifySteps(['create', 'read', 'execute_action']);
 
         form.destroy();
     });
@@ -6708,7 +6733,7 @@ QUnit.module('Views', {
         // in edit
         await testUtils.form.clickEdit(form);
         await testUtils.dom.click(form.$('[name="display_name"]'));
-        assert.verifySteps(['bounce']);
+        assert.verifySteps([]);
 
         form.destroy();
     });
@@ -6902,7 +6927,7 @@ QUnit.module('Views', {
     });
 
     QUnit.test('edition in form view on a "noCache" model', async function (assert) {
-        assert.expect(4);
+        assert.expect(5);
 
         await testUtils.mock.patch(BasicModel, {
             noCacheModels: BasicModel.prototype.noCacheModels.concat(['partner']),
@@ -6937,10 +6962,12 @@ QUnit.module('Views', {
 
         form.destroy();
         await testUtils.mock.unpatch(BasicModel);
+
+        assert.verifySteps(['clear_cache']); // triggered by the test environment on destroy
     });
 
     QUnit.test('creation in form view on a "noCache" model', async function (assert) {
-        assert.expect(4);
+        assert.expect(5);
 
         await testUtils.mock.patch(BasicModel, {
             noCacheModels: BasicModel.prototype.noCacheModels.concat(['partner']),
@@ -6971,10 +6998,12 @@ QUnit.module('Views', {
 
         form.destroy();
         await testUtils.mock.unpatch(BasicModel);
+
+        assert.verifySteps(['clear_cache']); // triggered by the test environment on destroy
     });
 
     QUnit.test('deletion in form view on a "noCache" model', async function (assert) {
-        assert.expect(4);
+        assert.expect(5);
 
         await testUtils.mock.patch(BasicModel, {
             noCacheModels: BasicModel.prototype.noCacheModels.concat(['partner']),
@@ -7010,6 +7039,8 @@ QUnit.module('Views', {
 
         form.destroy();
         await testUtils.mock.unpatch(BasicModel);
+
+        assert.verifySteps(['clear_cache']); // triggered by the test environment on destroy
     });
 
     QUnit.test('a popup window should automatically close after a do_action event', async function (assert) {
@@ -7231,6 +7262,8 @@ QUnit.module('Views', {
         // value before being requested to
         form.saveRecord();
 
+        await testUtils.nextTick();
+
         assert.containsOnce(form, '.o_form_readonly', "form view should be in readonly");
         assert.strictEqual(form.$('.o_form_view').text().trim(), 'some foo value',
             "foo field should have correct value");
@@ -7302,7 +7335,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('call canBeRemoved while saving', function (assert) {
+    QUnit.test('call canBeRemoved while saving', async function (assert) {
         assert.expect(10);
 
         this.data.partner.onchanges = {
@@ -7312,8 +7345,8 @@ QUnit.module('Views', {
         };
 
         var onchangeDef;
-        var createDef = $.Deferred();
-        var form = createView({
+        var createDef = testUtils.makeTestPromise();
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7321,23 +7354,23 @@ QUnit.module('Views', {
             mockRPC: function (route, args) {
                 var result = this._super.apply(this, arguments);
                 if (args.method === 'onchange') {
-                    return $.when(onchangeDef).then(_.constant(result));
+                    return Promise.resolve(onchangeDef).then(_.constant(result));
                 }
                 if (args.method === 'create') {
-                    return $.when(createDef).then(_.constant(result));
+                    return Promise.resolve(createDef).then(_.constant(result));
                 }
                 return result;
             },
         });
 
         // edit foo to trigger a delayed onchange
-        onchangeDef = $.Deferred();
-        testUtils.fields.editInput(form.$('.o_field_widget[name=foo]'), 'trigger onchange');
+        onchangeDef = testUtils.makeTestPromise();
+        await testUtils.fields.editInput(form.$('.o_field_widget[name=foo]'), 'trigger onchange');
 
         assert.strictEqual(form.$('.o_field_widget[name=display_name]').val(), 'default');
 
         // save (will wait for the onchange to return), and will be delayed as well
-        testUtils.dom.click(form.$buttons.find('.o_form_button_save'));
+        await testUtils.dom.click(form.$buttons.find('.o_form_button_save'));
 
         assert.hasClass(form.$('.o_form_view'), 'o_form_editable');
         assert.strictEqual(form.$('.o_field_widget[name=display_name]').val(), 'default');
@@ -7350,12 +7383,13 @@ QUnit.module('Views', {
 
         // unlock the onchange
         onchangeDef.resolve();
-
+        await testUtils.nextTick();
         assert.hasClass(form.$('.o_form_view'), 'o_form_editable');
         assert.strictEqual(form.$('.o_field_widget[name=display_name]').val(), 'changed');
 
         // unlock the create
         createDef.resolve();
+        await testUtils.nextTick();
 
         assert.hasClass(form.$('.o_form_view'), 'o_form_readonly');
         assert.strictEqual(form.$('.o_field_widget[name=display_name]').text(), 'changed');
@@ -7365,7 +7399,7 @@ QUnit.module('Views', {
         form.destroy();
     });
 
-    QUnit.test('domain returned by onchange is cleared on discard', function (assert) {
+    QUnit.test('domain returned by onchange is cleared on discard', async function (assert) {
         assert.expect(4);
 
         this.data.partner.onchanges = {
@@ -7374,7 +7408,7 @@ QUnit.module('Views', {
 
         var domain = ['id', '=', 1];
         var expectedDomain = domain;
-        var form = createView({
+        var form = await createAsyncView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -7382,7 +7416,7 @@ QUnit.module('Views', {
             mockRPC: function (route, args) {
                 if (args.method === 'onchange' && args.args[0][0] === 1) {
                     // onchange returns a domain only on record 1
-                    return $.when({
+                    return Promise.resolve({
                         domain: {
                             trululu: domain,
                         },
@@ -7403,22 +7437,22 @@ QUnit.module('Views', {
         assert.strictEqual(form.$('input[name=foo]').val(), 'yop', "should be on record 1");
 
         // change foo to trigger the onchange
-        testUtils.fields.editInput(form.$('input[name=foo]'), 'new value');
+        await testUtils.fields.editInput(form.$('input[name=foo]'), 'new value');
 
         // open many2one dropdown to check if the domain is applied
-        testUtils.fields.many2one.clickOpenDropdown('trululu');
+        await testUtils.fields.many2one.clickOpenDropdown('trululu');
 
         // switch to another record (should ask to discard changes, and reset the domain)
-        testUtils.dom.click(form.pager.$('.o_pager_next'));
+        await testUtils.dom.click(form.pager.$('.o_pager_next'));
 
         // discard changes by clicking on confirm in the dialog
-        testUtils.dom.click($('.modal .modal-footer .btn-primary:first'));
+        await testUtils.dom.click($('.modal .modal-footer .btn-primary:first'));
 
         assert.strictEqual(form.$('input[name=foo]').val(), 'blip', "should be on record 2");
 
         // open many2one dropdown to check if the domain is applied
         expectedDomain = [];
-        testUtils.fields.many2one.clickOpenDropdown('trululu');
+        await testUtils.fields.many2one.clickOpenDropdown('trululu');
 
         form.destroy();
     });
@@ -7665,6 +7699,7 @@ QUnit.module('Views', {
         form.$buttons.find('.o_form_buttons_edit').tooltip('show',false);
         assert.strictEqual($('.tooltip .oe_tooltip_string').length, 1,
             "should have rendered a tooltip");
+            await testUtils.nextTick();
         form.destroy();
     });
     QUnit.test('if the focus is on the save button, hitting ENTER should save', async function (assert) {

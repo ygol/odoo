@@ -1835,7 +1835,7 @@ QUnit.module('Views', {
                         {__domain: [['product_id', '=', 3]], product_id_count: 0},
                         {__domain: [['product_id', '=', 5]], product_id_count: 0},
                     ];
-                    return $.when(result);
+                    return Promise.resolve(result);
                 }
                 return this._super.apply(this, arguments);
             },
@@ -2291,8 +2291,6 @@ QUnit.module('Views', {
         // Write on the record using the priority widget to trigger a re-render in readonly
         await testUtils.dom.click(kanban.$('.o_field_widget.o_priority a.o_priority_star.fa-star-o').first());
         assert.verifySteps([
-            '/web/dataset/search_read',
-            '/web/dataset/call_kw/category/read',
             '/web/dataset/call_kw/partner/write',
             '/web/dataset/call_kw/partner/read',
             '/web/dataset/call_kw/category/read'
@@ -2505,11 +2503,11 @@ QUnit.module('Views', {
     });
 
     QUnit.test('wait x2manys batch fetches to re-render', async function (assert) {
-        assert.expect(4);
+        assert.expect(7);
         var done = assert.async();
 
-        var def;
-        var kanban = await createView({
+        var def = Promise.resolve();
+        var kanban = await createAsyncView({
             View: KanbanView,
             model: 'partner',
             data: this.data,
@@ -2525,7 +2523,7 @@ QUnit.module('Views', {
             mockRPC: function (route, args) {
                 var result = this._super(route, args);
                 if (args.method === 'read') {
-                    return Promise.resolve(def).then(function() {
+                    return def.then(function() {
                         return result;
                     });
                 }
@@ -2535,10 +2533,15 @@ QUnit.module('Views', {
 
         def = testUtils.makeTestPromise();
         assert.containsN(kanban, '.o_tag', 2);
-        await kanban.update({groupBy: ['state']});
-        def.resolve().then(function () {
+        assert.containsN(kanban, '.o_kanban_group', 2);
+        kanban.update({groupBy: ['state']});
+        def.then(async function () {
+            assert.containsN(kanban, '.o_kanban_group', 2);
+            await testUtils.nextTick();
+            assert.containsN(kanban, '.o_kanban_group', 3);
+
             assert.containsN(kanban, '.o_tag', 2,
-                'Should display 2 tags after update');
+            'Should display 2 tags after update');
             assert.strictEqual(kanban.$('.o_kanban_group:eq(1) .o_tag').text(),
                 'gold', 'First category should be \'gold\'');
             assert.strictEqual(kanban.$('.o_kanban_group:eq(2) .o_tag').text(),
@@ -2546,6 +2549,8 @@ QUnit.module('Views', {
             kanban.destroy();
             done();
         });
+        await testUtils.nextTick();
+        def.resolve();
     });
 
     QUnit.test('can drag and drop a record from one column to the next', async function (assert) {
@@ -2555,7 +2560,7 @@ QUnit.module('Views', {
         // is merged.  This is currently necessary to simulate the reality: we
         // need the click handlers to be executed after the end of the drag and
         // drop operation, not before.
-        var resequenceDef = Promise.makeTestPromise();
+        var resequenceDef = testUtils.makeTestPromise();
 
         var envIDs = [1, 3, 2, 4]; // the ids that should be in the environment during this test
         this.data.partner.fields.sequence = {type: 'number', string: "Sequence"};
@@ -3033,7 +3038,7 @@ QUnit.module('Views', {
     });
 
     QUnit.test('delete a column in grouped on m2o', async function (assert) {
-        assert.expect(36);
+        assert.expect(37);
 
         testUtils.mock.patch(KanbanRenderer, {
             _renderGrouped: function () {
@@ -3146,6 +3151,7 @@ QUnit.module('Views', {
         await nextTick(); // wait for resequence after drag and drop
         assert.deepEqual([newColumnID, 3], resequencedIDs,
             "moved column should be resequenced accordingly")
+        assert.verifySteps(['name_create', 'read', 'read', 'read']);
 
         kanban.destroy();
         testUtils.mock.unpatch(KanbanRenderer);
@@ -3597,7 +3603,7 @@ QUnit.module('Views', {
                     var result = [
                         {__domain: [['product_id', '=', 3]], product_id_count: 0, product_id: [3, 'hello']},
                     ];
-                    return $.when(result);
+                    return Promise.resolve(result);
                 }
                 return this._super.apply(this, arguments);
             },
@@ -3639,7 +3645,7 @@ QUnit.module('Views', {
                     var result = [
                         {__domain: [['product_id', '=', 3]], product_id_count: 0, product_id: [3, 'hello']},
                     ];
-                    return $.when(result);
+                    return Promise.resolve(result);
                 }
                 return this._super.apply(this, arguments);
             },
@@ -3684,7 +3690,7 @@ QUnit.module('Views', {
                     var result = [
                         {__domain: [['product_id', '=', 3]], product_id_count: 0, product_id: [3, 'hello']},
                     ];
-                    return $.when(result);
+                    return Promise.resolve(result);
                 }
                 return this._super.apply(this, arguments);
             },
@@ -3728,7 +3734,7 @@ QUnit.module('Views', {
                     var result = [
                         {__domain: [['product_id', '=', 3]], product_id_count: 0, product_id: [3, 'hello']},
                     ];
-                    return $.when(result);
+                    return Promise.resolve(result);
                 }
                 return this._super.apply(this, arguments);
             },
@@ -4113,7 +4119,7 @@ QUnit.module('Views', {
     });
 
     QUnit.test('load more records in column', async function (assert) {
-        assert.expect(12);
+        assert.expect(13);
 
         var envIDs = [1, 2, 4]; // the ids that should be in the environment during this test
         var kanban = await createAsyncView({
@@ -4131,7 +4137,7 @@ QUnit.module('Views', {
             },
             mockRPC: function (route, args) {
                 if (route === '/web/dataset/search_read') {
-                    assert.step([args.limit, args.offset]);
+                    assert.step(args.limit + ' - ' +  args.offset);
                 }
                 return this._super.apply(this, arguments);
             },
@@ -4147,7 +4153,7 @@ QUnit.module('Views', {
 
         assert.strictEqual(kanban.$('.o_kanban_group:eq(1) .o_kanban_record').length, 3,
             "there should now be 3 records in the column");
-        assert.verifySteps([[2, undefined], [2, undefined], [2, 2]],
+        assert.verifySteps(['2 - undefined', '2 - undefined', '2 - 2'],
             "the records should be correctly fetched");
         assert.deepEqual(kanban.exportState().resIds, envIDs);
 
@@ -4156,6 +4162,7 @@ QUnit.module('Views', {
         assert.strictEqual(kanban.$('.o_kanban_group:eq(1) .o_kanban_record').length, 3,
             "there should still be 3 records in the column after reload");
         assert.deepEqual(kanban.exportState().resIds, envIDs);
+        assert.verifySteps(['4 - undefined', '2 - undefined']);
 
         kanban.destroy();
     });
@@ -4188,7 +4195,7 @@ QUnit.module('Views', {
             },
             mockRPC: function (route, args) {
                 if (args.model === 'category' && args.method === 'read') {
-                    assert.step(args.args[0]);
+                    assert.step(String(args.args[0]));
                 }
                 if (route === '/web/dataset/search_read') {
                     if (args.limit) {
@@ -4207,7 +4214,7 @@ QUnit.module('Views', {
         assert.strictEqual(kanban.$('.o_kanban_group:eq(1) .o_kanban_record').length, 2,
             "there should be 2 records in the column");
 
-        assert.verifySteps([[7]], "only the appearing category should be fetched");
+        assert.verifySteps(['7'], "only the appearing category should be fetched");
 
         // load more
         await testUtils.dom.click(kanban.$('.o_kanban_group:eq(1)').find('.o_kanban_load_more'));
@@ -4215,7 +4222,7 @@ QUnit.module('Views', {
         assert.strictEqual(kanban.$('.o_kanban_group:eq(1) .o_kanban_record').length, 3,
             "there should now be 3 records in the column");
 
-        assert.verifySteps([[7], [6]], "the other categories should not be fetched");
+        assert.verifySteps(['6'], "the other categories should not be fetched");
 
         kanban.destroy();
     });
@@ -4428,7 +4435,7 @@ QUnit.module('Views', {
         kanban.destroy();
     });
 
-    QUnit.skip('basic support for widgets', async function (assert) {
+    QUnit.test('basic support for widgets', async function (assert) {
         assert.expect(1);
 
         var MyWidget = Widget.extend({
@@ -4698,7 +4705,7 @@ QUnit.module('Views', {
         kanban.destroy();
     });
 
-    QUnit.skip('RPCs when (re)loading kanban view progressbars', async function (assert) {
+    QUnit.test('RPCs when (re)loading kanban view progressbars', async function (assert) {
         assert.expect(9);
 
         var kanban = await createAsyncView({
@@ -4728,14 +4735,14 @@ QUnit.module('Views', {
         assert.verifySteps([
             // initial load
             'read_group',
-            '/web/dataset/search_read',
-            '/web/dataset/search_read',
             'read_progress_bar',
+            '/web/dataset/search_read',
+            '/web/dataset/search_read',
             // reload
             'read_group',
-            '/web/dataset/search_read',
-            '/web/dataset/search_read',
             'read_progress_bar',
+            '/web/dataset/search_read',
+            '/web/dataset/search_read',
         ]);
 
         kanban.destroy();
@@ -4876,7 +4883,7 @@ QUnit.module('Views', {
             groupBy: ['foo'],
             mockRPC: function (route, args) {
                 if (route === '/web/dataset/resequence') {
-                    return $.when(true);
+                    return Promise.resolve(true);
                 }
                 return this._super(route, args);
             },
@@ -5246,7 +5253,7 @@ QUnit.module('Views', {
     });
 
     QUnit.test('asynchronous rendering of a field widget (ungrouped)', async function (assert) {
-        assert.expect(2);
+        assert.expect(4);
 
         var fooFieldProm = makeTestPromise();
         var FieldChar = fieldRegistry.get('char');
@@ -5277,12 +5284,23 @@ QUnit.module('Views', {
         await nextTick();
         assert.strictEqual($('.o_kanban_record').text(), "LOADEDLOADEDLOADEDLOADED");
 
+        // reload with a domain
+        fooFieldProm = makeTestPromise();
+        kanbanController.reload({domain: [['id', '=', 1]]});
+        await nextTick();
+
+        assert.strictEqual($('.o_kanban_record').text(), "LOADEDLOADEDLOADEDLOADED");
+
+        fooFieldProm.resolve();
+        await nextTick();
+        assert.strictEqual($('.o_kanban_record').text(), "LOADED");
+
         kanbanController.destroy();
         delete fieldRegistry.map.asyncWidget;
     });
 
     QUnit.test('asynchronous rendering of a field widget (grouped)', async function (assert) {
-        assert.expect(2);
+        assert.expect(4);
 
         var fooFieldProm = makeTestPromise();
         var FieldChar = fieldRegistry.get('char');
@@ -5314,10 +5332,20 @@ QUnit.module('Views', {
         await nextTick();
         assert.strictEqual($('.o_kanban_record').text(), "LOADEDLOADEDLOADEDLOADED");
 
+        // reload with a domain
+        fooFieldProm = makeTestPromise();
+        kanbanController.reload({domain: [['id', '=', 1]]});
+        await nextTick();
+
+        assert.strictEqual($('.o_kanban_record').text(), "LOADEDLOADEDLOADEDLOADED");
+
+        fooFieldProm.resolve();
+        await nextTick();
+        assert.strictEqual($('.o_kanban_record').text(), "LOADED");
+
         kanbanController.destroy();
         delete fieldRegistry.map.asyncWidget;
     });
-
 });
 
 });

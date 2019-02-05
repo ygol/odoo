@@ -30,7 +30,7 @@ QUnit.module('core', {}, function () {
 
         await prom2.resolve();
 
-        assert.verifySteps(['ok prom1', 'ok prom2']);
+        assert.verifySteps(['ok prom2']);
 
         done();
     });
@@ -54,7 +54,7 @@ QUnit.module('core', {}, function () {
 
         await prom1.resolve();
 
-        assert.verifySteps(['ok prom2', 'ok prom1']);
+        assert.verifySteps(['ok prom1']);
 
         done();
     });
@@ -62,16 +62,68 @@ QUnit.module('core', {}, function () {
     QUnit.test('mutex: reject', async function (assert) {
         assert.expect(7);
         var done = assert.async();
-
         var mutex = new concurrency.Mutex();
 
         var prom1 = makeTestPromiseWithAssert(assert, 'prom1');
         var prom2 = makeTestPromiseWithAssert(assert, 'prom2');
         var prom3 = makeTestPromiseWithAssert(assert, 'prom3');
 
+        mutex.exec(function () { return prom1; }).catch(function() {});
+        mutex.exec(function () { return prom2; }).catch(function() {});
+        mutex.exec(function () { return prom3; }).catch(function() {});
+
+        assert.verifySteps([]);
+
+        prom1.resolve();
+        await testUtils.nextMicrotaskTick();
+
+        assert.verifySteps(['ok prom1']);
+
+        prom2.catch(function() {
+           assert.verifySteps(['ko prom2']);
+        });
+        try {
+        prom2.reject({name:"sdkjfmqsjdfmsjkdfkljsdq"});
+        await testUtils.nextMicrotaskTick();
+        }
+        catch(e) {
+            console.log("in the catch ",e);
+        }
+
+        prom3.resolve();
+        await testUtils.nextMicrotaskTick();
+
+        assert.verifySteps(['ok prom3']);
+        done();
+    });
+
+    QUnit.test('mutex: getUnlockedDef checks', async function (assert) {
+        assert.expect(9);
+
+        var mutex = new concurrency.Mutex();
+
+        var prom1 = makeTestPromiseWithAssert(assert, 'prom1');
+        var prom2 = makeTestPromiseWithAssert(assert, 'prom2');
+
+        mutex.getUnlockedDef().then(function () {
+            assert.step('mutex unlocked (1)');
+        });
+
+        await testUtils.nextMicrotaskTick();
+
+        assert.verifySteps(['mutex unlocked (1)']);
+
         mutex.exec(function () { return prom1; });
+        await testUtils.nextMicrotaskTick();
+
+        mutex.getUnlockedDef().then(function () {
+            assert.step('mutex unlocked (2)');
+        });
+
+        assert.verifySteps([]);
+
         mutex.exec(function () { return prom2; });
-        mutex.exec(function () { return prom3; });
+        await testUtils.nextMicrotaskTick();
 
         assert.verifySteps([]);
 
@@ -79,45 +131,9 @@ QUnit.module('core', {}, function () {
 
         assert.verifySteps(['ok prom1']);
 
-        try {
-            await prom2.reject();
-        } catch {
-            assert.verifySteps(['ok prom1', 'ko prom2']);
-        }
+        await prom2.resolve();
 
-        await prom3.resolve();
-
-        assert.verifySteps(['ok prom1', 'ko prom2', 'ok prom3']);
-        done();
-    });
-
-    QUnit.skip('mutex: getUnlockedDef checks', function (assert) {
-        assert.expect(5);
-
-        var m = new concurrency.Mutex();
-
-        var def1 = $.Deferred();
-        var def2 = $.Deferred();
-
-        assert.strictEqual(m.getUnlockedDef().state(), "resolved");
-
-        m.exec(function() { return def1; });
-
-        var unlockedDef = m.getUnlockedDef();
-
-        assert.strictEqual(unlockedDef.state(), "pending");
-
-        m.exec(function() { return def2; });
-
-        assert.strictEqual(unlockedDef.state(), "pending");
-
-        def1.resolve();
-
-        assert.strictEqual(unlockedDef.state(), "pending");
-
-        def2.resolve();
-
-        assert.strictEqual(unlockedDef.state(), "resolved");
+        assert.verifySteps(['ok prom2', 'mutex unlocked (2)']);
     });
 
     QUnit.test('DropPrevious: basic usecase', async function (assert) {
@@ -138,7 +154,7 @@ QUnit.module('core', {}, function () {
 
         await prom2.resolve();
 
-        assert.verifySteps(['rejected dp1','ok dp2']);
+        assert.verifySteps(['ok dp2']);
         done();
     });
 
@@ -162,7 +178,7 @@ QUnit.module('core', {}, function () {
         await prom1.resolve();
         await prom2.resolve();
 
-        assert.verifySteps(['rejected dp1','ok dp2']);
+        assert.verifySteps(['ok dp2']);
         done();
     });
 
@@ -376,9 +392,9 @@ QUnit.module('core', {}, function () {
             assert.step("p2 resolved");
         });
 
-        assert.verifySteps(['ok d1','p1 resolved'])
+        assert.verifySteps([])
         await d2.resolve('d2');
-        assert.verifySteps(['ok d1','p1 resolved','ok d2','p2 resolved'])
+        assert.verifySteps(['ok d2','p2 resolved'])
         done();
     });
 
@@ -401,9 +417,9 @@ QUnit.module('core', {}, function () {
             assert.step("p2 resolved");
         });
 
-        assert.verifySteps(['p1 resolved'])
+        assert.verifySteps([])
         await d2.resolve('d2');
-        assert.verifySteps(['p1 resolved','ok d2','p2 resolved'])
+        assert.verifySteps(['ok d2','p2 resolved'])
         done();
     });
 
@@ -429,7 +445,7 @@ QUnit.module('core', {}, function () {
         assert.verifySteps(['p1 rejected','ok d1'])
 
         await d2.resolve('d2');
-        assert.verifySteps(['p1 rejected','ok d1','ok d2','p2 resolved'])
+        assert.verifySteps(['ok d2','p2 resolved'])
         done();
     });
 
@@ -463,47 +479,51 @@ QUnit.module('core', {}, function () {
 
         assert.verifySteps(['p1 rejected', 'p2 rejected']);
 
-        await d1.resolve('d1');
+         d1.resolve('d1');
+         await Promise.resolve();
 
-        assert.verifySteps(['p1 rejected', 'p2 rejected', 'ok d1']);
+        assert.verifySteps(['ok d1']);
 
-        await d3.resolve('d3');
-        assert.verifySteps(['p1 rejected', 'p2 rejected', 'ok d1', 'ok d3','p3 resolved']);
+         d3.resolve('d3');
+         await Promise.resolve();
+
+         assert.verifySteps(['ok d3','p3 resolved']);
 
         done();
     });
 
     QUnit.test('MutexedDropPrevious: 3 arrives after 2 initialization', async function (assert) {
-
-        assert.expect(14);
-        var done = assert.async();
+        assert.expect(15);
         var m = new concurrency.MutexedDropPrevious();
 
         var d1 = makeTestPromiseWithAssert(assert, 'd1');
         var d2 = makeTestPromiseWithAssert(assert, 'd2');
         var d3 = makeTestPromiseWithAssert(assert, 'd3');
 
-        var p1 = m.exec(function () { return d1; }).catch(function() {
+        var p1 = m.exec(function () {
+            assert.step('execute d1');
+            return d1;
+        }).catch(function () {
             assert.step('p1 rejected');
         });
 
         var p2 = m.exec(function () {
             assert.step('execute d2');
             return d2;
-        }).then(function(){
-            assert.step('p2 resolved');
-        }).catch(function() {
+        }).catch(function () {
             assert.step('p2 rejected');
         });
 
-        assert.verifySteps([]);
+        assert.verifySteps(['execute d1']);
 
         // wait for next microtask tick (all settled promises callbacks have been called)
-        await Promise.resolve();
+        await testUtils.nextMicrotaskTick();
         assert.verifySteps(['p1 rejected']);
 
-        await d1.resolve('d1');
-        assert.verifySteps(['p1 rejected', 'ok d1', 'execute d2']);
+        d1.resolve('d1');
+        await testUtils.nextMicrotaskTick();
+
+        assert.verifySteps(['ok d1', 'execute d2']);
 
         var p3 = m.exec(function () {
             assert.step('execute d3');
@@ -511,16 +531,17 @@ QUnit.module('core', {}, function () {
         }).then(function (result) {
             assert.step('p3 resolved');
         });
-        await Promise.resolve()
-        assert.verifySteps(['p1 rejected', 'ok d1', 'execute d2', 'p2 rejected']);
+        await testUtils.nextMicrotaskTick();
+        assert.verifySteps(['p2 rejected']);
 
-        await d2.resolve();
-        assert.verifySteps(['p1 rejected', 'ok d1', 'execute d2', 'p2 rejected','ok d2', 'execute d3']);
+        d2.resolve();
+        await testUtils.nextMicrotaskTick();
+        assert.verifySteps(['ok d2', 'execute d3']);
 
-        await d3.resolve();
-        assert.verifySteps(['p1 rejected', 'ok d1', 'execute d2', 'p2 rejected','ok d2','execute d3', 'ok d3', 'p3 resolved']);
+        d3.resolve();
+        await testUtils.nextMicrotaskTick();
+        assert.verifySteps(['ok d3', 'p3 resolved']);
 
-        done();
      });
 
     QUnit.test('MutexedDropPrevious: 2 in then of 1 with 3', async function (assert) {
@@ -559,10 +580,10 @@ QUnit.module('core', {}, function () {
         assert.verifySteps(['p1 rejected', 'p2 rejected']);
 
         await d1.resolve('d1');
-        assert.verifySteps(['p1 rejected', 'p2 rejected', 'ok d1']);
+        assert.verifySteps(['ok d1']);
 
         await d3.resolve('d3');
-        assert.verifySteps(['p1 rejected', 'p2 rejected', 'ok d1', 'ok d3', 'p3 resolved']);
+        assert.verifySteps(['ok d3', 'p3 resolved']);
 
         done();
     });

@@ -402,9 +402,9 @@ var WysiwygMultizone = Wysiwyg.extend({
         var recordInfo = this._getRecordInfo({target: editable});
         var outerHTML = this._getCleanedHtml(editable).prop('outerHTML');
         var def = this._saveElement(outerHTML, recordInfo, editable);
-        def.done(function () {
+        def.then(function () {
             self.trigger_up('saved', recordInfo);
-        }).fail(function () {
+        }).guardedCatch(function () {
             self.trigger_up('canceled', recordInfo);
         });
         return def;
@@ -456,7 +456,7 @@ var WysiwygMultizone = Wysiwyg.extend({
                 });
             }
         }).get();
-        return $.when.apply($, defs);
+        return Promise.all(defs);
     },
     /**
      * Saves one (dirty) element of the page.

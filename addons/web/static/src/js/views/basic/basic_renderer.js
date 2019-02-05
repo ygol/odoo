@@ -561,7 +561,8 @@ var BasicRenderer = AbstractRenderer.extend({
 
         // Prepare widget rendering and save the related promise
         var def = widget._widgetRenderAndInsert(function () {});
-        var $el =  $('<div>');
+        var $el = $('<div>');
+
         this.defs.push(def);
 
         // Update the modifiers registration by associating the widget and by
@@ -569,6 +570,13 @@ var BasicRenderer = AbstractRenderer.extend({
         // associated to new widget)
         var self = this;
         def.then(function () {
+            // when the caller of renderFieldWidget uses something like
+            // this.renderFieldWidget(...).addClass(...), the class is added on
+            // the temporary div and not on the actual element that will be
+            // rendered. As we do not return a promise and some callers cannot
+            // wait for this.defs, we copy those attributes to the final element.
+            widget.$el.attr($el.getAttributes());
+
             $el.replaceWith(widget.$el);
             self._handleAttributes(widget.$el, node);
             self._registerModifiers(node, record, widget, {
@@ -711,7 +719,7 @@ var BasicRenderer = AbstractRenderer.extend({
             modifiersData.evaluatedModifiers[record.id] = record.evalModifiers(modifiersData.modifiers);
             self._applyModifiers(modifiersData, record);
         });
-        // delete this.defs;
+        delete this.defs;
 
         return Promise.all(defs);
     },

@@ -159,7 +159,7 @@ var Pager = Widget.extend({
             $input.click(function(ev) {
                 ev.stopPropagation(); // ignore clicks on the input
             });
-            $input.change(function(ev) {
+            $input.blur(function(ev) {
                 self._save($(ev.target)); // save the state when leaving the input
             });
             $input.on('keydown', function (ev) {
@@ -218,8 +218,6 @@ var Pager = Widget.extend({
             }
             // Render the pager's new state (removes the input)
             self._render();
-        }).catch(function() {
-            throw new Error("Something bad happened after the validation of the pager.");
         });
     },
     /**

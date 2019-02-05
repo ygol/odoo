@@ -10,6 +10,7 @@ var field_registry = require('web.field_registry');
 var TranslatableFieldMixin = basic_fields.TranslatableFieldMixin;
 var QWeb = core.qweb;
 var assetsLoaded = false;
+var assetsLoadedPromise ;
 
 /**
  * FieldHtml Widget
@@ -46,17 +47,17 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
         }
 
         if (!assetsLoaded) { // avoid flickering when begin to edit
-            assetsLoaded = $.Deferred();
-            var wysiwyg = new Wysiwyg(this, {});
-            wysiwyg.attachTo($('<textarea>')).then(function () {
-                wysiwyg.destroy();
-                var def = assetsLoaded;
-                assetsLoaded = true;
-                def.resolve();
+            assetsLoadedPromise = new Promise(function(resolve) {
+                var wysiwyg = new Wysiwyg(this, {});
+                wysiwyg.attachTo($('<textarea>')).then(function () {
+                    wysiwyg.destroy();
+                    assetsLoaded = true;
+                    resolve();
+                });
             });
         }
 
-        return $.when(this._super(), assetsLoaded, defAsset);
+        return Promise.all([this._super(), assetsLoadedPromise, defAsset]);
     },
     /**
      * @override
@@ -131,7 +132,7 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
                 this.$content.html(value);
             }
         }
-        return $.when();
+        return Promise.resolve();
     },
 
     //--------------------------------------------------------------------------
@@ -268,8 +269,10 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
         }
 
         this.$el.empty();
-
-        var def = $.Deferred();
+        var resolver;
+        var def = new Promise(function(resolve) {
+            resolver = resolve;
+        });
         if (this.nodeOptions.cssReadonly) {
             this.$iframe = $('<iframe class="o_readonly"/>');
             this.$iframe.appendTo(this.$el);
@@ -278,14 +281,14 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
 
             // inject content in iframe
 
-            this.$iframe.data('load-def', def); // for unit test
+            this.$iframe.data('loadDef', def); // for unit test
             window.top[this._onUpdateIframeId] = function (_avoidDoubleLoad) {
                 if (_avoidDoubleLoad !== avoidDoubleLoad) {
                     console.warn('Wysiwyg iframe double load detected');
                     return;
                 }
                 self.$content = $('#iframe_target', self.$iframe[0].contentWindow.document.body);
-                def.resolve();
+                resolver();
             };
 
             this.$iframe.one('load', function onLoad() {
@@ -326,7 +329,7 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
         } else {
             this.$content = $('<div class="o_readonly"/>').html(value);
             this.$content.appendTo(this.$el);
-            def.resolve();
+            resolver();
         }
 
         def.then(function () {

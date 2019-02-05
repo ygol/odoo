@@ -57,14 +57,14 @@ var ControlPanelController = mvc.Controller.extend({
     },
     /**
      * @param {Object} state a ControlPanelModel state
-     * @returns {Deferred<Object>} the result of `getSearchState`
+     * @returns {Promise<Object>} the result of `getSearchState`
      */
     importState: function (state) {
         var defs = [];
         this.model.importState(state);
         defs.push(this.getSearchQuery());
         defs.push(this.renderer.updateState(this.model.get()));
-        return $.when(defs).then(function (defsResults) {
+        return Promise.all(defs).then(function (defsResults) {
             return defsResults[0];
         });
     },
@@ -121,7 +121,7 @@ var ControlPanelController = mvc.Controller.extend({
     },
     /**
      * @private
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _reportNewQueryAndRender: function () {
         this.trigger_up('search', this.model.getQuery());

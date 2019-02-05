@@ -41,7 +41,7 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
         // savingDef is used to ensure that we always wait for pending save
         // operations to complete before checking if there are changes to
         // discard when discardChanges is called
-        this.savingDef = $.when();
+        this.savingDef = Promise.resolve();
     },
     /**
      * @override
@@ -117,7 +117,7 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
      * @see _.discardChanges
      */
     discardChanges: function (recordID, options) {
-        return $.when(this.mutex.getUnlockedDef(), this.savingDef)
+        return Promise.all([this.mutex.getUnlockedDef(), this.savingDef])
             .then(this._discardChanges.bind(this, recordID || this.handle, options));
     },
     /**
@@ -146,10 +146,10 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
     /**
      * @override
      */
-    renderPager: function ($node) {
+    renderPager: function ($node, options) {
         var self = this;
         var data = this.model.get(this.handle, {raw: true});
-        this.pager = new Pager(this, data.count, data.offset + 1, data.limit);
+        this.pager = new Pager(this, data.count, data.offset + 1, data.limit, options);
 
         this.pager.on('pager_changed', this, function (newState) {
             var self = this;
@@ -288,7 +288,7 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
                 },
                 on_success: resolve,
                 on_fail: function () {
-                    self.update({}, {reload: false}).then(reject).catch(reject);
+                    self.update({}, {reload: false}).then(reject).guardedCatch(reject);
                 },
                 on_closed: reload,
             });
@@ -490,7 +490,7 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
             }
             return saveDef;
         } else {
-            return Promise.reject(); // Cannot be saved
+            return Promise.reject("SaveRecord: this.canBeSave is false"); // Cannot be saved
         }
     },
     /**
@@ -569,9 +569,9 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
                 // asked for the discard but will unfortunately lose the click
                 // made on another row if any
                 self._confirmChange(recordID, [ev.data.fieldName], ev)
-                    .then(ev.data.onSuccess).catch(ev.data.onSuccess);
+                    .then(ev.data.onSuccess).guardedCatch(ev.data.onSuccess);
             })
-            .catch(ev.data.onFailure);
+            .guardedCatch(ev.data.onFailure);
     },
     /**
      * Forces to save directly the changes if the controller is in readonly,

@@ -75,7 +75,7 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
                 self.controlPanelElements = self._renderControlPanelElements();
                 self._controlPanel.$el.prependTo(self.$el);
             }
-
+        }).then(function () {
             return self._update(self.initialState);
         });
     },
@@ -183,7 +183,7 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
                 params = _.extend({}, params, searchQuery);
             });
         }
-        return $.when(def).then(this.update.bind(this, params, {}));
+        return Promise.resolve(def).then(this.update.bind(this, params, {}));
     },
     /**
      * For views that require a pager, this method will be called to allow the
@@ -317,7 +317,7 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
                     return Promise.all(defs).then(function () {
                         $banner.prependTo(self.$('> .o_content'));
                         self._$banner = $banner;
-                        return prom;
+                        // return prom;
                     });
                 });
         }
@@ -338,11 +338,14 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
         };
 
         this.renderButtons(elements.$buttons);
-        this.renderSidebar(elements.$sidebar);
-        this.renderPager(elements.$pager);
-        // remove the unnecessary outer div
-        elements = _.mapObject(elements, function($node) {
-            return $node && $node.contents();
+        var sidebarProm = this.renderSidebar(elements.$sidebar);
+        var pagerProm = this.renderPager(elements.$pager);
+
+        Promise.all([sidebarProm, pagerProm]).then(function() {
+            // remove the unnecessary outer div
+            elements = _.mapObject(elements, function($node) {
+                return $node && $node.contents();
+            });
         });
         elements.$switch_buttons = this._renderSwitchButtons();
 

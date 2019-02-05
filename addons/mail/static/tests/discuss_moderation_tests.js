@@ -534,7 +534,7 @@ QUnit.test('author: send message in moderated channel', function (assert) {
     assert.expect(4);
     var done = assert.async();
 
-    var messagePostDef = $.Deferred();
+    var messagePostDef = testUtils.makeTestPromise();
 
     this.data.initMessaging = {
         channel_slots: {
@@ -762,12 +762,11 @@ QUnit.test('author: sent message rejected in moderated channel', function (asser
     });
 });
 
-QUnit.test('no crash when load-more fetching "accepted" message twice', function (assert) {
+QUnit.test('no crash when load-more fetching "accepted" message twice', async function (assert) {
     // This tests requires discuss not loading more messages due to having less
     // messages to fetch than available height. This justifies we simply do not
     // patch FETCH_LIMIT to 1, as it would detect that more messages could fit
     // the empty space (it behaviour is linked to "auto load more").
-    var done = assert.async();
     assert.expect(2);
 
     var FETCH_LIMIT = Thread.prototype._FETCH_LIMIT;
@@ -800,7 +799,7 @@ QUnit.test('no crash when load-more fetching "accepted" message twice', function
     };
     var count = 0;
 
-    createDiscuss({
+    var discuss = await createDiscuss({
         id: 1,
         context: {},
         params: {},
@@ -812,33 +811,32 @@ QUnit.test('no crash when load-more fetching "accepted" message twice', function
                 count++;
                 if (count === 1) {
                     // inbox message_fetch
-                    return $.when([]);
+                    return Promise.resolve([]);
                 }
                 // general message_fetch
-                return $.when(messageData);
+                return Promise.resolve(messageData);
             }
             return this._super.apply(this, arguments);
         },
-    })
-    .then(function (discuss) {
-        var $general = discuss.$('.o_mail_discuss_sidebar')
-                        .find('.o_mail_discuss_item[data-thread-id=1]');
-        assert.strictEqual($general.length, 1,
-            "should have the channel item with id 1");
-        assert.strictEqual($general.attr('title'), 'general',
-            "should have the title 'general'");
-
-        // click on general
-        $general.click();
-
-        // simulate search
-        discuss.trigger_up('search', {
-            domains: [['author_id', '=', 100]],
-        });
-
-        discuss.destroy();
-        done();
     });
+
+    var $general = discuss.$('.o_mail_discuss_sidebar')
+                    .find('.o_mail_discuss_item[data-thread-id=1]');
+    assert.strictEqual($general.length, 1,
+        "should have the channel item with id 1");
+    assert.strictEqual($general.attr('title'), 'general',
+        "should have the title 'general'");
+
+    // click on general
+    await testUtils.dom.click($general);
+
+    // simulate search
+    discuss.trigger_up('search', {
+        domains: [['author_id', '=', 100]],
+    });
+    await testUtils.nextTick();
+
+    discuss.destroy();
 });
 
 });

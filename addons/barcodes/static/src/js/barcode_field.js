@@ -25,10 +25,8 @@ var FieldFloatScannable = basicFields.FieldFloat.extend({
      * @private
      */
     _renderEdit: function() {
-        var self = this;
-        $.when(this._super()).then(function () {
-            self.$input.data('enableBarcode', true);
-        });
+        this._super();
+        this.$input.data('enableBarcode', true);
     },
 
     //--------------------------------------------------------------------------

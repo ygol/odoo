@@ -25,7 +25,7 @@ var _t = core._t;
  *
  * @param {Widget} self a widget instance that can perform RPCs
  * @param {Array} ids the ids of activities to read
- * @return {Deferred<Array>} resolved with the activities
+ * @return {Promise<Array>} resolved with the activities
  */
 function _readActivities(self, ids) {
     if (!ids.length) {
@@ -60,7 +60,7 @@ BasicModel.include({
      * @private
      * @param {Object} record - an element from the localData
      * @param {string} fieldName
-     * @return {Deferred<Array>} resolved with the activities
+     * @return {Promise<Array>} resolved with the activities
      */
     _fetchSpecialActivity: function (record, fieldName) {
         var localID = (record._changes && fieldName in record._changes) ?

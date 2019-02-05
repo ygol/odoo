@@ -396,8 +396,8 @@ var FieldMany2One = AbstractField.extend({
                     method: 'name_create',
                     args: [name],
                     context: self.record.getContext(self.recordParams),
-                }).catch(function (error, ev) {
-                    ev.preventDefault();
+                }).guardedCatch(function (reason) {
+                    reason.event.preventDefault();
                     slowCreate();
                 });
                 self.dp.add(nameCreateDef)
@@ -407,7 +407,7 @@ var FieldMany2One = AbstractField.extend({
                         }
                         createDone();
                     })
-                    .catch(reject);
+                    .guardedCatch(reject);
             } else {
                 slowCreate();
             }
@@ -979,14 +979,17 @@ var FieldX2Many = AbstractField.extend({
      * @returns {Promise|undefined}
      */
     _render: function () {
+        var self = this;
         if (!this.view) {
             return this._super();
         }
         if (this.renderer) {
             this.currentColInvisibleFields = this._evalColumnInvisibleFields();
-            this.renderer.updateState(this.value, {'columnInvisibleFields': this.currentColInvisibleFields});
-            this.pager.updateState({ size: this.value.count });
-            return Promise.resolve();
+            return this.renderer.updateState(this.value, {
+                columnInvisibleFields: this.currentColInvisibleFields,
+            }).then(function () {
+                self.pager.updateState({ size: self.value.count });
+            });
         }
         var arch = this.view.arch;
         var viewType;
@@ -1215,8 +1218,8 @@ var FieldX2Many = AbstractField.extend({
         this.trigger_up('edited_list', { id: this.value.id });
         var editedRecord = this.value.data[ev.data.index];
         this.renderer.setRowMode(editedRecord.id, 'edit')
-                .then(ev.data.onSuccess)
-                .catch(ev.data.onSuccess);
+            .then(ev.data.onSuccess)
+            .guardedCatch(ev.data.onSuccess);
     },
     /**
      * Updates the given record with the changes.
@@ -1247,7 +1250,7 @@ var FieldX2Many = AbstractField.extend({
                 if (ev.data.onSuccess) {
                     ev.data.onSuccess();
                 }
-            }).catch(function () {
+            }).guardedCatch(function () {
                 if (ev.data.onFailure) {
                     ev.data.onFailure();
                 }
@@ -1316,7 +1319,7 @@ var FieldX2Many = AbstractField.extend({
                 action: function () {
                     return self._saveLine(ev.data.recordID)
                         .then(ev.data.onSuccess)
-                        .catch(ev.data.onFailure);
+                        .guardedCatch(ev.data.onFailure);
                 },
             });
         });
@@ -1357,7 +1360,7 @@ var FieldX2Many = AbstractField.extend({
                 operation: 'UPDATE',
                 id: rowID,
                 data: _.object([event.data.handleField], [event.data.offset + rowIDs.length]),
-            }).then(always).catch(always);
+            }).then(always).guardedCatch(always);
         });
     },
     /**
@@ -1518,7 +1521,7 @@ var FieldOne2Many = FieldX2Many.extend({
                     if (data.onSuccess){
                         data.onSuccess();
                     }
-                }).catch(function() {
+                }).guardedCatch(function() {
                     self.creatingRecord = false;
                 })
                 ;

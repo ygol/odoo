@@ -112,7 +112,7 @@ odoo.define('payment.payment_form', function (require) {
                             else {
                                 checked_radio.value = data.id; // set the radio value to the new card id
                                 form.submit();
-                                return $.Deferred();
+                                return new Promise(function () {});
                             }
                         }
                         // if the server has returned false, we display an error
@@ -131,7 +131,7 @@ odoo.define('payment.payment_form', function (require) {
                         $(button).attr('disabled', false);
                         $(button).children('.fa').addClass('fa-plus-circle')
                         $(button).find('span.o_loader').remove();
-                    }).fail(function (error, event) {
+                    }).guardedCatch(function (error) {
                         // if the rpc fails, pretty obvious
                         $(button).attr('disabled', false);
                         $(button).children('.fa').addClass('fa-plus-circle')
@@ -174,7 +174,7 @@ odoo.define('payment.payment_form', function (require) {
                                 $(newForm).find('input[data-remove-me]').remove(); // remove all the input that should be removed
                                 if(action_url) {
                                     newForm.submit(); // and finally submit the form
-                                    return $.Deferred();
+                                    return new Promise(function () {});
                                 }
                             }
                             else {
@@ -183,7 +183,7 @@ odoo.define('payment.payment_form', function (require) {
                                     _t("We are not able to redirect you to the payment form.")
                                 );
                             }
-                        }).fail(function (error, event) {
+                        }).guardedCatch(function (error) {
                             self.displayError(
                                 _t('Server Error'),
                                 _t("We are not able to redirect you to the payment form. ") +
@@ -201,7 +201,7 @@ odoo.define('payment.payment_form', function (require) {
                 }
                 else {  // if the user is using an old payment then we just submit the form
                     form.submit();
-                    return $.Deferred();
+                    return new Promise(function () {});
                 }
             }
             else {
@@ -300,7 +300,7 @@ odoo.define('payment.payment_form', function (require) {
                     $(button).attr('disabled', false);
                     $(button).children('.fa').addClass('fa-plus-circle')
                     $(button).find('span.o_loader').remove();
-                }).fail(function (error, event) {
+                }).guardedCatch(function (error) {
                     // if the rpc fails, pretty obvious
                     $(button).attr('disabled', false);
                     $(button).children('.fa').addClass('fa-plus-circle')

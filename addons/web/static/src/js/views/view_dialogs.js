@@ -127,7 +127,7 @@ var FormViewDialog = ViewDialog.extend({
                     text: (multi_select ? _t("Save & Close") : _t("Save")),
                     classes: "btn-primary",
                     click: function () {
-                        this._save().then(self.close.bind(self));
+                        self._save().then(self.close.bind(self));
                     }
                 });
 
@@ -136,7 +136,7 @@ var FormViewDialog = ViewDialog.extend({
                         text: _t("Save & New"),
                         classes: "btn-primary",
                         click: function () {
-                            this._save().then(self.form_view.createRecord.bind(self.form_view, self.parentID));
+                            self._save().then(self.form_view.createRecord.bind(self.form_view, self.parentID));
                         },
                     });
                 }
@@ -318,7 +318,7 @@ var SelectCreateDialog = ViewDialog.extend({
         }
         var self = this;
         var _super = this._super.bind(this);
-        this.loadViews(this.res_model, this.context, [[false, 'list'], [false, 'search']], {})
+        return this.loadViews(this.res_model, this.context, [[false, 'list'], [false, 'search']], {})
             .then(this.setup.bind(this))
             .then(function (fragment) {
                 self.opened().then(function () {
@@ -330,7 +330,7 @@ var SelectCreateDialog = ViewDialog.extend({
                 });
                 return _super();
             });
-        return this;
+        // return this;
     },
 
     setup: function (fieldsViews) {

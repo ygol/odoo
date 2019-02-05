@@ -5,7 +5,7 @@ odoo.define('portal.portal', function (require) {
 
 
     if (!$('.o_portal').length) {
-        return $.Deferred().reject("DOM doesn't contain '.o_portal'");
+        return Promise.reject("DOM doesn't contain '.o_portal'");
     }
 
     if ($('.o_portal_details').length) {
@@ -14,7 +14,7 @@ odoo.define('portal.portal', function (require) {
             var select = $("select[name='state_id']");
             state_options.detach();
             var displayed_state = state_options.filter("[data-country_id="+($(this).val() || 0)+"]");
-            var nb = displayed_state.appendTo(select).show().size();
+            var nb = displayed_state.appendTo(select).show().length;
             select.parent().toggle(nb>=1);
         });
         $('.o_portal_details').find("select[name='country_id']").change();

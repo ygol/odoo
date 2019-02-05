@@ -34,10 +34,10 @@ QUnit.module('pad widget', {
     },
 });
 
-    QUnit.test('pad widget display help if server not configured', function (assert) {
+    QUnit.test('pad widget display help if server not configured', async function (assert) {
         assert.expect(4);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'task',
             data: this.data,
@@ -51,28 +51,28 @@ QUnit.module('pad widget', {
             res_id: 1,
             mockRPC: function (route, args) {
                 if (args.method === 'pad_is_configured') {
-                    return $.when(false);
+                    return Promise.resolve(false);
                 }
                 return this._super.apply(this, arguments);
             },
         });
-        assert.ok(form.$('p.oe_unconfigured').is(':visible'),
+        assert.isVisible(form.$('p.oe_unconfigured'),
             "help message should be visible");
-        assert.notOk(form.$('p.oe_pad_content').is(':visible'),
-            "content should not be visible");
+        assert.containsNone(form, 'p.oe_pad_content',
+            "content should not be displayed");
         await testUtils.form.clickEdit(form);
-        assert.ok(form.$('p.oe_unconfigured').is(':visible'),
+        assert.isVisible(form.$('p.oe_unconfigured'),
             "help message should be visible");
-        assert.notOk(form.$('p.oe_pad_content').is(':visible'),
-            "content should not be visible");
+        assert.containsNone(form, 'p.oe_pad_content',
+            "content should not be displayed");
         form.destroy();
         delete FieldPad.prototype.isPadConfigured;
     });
 
-    QUnit.test('pad widget works, basic case', function (assert) {
+    QUnit.test('pad widget works, basic case', async function (assert) {
         assert.expect(5);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'task',
             data: this.data,
@@ -87,7 +87,7 @@ QUnit.module('pad widget', {
             mockRPC: function (route, args) {
                 if (route === 'https://pad.odoo.pad/p/test/1?showChat=false&userName=batman') {
                     assert.ok(true, "should have an iframe with correct src");
-                    return $.when(true);
+                    return Promise.resolve(true);
                 }
                 return this._super.apply(this, arguments);
             },
@@ -95,11 +95,11 @@ QUnit.module('pad widget', {
                 userName: "batman",
             },
         });
-        assert.notOk(form.$('p.oe_unconfigured').is(':visible'),
+        assert.isNotVisible(form.$('p.oe_unconfigured'),
             "help message should not be visible");
-        assert.ok(form.$('.oe_pad_content').is(':visible'),
+        assert.isVisible(form.$('.oe_pad_content'),
             "content should be visible");
-        assert.strictEqual(form.$('.oe_pad_content:contains(This pad will be)').length, 1,
+        assert.containsOnce(form, '.oe_pad_content:contains(This pad will be)',
             "content should display a message when not initialized");
 
         await testUtils.form.clickEdit(form);
@@ -111,12 +111,12 @@ QUnit.module('pad widget', {
         delete FieldPad.prototype.isPadConfigured;
     });
 
-    QUnit.test('pad widget works, with existing data', function (assert) {
+    QUnit.test('pad widget works, with existing data', async function (assert) {
         assert.expect(3);
 
-        var contentDef = $.Deferred();
+        var contentDef = testUtils.makeTestPromise();
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'task',
             data: this.data,
@@ -130,7 +130,7 @@ QUnit.module('pad widget', {
             res_id: 2,
             mockRPC: function (route, args) {
                 if (_.str.startsWith(route, 'http')) {
-                    return $.when(true);
+                    return Promise.resolve(true);
                 }
                 var result = this._super.apply(this, arguments);
                 if (args.method === 'pad_get_content') {
@@ -149,6 +149,7 @@ QUnit.module('pad widget', {
         assert.strictEqual(form.$('.oe_pad_content').text(), "Loading",
             "should display loading message");
         contentDef.resolve();
+        await testUtils.nextTick();
         assert.strictEqual(form.$('.oe_pad_content').text(), "we should rewrite this server in haskell",
             "should display proper value");
 
@@ -158,10 +159,10 @@ QUnit.module('pad widget', {
         delete FieldPad.prototype.isPadConfigured;
     });
 
-    QUnit.test('pad widget is not considered dirty at creation', function (assert) {
+    QUnit.test('pad widget is not considered dirty at creation', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'task',
             data: this.data,
@@ -174,7 +175,7 @@ QUnit.module('pad widget', {
                 '</form>',
             mockRPC: function (route, args) {
                 if (!args.method) {
-                    return $.when(true);
+                    return Promise.resolve(true);
                 }
                 return this._super.apply(this, arguments);
             },
@@ -183,20 +184,24 @@ QUnit.module('pad widget', {
             },
         });
         var def = form.canBeDiscarded();
+        var defState = 'unresolved';
+        def.then(function () {
+            defState = 'resolved';
+        });
 
         assert.strictEqual($('.modal').length, 0,
             "should have no confirmation modal opened");
-
-        assert.strictEqual(def.state(), 'resolved',
+        await testUtils.nextTick();
+        assert.strictEqual(defState, 'resolved',
             "can be discarded was succesfully resolved");
         form.destroy();
         delete FieldPad.prototype.isPadConfigured;
     });
 
-    QUnit.test('pad widget is not considered dirty at edition', function (assert) {
+    QUnit.test('pad widget is not considered dirty at edition', async function (assert) {
         assert.expect(2);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'task',
             data: this.data,
@@ -210,7 +215,7 @@ QUnit.module('pad widget', {
             res_id: 2,
             mockRPC: function (route, args) {
                 if (!args.method) {
-                    return $.when(true);
+                    return Promise.resolve(true);
                 }
                 return this._super.apply(this, arguments);
             },
@@ -220,20 +225,24 @@ QUnit.module('pad widget', {
         });
         await testUtils.form.clickEdit(form);
         var def = form.canBeDiscarded();
+        var defState = 'unresolved';
+        def.then(function () {
+            defState = 'resolved';
+        });
 
         assert.strictEqual($('.modal').length, 0,
             "should have no confirmation modal opened");
-
-        assert.strictEqual(def.state(), 'resolved',
+        await testUtils.nextTick();
+        assert.strictEqual(defState, 'resolved',
             "can be discarded was succesfully resolved");
         form.destroy();
         delete FieldPad.prototype.isPadConfigured;
     });
 
-    QUnit.test('record should be discarded properly even if only pad has changed', function (assert) {
+    QUnit.test('record should be discarded properly even if only pad has changed', async function (assert) {
         assert.expect(1);
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'task',
             data: this.data,
@@ -247,7 +256,7 @@ QUnit.module('pad widget', {
             res_id: 2,
             mockRPC: function (route, args) {
                 if (!args.method) {
-                    return $.when(true);
+                    return Promise.resolve(true);
                 }
                 return this._super.apply(this, arguments);
             },

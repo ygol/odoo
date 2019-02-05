@@ -13,6 +13,7 @@ odoo.define('web.test_utils', function (require) {
 var ajax = require('web.ajax');
 var concurrency = require('web.concurrency');
 var core = require('web.core');
+var relationalFields = require('web.relational_fields');
 var session = require('web.session');
 var testUtilsCreate = require('web.test_utils_create');
 var testUtilsDom = require('web.test_utils_dom');
@@ -25,6 +26,8 @@ var testUtilsMock = require('web.test_utils_mock');
 var testUtilsModal = require('web.test_utils_modal');
 var testUtilsPivot = require('web.test_utils_pivot');
 var tools = require('web.tools');
+
+
 function deprecated(fn, type) {
     var msg = `Helper 'testUtils.${fn.name}' is deprecated. ` +
         `Please use 'testUtils.${type}.${fn.name}' instead.`;
@@ -57,7 +60,7 @@ function makeTestPromise() {
 
 function makeTestPromiseWithAssert(assert, str) {
     var prom = makeTestPromise();
-    prom.then(() => assert.step('ok ' + str));
+    prom.then(() => assert.step('ok ' + str)).catch(function(){});
     prom.catch(() => assert.step('ko ' + str));
     return prom;
 }
@@ -170,6 +173,7 @@ return Promise.all([
         createActionManager: testUtilsCreate.createActionManager,
         createDebugManager: testUtilsCreate.createDebugManager,
         createAsyncView: testUtilsCreate.createAsyncView,
+        createCalendarView: testUtilsCreate.createCalendarView,
         createControlPanel: testUtilsCreate.createControlPanel,
         createView: testUtilsCreate.createAsyncView,
         createModel: testUtilsCreate.createModel,

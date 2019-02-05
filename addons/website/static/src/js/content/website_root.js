@@ -74,11 +74,11 @@ var WebsiteRoot = rootWidget.RootWidget.extend(ServiceProviderMixin, {
      */
     willStart: function () {
         // TODO would be even greater to wait for those only if necessary
-        return $.when(
+        return Promise.All([
             this._super.apply(this, arguments),
             session.is_bound,
             localeDef
-        );
+        ]);
     },
     /**
      * @override
@@ -124,7 +124,7 @@ var WebsiteRoot = rootWidget.RootWidget.extend(ServiceProviderMixin, {
             $('input, textarea').placeholder();
         }
 
-        return $.when.apply($, defs);
+        return Promise.all(defs);
     },
 
     //--------------------------------------------------------------------------
@@ -205,7 +205,7 @@ var WebsiteRoot = rootWidget.RootWidget.extend(ServiceProviderMixin, {
      * @param {jQuery} [$from]
      *        only initialize the animations whose `selector` matches the
      *        element or one of its descendant (default to the wrapwrap element)
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _startAnimations: function (editableMode, $from) {
         var self = this;
@@ -226,9 +226,9 @@ var WebsiteRoot = rootWidget.RootWidget.extend(ServiceProviderMixin, {
                 self.animations.push(animation);
                 return animation.attachTo($(el));
             });
-            return $.when.apply($, defs);
+            return Promise.all(defs);
         });
-        return $.when.apply($, defs);
+        return Promise.all(defs);
     },
     /**
      * Destroys all animation instances. Especially needed before saving while
@@ -265,8 +265,8 @@ var WebsiteRoot = rootWidget.RootWidget.extend(ServiceProviderMixin, {
      */
     _onAnimationStartDemand: function (ev) {
         this._startAnimations(ev.data.editableMode, ev.data.$target)
-            .done(ev.data.onSuccess)
-            .fail(ev.data.onFailure);
+            .then(ev.data.onSuccess)
+            .guardedCatch(ev.data.onFailure);
     },
     /**
      * Called when the root is notified that the animations have to be
@@ -337,12 +337,12 @@ var WebsiteRoot = rootWidget.RootWidget.extend(ServiceProviderMixin, {
                 object: $data.data('object'),
             },
         })
-        .done(function (result) {
+        .then(function (result) {
             $data.toggleClass("css_unpublished css_published");
             $data.find('input').prop("checked", result);
             $data.parents("[data-publish]").attr("data-publish", +result ? 'on' : 'off');
         })
-        .fail(function (err, data) {
+        .guardedCatch(function (err, data) {
             return new Dialog(self, {
                 title: data.data ? data.data.arguments[0] : "",
                 $content: $('<div/>', {

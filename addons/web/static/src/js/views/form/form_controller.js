@@ -165,18 +165,20 @@ var FormController = BasicController.extend({
      * @override method from BasicController
      * @param {jQueryElement} $node
      * @param {Object} options
+     * @returns {Promise}
      */
     renderPager: function ($node, options) {
         options = _.extend({}, options, {
             validate: this.canBeDiscarded.bind(this),
         });
-        this._super($node, options);
+        return this._super($node, options);
     },
     /**
      * Instantiate and render the sidebar if a sidebar is requested
      * Sets this.sidebar
      * @param {jQuery} [$node] a jQuery node where the sidebar should be
      *   inserted
+     * @return {Promise}
      **/
     renderSidebar: function ($node) {
         var self = this;
@@ -398,11 +400,16 @@ var FormController = BasicController.extend({
      * @returns {Promise}
      */
     _update: function () {
-        var title = this.getTitle();
-        this._setTitle(title);
-        this._updateButtons();
-        this._updateSidebar();
-        return this._super.apply(this, arguments).then(this.autofocus.bind(this));
+        var self = this;
+
+        return this._super.apply(this, arguments).then(function() {
+            var title = self.getTitle();
+            self._setTitle(title);
+            self._updateButtons();
+            self._updateSidebar();
+
+            self.autofocus();
+        });
     },
     /**
      * @private
@@ -484,7 +491,7 @@ var FormController = BasicController.extend({
             def = saveAndExecuteAction();
         }
 
-        def.then(this._enableButtons.bind(this)).catch(this._enableButtons.bind(this));
+        def.then(this._enableButtons.bind(this)).guardedCatch(this._enableButtons.bind(this));
     },
     /**
      * Called when the user wants to create a new record -> @see createRecord
@@ -659,7 +666,7 @@ var FormController = BasicController.extend({
         ev.stopPropagation(); // Prevent x2m lines to be auto-saved
         var self = this;
         this._disableButtons();
-        this.saveRecord().then(this._enableButtons.bind(this)).catch(this._enableButtons.bind(this));
+        this.saveRecord().then(this._enableButtons.bind(this)).guardedCatch(this._enableButtons.bind(this));
     },
     /**
      * Called when user swipes left. Move to next record.

@@ -191,8 +191,8 @@ return AbstractWebClient.extend({
                                .then(function() {
                                     self._on_app_clicked_done(ev)
                                         .then(resolve)
-                                        .catch(reject);
-                               }).catch(function() {
+                                        .guardedCatch(reject);
+                               }).guardedCatch(function() {
                                     resolve();
                                });
                         setTimeout(function () {
@@ -217,7 +217,7 @@ return AbstractWebClient.extend({
                     var completed = new Promise(function(resolve, reject) {
                         Promise.resolve(self._openMenu(result, {
                             clear_breadcrumbs: true,
-                        })).then(resolve).catch(reject);
+                        })).then(resolve).guardedCatch(reject);
 
                         setTimeout(function () {
                             resolve();
@@ -225,7 +225,7 @@ return AbstractWebClient.extend({
                     });
                     return completed;
                 });
-            }).catch(function () {
+            }).guardedCatch(function () {
                 self.$el.removeClass('o_mobile_menu_opened');
             });
     },

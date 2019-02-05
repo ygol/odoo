@@ -143,7 +143,7 @@ return core.Class.extend({
                 },
                 model: 'ir.filters',
                 method: 'get_filters',
-            }).catch(this._invalidate.bind(this, this._cache.filters, key));
+            }).guardedCatch(this._invalidate.bind(this, this._cache.filters, key));
         }
         return this._cache.filters[key];
     },

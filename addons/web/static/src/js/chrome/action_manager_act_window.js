@@ -199,11 +199,11 @@ ActionManager.include({
                         controller.widget = widget;
                         resolve(controller);
                     }
-                }).catch(reject);
+                }).guardedCatch(reject);
             });
             // Need to define an reject property to call it into _destroyWindowAction
             def.reject = rejection;
-            def.catch(function () {
+            def.guardedCatch(function () {
                 def.rejected = true;
                 delete self.controllers[controllerID];
             });
@@ -229,18 +229,15 @@ ActionManager.include({
                 if (controller.widget) {
                     controller.widget.destroy();
                 }
-            }, function () {
-                // VSC do nothing on reject
-//                 delete self.controllers[controller.jsID];
-//                 if (controller.widget) {
-//                     controller.widget.destroy();
-//                 }
             });
-            // reject the promise if it is not yet resolved, so that the
-            // controller is correctly destroyed as soon as it is ready, and
-            // its reference is removed
-            controllerDef.reject();
-        };
+            // If controllerDef is not resolved yet, reject it so that the
+            // controller will be correctly destroyed as soon as it'll be ready,
+            // and its reference will be removed. Lazy-loaded controllers do
+            // not have a reject function on their promise
+            if (controllerDef.reject) {
+                controllerDef.reject();
+            }
+        }
     },
     /**
      * Executes actions of type 'ir.actions.act_window'.
@@ -257,7 +254,7 @@ ActionManager.include({
         var self = this;
         return this.dp.add(this._loadViews(action)).then(function (fieldsViews) {
             var views = self._generateActionViews(action, fieldsViews);
-            action._views = action.views;  // save the initial attribute
+            action._views = action.views; // save the initial attribute
             action.views = views;
             action.controlPanelFieldsView = fieldsViews.search;
             action.controllers = {};
@@ -312,7 +309,7 @@ ActionManager.include({
                     action.controllerID = controller.jsID;
                     return self._executeAction(action, options);
                 })
-                .catch(self._destroyWindowAction.bind(self, action));
+                .guardedCatch(self._destroyWindowAction.bind(self, action));
         });
     },
     /**
@@ -480,7 +477,7 @@ ActionManager.include({
         var view = _.findWhere(action.views, {type: viewType});
         if (!view) {
             // can't switch to an unknown view
-            return $.Deferred().reject();
+            return Promise.reject();
         }
         var currentController = this.getCurrentController();
         var index;
@@ -626,14 +623,14 @@ ActionManager.include({
                 active_id: recordID,
             }));
         } else {
-            def = new Promise(function(){});
+            def = new Promise(function () {});
         }
 
         // use the DropPrevious to prevent from executing the handler if another
         // request (doAction, switchView...) has been done meanwhile ; execute
         // the fail handler if the 'call_button' or 'loadAction' failed but not
         // if the request failed due to the DropPrevious,
-        def.catch(ev.data.on_fail);
+        def.guardedCatch(ev.data.on_fail);
         this.dp.add(def).then(function (action) {
             // show effect if button have effect attribute
             // rainbowman can be displayed from two places: from attribute on a button or from python

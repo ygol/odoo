@@ -11,10 +11,9 @@ var WysiwygRegistry = Registry.extend({
         this._super();
         this._jobs = [];
         this._xmlDependencies = [];
-        this._def = $.when();
     },
     start: function (wysiwyg) {
-        var defs = [this._def];
+        var defs = [];
         var fn;
         while ((fn = this._jobs.shift())) {
             defs.push(fn(wysiwyg));
@@ -23,10 +22,7 @@ var WysiwygRegistry = Registry.extend({
         while ((xmlPath = this._xmlDependencies.shift())) {
             defs.push(ajax.loadXML(xmlPath, core.qweb));
         }
-        if (defs.length !== 1) {
-            this._def = $.when.apply($, defs);
-        }
-        return this._def.state() === 'resolved' ? $.when() : this._def;
+        return Promise.all(defs);
     },
     addJob: function (job) {
         this._jobs.push(job);

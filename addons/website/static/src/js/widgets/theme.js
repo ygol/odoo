@@ -51,7 +51,7 @@ var ThemeCustomizeDialog = Dialog.extend({
                 return core.qweb.add_template(data);
             });
         }
-        return $.when(this._super.apply(this, arguments), templateDef);
+        return Promise.all([this._super.apply(this, arguments), templateDef]);
     },
     /**
      * @override
@@ -95,9 +95,9 @@ var ThemeCustomizeDialog = Dialog.extend({
 
         this.$inputs = this.$('[data-xmlid], [data-enable], [data-disable]');
 
-        return $.when(
-            this._super.apply(this, arguments),
-            this._loadViews()
+        return Promise.all(
+            [this._super.apply(this, arguments),
+            this._loadViews()]
         );
     },
 
@@ -210,12 +210,13 @@ var ThemeCustomizeDialog = Dialog.extend({
      */
     _loadViews: function () {
         var self = this;
-        return this._rpc({
+        var prom =  this._rpc({
             route: '/website/theme_customize_get',
             params: {
                 xml_ids: this._getXMLIDs(this.$inputs),
             },
-        }).done(function (data) {
+        });
+        prom.then(function (data) {
             self.$inputs.prop('checked', false);
             _.each(self.$inputs.filter('[data-xmlid]:not([data-xmlid=""])'), function (input) {
                 var $input = $(input);
@@ -230,9 +231,10 @@ var ThemeCustomizeDialog = Dialog.extend({
                 }
             });
             self._setActive();
-        }).fail(function (d, error) {
-            Dialog.alert(this, error.data.message);
+        }).guardedCatch(function (reason) {
+            Dialog.alert(this, reason.error.data.message);
         });
+        return prom;
     },
     /**
      * @private
@@ -270,38 +272,34 @@ var ThemeCustomizeDialog = Dialog.extend({
             return Promise.resolve();
         }
 
-        var def = $.Deferred();
-        var $image = $('<img/>');
-        var editor = new weWidgets.MediaDialog(this, {
-            onlyImages: true,
-            firstFilters: ['background'],
-        }, $image[0]);
+        var def = new Promise(function(resolve, reject) {
+            var $image = $('<img/>');
+            var editor = new weWidgets.MediaDialog(this, {
+                onlyImages: true,
+                firstFilters: ['background'],
+            }, $image[0]);
 
-        editor.on('save', this, function (media) { // TODO use scss customization instead (like for user colors)
-            var src = $(media).attr('src');
-            self._rpc({
-                model: 'ir.model.data',
-                method: 'get_object_reference',
-                args: ['website', bodyCustomImageXMLID],
-            }).then(function (data) {
-                return self._rpc({
-                    model: 'ir.ui.view',
-                    method: 'save',
-                    args: [
-                        data[1],
-                        '#wrapwrap { background-image: url("' + src + '"); }',
-                        '//style',
-                    ],
-                });
-            }).then(function () {
-                def.resolve();
+            editor.on('save', this, function (media) { // TODO use scss customization instead (like for user colors)
+                var src = $(media).attr('src');
+                self._rpc({
+                    model: 'ir.model.data',
+                    method: 'get_object_reference',
+                    args: ['website', bodyCustomImageXMLID],
+                }).then(function (data) {
+                    return self._rpc({
+                        model: 'ir.ui.view',
+                        method: 'save',
+                        args: [
+                            data[1],
+                            '#wrapwrap { background-image: url("' + src + '"); }',
+                            '//style',
+                        ],
+                    });
+                }).then(resolve);
             });
+            editor.on('cancel', this, resolve);
+            editor.open();
         });
-        editor.on('cancel', this, function () {
-            def.resolve();
-        });
-
-        editor.open();
 
         return def;
     },
@@ -352,7 +350,7 @@ var ThemeCustomizeDialog = Dialog.extend({
                 disable: (disable || []).join(','),
                 tab: this.$('.nav-link.active').parent().index(),
             });
-            return $.Deferred();
+            return Promise.resolve();
         }
 
         var self = this;
@@ -369,25 +367,26 @@ var ThemeCustomizeDialog = Dialog.extend({
                 var $links = $(linkSelector);
                 var $newLinks = $(bundleContent).filter(linkSelector);
 
-                var linksLoaded = $.Deferred();
-                var nbLoaded = 0;
-                $newLinks.on('load', function (e) {
-                    if (++nbLoaded >= $newLinks.length) {
-                        linksLoaded.resolve();
-                    }
+                var linksLoaded = new Promise(function(resolve, reject) {
+                    var nbLoaded = 0;
+                    $newLinks.on('load', function (e) {
+                        if (++nbLoaded >= $newLinks.length) {
+                            resolve();
+                        }
+                    });
+                    $newLinks.on('error', function (e) {
+                        reject();
+                        window.location.hash = 'theme=true';
+                        window.location.reload();
+                    });
+                    $links.last().after($newLinks);
                 });
-                $newLinks.on('error', function (e) {
-                    linksLoaded.reject();
-                    window.location.hash = 'theme=true';
-                    window.location.reload();
-                });
-                $links.last().after($newLinks);
                 return linksLoaded.then(function () {
                     $links.remove();
                 });
             });
 
-            return $.when.apply($, defs).then(function () {
+            return Promise.all(defs).then(function () {
                 self.$modal.removeClass('o_theme_customize_loading');
             });
         });
@@ -548,7 +547,7 @@ var ThemeCustomizeMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
      *
      * @private
      * @param {string} tab
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _openThemeCustomizeDialog: function (tab) {
         return new ThemeCustomizeDialog(this, {tab: tab}).open();

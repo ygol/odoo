@@ -472,7 +472,7 @@ var AbstractField = Widget.extend({
         } catch (e) {
             this._isValid = false;
             this.trigger_up('set_dirty', {dataPointID: this.dataPointID});
-            return Promise.reject();
+            return Promise.reject({message:"Value set does not correspond to the type"});
         }
         if (!(options && options.forceChange) && this._isSameValue(value)) {
             return Promise.resolve();

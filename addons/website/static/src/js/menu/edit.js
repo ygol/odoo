@@ -83,7 +83,7 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
      * welcome message if necessary.
      *
      * @private
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     _startEditMode: function () {
         var self = this;
@@ -105,13 +105,13 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
                 .find('.oe_structure.oe_empty, [data-oe-type="html"]')
                 .not('[data-editor-message]')
                 .attr('data-editor-message', _t('DRAG BUILDING BLOCKS HERE'));
-            var def = $.Deferred();
-            self.trigger_up('animation_start_demand', {
-                editableMode: true,
-                onSuccess: def.resolve.bind(def),
-                onFailure: def.reject.bind(def),
+            new Promise(function(resolve, reject) { //VSC: I don't know why the editor needs to create a promise here and resolve it.
+                self.trigger_up('animation_start_demand', {
+                    editableMode: true,
+                    onSuccess: resolve,
+                    onFailure: reject,
+                });
             });
-            return def;
         });
     },
     /**

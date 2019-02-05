@@ -175,12 +175,11 @@ QUnit.module('basic_fields', {
         await testUtils.nextMicrotaskTick();
 
         // wait for the debounced callback to be called
-        assert.verifySteps(['_setValue'],
+        assert.verifySteps([],
             "_setValue should not have been called after widget destruction");
 
         DebouncedField.prototype._doAction = _doAction;
         DebouncedField.prototype._setValue = _setValue;
-
     });
 
     QUnit.module('FieldBoolean');
@@ -1182,6 +1181,8 @@ QUnit.module('basic_fields', {
 
         // complete the onchange
         def.resolve();
+        await testUtils.nextTick();
+
         assert.strictEqual(form.$('input[name="foo"]').val(), 'tralala',
             'input should contain the same value as before onchange');
 
@@ -1505,7 +1506,7 @@ QUnit.module('basic_fields', {
 
         var $field = form.$('.o_field_text');
 
-        assert.strictEqual($field.outerHeight(), $field[0].scrollHeight,
+        assert.strictEqual($field[0].offsetHeight, $field[0].scrollHeight,
             "text field should not have a scroll bar");
 
         await testUtils.form.clickEdit(form);
@@ -1513,7 +1514,7 @@ QUnit.module('basic_fields', {
         var $textarea = form.$('textarea:first');
 
         // the difference is to take small calculation errors into account
-        assert.strictEqual($textarea.innerHeight(), $textarea[0].scrollHeight,
+        assert.strictEqual($textarea[0].clientHeight, $textarea[0].scrollHeight,
             "textarea should not have a scroll bar");
         form.destroy();
     });
@@ -1908,7 +1909,7 @@ QUnit.module('basic_fields', {
                 this._super.apply(this, arguments);
             },
             _getURI: function (fileURI) {
-                var res = this._super.apply(this, arguments);
+                this._super.apply(this, arguments);
                 assert.step('_getURI');
                 assert.ok(_.str.startsWith(fileURI, 'blob:'));
                 this.PDFViewerApplication = {
@@ -1936,7 +1937,7 @@ QUnit.module('basic_fields', {
         assert.verifySteps(['_getURI']);
         // second upload call pdfjs method inside iframe
         form.$('input[type="file"]').trigger('change');
-        assert.verifySteps(['_getURI', 'open']);
+        assert.verifySteps(['open']);
 
         testUtils.mock.unpatch(field_registry.map.pdf_viewer);
         form.destroy();
@@ -2111,7 +2112,7 @@ QUnit.module('basic_fields', {
                     '</field>' +
                 '</form>',
             res_id: 1,
-            mockRPC: function (route, args) {
+            mockRPC: function (route) {
                 if (route === 'data:image/png;base64,myimage') {
                     assert.step("The view's image should have been fetched");
                     return Promise.resolve('wow');
@@ -2132,10 +2133,7 @@ QUnit.module('basic_fields', {
         await testUtils.dom.click(form.$('tbody td:contains(gold)'));
         assert.strictEqual($('.modal').length, 1,
             'The modal should have opened');
-        assert.verifySteps([
-            "The view's image should have been fetched",
-            "The dialog's image should have been fetched",
-        ]);
+        assert.verifySteps(["The dialog's image should have been fetched"]);
 
         form.destroy();
     });
@@ -2159,7 +2157,7 @@ QUnit.module('basic_fields', {
                     '</field>' +
                 '</form>',
             res_id: 1,
-            mockRPC: function (route, args) {
+            mockRPC: function (route) {
                 if (route === 'data:image/png;base64,product_image') {
                     assert.ok(true, "The list's image should have been fetched");
                     return Promise.resolve();
@@ -2275,8 +2273,6 @@ QUnit.module('basic_fields', {
             kanban.on_detach_callback();
 
             assert.verifySteps([
-                'on_attach_callback',
-                'on_attach_callback',
                 'on_detach_callback',
                 'on_detach_callback'
             ]);
@@ -2961,7 +2957,7 @@ QUnit.module('basic_fields', {
         form.destroy();
     });
 
-    QUnit.test('date field support internalization', function (assert) {
+    QUnit.test('date field support internalization', async function (assert) {
         assert.expect(2);
 
         var originalLocale = moment.locale();
@@ -2975,7 +2971,7 @@ QUnit.module('basic_fields', {
             ordinal: '%d.',
         });
 
-        var form = createView({
+        var form = await createView({
             View: FormView,
             model: 'partner',
             data: this.data,
@@ -2984,14 +2980,14 @@ QUnit.module('basic_fields', {
         });
 
         var dateViewForm = form.$('.o_field_date').text();
-        testUtils.dom.click(form.$buttons.find('.o_form_button_edit'));
-        testUtils.openDatepicker(form.$('.o_datepicker'));
+        await testUtils.dom.click(form.$buttons.find('.o_form_button_edit'));
+        await testUtils.openDatepicker(form.$('.o_datepicker'));
         assert.strictEqual(form.$('.o_datepicker_input').val(), dateViewForm,
             "input date field should be the same as it was in the view form");
 
-        testUtils.dom.click($('.day:contains(30)'));
-        var dateEditForm = form.$('.o_datepicker_input').val()
-        testUtils.dom.click(form.$buttons.find('.o_form_button_save'));
+        await testUtils.dom.click($('.day:contains(30)'));
+        var dateEditForm = form.$('.o_datepicker_input').val();
+        await testUtils.dom.click(form.$buttons.find('.o_form_button_save'));
         assert.strictEqual(form.$('.o_field_date').text(), dateEditForm,
             "date field should be the same as the one selected in the view form");
 
@@ -3541,7 +3537,7 @@ QUnit.module('basic_fields', {
             string: "Quux", type: "monetary", digits: [16,1], searchable: true, readonly: true,
         };
 
-        (_.find(this.data.partner.records, function (record) { return record.id === 5 })).quux = 4.2;
+        (_.find(this.data.partner.records, function (record) { return record.id === 5; })).quux = 4.2;
 
         this.data.partner.onchanges = {
             bar: function (obj) {

@@ -39,13 +39,13 @@ QUnit.module('field html', {
         testUtils.mock.patch(ajax, {
             loadAsset: function (xmlId) {
                 if (xmlId === 'template.assets') {
-                    return $.when({
+                    return Promise.resolve({
                         cssLibs: [],
                         cssContents: ['.field_body {background-color: red;}']
                     });
                 }
                 if (xmlId === 'template.assets_all_style') {
-                    return $.when({
+                    return Promise.resolve({
                         cssLibs: $('link[href]:not([type="image/x-icon"])').map(function () {
                             return $(this).attr('href');
                         }).get(),
@@ -97,7 +97,7 @@ QUnit.test('save arch and html', function (assert) {
             }
             return this._super.apply(this, arguments);
         },
-    }).then(function (form) {
+    }).then(async function (form) {
         var $fieldReadonly = form.$('.oe_form_field[name="body_html"]');
         var $fieldEdit = form.$('.oe_form_field[name="body_arch"]');
 
@@ -113,8 +113,8 @@ QUnit.test('save arch and html', function (assert) {
         assert.strictEqual($fieldEdit.css('display'), 'block', "should display the edit mode");
 
         var $iframe = $fieldEdit.find('iframe');
-
-        $iframe.data('load-def').then(function () {
+        await testUtils.nextTick();
+        $iframe.data('loadDef').then(function () {
             var doc = $iframe.contents()[0];
             var $content = $('#iframe_target', doc);
 

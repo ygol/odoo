@@ -1591,16 +1591,15 @@ QUnit.module('fields', {}, function () {
             });
 
             testUtils.mock.intercept(form, "field_changed", function (event) {
-                assert.step(form.model.get(event.data.changes.turtles.id).res_id);
+                assert.step(String(form.model.get(event.data.changes.turtles.id).res_id));
             }, true);
 
             await testUtils.form.clickEdit(form);
 
-            var steps = [];
             var positions = [
-                [6, 0, 'top', [3, 6, 1, 2, 5, 7, 4]], // move the last to the first line
-                [5, 1, 'top', [7, 6, 1, 2, 5]], // move the penultimate to the second line
-                [2, 5, 'center', [1, 2, 5, 6]], // move the third to the penultimate line
+                [6, 0, 'top', ['3', '6', '1', '2', '5', '7', '4']], // move the last to the first line
+                [5, 1, 'top', ['7', '6', '1', '2', '5']], // move the penultimate to the second line
+                [2, 5, 'center', ['1', '2', '5', '6']], // move the third to the penultimate line
             ];
             async function dragAndDrop() {
                 var pos = positions.shift();
@@ -1611,8 +1610,7 @@ QUnit.module('fields', {}, function () {
                     { position: pos[2] }
                 );
 
-                steps = steps.concat(pos[3]);
-                assert.verifySteps(steps,
+                assert.verifySteps(pos[3],
                     "sequences values should be apply from the begin index to the drop index");
 
                 if (positions.length) {
@@ -3237,7 +3235,7 @@ QUnit.module('fields', {}, function () {
             form.$('.o_field_widget[name="product_id"] input').val('').trigger('keyup');
             assert.verifySteps(['read', 'read'], 'no onchange should be done as line is invalid');
             await testUtils.dom.click(form.$('.o_list_record_remove'));
-            assert.verifySteps(['read', 'read', 'onchange'], 'onchange should have been done');
+            assert.verifySteps(['onchange'], 'onchange should have been done');
 
             form.destroy();
         });
@@ -3393,8 +3391,7 @@ QUnit.module('fields', {}, function () {
             form.destroy();
         });
 
-        QUnit.skip('one2many and onchange (with date) [!!! ATTENTION, ATTENTION !!! DON\'T SKIP ME !!! DON\'T FORGET TO FIX ME BEFORE MERGING !!!]', async function (assert) {
-            // SVS: This test fails because an uncaught error occurs in tempusdominus lib
+        QUnit.test('one2many and onchange (with date)', async function (assert) {
             assert.expect(7);
 
             this.data.partner.onchanges = {
@@ -3429,6 +3426,11 @@ QUnit.module('fields', {}, function () {
             await testUtils.dom.click($('.bootstrap-datetimepicker-widget .year:contains(2017)'));
             await testUtils.dom.click($('.bootstrap-datetimepicker-widget .month').eq(1));
             await testUtils.dom.click($('.day:contains(22)'));
+            // trigger the blur of input before the click on Save, to closely mock what actually
+            // happens when we really click on Save
+            // this is required to close the datepicker before removing the input from the DOM
+            // (because of the re-rendering in readonly), otherwise tempusdominus crashes
+            await testUtils.dom.triggerEvents(form.$('.o_datepicker_input'), 'blur');
             await testUtils.form.clickSave(form);
 
             assert.verifySteps(['read', 'read', 'onchange', 'write', 'read', 'read']);
@@ -5571,7 +5573,7 @@ QUnit.module('fields', {}, function () {
         });
 
         QUnit.test('one2many list editable, no onchange when required field is not set', async function (assert) {
-            assert.expect(7);
+            assert.expect(8);
 
             this.data.turtle.fields.turtle_foo.required = true;
             this.data.partner.onchanges = {
@@ -5612,6 +5614,7 @@ QUnit.module('fields', {}, function () {
             assert.verifySteps(['read', 'default_get'], "no onchange should have been applied");
 
             await testUtils.fields.editInput(form.$('.o_field_widget[name="turtle_foo"]'), "some text");
+            assert.verifySteps(['onchange']);
             assert.strictEqual(form.$('.o_field_widget[name="int_field"]').val(), "1",
                 "int_field should now be 1 (the onchange should have been done");
 
@@ -5622,7 +5625,7 @@ QUnit.module('fields', {}, function () {
             // should omit require fields that aren't in the view as they (obviously)
             // have no value, when checking the validity of required fields
             // shouldn't consider numerical fields with value 0 as unset
-            assert.expect(12);
+            assert.expect(13);
 
             this.data.turtle.fields.turtle_foo.required = true;
             this.data.turtle.fields.turtle_qux.required = true; // required field not in the view
@@ -5677,13 +5680,14 @@ QUnit.module('fields', {}, function () {
             await testUtils.fields.editInput(form.$('.o_field_widget[name="turtle_foo"]'), "some text");
             assert.strictEqual(form.$('.o_field_widget[name="int_field"]').val(), "0",
                 "int_field should still be 0 (no onchange should have been done yet)");
-            assert.verifySteps(['load_views', 'read', 'default_get'], "no onchange should have been applied");
+            assert.verifySteps([], "no onchange should have been applied");
 
             // fill partner_ids field with a tag (all required fields will then be set)
             await testUtils.fields.many2one.clickOpenDropdown('partner_ids');
             await testUtils.fields.many2one.clickHighlightedItem('partner_ids');
             assert.strictEqual(form.$('.o_field_widget[name="int_field"]').val(), "1",
                 "int_field should now be 1 (the onchange should have been done");
+            assert.verifySteps(['name_search', 'read', 'onchange']);
 
             form.destroy();
         });
@@ -8114,10 +8118,10 @@ QUnit.module('fields', {}, function () {
             form.destroy();
         });
 
-        QUnit.test('field context is correctly passed to x2m subviews', function (assert) {
+        QUnit.test('field context is correctly passed to x2m subviews', async function (assert) {
             assert.expect(2);
 
-             var form = createView({
+             var form = await createView({
                 View: FormView,
                 model: 'partner',
                 data: this.data,

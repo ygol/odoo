@@ -355,7 +355,7 @@ var FormRenderer = BasicRenderer.extend({
      */
     _renderButtonBox: function (node) {
         var self = this;
-        var $result = $('<' + node.tag + '>', { 'class': 'o_not_full' });
+        var $result = $('<' + node.tag + '>', {class: 'o_not_full'});
         var buttons = _.map(node.children, function (child) {
             if (child.tag === 'button') {
                 return self._renderStatButton(child);
@@ -363,48 +363,60 @@ var FormRenderer = BasicRenderer.extend({
                 return self._renderNode(child);
             }
         });
-        var buttons_partition = _.partition(buttons, function ($button) {
-            return $button.is('.o_invisible_modifier');
-        });
-        var invisible_buttons = buttons_partition[0];
-        var visible_buttons = buttons_partition[1];
 
-        // Get the unfolded buttons according to window size
-        var nb_buttons = [2, 2, 4, 6][config.device.size_class] || 7;
-        var unfolded_buttons = visible_buttons.slice(0, nb_buttons).concat(invisible_buttons);
-
-        // Get the folded buttons
-        var folded_buttons = visible_buttons.slice(nb_buttons);
-        if (folded_buttons.length === 1) {
-            unfolded_buttons = buttons;
-            folded_buttons = [];
-        }
-
-        // Toggle class to tell if the button box is full (CSS requirement)
-        var full = (visible_buttons.length > nb_buttons);
-        $result.toggleClass('o_full', full).toggleClass('o_not_full', !full);
-
-        // Add the unfolded buttons
-        _.each(unfolded_buttons, function ($button) {
-            $button.appendTo($result);
+        // modifiers could not be registered yet (see renderFieldWidget) so we
+        // temporary append all buttons (some might be replaced by their
+        // corresponding widget rendering) before partitioning buttons
+        var $tempResult = $('<div>');
+        _.each(buttons, function ($button) {
+            $button.appendTo($tempResult);
         });
 
-        // Add the dropdown with folded buttons if any
-        if (folded_buttons.length) {
-            $result.append(dom.renderButton({
-                attrs: {
-                    class: 'oe_stat_button o_button_more dropdown-toggle',
-                    'data-toggle': 'dropdown',
-                },
-                text: _t("More"),
-            }));
-
-            var $dropdown = $("<div>", {'class': "dropdown-menu o_dropdown_more", role: "menu"});
-            _.each(folded_buttons, function ($button) {
-                $button.addClass('dropdown-item').appendTo($dropdown);
+        Promise.all(this.defs).then(function () {
+            buttons = $tempResult.children();
+            var buttons_partition = _.partition(buttons, function (button) {
+                return $(button).is('.o_invisible_modifier');
             });
-            $dropdown.appendTo($result);
-        }
+            var invisible_buttons = buttons_partition[0];
+            var visible_buttons = buttons_partition[1];
+
+            // Get the unfolded buttons according to window size
+            var nb_buttons = [2, 2, 4, 6][config.device.size_class] || 7;
+            var unfolded_buttons = visible_buttons.slice(0, nb_buttons).concat(invisible_buttons);
+
+            // Get the folded buttons
+            var folded_buttons = visible_buttons.slice(nb_buttons);
+            if (folded_buttons.length === 1) {
+                unfolded_buttons = buttons;
+                folded_buttons = [];
+            }
+
+            // Toggle class to tell if the button box is full (CSS requirement)
+            var full = (visible_buttons.length > nb_buttons);
+            $result.toggleClass('o_full', full).toggleClass('o_not_full', !full);
+
+            // Add the unfolded buttons
+            _.each(unfolded_buttons, function (button) {
+                $(button).appendTo($result);
+            });
+
+            // Add the dropdown with folded buttons if any
+            if (folded_buttons.length) {
+                $result.append(dom.renderButton({
+                    attrs: {
+                        'class': 'oe_stat_button o_button_more dropdown-toggle',
+                        'data-toggle': 'dropdown',
+                    },
+                    text: _t("More"),
+                }));
+
+                var $dropdown = $("<div>", {class: "dropdown-menu o_dropdown_more", role: "menu"});
+                _.each(folded_buttons, function (button) {
+                    $(button).addClass('dropdown-item').appendTo($dropdown);
+                });
+                $dropdown.appendTo($result);
+            }
+        });
 
         this._handleAttributes($result, node);
         this._registerModifiers(node, this.state, $result);
@@ -900,19 +912,19 @@ var FormRenderer = BasicRenderer.extend({
         var defs = [];
         this.defs = defs;
         var $form = this._renderNode(this.arch).addClass(this.className);
-        //delete this.defs;
+        delete this.defs;
 
         return Promise.all(defs).then(function () {
             self._updateView($form.contents());
             if (self.state.res_id in self.alertFields) {
                 self.displayTranslationAlert();
             }
-        }, function () {
-            $form.remove();
         }).then(function(){
             if (self.lastActivatedFieldIndex >= 0) {
                 self._activateNextFieldWidget(self.state, self.lastActivatedFieldIndex);
             }
+        }).guardedCatch(function () {
+            $form.remove();
         });
     },
     /**

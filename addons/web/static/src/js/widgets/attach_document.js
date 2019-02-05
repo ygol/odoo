@@ -122,7 +122,7 @@ var AttachDocument = Widget.extend({
                     }
                 }).then(function () {
                     resolve();
-                }).catch(function(reason) {
+                }).guardedCatch(function(reason) {
                     resolve();
                     throw new Error(reason);
                 });

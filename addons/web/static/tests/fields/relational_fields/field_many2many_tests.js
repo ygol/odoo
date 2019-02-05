@@ -111,7 +111,7 @@ QUnit.module('fields', {}, function () {
                     }]
                 },
             };
-        }
+        },
     }, function () {
         QUnit.module('FieldMany2Many');
 
@@ -552,8 +552,6 @@ QUnit.module('fields', {}, function () {
                 'new name', 'the updated row still has the correct values');
 
             assert.verifySteps([
-                'read', // main record
-                'read', // relational field
                 'search_read', // list view in dialog
                 'read', // relational field (updated)
                 'write', // save main record
@@ -742,7 +740,7 @@ QUnit.module('fields', {}, function () {
                         assert.step(_.last(route.split('/')) + ' on ' + args.model);
                     }
                     if (args.model === 'turtle') {
-                        assert.step(args.args[0]); // the read ids
+                        assert.step(JSON.stringify(args.args[0])); // the read ids
                     }
                     return this._super.apply(this, arguments);
                 },
@@ -771,16 +769,16 @@ QUnit.module('fields', {}, function () {
                 'read on partner',
                 'search_read on partner_type',
                 'read on turtle',
-                [1, 2, 3],
+                '[1,2,3]',
                 'read on partner_type',
                 'read on turtle',
-                [1, 2],
+                '[1,2]',
                 'search_read on partner_type',
                 'read on turtle',
-                [2, 3],
+                '[2,3]',
                 'read on partner_type',
                 'read on turtle',
-                [2, 3],
+                '[2,3]',
             ]);
 
             form.destroy();
@@ -875,7 +873,7 @@ QUnit.module('fields', {}, function () {
         QUnit.test('onchange with 40+ commands for a many2many', async function (assert) {
             // this test ensures that the basic_model correctly handles more LINK_TO
             // commands than the limit of the dataPoint (40 for x2many kanban)
-            assert.expect(23);
+            assert.expect(24);
 
             // create a lot of partner_types that will be linked by the onchange
             var commands = [[5]];
@@ -927,14 +925,14 @@ QUnit.module('fields', {}, function () {
 
             await testUtils.fields.editInput(form.$('.o_field_widget[name=foo]'), 'trigger onchange');
 
-            assert.verifySteps(['read', 'onchange', 'read']);
+            assert.verifySteps(['onchange', 'read']);
             assert.strictEqual(form.$('.o_x2m_control_panel .o_pager_counter').text().trim(),
                 '1-40 / 45', "pager should be correct");
             assert.strictEqual(form.$('.o_kanban_record:not(".o_kanban_ghost")').length, 40,
                 'there should be 40 records displayed on page 1');
 
             await testUtils.dom.click(form.$('.o_field_widget[name=timmy] .o_pager_next'));
-            assert.verifySteps(['read', 'onchange', 'read', 'read']);
+            assert.verifySteps(['read']);
             assert.strictEqual(form.$('.o_x2m_control_panel .o_pager_counter').text().trim(),
                 '41-45 / 45', "pager should be correct");
             assert.strictEqual(form.$('.o_kanban_record:not(".o_kanban_ghost")').length, 5,
@@ -959,6 +957,7 @@ QUnit.module('fields', {}, function () {
             assert.strictEqual(form.$('.o_kanban_record:not(".o_kanban_ghost")').length, 40,
                 'there should be 40 records displayed on page 1');
 
+            assert.verifySteps(['write', 'read', 'read', 'read']);
             form.destroy();
         });
 

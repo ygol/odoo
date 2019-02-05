@@ -114,7 +114,7 @@ function redirect (url, wait) {
     };
 
     var wait_server = function() {
-        ajax.rpc("/web/webclient/version_info", {}).then(load).catch(function() {
+        ajax.rpc("/web/webclient/version_info", {}).then(load).guardedCatch(function() {
             setTimeout(wait_server, 250);
         });
     };

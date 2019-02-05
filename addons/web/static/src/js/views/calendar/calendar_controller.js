@@ -390,7 +390,7 @@ var CalendarController = AbstractController.extend({
                 self.reload();
                 self.quickCreating = false;
             })
-            .catch(function (result) {
+            .guardedCatch(function (result) {
                 var errorEvent = result.event;
                 // This will occurs if there are some more fields required
                 // Preventdefaulting the error event will prevent the traceback window

@@ -156,7 +156,7 @@ var RecordQuickCreate = Widget.extend({
             } else {
                 self._enableQuickCreate();
             }
-        }).catch(this._enableQuickCreate.bind(this));
+        }).guardedCatch(this._enableQuickCreate.bind(this));
     },
     /**
      * Notifies the environment that the quick creation must be cancelled

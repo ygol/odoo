@@ -64,7 +64,7 @@ var LunchKanbanModel = KanbanModel.extend({
     },
     _updateLocation: function (locationId) {
         this.locationId = locationId;
-        return $.when();
+        return Promise.resolve();
     },
     _updateUser: function (userId) {
         var self = this;
