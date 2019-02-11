@@ -74,7 +74,7 @@ var WebsiteRoot = rootWidget.RootWidget.extend(ServiceProviderMixin, {
      */
     willStart: function () {
         // TODO would be even greater to wait for those only if necessary
-        return Promise.All([
+        return Promise.all([
             this._super.apply(this, arguments),
             session.is_bound,
             localeDef
