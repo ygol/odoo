@@ -282,13 +282,14 @@ var BaseSettingRenderer = FormRenderer.extend({
     },
 
     _render: function () {
+        var self = this;
         return this._super.apply(this, arguments).then(function() {
-            this._initModules();
-            this._renderLeftPanel();
-            this._initSearch();
-            this.$('.o_statusbar_buttons').addClass('d-none');
+            self._initModules();
+            self._renderLeftPanel();
+            self._initSearch();
+            self.$('.o_statusbar_buttons').addClass('d-none');
             if (config.device.isMobile) {
-                this._enableSwipe();
+                self._enableSwipe();
             }
         });
     },

@@ -178,10 +178,10 @@ QUnit.module('base_settings_tests', {
         form.destroy();
     });
 
-    QUnit.test('settings view shows statusbar buttons only if there are changes to save', function (assert) {
+    QUnit.test('settings view shows statusbar buttons only if there are changes to save', async function (assert) {
         assert.expect(5);
 
-        var form = createView({
+        var form = await createAsyncView({
             View: BaseSettingsView,
             model: 'project',
             data: this.data,
@@ -208,7 +208,7 @@ QUnit.module('base_settings_tests', {
 
         assert.containsNone(form, '.o_field_boolean input:checked', "checkbox should not be checked");
         assert.hasClass(form.$('.o_statusbar_buttons'), 'd-none', "statusbar buttons should not be shown");
-        testUtils.dom.click(form.$("input[type='checkbox']"));
+        await testUtils.dom.click(form.$("input[type='checkbox']"));
         assert.strictEqual(form.$('.o_field_boolean input:checked').length, 1,"checkbox should be checked");
         assert.isVisible(form.$('.o_statusbar_buttons'), "statusbar buttons should be shown");
         form.destroy();
