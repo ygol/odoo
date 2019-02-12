@@ -4944,7 +4944,7 @@ QUnit.module('Views', {
             mockRPC: function (route, args) {
                 if (route === 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACAA==') {
                     assert.ok("The view's image should have been fetched.");
-                    return $.when();
+                    return Promise.resolve();
                 }
                 return this._super.apply(this, arguments);
             },

@@ -43,7 +43,7 @@ var PortalComposer = Widget.extend({
      * @private
      */
     _onSubmitButtonClick: function () {
-        return $.Deferred();
+        return new Promise(function() {});
     },
 });
 

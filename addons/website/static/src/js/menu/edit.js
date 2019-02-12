@@ -51,7 +51,7 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
 
         // If we auto start the editor, do not show a welcome message
         if (this._editorAutoStart) {
-            return $.when(def, this._startEditMode());
+            return Promise.all([def, this._startEditMode()]);
         }
 
         // Check that the page is empty
