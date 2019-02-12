@@ -124,8 +124,7 @@ QUnit.module('Views', {
     };
 
     QUnit.test('simple calendar rendering', async function (assert) {
-        assert.expect(25);
-        var done = assert.async();
+        assert.expect(23);
 
         this.data.event.records.push({
             id: 7,
@@ -167,13 +166,7 @@ QUnit.module('Views', {
 
         var $sidebar = calendar.$('.o_calendar_sidebar');
 
-        // filters which has no value should show with string "Undefined", should not have any user image and should show at the last
-        assert.strictEqual($typeFilter.find('.o_calendar_filter_item:last').data('value'), false, "filters having false value should be displayed at last in filter items");
-        assert.strictEqual($typeFilter.find('.o_calendar_filter_item:last span').text(), "Undefined", "filters having false value should display 'Undefined' string");
-        assert.strictEqual($typeFilter.find('.o_calendar_filter_item:last label img').length, 0, "filters having false value should not have any user image");
-
         // test view scales
-
         assert.containsN(calendar, '.fc-event', 9,
             "should display 9 events on the week (4 event + 5 days event)");
         assert.containsN($sidebar, '.o_selected_range', 7,
