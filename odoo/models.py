@@ -2872,15 +2872,15 @@ Fields:
                 else:
                     records &= self._in_cache_without(f)
 
-        # fetch records with read()
+        # fetch records with _read()
         assert self in records and field in fs
         records = records.with_prefetch(self._prefetch)
         result = []
         try:
-            result = records.read([f.name for f in fs], load='_classic_write')
+            result = records._read([f.name for f in fs])
         except AccessError:
             # not all prefetched records may be accessible, try with only the current recordset
-            result = self.read([f.name for f in fs], load='_classic_write')
+            result = self._read([f.name for f in fs])
 
         # check the cache, and update it if necessary
         if not self.env.cache.contains_value(self, field):
