@@ -2817,7 +2817,7 @@ Fields:
 
         # fetch stored fields from the database to the cache; this should feed
         # the prefetching of secondary records
-        self._read_from_database(stored, inherited)
+        self._read(stored, inherited)
 
         # retrieve results from records; this takes values from the cache and
         # computes remaining fields
@@ -2892,7 +2892,7 @@ Fields:
                 self.env.cache.set_failed(self, [field], exc)
 
     @api.multi
-    def _read_from_database(self, field_names, inherited_field_names=[]):
+    def _read(self, field_names, inherited_field_names=[]):
         """ Read the given fields of the records in ``self`` from the database,
             and store them in cache. Access errors are also stored in cache.
 
