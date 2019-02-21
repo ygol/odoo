@@ -5296,8 +5296,14 @@ Fields:
                 updates[frozendict(vals)].add(rec.id)
             # update records in batch when possible
             with recs.env.norecompute():
+                db_vals = {
+                    vals.pop('id'): vals
+                    for vals in recs.read(ns, load=False)
+                }
                 for vals, ids in updates.items():
                     target = recs.browse(ids)
+                    if all(db_vals.get(id, vals) == vals for id in ids):
+                        continue
                     try:
                         target._write(dict(vals))
                     except MissingError:
