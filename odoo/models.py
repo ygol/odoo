@@ -3365,7 +3365,9 @@ Fields:
             if inverse_vals:
                 self.check_field_access_rights('write', list(inverse_vals))
 
-                self.modified(set(inverse_vals) - set(store_vals))
+                # Modifying a field requires to determine what depends on its
+                # old and new values.
+                self.modified(set(inverse_vals) - set(store_vals), before=True)
 
                 # group fields by inverse method (to call it once), and order
                 # groups by dependence (in case they depend on each other)
@@ -3442,8 +3444,10 @@ Fields:
                 columns.append(('write_date', '%s', AsIs("(now() at time zone 'UTC')")))
                 updated.append('write_date')
 
-        # mark fields to recompute (the ones that depend on old values)
-        self.modified(vals)
+        # Modifying a field requires to determine what depends on its old and
+        # new values. For instance, changing the sales order of a line requires
+        # to recompute the total of both former and latter sales order.
+        self.modified(vals, before=True)
 
         # update columns
         if columns:
@@ -5217,13 +5221,15 @@ Fields:
         self.env.cache.invalidate(spec)
 
     @api.multi
-    def modified(self, fnames):
+    def modified(self, fnames, before=False):
         """ Notify that fields have been modified on ``self``. This invalidates
             the cache, and prepares the recomputation of stored function fields
             (new-style fields only).
 
             :param fnames: iterable of field names that have been modified on
                 records ``self``
+            :param before: whether the notification happens before modifying
+                the fields
         """
         # group triggers by (model, path) to minimize the calls to search()
         invalids = []
@@ -5232,6 +5238,10 @@ Fields:
             mfield = self._fields[fname]
             # invalidate mfield on self, and its inverses fields
             invalids.append((mfield, self._ids))
+            if before and not mfield.relational:
+                # the dependents of non-relational fields are the same before
+                # and after an update; we therefore process them once (after)
+                continue
             for field in self._field_inverses[mfield]:
                 invalids.append((field, None))
             # group triggers by model and path to reduce the number of search()
