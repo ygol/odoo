@@ -3350,7 +3350,7 @@ Fields:
                     )
 
             if inverse_vals:
-                self.modified(set(inverse_vals) - set(store_vals))
+                self.modified(set(inverse_vals) - set(store_vals), before=True)
 
                 # group fields by inverse method (to call it once), and order
                 # groups by dependence (in case they depend on each other)
@@ -3429,7 +3429,7 @@ Fields:
                 updated.append('write_date')
 
         # mark fields to recompute (the ones that depend on old values)
-        self.modified(vals)
+        self.modified(vals, before=True)
 
         # update columns
         if columns:
@@ -5199,19 +5199,23 @@ Fields:
         self.env.cache.invalidate(spec)
 
     @api.multi
-    def modified(self, fnames):
+    def modified(self, fnames, before=False):
         """ Notify that fields have been modified on ``self``. This invalidates
             the cache, and prepares the recomputation of stored function fields
             (new-style fields only).
 
             :param fnames: iterable of field names that have been modified on
                 records ``self``
+            :param before: whether the notification happens before modifying
+                the fields
         """
         # group triggers by (model, path) to minimize the calls to search()
         invalids = []
         triggers = defaultdict(set)
         for fname in fnames:
             mfield = self._fields[fname]
+            if before and not mfield.relational:
+                continue
             # invalidate mfield on self, and its inverses fields
             invalids.append((mfield, self._ids))
             for field in self._field_inverses[mfield]:
