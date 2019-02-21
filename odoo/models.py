@@ -1559,6 +1559,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
 
         :raise AccessError: * if user tries to bypass access rules for read on the requested object.
         """
+        _logger.info("%s SEARCH %s", self._name, args)
         res = self._search(args, offset=offset, limit=limit, order=order, count=count)
         return res if count else self.browse(res)
 
@@ -2844,6 +2845,7 @@ Fields:
         """ Read from the database in order to fetch ``field`` (:class:`Field`
             instance) for ``self`` in cache.
         """
+        _logger.info("%s PREFETCH %s IN %s", self, field.name, (self._uid, self._context))
         # fetch the records of this model without field_name in their cache
         records = self._in_cache_without(field)
 
@@ -3389,6 +3391,7 @@ Fields:
             return True
         self.check_field_access_rights('write', list(vals))
 
+        _logger.info("%s WRITE %s", self, vals)
         cr = self._cr
 
         # determine records that require updating parent_path
@@ -3516,6 +3519,7 @@ Fields:
 
         self = self.browse()
         self.check_access_rights('create')
+        _logger.info("%s CREATE %s", self._name, vals_list)
 
         bad_names = {'id', 'parent_path'}
         if self._log_access:
