@@ -305,3 +305,13 @@ class Company(models.Model):
             main_company = self.env['res.company'].sudo().search([], limit=1, order="id")
 
         return main_company
+
+    @api.model
+    def search(self, args, offset=0, limit=None, order=None, count=False):
+        if len(args) == 1 and args[0][0] == 'parent_id' and args[0][1] == 'in' and not count:
+            return self.browse(self.browse(args[0][2])._children_ids())
+        return super().search(args, offset, limit, order, count)
+
+    @tools.ormcache('self.id')
+    def _children_ids(self):
+        return self._search([('parent_id', 'in', self.ids)])
