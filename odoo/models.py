@@ -3467,6 +3467,16 @@ Fields:
         # checking constraints on records
         self.modified(updated)
 
+        # update cache of column fields
+        cache = self.env.cache
+        for name in updated:
+            if name not in vals:
+                continue
+            field = self._fields[name]
+            value = field.convert_to_cache(vals[name], self.browse(), validate=False)
+            for record in self:
+                cache.set(record, field, value)
+
         # set the value of non-column fields
         if other_fields:
             # discard default values from context
