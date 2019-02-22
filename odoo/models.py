@@ -3476,6 +3476,16 @@ Fields:
         # checking constraints on records
         self.modified(updated)
 
+        # update cache of column fields
+        cache = self.env.cache
+        for name in updated:
+            if name not in vals:
+                continue
+            field = self._fields[name]
+            value = field.convert_to_cache(vals[name], self.browse(), validate=False)
+            for record in self:
+                cache.set(record, field, value)
+
         # set the value of non-column fields
         if other_fields:
             # discard default values from context
@@ -3704,6 +3714,18 @@ Fields:
             # because the latter can require the value of computed fields, e.g.,
             # a one2many checking constraints on records
             records.modified(self._fields)
+
+            # update cache of column fields
+            cache = self.env.cache
+            for name, field in self._fields.items():
+                if not (field.store and field.column_type):
+                    continue
+                for data in data_list:
+                    if name not in data:
+                        continue
+                    record = data['record']
+                    value = field.convert_to_cache(data[name], record, validate=False)
+                    cache.set(record, field, value)
 
             if other_fields:
                 # discard default values from context for other fields
