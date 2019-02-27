@@ -181,6 +181,7 @@ class Cursor(object):
         self.cache = {}
 
         # event handlers, see method after() below
+        self._precommit = set()
         self._event_handlers = {'commit': [], 'rollback': []}
 
     def __build_dict(self, row):
@@ -342,6 +343,11 @@ class Cursor(object):
         self._cnx.set_isolation_level(isolation_level)
 
     @check
+    def precommit(self, func):
+        """ Execute ``func()`` just before committing. """
+        self._precommit.add(func)
+
+    @check
     def after(self, event, func):
         """ Register an event handler.
 
@@ -367,6 +373,11 @@ class Cursor(object):
     def commit(self):
         """ Perform an SQL `COMMIT`
         """
+        try:
+            for func in self._precommit:
+                func()
+        finally:
+            self._precommit.clear()
         result = self._cnx.commit()
         for func in self._pop_event_handlers()['commit']:
             func()
@@ -376,6 +387,7 @@ class Cursor(object):
     def rollback(self):
         """ Perform an SQL `ROLLBACK`
         """
+        self._precommit.clear()
         result = self._cnx.rollback()
         for func in self._pop_event_handlers()['rollback']:
             func()
@@ -394,9 +406,11 @@ class Cursor(object):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type is None:
-            self.commit()
-        self.close()
+        try:
+            if exc_type is None:
+                self.commit()
+        finally:
+            self.close()
 
     @contextmanager
     @check
