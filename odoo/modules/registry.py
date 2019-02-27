@@ -246,8 +246,13 @@ class Registry(Mapping):
         """ Complete the setup of models.
             This must be called after loading modules and before using the ORM.
         """
-        lazy_property.reset_all(self)
         env = odoo.api.Environment(cr, SUPERUSER_ID, {})
+
+        # flush fields to recompute before changing registry
+        if env:
+            env['base'].recompute()
+
+        lazy_property.reset_all(self)
 
         # add manual models
         if self._init_modules:

@@ -714,6 +714,7 @@ form: module.record_id""" % (xml_id,)
         assert de.tag in self.DATA_ROOTS, "Root xml tag must be <openerp>, <odoo> or <data>."
         try:
             self._tag_root(de)
+            self.env['base'].recompute()
         except Exception as e:
             exc_info = sys.exc_info()
             pycompat.reraise(
@@ -777,6 +778,7 @@ def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
     }
     env = odoo.api.Environment(cr, SUPERUSER_ID, context)
     result = env[model].load(fields, datas)
+    env['base'].recompute()
     if any(msg['type'] == 'error' for msg in result['messages']):
         # Report failed import and abort module install
         warning_msg = "\n".join(msg['message'] for msg in result['messages'])

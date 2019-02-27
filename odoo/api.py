@@ -804,6 +804,7 @@ class Environment(Mapping):
         self._cache_key = (cr, uid)
         self._protected = StackMap()                # {field: ids, ...}
         self.dirty = defaultdict(set)               # {record: set(field_name), ...}
+        self.recomputing = envs.recomputing
         self.all = envs
         envs.add(self)
         return self
@@ -1003,6 +1004,25 @@ class Environment(Mapping):
         return self if field.context_dependent else self._cache_key
 
 
+class Flag(object):
+    __slots__ = ['value']
+
+    def __init__(self):
+        self.value = False
+
+    def __bool__(self):
+        return self.value
+
+    @contextmanager
+    def __call__(self):
+        try:
+            old_value = self.value
+            self.value = True
+            yield
+        finally:
+            self.value = old_value
+
+
 class Environments(object):
     """ A common object for all environments in a request. """
     def __init__(self):
@@ -1011,6 +1031,7 @@ class Environments(object):
         self.todo = {}                  # recomputations {field: [records]}
         self.mode = False               # flag for draft/onchange
         self.recompute = True
+        self.recomputing = Flag()       # flag set while recomputing
 
     def add(self, env):
         """ Add the environment ``env``. """

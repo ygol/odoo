@@ -866,13 +866,11 @@ class TestFields(common.TransactionCase):
         # change quantity, 'bar' should recompute to 'ABCABC'
         attribute_record.quantity = 2
         self.assertEqual(attribute_record.bar, 'ABCABC')
-        self.assertFalse(self.env.has_todo())
 
         # change company field 'foo', 'bar' should recompute to 'DEFDEF'
         company_record.foo = 'DEF'
         self.assertEqual(attribute_record.company.foo, 'DEF')
         self.assertEqual(attribute_record.bar, 'DEFDEF')
-        self.assertFalse(self.env.has_todo())
 
         # add group on company-dependent field
         self.assertFalse(user0.has_group('base.group_system'))

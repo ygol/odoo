@@ -3152,61 +3152,56 @@ Fields:
             raise UserError(_('Unable to delete this document because it is used as a default property'))
 
         # Delete the records' properties.
-        with self.env.norecompute():
-            self.check_access_rule('unlink')
-            self.env['ir.property'].search([('res_id', 'in', refs)]).sudo().unlink()
+        self.check_access_rule('unlink')
+        self.env['ir.property'].search([('res_id', 'in', refs)]).sudo().unlink()
 
-            cr = self._cr
-            Data = self.env['ir.model.data'].sudo().with_context({})
-            Defaults = self.env['ir.default'].sudo()
-            Attachment = self.env['ir.attachment']
-            Translation = self.env['ir.translation'].sudo()
+        cr = self._cr
+        Data = self.env['ir.model.data'].sudo().with_context({})
+        Defaults = self.env['ir.default'].sudo()
+        Attachment = self.env['ir.attachment']
+        Translation = self.env['ir.translation'].sudo()
 
-            for sub_ids in cr.split_for_in_conditions(self.ids):
-                query = "DELETE FROM %s WHERE id IN %%s" % self._table
-                cr.execute(query, (sub_ids,))
+        for sub_ids in cr.split_for_in_conditions(self.ids):
+            query = "DELETE FROM %s WHERE id IN %%s" % self._table
+            cr.execute(query, (sub_ids,))
 
-                # Removing the ir_model_data reference if the record being deleted
-                # is a record created by xml/csv file, as these are not connected
-                # with real database foreign keys, and would be dangling references.
-                #
-                # Note: the following steps are performed as superuser to avoid
-                # access rights restrictions, and with no context to avoid possible
-                # side-effects during admin calls.
-                data = Data.search([('model', '=', self._name), ('res_id', 'in', sub_ids)])
-                if data:
-                    data.unlink()
+            # Removing the ir_model_data reference if the record being deleted
+            # is a record created by xml/csv file, as these are not connected
+            # with real database foreign keys, and would be dangling references.
+            #
+            # Note: the following steps are performed as superuser to avoid
+            # access rights restrictions, and with no context to avoid possible
+            # side-effects during admin calls.
+            data = Data.search([('model', '=', self._name), ('res_id', 'in', sub_ids)])
+            if data:
+                data.unlink()
 
-                # For the same reason, remove the defaults having some of the
-                # records as value
-                Defaults.discard_records(self.browse(sub_ids))
+            # For the same reason, remove the defaults having some of the
+            # records as value
+            Defaults.discard_records(self.browse(sub_ids))
 
-                # For the same reason, remove the relevant records in ir_attachment
-                # (the search is performed with sql as the search method of
-                # ir_attachment is overridden to hide attachments of deleted
-                # records)
-                query = 'SELECT id FROM ir_attachment WHERE res_model=%s AND res_id IN %s'
-                cr.execute(query, (self._name, sub_ids))
-                attachments = Attachment.browse([row[0] for row in cr.fetchall()])
-                if attachments:
-                    attachments.unlink()
+            # For the same reason, remove the relevant records in ir_attachment
+            # (the search is performed with sql as the search method of
+            # ir_attachment is overridden to hide attachments of deleted
+            # records)
+            query = 'SELECT id FROM ir_attachment WHERE res_model=%s AND res_id IN %s'
+            cr.execute(query, (self._name, sub_ids))
+            attachments = Attachment.browse([row[0] for row in cr.fetchall()])
+            if attachments:
+                attachments.unlink()
 
-                if any(field.translate for field in self._fields.values()):
-                    # For the same reason, remove the relevant records in ir_translation
-                    translations = Translation.search([
-                        ('type', 'in', ['model', 'model_terms']),
-                        ('name', '=like', self._name+',%'),
-                        ('res_id', 'in', sub_ids)])
-                    if translations:
-                        translations.unlink()
+            if any(field.translate for field in self._fields.values()):
+                # For the same reason, remove the relevant records in ir_translation
+                translations = Translation.search([
+                    ('type', 'in', ['model', 'model_terms']),
+                    ('name', '=like', self._name+',%'),
+                    ('res_id', 'in', sub_ids)])
+                if translations:
+                    translations.unlink()
 
-            # invalidate the *whole* cache, since the orm does not handle all
-            # changes made in the database, like cascading delete!
-            self.invalidate_cache()
-
-        # recompute new-style fields
-        if self.env.recompute and self._context.get('recompute', True):
-            self.recompute()
+        # invalidate the *whole* cache, since the orm does not handle all
+        # changes made in the database, like cascading delete!
+        self.invalidate_cache()
 
         # auditing: deletions are infrequent and leave no trace in the database
         _unlink.info('User #%s deleted %s records with IDs: %r', self._uid, self._name, self.ids)
@@ -3392,10 +3387,6 @@ Fields:
 
                 # check Python constraints for inversed fields
                 self._validate_fields(set(inverse_vals) - set(store_vals))
-
-            # recompute fields
-            if self.env.recompute and self._context.get('recompute', True):
-                self.recompute()
 
         return True
 
@@ -3640,10 +3631,6 @@ Fields:
         # check Python constraints for non-stored inversed fields
         for data in data_list:
             data['record']._validate_fields(set(data['inversed']) - set(data['stored']))
-
-        # recompute fields
-        if self.env.recompute and self._context.get('recompute', True):
-            self.recompute()
 
         return records
 
@@ -5283,7 +5270,9 @@ Fields:
 
     def _recompute_todo(self, field):
         """ Mark ``field`` to be recomputed. """
-        self.env.add_todo(field, self)
+        if self:
+            self.env.add_todo(field, self)
+            self.env.cr.precommit(self.env['base'].recompute)
 
     def _recompute_done(self, field):
         """ Mark ``field`` as recomputed. """
@@ -5294,22 +5283,25 @@ Fields:
         """ Recompute stored function fields. The fields and records to
             recompute have been determined by method :meth:`modified`.
         """
-        while self.env.has_todo():
-            field, recs = self.env.get_todo()
-            # determine the fields to recompute
-            fs = self.env[field.model_name]._field_computed[field]
-            ns = [f.name for f in fs if f.store]
-            # evaluate fields, and group record ids by update
-            updates = defaultdict(set)
-            for rec in recs:
-                try:
-                    vals = {n: rec[n] for n in ns}
-                except MissingError:
-                    continue
-                vals = rec._convert_to_write(vals)
-                updates[frozendict(vals)].add(rec.id)
-            # update records in batch when possible
-            with recs.env.norecompute():
+        if self.env.recomputing:
+            return
+
+        with self.env.recomputing():
+            while self.env.has_todo():
+                field, recs = self.env.get_todo()
+                # determine the fields to recompute
+                fs = self.env[field.model_name]._field_computed[field]
+                ns = [f.name for f in fs if f.store]
+                # evaluate fields, and group record ids by update
+                updates = defaultdict(set)
+                for rec in recs:
+                    try:
+                        vals = {n: rec[n] for n in ns}
+                    except MissingError:
+                        continue
+                    vals = rec._convert_to_write(vals)
+                    updates[frozendict(vals)].add(rec.id)
+                # update records in batch when possible
                 for vals, ids in updates.items():
                     target = recs.browse(ids)
                     try:
@@ -5318,9 +5310,9 @@ Fields:
                         # retry without missing records
                         target.exists()._write(dict(vals))
 
-            # mark computed fields as done
-            for f in fs:
-                recs._recompute_done(f)
+                # mark computed fields as done
+                for f in fs:
+                    recs._recompute_done(f)
 
     #
     # Generic onchange method
