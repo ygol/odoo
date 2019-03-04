@@ -3555,6 +3555,7 @@ Fields:
             vals = self._add_missing_default_values(vals)
 
             # distribute fields into sets for various purposes
+            record = self.new()
             data = {}
             data['stored'] = stored = {}
             data['inversed'] = inversed = {}
@@ -3567,6 +3568,8 @@ Fields:
                 if not field:
                     unknown_names.add(key)
                     continue
+                if field.base_field.column_type:
+                    record._cache[key] = field.convert_to_cache(val, record)
                 if field.store:
                     stored[key] = val
                 if field.inherited:
@@ -3575,6 +3578,12 @@ Fields:
                     inversed[key] = val
                     inversed_fields.add(field)
                     protected.update(self._field_computed.get(field, [field]))
+
+            # precompute stored fields
+            with self.env.do_in_onchange():
+                for key, field in self._fields.items():
+                    if key not in stored and field.store and field.compute:
+                        stored[key] = field.convert_to_write(record[key], record)
 
             data_list.append(data)
 
@@ -3714,6 +3723,12 @@ Fields:
             # because the latter can require the value of computed fields, e.g.,
             # a one2many checking constraints on records
             records.modified(self._fields)
+
+            # mark precomputed fields as done
+            for name, field in self._fields.items():
+                if field.store and field.compute:
+                    assert all(name in data['stored'] for data in data_list)
+                    records._recompute_done(field)
 
             # update cache of column fields
             cache = self.env.cache
