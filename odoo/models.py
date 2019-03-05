@@ -3478,11 +3478,11 @@ Fields:
 
         # update cache of column fields
         cache = self.env.cache
-        for name in updated:
+        for name, fmt, val in columns:
             if name not in vals:
                 continue
             field = self._fields[name]
-            value = field.convert_to_cache(vals[name], self.browse())
+            value = field.convert_to_cache(val, self.browse())
             for record in self:
                 cache.set(record, field, value)
 
@@ -3736,10 +3736,10 @@ Fields:
                 if not (field.store and field.column_type):
                     continue
                 for data in data_list:
-                    if name not in data:
+                    if name not in data['stored']:
                         continue
                     record = data['record']
-                    value = field.convert_to_cache(data[name], record)
+                    value = field.convert_to_cache(data['stored'][name], record)
                     cache.set(record, field, value)
 
             if other_fields:
