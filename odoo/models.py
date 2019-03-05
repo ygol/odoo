@@ -3482,7 +3482,7 @@ Fields:
             if name not in vals:
                 continue
             field = self._fields[name]
-            value = field.convert_to_cache(vals[name], self.browse(), validate=False)
+            value = field.convert_to_cache(vals[name], self.browse())
             for record in self:
                 cache.set(record, field, value)
 
@@ -3739,7 +3739,7 @@ Fields:
                     if name not in data:
                         continue
                     record = data['record']
-                    value = field.convert_to_cache(data[name], record, validate=False)
+                    value = field.convert_to_cache(data[name], record)
                     cache.set(record, field, value)
 
             if other_fields:
