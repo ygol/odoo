@@ -1740,8 +1740,6 @@ class Datetime(Field):
     def convert_to_cache(self, value, record, validate=True):
         if not value:
             return False
-        if isinstance(value, date) and not isinstance(value, datetime):
-            raise TypeError("%s (field %s) must be string or datetime, not date." % (value, self))
         return self.from_string(value)
 
     def convert_to_export(self, value, record):
