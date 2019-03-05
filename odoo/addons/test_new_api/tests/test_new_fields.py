@@ -246,12 +246,14 @@ class TestFields(common.TransactionCase):
         self.assertEqual(d.display_name, 'A / B / C / D')
 
         b.parent = False
+        b.recompute()
         self.assertEqual(a.display_name, 'A')
         self.assertEqual(b.display_name, 'B')
         self.assertEqual(c.display_name, 'B / C')
         self.assertEqual(d.display_name, 'B / C / D')
 
         b.name = 'X'
+        b.recompute()
         self.assertEqual(a.display_name, 'A')
         self.assertEqual(b.display_name, 'X')
         self.assertEqual(c.display_name, 'X / C')
