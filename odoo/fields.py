@@ -20,8 +20,6 @@ except ImportError:
     #pylint: disable=bad-python3-import
     from xmlrpclib import MAXINT
 
-import psycopg2
-
 from .sql_db import LazyCursor
 from .tools import float_repr, float_round, frozendict, html_sanitize, human_size, pg_varchar,\
     ustr, OrderedSet, pycompat, sql, date_utils, groupby
@@ -1789,9 +1787,9 @@ class Binary(Field):
                     not record.env.user._is_system()):
                 raise UserError(_("Only admins can upload SVG files."))
         if isinstance(value, bytes):
-            return psycopg2.Binary(value)
+            return value
         try:
-            return psycopg2.Binary(str(value).encode('ascii'))
+            return str(value).encode('ascii')
         except UnicodeEncodeError:
             raise UserError(_("ASCII characters are required for %s in %s") % (value, self.name))
 
