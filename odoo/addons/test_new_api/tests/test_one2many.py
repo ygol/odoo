@@ -192,15 +192,18 @@ class One2manyCase(TransactionCase):
         # detach message from discussion
         message = discussion.messages[0]
         message.discussion = False
+        discussion.recompute()
 
         # writing on the one2many and actually modifying the relation must
         # trigger recomputation of fields that depend on its inverse many2one
         self.assertNotIn(message, discussion.messages)
         discussion.with_context(compute_name='X').write({'messages': [(4, message.id)]})
+        discussion.recompute()
         self.assertEqual(message.name, 'X')
 
         # writing on the one2many without modifying the relation should not
         # trigger recomputation of fields that depend on its inverse many2one
         self.assertIn(message, discussion.messages)
         discussion.with_context(compute_name='Y').write({'messages': [(4, message.id)]})
+        discussion.recompute()
         self.assertEqual(message.name, 'X')
