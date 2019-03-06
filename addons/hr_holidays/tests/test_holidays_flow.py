@@ -126,8 +126,8 @@ class TestHolidaysFlow(TestHrHolidaysBase):
             'name': 'Hol22',
             'employee_id': self.employee_emp_id,
             'holiday_status_id': self.holidays_status_limited.id,
-            'date_from': (datetime.today() + relativedelta(days=2)).strftime('%Y-%m-%d %H:%M'),
-            'date_to': (datetime.today() + relativedelta(days=3)),
+            'date_from': (fields.Datetime.today() + relativedelta(days=2)),
+            'date_to': (fields.Datetime.today() + relativedelta(days=3)),
             'number_of_days': 1,
         })
         hol2_user_group = hol2.sudo(self.user_hruser_id)

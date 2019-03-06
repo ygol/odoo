@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from odoo import tests
+from odoo import fields
 from odoo.addons.hr_holidays.tests.common import TestHrHolidaysBase
 
 
@@ -25,8 +24,8 @@ class TestChangeDepartment(TestHrHolidaysBase):
                 'name': name,
                 'employee_id': self.employee_emp_id,
                 'holiday_status_id': self.holidays_status_1.id,
-                'date_from': (datetime.today() + relativedelta(days=start)).strftime('%Y-%m-%d %H:%M'),
-                'date_to': datetime.today() + relativedelta(days=end),
+                'date_from': fields.Datetime.today() + relativedelta(days=start),
+                'date_to': fields.Datetime.today() + relativedelta(days=end),
                 'number_of_days': end-start,
             })
 
