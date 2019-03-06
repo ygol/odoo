@@ -1391,6 +1391,7 @@ class Meeting(models.Model):
         real_id = calendar_id2real_id(self.id)
         meeting_origin = self.browse(real_id)
 
+        self.recompute()
         data = self.read(['allday', 'start', 'stop', 'rrule', 'duration'])[0]
         if data.get('rrule'):
             data.update(
