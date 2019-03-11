@@ -110,6 +110,8 @@ class IrRule(models.Model):
         if self._uid == SUPERUSER_ID:
             return self.browse(())
 
+        self.recompute(self._fields['global'])
+
         query = """ SELECT r.id FROM ir_rule r JOIN ir_model m ON (r.model_id=m.id)
                     WHERE m.model=%s AND r.active AND r.perm_{mode}
                     AND (r.id IN (SELECT rule_group_id FROM rule_group_rel rg

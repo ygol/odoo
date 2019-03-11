@@ -828,6 +828,10 @@ class expression(object):
             field = model._fields.get(path[0])
             comodel = model.env.get(getattr(field, 'comodel_name', None))
 
+            # searching on a computed field requires its value to be stored
+            if field:
+                model.recompute(field)
+
             # ----------------------------------------
             # SIMPLE CASE
             # 1. leaf is an operator
@@ -888,6 +892,7 @@ class expression(object):
 
             elif len(path) > 1 and field.store and field.type == 'one2many' and field.auto_join:
                 # res_partner.id = res_partner__bank_ids.partner_id
+                comodel.recompute(comodel._fields[field.inverse_name])
                 leaf.add_join_context(comodel, 'id', field.inverse_name, path[0])
                 domain = field.domain(model) if callable(field.domain) else field.domain
                 push(create_substitution_leaf(leaf, (path[1], operator, right), comodel))
@@ -954,6 +959,7 @@ class expression(object):
                     domain = domain(model)
                 inverse_is_int = comodel._fields[field.inverse_name].type == 'integer'
                 unwrap_inverse = (lambda ids: ids) if inverse_is_int else (lambda recs: recs.ids)
+                comodel.recompute(comodel._fields[field.inverse_name])
 
                 if right is not False:
                     # determine ids2 in comodel

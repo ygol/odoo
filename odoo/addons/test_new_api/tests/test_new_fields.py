@@ -408,6 +408,20 @@ class TestFields(common.TransactionCase):
 
             self.assertEqual(messages0, messages1)
 
+    def test_14_search_compute_store(self):
+        """ test search on computed stored fields """
+        model = self.env['test_new_api.compute.protected']
+        record = model.create({'foo': 'X'})
+        self.assertIn(record, model.search([('bar', '=', 'X')]))
+        self.assertEqual(record.read(['bar'])[0]['bar'], 'X')
+
+        record.foo = 'Y'
+        self.assertIn(record, model.search([('bar', '=', 'Y')]))
+        self.assertEqual(record.read(['bar'])[0]['bar'], 'Y')
+
+        record.foo = 'Z'
+        self.assertEqual(record.read(['bar'])[0]['bar'], 'Z')
+
     def test_15_constraint(self):
         """ test new-style Python constraints """
         discussion = self.env.ref('test_new_api.discussion_0')

@@ -2116,6 +2116,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         for gb in groupby_fields:
             assert gb in self._fields, "Unknown field %r in 'groupby'" % gb
             gb_field = self._fields[gb].base_field
+            self.recompute(gb_field)
             assert gb_field.store and gb_field.column_type, "Fields in 'groupby' must be regular database-persisted fields (no function or related fields), or function fields with store=True"
 
         aggregated_fields = []
@@ -2150,8 +2151,10 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                 continue
             if name in aggregated_fields:
                 raise UserError(_("Output name %r is used twice.") % name)
+
             aggregated_fields.append(name)
 
+            self.recompute(field)
             expr = self._inherits_join_calc(self._table, fname, query)
             if func.lower() == 'count_distinct':
                 term = 'COUNT(DISTINCT %s) AS "%s"' % (expr, name)
@@ -2806,6 +2809,7 @@ Fields:
         for name in fields:
             field = self._fields.get(name)
             if field:
+                self.recompute(field)
                 if field.store:
                     stored.append(name)
                 elif field.base_field.store:
@@ -5239,6 +5243,7 @@ Fields:
                     f = Model._fields.get(path)
                     if f and f.store and f.type not in ('one2many', 'many2many'):
                         # path is direct (not dotted), stored, and inline -> optimise to raw sql
+                        Model.recompute(f)
                         self.env.cr.execute('SELECT id FROM "%s" WHERE "%s" in %%s' % (Model._table, path), [tuple(self.ids)])
                         target0 = Model.browse(i for [i] in self.env.cr.fetchall())
                     else:
@@ -5279,11 +5284,15 @@ Fields:
         self.env.remove_todo(field, self)
 
     @api.model
-    def recompute(self):
+    def recompute(self, field=None):
         """ Recompute stored function fields. The fields and records to
             recompute have been determined by method :meth:`modified`.
         """
         if self.env.recomputing:
+            return
+
+        if field is not None and not (field.compute and field.store):
+            # field does not require recomputation and storage
             return
 
         with self.env.recomputing():
