@@ -984,18 +984,10 @@ class Environment(Mapping):
         field = min(self.all.todo, key=self.registry.field_sequence)
         return field, self.all.todo[field][0]
 
-    @property
-    def recompute(self):
-        return self.all.recompute
-
     @contextmanager
     def norecompute(self):
-        tmp = self.all.recompute
-        self.all.recompute = False
-        try:
-            yield
-        finally:
-            self.all.recompute = tmp
+        """ Deprecated, recompute() is deferred by default. """
+        yield
 
     def cache_key(self, field):
         """ Return the key to store the value of ``field`` in cache, the full
@@ -1030,7 +1022,6 @@ class Environments(object):
         self.cache = Cache()            # cache for all records
         self.todo = {}                  # recomputations {field: [records]}
         self.mode = False               # flag for draft/onchange
-        self.recompute = True
         self.recomputing = Flag()       # flag set while recomputing
 
     def add(self, env):

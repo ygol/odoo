@@ -1830,20 +1830,19 @@ class Binary(Field):
             return
         # create the attachments that store the values
         env = record_values[0][0].env
-        with env.norecompute():
-            env['ir.attachment'].sudo().with_context(
-                binary_field_real_user=env.user,
-            ).create([{
-                    'name': self.name,
-                    'res_model': self.model_name,
-                    'res_field': self.name,
-                    'res_id': record.id,
-                    'type': 'binary',
-                    'datas': value,
-                }
-                for record, value in record_values
-                if value
-            ])
+        env['ir.attachment'].sudo().with_context(
+            binary_field_real_user=env.user,
+        ).create([{
+                'name': self.name,
+                'res_model': self.model_name,
+                'res_field': self.name,
+                'res_id': record.id,
+                'type': 'binary',
+                'datas': value,
+            }
+            for record, value in record_values
+            if value
+        ])
 
     def write(self, records, value):
         assert self.attachment
@@ -1853,25 +1852,24 @@ class Binary(Field):
             ('res_field', '=', self.name),
             ('res_id', 'in', records.ids),
         ])
-        with records.env.norecompute():
-            if value:
-                # update the existing attachments
-                atts.write({'datas': value})
-                atts_records = records.browse(atts.mapped('res_id'))
-                # create the missing attachments
-                if len(atts_records) < len(records):
-                    atts.create([{
-                            'name': self.name,
-                            'res_model': record._name,
-                            'res_field': self.name,
-                            'res_id': record.id,
-                            'type': 'binary',
-                            'datas': value,
-                        }
-                        for record in (records - atts_records)
-                    ])
-            else:
-                atts.unlink()
+        if value:
+            # update the existing attachments
+            atts.write({'datas': value})
+            atts_records = records.browse(atts.mapped('res_id'))
+            # create the missing attachments
+            if len(atts_records) < len(records):
+                atts.create([{
+                        'name': self.name,
+                        'res_model': record._name,
+                        'res_field': self.name,
+                        'res_id': record.id,
+                        'type': 'binary',
+                        'datas': value,
+                    }
+                    for record in (records - atts_records)
+                ])
+        else:
+            atts.unlink()
 
 
 class Selection(Field):
@@ -2496,31 +2494,30 @@ class One2many(_RelationalMulti):
                         comodel.browse(lines._ids).write({inverse: record_id})
                 to_relink.clear()
 
-        with model.env.norecompute():
-            for records, commands in records_commands_list:
-                for act in (commands or ()):
-                    if act[0] == 0:
-                        for record in records:
-                            to_create.append(dict(act[2], **{inverse: record.id}))
-                    elif act[0] == 1:
-                        comodel.browse(act[1]).write(act[2])
-                    elif act[0] == 2:
-                        to_delete.append(act[1])
-                    elif act[0] == 3:
-                        unlink([act[1]])
-                    elif act[0] == 4:
-                        to_relink[act[1]] = records[-1].id
-                    elif act[0] in (5, 6):
-                        flush()
-                        ids = act[2] if act[0] == 6 else []
-                        domain = self.domain(model) if callable(self.domain) else self.domain
-                        domain = domain + [(inverse, 'in', records.ids)]
-                        if ids:
-                            domain = domain + [('id', 'not in', ids)]
-                        unlink(comodel.search(domain)._ids)
-                        to_relink.update(dict.fromkeys(ids, records[-1].id))
+        for records, commands in records_commands_list:
+            for act in (commands or ()):
+                if act[0] == 0:
+                    for record in records:
+                        to_create.append(dict(act[2], **{inverse: record.id}))
+                elif act[0] == 1:
+                    comodel.browse(act[1]).write(act[2])
+                elif act[0] == 2:
+                    to_delete.append(act[1])
+                elif act[0] == 3:
+                    unlink([act[1]])
+                elif act[0] == 4:
+                    to_relink[act[1]] = records[-1].id
+                elif act[0] in (5, 6):
+                    flush()
+                    ids = act[2] if act[0] == 6 else []
+                    domain = self.domain(model) if callable(self.domain) else self.domain
+                    domain = domain + [(inverse, 'in', records.ids)]
+                    if ids:
+                        domain = domain + [('id', 'not in', ids)]
+                    unlink(comodel.search(domain)._ids)
+                    to_relink.update(dict.fromkeys(ids, records[-1].id))
 
-            flush()
+        flush()
 
 
 class Many2many(_RelationalMulti):
@@ -2762,37 +2759,36 @@ class Many2many(_RelationalMulti):
         to_create = []                  # line vals to create [(ids, vals)]
         to_delete = []                  # line ids to delete
 
-        with model.env.norecompute():
-            for records, commands in records_commands_list:
-                for act in (commands or ()):
-                    if not isinstance(act, (list, tuple)) or not act:
-                        continue
-                    if act[0] == 0:
-                        to_create.append((records._ids, act[2]))
-                    elif act[0] == 1:
-                        comodel.browse(act[1]).write(act[2])
-                    elif act[0] == 2:
-                        to_delete.append(act[1])
-                    elif act[0] == 3:
-                        relation_remove(records._ids, act[1])
-                    elif act[0] == 4:
-                        relation_add(records._ids, act[1])
-                    elif act[0] in (5, 6):
-                        # new lines must no longer be linked to records
-                        to_create = [(set(ids) - set(records._ids), vals)
-                                     for (ids, vals) in to_create]
-                        relation_set(records._ids, act[2] if act[0] == 6 else ())
+        for records, commands in records_commands_list:
+            for act in (commands or ()):
+                if not isinstance(act, (list, tuple)) or not act:
+                    continue
+                if act[0] == 0:
+                    to_create.append((records._ids, act[2]))
+                elif act[0] == 1:
+                    comodel.browse(act[1]).write(act[2])
+                elif act[0] == 2:
+                    to_delete.append(act[1])
+                elif act[0] == 3:
+                    relation_remove(records._ids, act[1])
+                elif act[0] == 4:
+                    relation_add(records._ids, act[1])
+                elif act[0] in (5, 6):
+                    # new lines must no longer be linked to records
+                    to_create = [(set(ids) - set(records._ids), vals)
+                                 for (ids, vals) in to_create]
+                    relation_set(records._ids, act[2] if act[0] == 6 else ())
 
-            if to_create:
-                # create lines in batch, and link them
-                lines = comodel.create([vals for ids, vals in to_create])
-                for line, (ids, vals) in zip(lines, to_create):
-                    relation_add(ids, line.id)
+        if to_create:
+            # create lines in batch, and link them
+            lines = comodel.create([vals for ids, vals in to_create])
+            for line, (ids, vals) in zip(lines, to_create):
+                relation_add(ids, line.id)
 
-            if to_delete:
-                # delete lines in batch
-                comodel.browse(to_delete).unlink()
-                relation_delete(to_delete)
+        if to_delete:
+            # delete lines in batch
+            comodel.browse(to_delete).unlink()
+            relation_delete(to_delete)
 
         # process pairs to add (beware of duplicates)
         pairs = [(x, y) for x, ys in new_relation.items() for y in ys - old_relation[x]]

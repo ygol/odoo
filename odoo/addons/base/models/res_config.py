@@ -576,16 +576,14 @@ class ResConfigSettings(models.TransientModel, ResConfigModuleInstallationMixin)
 
         # group fields: modify group / implied groups
         current_settings = self.default_get(list(self.fields_get()))
-        with self.env.norecompute():
-            for name, groups, implied_group in classified['group']:
-                if self[name] == current_settings[name]:
-                    continue
-                if int(self[name]):
-                    groups.write({'implied_ids': [(4, implied_group.id)]})
-                else:
-                    groups.write({'implied_ids': [(3, implied_group.id)]})
-                    implied_group.write({'users': [(3, user.id) for user in groups.mapped('users')]})
-        self.recompute()
+        for name, groups, implied_group in classified['group']:
+            if self[name] == current_settings[name]:
+                continue
+            if int(self[name]):
+                groups.write({'implied_ids': [(4, implied_group.id)]})
+            else:
+                groups.write({'implied_ids': [(3, implied_group.id)]})
+                implied_group.write({'users': [(3, user.id) for user in groups.mapped('users')]})
 
         # config fields: store ir.config_parameters
         IrConfigParameter = self.env['ir.config_parameter'].sudo()
