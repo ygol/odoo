@@ -170,12 +170,12 @@ class Applicant(models.Model):
     @api.one
     def _compute_day(self):
         if self.date_open:
-            date_create = self.create_date
+            date_create = self.create_date or fields.Datetime.now()
             date_open = self.date_open
             self.day_open = (date_open - date_create).total_seconds() / (24.0 * 3600)
 
         if self.date_closed:
-            date_create = self.create_date
+            date_create = self.create_date or fields.Datetime.now()
             date_closed = self.date_closed
             self.day_close = (date_closed - date_create).total_seconds() / (24.0 * 3600)
             self.delay_close = self.day_close - self.day_open
