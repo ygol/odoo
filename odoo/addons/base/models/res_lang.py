@@ -182,6 +182,7 @@ class Lang(models.Model):
 
     @tools.ormcache('code')
     def _lang_get_id(self, code):
+        self = self.with_context(active_test=False)
         return (self.search([('code', '=', code)]) or
                 self.search([('code', '=', 'en_US')]) or
                 self.search([], limit=1)).id

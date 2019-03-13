@@ -1052,6 +1052,8 @@ class TestFields(common.TransactionCase):
         self.assertEqual(email.message, message)
 
         french = self.env['res.lang']._lang_get('fr_FR')
+        self.assertEqual(french.code, 'fr_FR')
+
         french.active = True
 
         def count(msg):
