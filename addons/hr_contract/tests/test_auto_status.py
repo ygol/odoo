@@ -22,19 +22,19 @@ class TestHrContracts(TransactionCase):
         self.env.ref('hr_contract.ir_cron_data_contract_update_state').method_direct_trigger()
 
     def test_contract_enddate(self):
-        self.test_contract.update(dict(date_end=datetime.now() + relativedelta(days=100)))
+        self.test_contract.update(dict(date_end=date.today() + relativedelta(days=100)))
         self.contract = self.contracts.create(self.test_contract)
         self.apply_cron()
         self.assertEquals(self.contract.state, 'open')
 
-        self.test_contract.update(dict(date_end=datetime.now() + relativedelta(days=5)))
+        self.test_contract.update(dict(date_end=date.today() + relativedelta(days=5)))
         self.contract.write(self.test_contract)
         self.apply_cron()
         self.assertEquals(self.contract.state, 'pending')
 
         self.test_contract.update({
-            'date_start': datetime.now() + relativedelta(days=-50),
-            'date_end': datetime.now() + relativedelta(days=-1),
+            'date_start': date.today() + relativedelta(days=-50),
+            'date_end': date.today() + relativedelta(days=-1),
             'state': 'pending',
         })
         self.contract.write(self.test_contract)
@@ -50,7 +50,7 @@ class TestHrContracts(TransactionCase):
 
         self.employee.visa_expire = date.today() + relativedelta(days=-5)
         self.test_contract.update({
-            'date_start': datetime.now() + relativedelta(days=-50),
+            'date_start': date.today() + relativedelta(days=-50),
             'state': 'pending',
         })
         self.contract.write(self.test_contract)
@@ -58,7 +58,7 @@ class TestHrContracts(TransactionCase):
         self.assertEquals(self.contract.state, 'close')
 
     def test_contract_start_date(self):
-        self.test_contract.update(dict(date_start=datetime.now(), state='incoming'))
+        self.test_contract.update(dict(date_start=date.today(), state='incoming'))
         self.contract = self.contracts.create(self.test_contract)
         self.apply_cron()
         self.assertEquals(self.contract.state, 'open')
