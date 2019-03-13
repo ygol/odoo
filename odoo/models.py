@@ -3578,6 +3578,9 @@ Fields:
             with self.env.do_in_onchange():
                 for key, field in self._fields.items():
                     if key not in stored and field.store and field.compute:
+                        if field.comodel_name == self._name and record in record[key]:
+                            # cannot store a self-reference, recompute it later
+                            continue
                         stored[key] = field.convert_to_write(record[key], record)
 
             data_list.append(data)
@@ -3724,10 +3727,11 @@ Fields:
             records.modified(self._fields)
 
             # mark precomputed fields as done
-            for name, field in self._fields.items():
-                if field.store and field.compute:
-                    assert all(name in data['stored'] for data in data_list)
-                    records._recompute_done(field)
+            for data in data_list:
+                for name in data['stored']:
+                    field = self._fields[name]
+                    if field.compute:
+                        data['record']._recompute_done(field)
 
             if other_fields:
                 # discard default values from context for other fields
