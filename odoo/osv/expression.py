@@ -418,7 +418,7 @@ def is_leaf(element, internal=False):
     """
     INTERNAL_OPS = TERM_OPERATORS + ('<>',)
     if internal:
-        INTERNAL_OPS += ('inselect', 'not inselect')
+        INTERNAL_OPS += ('inselect', 'not inselect', 'exists', 'not exists')
     return (isinstance(element, tuple) or isinstance(element, list)) \
         and len(element) == 3 \
         and element[1] in INTERNAL_OPS \
@@ -977,17 +977,22 @@ class expression(object):
                 else:
                     # determine ids1 = records with lines
                     if comodel._fields[field.inverse_name].store and not (inverse_is_int and domain):
-                        ids1 = select_distinct_from_where_not_null(cr, field.inverse_name, comodel._table)
+                        op1 = 'exists' if operator in NEGATIVE_TERM_OPERATORS else 'not exists'
+                        push(create_substitution_leaf(leaf, ('id', op1, 'select 1 from %s where %s = %s.id' % (
+                            comodel._table,
+                            field.inverse_name,
+                            leaf.generate_alias()
+                        )), model, internal=True))
                     else:
+                        op1 = 'in' if operator in NEGATIVE_TERM_OPERATORS else 'not in'
                         comodel_domain = [(field.inverse_name, '!=', False)]
                         if inverse_is_int and domain:
                             comodel_domain += domain
                         recs = comodel.search(comodel_domain).sudo().with_context(prefetch_fields=False)
                         ids1 = unwrap_inverse(recs.mapped(field.inverse_name))
 
-                    # rewrite condition to match records with/without lines
-                    op1 = 'in' if operator in NEGATIVE_TERM_OPERATORS else 'not in'
-                    push(create_substitution_leaf(leaf, ('id', op1, ids1), model))
+                        # rewrite condition to match records with/without lines
+                        push(create_substitution_leaf(leaf, ('id', op1, ids1), model))
 
             elif field.type == 'many2many':
                 rel_table, rel_id1, rel_id2 = field.relation, field.column1, field.column2
@@ -1026,12 +1031,14 @@ class expression(object):
                     push(create_substitution_leaf(leaf, ('id', subop, (subquery, [ids2])), internal=True))
 
                 else:
-                    # determine ids1 = records with relations
-                    ids1 = select_distinct_from_where_not_null(cr, rel_id1, rel_table)
-
                     # rewrite condition to match records with/without relations
-                    op1 = 'in' if operator in NEGATIVE_TERM_OPERATORS else 'not in'
-                    push(create_substitution_leaf(leaf, ('id', op1, ids1), model))
+                    op1 = 'exists' if operator in NEGATIVE_TERM_OPERATORS else 'not exists'
+
+                    push(create_substitution_leaf(leaf, ('id', op1, 'select 1 from %s where %s = %s.id' % (
+                        rel_table,
+                        rel_id1,
+                        leaf.generate_alias()
+                    )), model, internal=True))
 
             elif field.type == 'many2one':
                 if operator in HIERARCHY_FUNCS:
@@ -1157,7 +1164,7 @@ class expression(object):
         left, operator, right = leaf
 
         # final sanity checks - should never fail
-        assert operator in (TERM_OPERATORS + ('inselect', 'not inselect')), \
+        assert operator in (TERM_OPERATORS + ('inselect', 'not inselect', 'exists', 'not exists')), \
             "Invalid operator %r in domain term %r" % (operator, leaf)
         assert leaf in (TRUE_LEAF, FALSE_LEAF) or left in model._fields, \
             "Invalid field %r in domain term %r" % (left, leaf)
@@ -1181,6 +1188,10 @@ class expression(object):
         elif operator == 'not inselect':
             query = '(%s."%s" not in (%s))' % (table_alias, left, right[0])
             params = right[1]
+
+        elif operator in ('exists', 'not exists'):
+            query = '%s(%s)' % (operator, right)
+            params = []
 
         elif operator in ['in', 'not in']:
             # Two cases: right is a boolean or a list. The boolean case is an
