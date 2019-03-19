@@ -3383,9 +3383,7 @@ Fields:
                     inv_vals = {f.name: inverse_vals[f.name] for f in fields}
                     for records in batches:
                         for record in records:
-                            record._cache.update(
-                                record._convert_to_cache(inv_vals, update=True)
-                            )
+                            record._update_cache(inv_vals)
                         fields[0].determine_inverse(records)
 
                 self.modified(set(inverse_vals) - set(store_vals))
@@ -3550,7 +3548,7 @@ Fields:
             vals = self._add_missing_default_values(vals)
 
             # distribute fields into sets for various purposes
-            record = self.new()
+            columns = {}
             data = {}
             data['stored'] = stored = {}
             data['inversed'] = inversed = {}
@@ -3564,7 +3562,7 @@ Fields:
                     unknown_names.add(key)
                     continue
                 if field.base_field.column_type:
-                    record._cache[key] = field.convert_to_cache(val, record)
+                    columns[key] = val
                 if field.store:
                     stored[key] = val
                 if field.inherited:
@@ -3575,6 +3573,7 @@ Fields:
                     protected.update(self._field_computed.get(field, [field]))
 
             # precompute stored fields
+            record = self.new(columns)
             with self.env.do_in_onchange():
                 for key, field in self._fields.items():
                     if key not in stored and field.store and field.compute:
@@ -3642,7 +3641,7 @@ Fields:
 
                 for batch in batches:
                     for record, vals in batch:
-                        record._cache.update(record._convert_to_cache(vals))
+                        record._update_cache(vals)
                     batch_recs = self.concat(*(record for record, vals in batch))
                     fields[0].determine_inverse(batch_recs)
 
@@ -4972,6 +4971,21 @@ Fields:
             for name, value in values.items():
                 record[name] = value
 
+    def _update_cache(self, values, validate=True):
+        """ Update the cache of ``self`` with the given values. """
+        cache = self.env.cache
+        # assign currency fields before monetary fields (for rounding)
+        monetary, other = [], []
+        for name, value in values.items():
+            field = self._fields.get(name)
+            if field:
+                if field.type == 'monetary':
+                    monetary.append((field, value))
+                else:
+                    other.append((field, value))
+        for field, value in (other + monetary):
+            cache.set(self, field, field.convert_to_cache(value, self, validate=validate))
+
     #
     # New records - represent records that do not exist in the database yet;
     # they are used to perform onchanges.
@@ -4989,7 +5003,7 @@ Fields:
         records. The reference is encapsulated in the ``id`` of the record.
         """
         record = self.browse([NewId(ref)])
-        record._cache.update(record._convert_to_cache(values, update=True))
+        record._update_cache(values)
 
         if record.env.in_onchange:
             # The cache update does not set inverse fields, so do it manually.
