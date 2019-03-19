@@ -195,7 +195,7 @@ class Channel(models.Model):
     @api.depends('slide_ids.slide_type', 'slide_ids.is_published', 'slide_ids.completion_time',
                  'slide_ids.likes', 'slide_ids.dislikes', 'slide_ids.total_views')
     def _compute_slides_statistics(self):
-        result = dict((cid, dict(total_views=0, total_votes=0, total_time=0)) for cid in self.ids)
+        result = dict((cid, dict(total_views=0, total_votes=0, total_time=0)) for cid in self._ids)
         read_group_res = self.env['slide.slide'].read_group(
             [('is_published', '=', True),('channel_id', 'in', self.ids)],
             ['channel_id', 'slide_type', 'likes', 'dislikes', 'total_views', 'completion_time'],
@@ -533,7 +533,7 @@ class Category(models.Model):
 
     @api.depends('slide_ids.slide_type', 'slide_ids.is_published')
     def _count_presentations(self):
-        result = dict.fromkeys(self.ids, dict())
+        result = {cid: {} for cid in self._ids}
         res = self.env['slide.slide'].read_group(
             [('is_published', '=', True), ('category_id', 'in', self.ids)],
             ['category_id', 'slide_type'], ['category_id', 'slide_type'],
