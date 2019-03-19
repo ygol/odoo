@@ -580,7 +580,8 @@ class AccountMoveLine(models.Model):
                     reconciled = True
             line.reconciled = reconciled
 
-            line.amount_residual = line.company_id.currency_id.round(amount * sign)
+            if line.company_id.currency_id:
+                line.amount_residual = line.company_id.currency_id.round(amount * sign)
             line.amount_residual_currency = line.currency_id and line.currency_id.round(amount_residual_currency * sign) or 0.0
 
     @api.depends('debit', 'credit')
