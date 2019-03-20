@@ -3577,10 +3577,13 @@ Fields:
             with self.env.do_in_onchange():
                 for key, field in self._fields.items():
                     if key not in stored and field.store and field.compute:
-                        if field.comodel_name == self._name and record in record[key]:
-                            # cannot store a self-reference, recompute it later
-                            continue
-                        stored[key] = field.convert_to_write(record[key], record)
+                        try:
+                            if field.comodel_name == self._name and record in record[key]:
+                                # cannot store a self-reference, recompute it later
+                                continue
+                            stored[key] = field.convert_to_write(record[key], record)
+                        except Exception:
+                            pass
 
             data_list.append(data)
 
