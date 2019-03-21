@@ -3542,6 +3542,11 @@ Fields:
         # classify fields for each record
         data_list = []
         inversed_fields = set()
+        precomputed = [
+            (name, field)
+            for name, field in self._fields.items()
+            if field.compute and field.store
+        ]
 
         for vals in vals_list:
             # add missing defaults
@@ -3575,11 +3580,13 @@ Fields:
                     inversed_fields.add(field)
                     protected.update(self._field_computed.get(field, [field]))
 
-            # precompute stored fields
-            with self.env.do_in_onchange():
-                record = self.new(columns)
-                for key, field in self._fields.items():
-                    if key not in stored and field.store and field.compute:
+            if precomputed:
+                # precompute stored fields
+                with self.env.do_in_onchange():
+                    record = self.new(columns)
+                    for key, field in precomputed:
+                        if key in stored:
+                            continue
                         try:
                             if field.comodel_name == self._name and record in record[key]:
                                 # cannot store a self-reference, recompute it later
