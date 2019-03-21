@@ -3576,8 +3576,8 @@ Fields:
                     protected.update(self._field_computed.get(field, [field]))
 
             # precompute stored fields
-            record = self.new(columns)
             with self.env.do_in_onchange():
+                record = self.new(columns)
                 for key, field in self._fields.items():
                     if key not in stored and field.store and field.compute:
                         try:
