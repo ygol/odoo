@@ -192,8 +192,10 @@ class BlogPost(models.Model):
         for blog_post in self:
             if blog_post.published_date:
                 blog_post.post_date = blog_post.published_date
-            else:
+            elif blog_post.create_date:
                 blog_post.post_date = blog_post.create_date
+            else:
+                raise ValueError("Cannot compute post_date")
 
     @api.multi
     def _set_post_date(self):
