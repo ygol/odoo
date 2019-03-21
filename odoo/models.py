@@ -3561,6 +3561,9 @@ Fields:
                 if not field:
                     unknown_names.add(key)
                     continue
+                if field.compute and field.readonly:
+                    # the field will be recomputed anyway
+                    continue
                 if field.base_field.column_type:
                     columns[key] = val
                 if field.store:
