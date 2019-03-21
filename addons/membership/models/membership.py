@@ -57,13 +57,9 @@ class MembershipLine(models.Model):
             i.id = (
                 SELECT l.invoice_id FROM
                 account_invoice_line l WHERE
-                l.id = (
-                    SELECT  ml.account_invoice_line FROM
-                    membership_membership_line ml WHERE
-                    ml.id = %s
-                    )
+                l.id = %s
                 )
-            ''', (line.id,))
+            ''', (line.account_invoice_line.id or 0,))
             fetched = self._cr.fetchone()
             if not fetched:
                 line.state = 'canceled'
