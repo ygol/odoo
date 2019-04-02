@@ -573,53 +573,60 @@ class Field(MetaField('DummyField', (object,), {})):
 
     def _compute_related(self, records):
         """ Compute the related field ``self`` on ``records``. """
+        def process(others):
+            #
+            # Traverse fields one by one for all records, in order to take
+            # advantage of prefetching for each field access. In order to
+            # clarify the impact of the algorithm, consider traversing 'foo.bar'
+            # for records a1 and a2, where 'foo' is already present in cache for
+            # a1, a2. Initially, both a1 and a2 are marked for prefetching. As
+            # the commented code below shows, traversing all fields one record
+            # at a time will fetch 'bar' one record at a time.
+            #
+            #       b1 = a1.foo         # mark b1 for prefetching
+            #       v1 = b1.bar         # fetch/compute bar for b1
+            #       b2 = a2.foo         # mark b2 for prefetching
+            #       v2 = b2.bar         # fetch/compute bar for b2
+            #
+            # On the other hand, traversing all records one field at a time
+            # ensures maximal prefetching for each field access.
+            #
+            #       b1 = a1.foo         # mark b1 for prefetching
+            #       b2 = a2.foo         # mark b2 for prefetching
+            #       v1 = b1.bar         # fetch/compute bar for b1, b2
+            #       v2 = b2.bar         # value already in cache
+            #
+            # This difference has a major impact on performance, in particular
+            # in the case where 'bar' is a computed field that takes advantage
+            # of batch computation.
+            #
+            values = list(others)
+            for name in self.related:
+                try:
+                    values = [first(value)[name] for value in values]
+                except AccessError as e:
+                    description = records.env['ir.model']._get(records._name).name
+                    raise AccessError(
+                        _("%(previous_message)s\n\nImplicitly accessed through '%(document_kind)s' (%(document_model)s).") % {
+                            'previous_message': e.args[0],
+                            'document_kind': description,
+                            'document_model': records._name,
+                        }
+                    )
+            for record, value in zip(records, values):
+                record[self.name] = value
+
         # when related_sudo, bypass access rights checks when reading values
         others = records.sudo() if self.related_sudo else records
-        # copy the cache of draft records into others' cache
+
         if records.env.in_onchange and records.env != others.env:
-            copy_cache(records - records.filtered('id'), others.env)
-        #
-        # Traverse fields one by one for all records, in order to take advantage
-        # of prefetching for each field access. In order to clarify the impact
-        # of the algorithm, consider traversing 'foo.bar' for records a1 and a2,
-        # where 'foo' is already present in cache for a1, a2. Initially, both a1
-        # and a2 are marked for prefetching. As the commented code below shows,
-        # traversing all fields one record at a time will fetch 'bar' one record
-        # at a time.
-        #
-        #       b1 = a1.foo         # mark b1 for prefetching
-        #       v1 = b1.bar         # fetch/compute bar for b1
-        #       b2 = a2.foo         # mark b2 for prefetching
-        #       v2 = b2.bar         # fetch/compute bar for b2
-        #
-        # On the other hand, traversing all records one field at a time ensures
-        # maximal prefetching for each field access.
-        #
-        #       b1 = a1.foo         # mark b1 for prefetching
-        #       b2 = a2.foo         # mark b2 for prefetching
-        #       v1 = b1.bar         # fetch/compute bar for b1, b2
-        #       v2 = b2.bar         # value already in cache
-        #
-        # This difference has a major impact on performance, in particular in
-        # the case where 'bar' is a computed field that takes advantage of batch
-        # computation.
-        #
-        values = list(others)
-        for name in self.related[:-1]:
             try:
-                values = [first(value[name]) for value in values]
-            except AccessError as e:
-                description = records.env['ir.model']._get(records._name).name
-                raise AccessError(
-                    _("%(previous_message)s\n\nImplicitly accessed through '%(document_kind)s' (%(document_model)s).") % {
-                        'previous_message': e.args[0],
-                        'document_kind': description,
-                        'document_model': records._name,
-                    }
-                )
-        # assign final values to records
-        for record, value in zip(records, values):
-            record[self.name] = value[self.related_field.name]
+                process(records)
+            except AccessError:
+                copy_cache(records, others.env)
+                process(others)
+        else:
+            process(others)
 
     def _inverse_related(self, records):
         """ Inverse the related field ``self`` on ``records``. """
