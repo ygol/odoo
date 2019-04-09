@@ -10,6 +10,7 @@ odoo.define('website_form.animation', function (require) {
     var qweb = core.qweb;
 
     publicWidget.registry.form_builder_send = publicWidget.Widget.extend({
+        xmlDependencies: ['/website_form/static/src/xml/website_form_editor.xml'],
         selector: '.s_website_form',
 
         willStart: function () {
@@ -52,12 +53,53 @@ odoo.define('website_form.animation', function (require) {
             datepickers_options.format = time.getLangDateFormat();
             this.$target.find('.o_website_form_date').datetimepicker(datepickers_options);
 
+            // Re fetch the values from database while landing on the page having forms
+            //  updates the values for such fields to keep it in sync with the database values.
+            this.reFetchFieldsValue()
+
             return this._super.apply(this, arguments);
         },
 
         destroy: function () {
             this._super.apply(this, arguments);
             this.$target.find('button').off('click');
+        },
+
+        reFetchFieldsValue: function () {
+            var self = this;
+            // list out the fields which are in current website form
+            var fieldsList = _.map(this.$target.find('.form-group.form-field:not(.o_website_form_custom) .o_website_field_dynamic label.col-form-label'), function (label) {
+                return $(label).attr('for');
+            });
+            var modelName = this.$target.data('model_name');
+
+            if (modelName && fieldsList.length && !this.editableMode) {
+                this._rpc({
+                    route: '/get_website_form_updated_fields',
+                    params: {
+                        model: modelName,
+                        fields: fieldsList,
+                    }
+                }).then(function (fieldsInfo) {
+                    _.each(fieldsInfo, function (field, fieldName) {
+                        field.required = field.required ? 1 : null;
+                        field.name = fieldName;
+                        var $target = self.$target.find('label[for="'+ fieldName +'"]').closest('.o_website_field_dynamic');
+                        var $el = $target.children().last();
+                        field.formatInfo = {
+                            lableClass: $target.children().first().attr('class') || '',
+                            contentClass: $el.attr('class') || '',
+                        };
+
+                        if ($el.find('.o_website_form_checkbox, .o_website_form_radio').length) {
+                            field.display = $el.find('.o_website_form_checkbox, .o_website_form_radio').data('display');
+                        }
+                        var $content = $(qweb.render("website_form.field_" + field.type, {field: field}));
+                        // Replace the content with the values fetched from database
+                        $el.replaceWith($content.find('.o_website_field_dynamic').children().last());
+                    });
+                });
+            }
         },
 
         send: function (e) {
