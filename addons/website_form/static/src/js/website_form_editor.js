@@ -282,8 +282,18 @@ odoo.define('website_form_editor', function (require) {
 
         append_field: function (field) {
             var self = this;
+            // Copy formatting classes of the current row (field)
+            var $label = this.$target.find('label.col-form-label').parent();
+            field.formatInfo = {
+                lableClass: $label.attr('class') || '',
+                contentClass: $label.next().attr('class') || '',
+            };
             this.render_field(field).then(function (field){
-                self.$target.find(".form-group:has('.o_website_form_send')").before(field);
+                if (self.$target.hasClass('form-field')) {
+                    self.$target.after(field);
+                } else {
+                    self.$target.find(".o_website_form_send").closest('.form-group').before(field);
+                }
             });
         },
 
@@ -315,8 +325,10 @@ odoo.define('website_form_editor', function (require) {
         },
 
         onBuilt: function () {
-            // Open the parameters modal on snippet drop
-            this.website_form_model_modal('click', null, null);
+            // Open the parameters modal on snippet drop only for the website form
+            if (this.$target.is('form.s_website_form')) {
+                this.website_form_model_modal('click', null, null);
+            }
         },
 
         init_form: function (model_name) {
@@ -359,6 +371,9 @@ odoo.define('website_form_editor', function (require) {
         },
 
         cleanForSave: function () {
+            if (!this.$target.is('form.s_website_form')) {
+                return;
+            }
             var model = this.$target.data('model_name');
             // because apparently this can be called on the wrong widget and
             // we may not have a model, or fields...

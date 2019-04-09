@@ -30,12 +30,12 @@
     <t t-name="website_form.field">
         <div t-att-class="'form-group form-field' + (field.custom ? ' o_website_form_custom' : '') + (field.required ? ' o_website_form_required' : '')">
             <div class="row ">
-                <div class="col-3 text-md-right">
+                <div t-att-class="field.formatInfo and field.formatInfo.lableClass || 'col-3 text-md-right'">
                     <label class="col-form-label" t-att-for="field.name">
                         <t t-esc="field.string"/>
                     </label>
                 </div>
-                <div class="col-9">
+                <div t-att-class="field.formatInfo and field.formatInfo.contentClass || 'col-9 my-auto'">
                     <t t-raw="0"/>
                 </div>
             </div>
