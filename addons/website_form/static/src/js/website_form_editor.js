@@ -321,21 +321,41 @@ odoo.define('website_form_editor', function (require) {
 
         init_form: function (model_name) {
             var self = this;
-            if (model_name !== this.$target.attr('data-model_name')) {
-                // Reset the form
-                this.$target.attr('data-model_name', model_name);
-                this.$target.find(".form-field:not(:has('.o_website_form_send'))").remove();
-
-                // Force fetch the fields of the new model
-                // and render all model required fields
-                this.fetch_model_fields().then(function (fields) {
-                    _.each(fields, function (field, field_name){
-                        if (field.required) {
-                            self.append_field(field);
+            var currentModel = this.$target.attr('data-model_name');
+            if (!currentModel) {
+                // Directly change the parameters if model is same or
+                // parameters are being set for the first time
+                this.change_form_parameter(model_name);
+            } else if (model_name !== currentModel) {
+                // Otherwise, open warning modal (after the previous one
+                // responsible for changing parameters is destroyed)
+                this.$modal.on('hidden.bs.modal', function () {
+                    self.build_modal(
+                        _t("Warning"),
+                        _t("Are you sure you want to change the parameters of your form? <br/> All the current fields will be discarded."),
+                        function () {
+                            self.change_form_parameter(model_name);
                         }
-                    });
+                    );
                 });
             }
+        },
+
+        change_form_parameter: function (model_name) {
+            var self = this;
+            // Reset the form
+            this.$target.attr('data-model_name', model_name);
+            this.$target.find(".form-field:not(:has('.o_website_form_send'))").remove();
+
+            // Force fetch the fields of the new model
+            // and render all model required fields
+            this.fetch_model_fields().then(function (fields) {
+                _.each(fields, function (field, field_name){
+                    if (field.required) {
+                        self.append_field(field);
+                    }
+                });
+            });
         },
 
         cleanForSave: function () {
