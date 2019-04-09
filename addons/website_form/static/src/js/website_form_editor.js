@@ -168,7 +168,11 @@ odoo.define('website_form_editor', function (require) {
                     field: {
                         name: 'field_selection',
                         string: 'Field',
-                        records: _.sortBy(available_fields, 'display_name')
+                        records: _.sortBy(available_fields, 'display_name'),
+                        formatInfo: {
+                            lableClass: 'col-1 text-md-left',
+                            contentClass: 'col-11',
+                        },
                     }
                 });
 
