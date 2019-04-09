@@ -28,14 +28,16 @@
 
     <!-- Generic Field Layout -->
     <t t-name="website_form.field">
-        <div t-att-class="'row form-group form-field' + (field.custom ? ' o_website_form_custom' : '') + (field.required ? ' o_website_form_required' : '')">
-            <div class="col-md-3 text-md-right">
-                <label class="col-form-label" t-att-for="field.name">
-                    <t t-esc="field.string"/>
-                </label>
-            </div>
-            <div class="col-md-9">
-                <t t-raw="0"/>
+        <div t-att-class="'form-group form-field' + (field.custom ? ' o_website_form_custom' : '') + (field.required ? ' o_website_form_required' : '')">
+            <div class="row ">
+                <div class="col-3 text-md-right">
+                    <label class="col-form-label" t-att-for="field.name">
+                        <t t-esc="field.string"/>
+                    </label>
+                </div>
+                <div class="col-9">
+                    <t t-raw="0"/>
+                </div>
             </div>
         </div>
     </t>
