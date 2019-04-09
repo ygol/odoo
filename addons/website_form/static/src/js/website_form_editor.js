@@ -373,6 +373,27 @@ odoo.define('website_form_editor', function (require) {
         }
     });
 
+    // Radio/Checkbox field option to display vertical or horizontal
+    options.registry['website_form_editor_field_multi_choice_display'] = options.Class.extend({
+        xmlDependencies: ['/website_form/static/src/xml/website_form_editor.xml'],
+
+        // display radio options
+        website_form_choice_field_display: function (previewMode, value, $li) {
+            this.$target.toggleClass('row', value === 'horizontal')
+                .attr('data-display', value);
+        },
+        /**
+         * @override
+         */
+        _setActive: function () {
+            this._super.apply(this, arguments);
+            this.$el.find('[data-website_form_choice_field_display]')
+                .removeClass('active')
+                .filter('[data-website_form_choice_field_display=' + this.$target.attr('data-display') + ']')
+                .addClass('active');
+        },
+    });
+
     // Dirty hack to transform select fields into an editable construct
     options.registry['website_form_editor_field_select'] = options.Class.extend({
         xmlDependencies: ['/website_form/static/src/xml/website_form_editor.xml'],
