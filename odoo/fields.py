@@ -744,6 +744,7 @@ class Field(MetaField('DummyField', (object,), {})):
                 path_str = None if path is None else ('.'.join(path) or 'id')
                 model._field_triggers.add(field, (self, path_str))
             elif path:
+                _logger.warning("Field %s is recursive", self)
                 self.recursive = True
                 model._field_triggers.add(field, (self, '.'.join(path)))
 
