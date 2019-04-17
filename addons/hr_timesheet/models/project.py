@@ -131,10 +131,15 @@ class Task(models.Model):
         for task in self:
             task.total_hours_spent = task.effective_hours + task.subtask_effective_hours
 
-    @api.depends('child_ids.effective_hours', 'child_ids.subtask_effective_hours')
+    @api.depends('child_ids.effective_hours')
     def _compute_subtask_effective_hours(self):
         for task in self:
-            task.subtask_effective_hours = sum(child_task.effective_hours + child_task.subtask_effective_hours for child_task in task.child_ids)
+            hours = 0
+            subtasks = task.child_ids
+            while subtasks:
+                hours += sum(subtasks.mapped('effective_hours'))
+                subtasks = subtasks.mapped('child_ids')
+            task.subtask_effective_hours = hours
 
     # ---------------------------------------------------------
     # ORM

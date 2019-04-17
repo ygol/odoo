@@ -394,13 +394,15 @@ class Department(models.Model):
             return [(record.id, record.name) for record in self]
         return super(Department, self).name_get()
 
-    @api.depends('name', 'parent_id.complete_name')
+    @api.depends('name', 'parent_id')
     def _compute_complete_name(self):
         for department in self:
-            if department.parent_id:
-                department.complete_name = '%s / %s' % (department.parent_id.complete_name, department.name)
-            else:
-                department.complete_name = department.name
+            d = department
+            names = []
+            while d:
+                names.append(d.name)
+                d = d.parent_id
+            department.complete_name = " / ".join(reversed(names))
 
     @api.constrains('parent_id')
     def _check_parent_id(self):

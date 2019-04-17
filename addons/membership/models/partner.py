@@ -44,7 +44,7 @@ class Partner(models.Model):
                  'member_lines.account_invoice_line.invoice_id.partner_id',
                  'free_member',
                  'member_lines.date_to', 'member_lines.date_from',
-                 'associate_member.membership_state')
+                 'associate_member')
     def _compute_membership_state(self):
         values = self._membership_state()
         for partner in self:

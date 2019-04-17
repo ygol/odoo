@@ -911,13 +911,17 @@ class GroupsImplied(models.Model):
     trans_implied_ids = fields.Many2many('res.groups', string='Transitively inherits',
         compute='_compute_trans_implied')
 
-    @api.depends('implied_ids.trans_implied_ids')
+    @api.depends('implied_ids')
     def _compute_trans_implied(self):
-        # Compute the transitive closure recursively. Note that the performance
-        # is good, because the record cache behaves as a memo (the field is
-        # never computed twice on a given group.)
+        def closure(gs):
+            more = gs.mapped('implied_ids')
+            while more:
+                gs |= more
+                more = more.mapped('implied_ids')
+            return gs
+
         for g in self:
-            g.trans_implied_ids = g.implied_ids | g.mapped('implied_ids.trans_implied_ids')
+            g.trans_implied_ids = closure(g.implied_ids)
 
     @api.model_create_multi
     def create(self, vals_list):

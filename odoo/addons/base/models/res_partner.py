@@ -285,7 +285,7 @@ class Partner(models.Model):
     def _compute_get_ids(self):
         self.self = self.id
 
-    @api.depends('is_company', 'parent_id.commercial_partner_id')
+    @api.depends('is_company', 'parent_id')
     def _compute_commercial_partner(self):
         self.env.cr.execute("""
         WITH RECURSIVE cpid(id, parent_id, commercial_partner_id, final) AS (

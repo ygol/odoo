@@ -36,7 +36,7 @@ class Employee(models.Model):
         return indirect_subordinates | direct_subordinates
 
 
-    @api.depends('child_ids', 'child_ids.child_all_count')
+    @api.depends('child_ids')
     def _compute_subordinates(self):
         for employee in self:
             employee.subordinate_ids = employee._get_subordinates()

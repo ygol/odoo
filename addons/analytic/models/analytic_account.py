@@ -46,13 +46,15 @@ class AccountAnalyticGroup(models.Model):
     complete_name = fields.Char('Complete Name', compute='_compute_complete_name', store=True)
     company_id = fields.Many2one('res.company', string='Company')
 
-    @api.depends('name', 'parent_id.complete_name')
+    @api.depends('name', 'parent_id')
     def _compute_complete_name(self):
         for group in self:
-            if group.parent_id:
-                group.complete_name = '%s / %s' % (group.parent_id.complete_name, group.name)
-            else:
-                group.complete_name = group.name
+            g = group
+            names = []
+            while g:
+                names.append(g.name)
+                g = g.parent_id
+            group.complete_name = " / ".join(reversed(names))
 
 class AccountAnalyticAccount(models.Model):
     _name = 'account.analytic.account'

@@ -45,7 +45,7 @@ class IrUiMenu(models.Model):
 
     web_icon_data = fields.Binary(string='Web Icon Image', attachment=True)
 
-    @api.depends('name', 'parent_id.complete_name')
+    @api.depends('name', 'parent_id')
     def _compute_complete_name(self):
         for menu in self:
             menu.complete_name = menu._get_full_name()

@@ -24,13 +24,15 @@ class Category(models.Model):
     discussions = fields.Many2many('test_new_api.discussion', 'test_new_api_discussion_category',
                                    'category', 'discussion')
 
-    @api.one
-    @api.depends('name', 'parent.display_name')     # this definition is recursive
+    @api.depends('name', 'parent')
     def _compute_display_name(self):
-        if self.parent:
-            self.display_name = self.parent.display_name + ' / ' + self.name
-        else:
-            self.display_name = self.name
+        for cat in self:
+            names = []
+            cur = cat
+            while cur:
+                names.append(cur.name)
+                cur = cur.parent
+            cat.display_name = " / ".join(reversed(names))
 
     @api.depends('parent')
     def _compute_root_categ(self):
@@ -445,18 +447,28 @@ class CompanyDependentAttribute(models.Model):
 class ComputeRecursive(models.Model):
     _name = 'test_new_api.recursive'
     _description = 'Test New API Recursive'
+    _parent_store = True
+    _parent_name = 'parent'
 
     name = fields.Char(required=True)
     parent = fields.Many2one('test_new_api.recursive', ondelete='cascade')
+    parent_path = fields.Char(index=True)
+    parents = fields.Many2many('test_new_api.recursive', search='_search_parents', store=False)
     display_name = fields.Char(compute='_compute_display_name', store=True)
 
-    @api.depends('name', 'parent.display_name')
+    def _search_parents(self, operator, value):
+        assert operator == 'in'
+        return [('id', 'child_of', value)]
+
+    @api.depends('parents.name', 'parents.parent')
     def _compute_display_name(self):
         for rec in self:
-            if rec.parent:
-                rec.display_name = rec.parent.display_name + " / " + rec.name
-            else:
-                rec.display_name = rec.name
+            names = []
+            cur = rec
+            while cur:
+                names.append(cur.name)
+                cur = cur.parent
+            rec.display_name = " / ".join(reversed(names))
 
 
 class ComputeCascade(models.Model):
