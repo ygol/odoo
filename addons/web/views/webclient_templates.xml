@@ -745,7 +745,6 @@
                 <script type="text/javascript">
                     odoo.session_info = <t t-raw="session_info"/>;
                 </script>
-
                 <t t-call-assets="web.assets_common" t-js="false"/>
                 <t t-call-assets="web.assets_backend" t-js="false"/>
                 <t t-call-assets="web.assets_common" t-css="false"/>
