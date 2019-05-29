@@ -44,6 +44,9 @@ if len(sys.argv) > 1 and sys.argv[1] == 'gevent':
                     "Bad result from poll: %r" % state)
     psycopg2.extensions.set_wait_callback(gevent_wait_callback)
     evented = True
+else:
+    import psycopg2.extensions, psycopg2.extras
+    psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
 
 # Is the server running in prefork mode (e.g. behind Gunicorn).
 # If this is True, the processes have to communicate some events,
