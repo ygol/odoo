@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
-
+import collections
 import logging
 import psycopg2
 
@@ -241,3 +241,17 @@ def reverse_order(order):
         direction = 'asc' if item[1:] == ['desc'] else 'desc'
         items.append('%s %s' % (item[0], direction))
     return ', '.join(items)
+
+class PseudoModel:
+    def __init__(self, *, parent, **kwargs):
+        self.__parent=parent
+        self.__dict__.update(kwargs)
+
+    def __getattr__(self, item):
+        return getattr(self.__parent, item)
+
+    def _table_has_rows(self):
+        return False
+
+    def is_transient(self):
+        return False

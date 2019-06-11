@@ -924,6 +924,8 @@ class Field(MetaField('DummyField', (object,), {})):
             :param model: an instance of the field's model
             :param column: the column's configuration (dict) if it exists, or ``None``
         """
+        if self.company_dependent:
+            return # probably just a UI thing
         has_notnull = column and column['is_nullable'] == 'NO'
 
         if not column or (self.required and not has_notnull):
@@ -944,6 +946,7 @@ class Field(MetaField('DummyField', (object,), {})):
         """
         indexname = '%s_%s_index' % (model._table, self.name)
         if self.index:
+            assert not self.company_dependent
             try:
                 with model._cr.savepoint():
                     sql.create_index(model._cr, indexname, model._table, ['"%s"' % self.name])
@@ -2176,7 +2179,7 @@ class Many2one(_Relational):
     def update_db_foreign_key(self, model, column):
         comodel = model.env[self.comodel_name]
         # ir_actions is inherited, so foreign key doesn't work on it
-        if not comodel._auto or comodel._table == 'ir_actions':
+        if not comodel._auto or comodel._table == 'ir_actions' or self.company_dependent:
             return
         # create/update the foreign key, and reflect it in 'ir.model.constraint'
         process = sql.fix_foreign_key if column else sql.add_foreign_key

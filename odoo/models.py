@@ -270,6 +270,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
     _table = None               # SQL table name used by model
     _sequence = None            # SQL sequence to use for ID field
     _sql_constraints = []       # SQL constraints [(name, sql_def, message)]
+    _company_table = None
 
     _rec_name = None            # field to use for labeling records
     _order = 'id'               # default order for searching results
@@ -541,6 +542,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         """ Initialize base model attributes. """
         cls._description = cls._name
         cls._table = cls._name.replace('.', '_')
+        cls._company_table = None
         cls._sequence = None
         cls._log_access = cls._auto
         cls._inherits = {}
@@ -555,6 +557,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                     _logger.warning("The model %s has no _description", cls._name)
                 cls._description = base._description or cls._description
                 cls._table = base._table or cls._table
+                cls._company_table = base._company_table or cls._company_table
                 cls._sequence = base._sequence or cls._sequence
                 cls._log_access = getattr(base, '_log_access', cls._log_access)
 
@@ -573,6 +576,8 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         cls._sequence = cls._sequence or (cls._table + '_id_seq')
         cls._constraints = list(cls._constraints.values())
         cls._sql_constraints = list(cls._sql_constraints.values())
+        cls._company_table = cls._company_table or (cls._table + '__company')
+        check_pg_name(cls._company_table)
 
         # update _inherits_children of parent models
         for parent_name in cls._inherits:
@@ -2410,6 +2415,22 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
             if must_create_table:
                 tools.create_model_table(cr, self._table, self._description)
 
+            company_table = any(f.company_dependent for f in self._fields.values()) and self._company_table
+            company_columns = {}
+            if company_table:
+                _logger.info("Creating company table %r for %r", company_table, self._name)
+                if not tools.table_exists(cr, company_table):
+                    cr.execute("""
+                    CREATE TABLE {self._company_table} (
+                        record_id integer REFERENCES {self._table} (id),
+                        company_id integer REFERENCES res_company (id)
+                    );
+                    -- used for uniquity not indexing
+                    CREATE UNIQUE INDEX ON {self._company_table} (coalesce(record_id, 0), coalesce(company_id, 0));
+                    CREATE INDEX ON {self._company_table} (record_id, company_id);
+                    """.format(self=self))
+                company_columns = tools.table_columns(cr, company_table)
+
             if self._parent_store:
                 if not tools.column_exists(cr, self._table, 'parent_path'):
                     self._create_parent_columns()
@@ -2426,15 +2447,25 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                 recs._recompute_todo(field)
 
             for field in self._fields.values():
-                if not field.store:
+                if not (field.store or field.company_dependent):
                     continue
 
                 if field.manual and not update_custom_fields:
                     continue            # don't update custom fields
 
-                new = field.update_db(self, columns)
-                if new and field.compute:
-                    self.pool.post_init(recompute, field)
+                if field.company_dependent:
+                    field.update_db(
+                        tools.PseudoModel(
+                            _name=self._name + '__company',
+                            _table=company_table,
+                            parent=self,
+                        ),
+                        company_columns
+                    )
+                else:
+                    new = field.update_db(self, columns)
+                    if new and field.compute:
+                        self.pool.post_init(recompute, field)
 
         if self._auto:
             self._add_sql_constraints()
