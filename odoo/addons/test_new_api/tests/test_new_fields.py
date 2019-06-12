@@ -1,6 +1,7 @@
 #
 # test cases for new-style fields
 #
+import operator
 from datetime import date, datetime, time
 
 from odoo import fields
@@ -767,136 +768,6 @@ class TestFields(common.TransactionCase):
             for field in ('is_company', 'name', 'email', 'country_id'):
                 self.assertEqual(getattr(user, field), getattr(partner, field))
                 self.assertEqual(user[field], partner[field])
-
-    def test_27_company_dependent(self):
-        """ test company-dependent fields. """
-        # consider three companies
-        company0 = self.env.ref('base.main_company')
-        company1 = self.env['res.company'].create({'name': 'A'})
-        company2 = self.env['res.company'].create({'name': 'B'})
-
-        # create one user per company
-        user0 = self.env['res.users'].create({'name': 'Foo', 'login': 'foo',
-                                              'company_id': company0.id, 'company_ids': []})
-        user1 = self.env['res.users'].create({'name': 'Bar', 'login': 'bar',
-                                              'company_id': company1.id, 'company_ids': []})
-        user2 = self.env['res.users'].create({'name': 'Baz', 'login': 'baz',
-                                              'company_id': company2.id, 'company_ids': []})
-
-        # create values for many2one field
-        tag0 = self.env['test_new_api.multi.tag'].create({'name': 'Qux'})
-        tag1 = self.env['test_new_api.multi.tag'].create({'name': 'Quux'})
-        tag2 = self.env['test_new_api.multi.tag'].create({'name': 'Quuz'})
-
-        # create default values for the company-dependent fields
-        field_foo = self.env['ir.model.fields']._get('test_new_api.company', 'foo')
-        self.env['ir.property'].create({'name': 'foo', 'fields_id': field_foo.id,
-                                        'value': 'default', 'type': 'char'})
-        field_tag_id = self.env['ir.model.fields']._get('test_new_api.company', 'tag_id')
-        self.env['ir.property'].create({'name': 'foo', 'fields_id': field_tag_id.id,
-                                        'value': tag0, 'type': 'many2one'})
-
-        # assumption: users don't have access to 'ir.property'
-        accesses = self.env['ir.model.access'].search([('model_id.model', '=', 'ir.property')])
-        accesses.write(dict.fromkeys(['perm_read', 'perm_write', 'perm_create', 'perm_unlink'], False))
-
-        # create/modify a record, and check the value for each user
-        record = self.env['test_new_api.company'].create({
-            'foo': 'main',
-            'date': '1932-11-09',
-            'moment': '1932-11-09 00:00:00',
-            'tag_id': tag1.id,
-        })
-        record.invalidate_cache()
-        self.assertEqual(record.sudo(user0).foo, 'main')
-        self.assertEqual(record.sudo(user1).foo, 'default')
-        self.assertEqual(record.sudo(user2).foo, 'default')
-        self.assertEqual(str(record.sudo(user0).date), '1932-11-09')
-        self.assertEqual(record.sudo(user1).date, False)
-        self.assertEqual(record.sudo(user2).date, False)
-        self.assertEqual(str(record.sudo(user0).moment), '1932-11-09 00:00:00')
-        self.assertEqual(record.sudo(user1).moment, False)
-        self.assertEqual(record.sudo(user2).moment, False)
-        self.assertEqual(record.sudo(user0).tag_id, tag1)
-        self.assertEqual(record.sudo(user1).tag_id, tag0)
-        self.assertEqual(record.sudo(user2).tag_id, tag0)
-
-        record.sudo(user1).write({
-            'foo': 'alpha',
-            'date': '1932-12-10',
-            'moment': '1932-12-10 23:59:59',
-            'tag_id': tag2.id,
-        })
-        record.invalidate_cache()
-        self.assertEqual(record.sudo(user0).foo, 'main')
-        self.assertEqual(record.sudo(user1).foo, 'alpha')
-        self.assertEqual(record.sudo(user2).foo, 'default')
-        self.assertEqual(str(record.sudo(user0).date), '1932-11-09')
-        self.assertEqual(str(record.sudo(user1).date), '1932-12-10')
-        self.assertEqual(record.sudo(user2).date, False)
-        self.assertEqual(str(record.sudo(user0).moment), '1932-11-09 00:00:00')
-        self.assertEqual(str(record.sudo(user1).moment), '1932-12-10 23:59:59')
-        self.assertEqual(record.sudo(user2).moment, False)
-        self.assertEqual(record.sudo(user0).tag_id, tag1)
-        self.assertEqual(record.sudo(user1).tag_id, tag2)
-        self.assertEqual(record.sudo(user2).tag_id, tag0)
-
-        # unlink value of a many2one (tag2), and check again
-        tag2.unlink()
-        self.assertEqual(record.sudo(user0).tag_id, tag1)
-        self.assertEqual(record.sudo(user1).tag_id, tag0.browse())
-        self.assertEqual(record.sudo(user2).tag_id, tag0)
-
-        record.sudo(user1).foo = False
-        record.invalidate_cache()
-        self.assertEqual(record.sudo(user0).foo, 'main')
-        self.assertEqual(record.sudo(user1).foo, False)
-        self.assertEqual(record.sudo(user2).foo, 'default')
-
-        # set field with 'force_company' in context
-        record.sudo(user0).with_context(force_company=company1.id).foo = 'beta'
-        record.invalidate_cache()
-        self.assertEqual(record.sudo(user0).foo, 'main')
-        self.assertEqual(record.sudo(user1).foo, 'beta')
-        self.assertEqual(record.sudo(user2).foo, 'default')
-
-        # create company record and attribute
-        company_record = self.env['test_new_api.company'].create({'foo': 'ABC'})
-        attribute_record = self.env['test_new_api.company.attr'].create({
-            'company': company_record.id,
-            'quantity': 1,
-        })
-        self.assertEqual(attribute_record.bar, 'ABC')
-
-        # change quantity, 'bar' should recompute to 'ABCABC'
-        attribute_record.quantity = 2
-        self.assertEqual(attribute_record.bar, 'ABCABC')
-        self.assertFalse(self.env.has_todo())
-
-        # change company field 'foo', 'bar' should recompute to 'DEFDEF'
-        company_record.foo = 'DEF'
-        self.assertEqual(attribute_record.company.foo, 'DEF')
-        self.assertEqual(attribute_record.bar, 'DEFDEF')
-        self.assertFalse(self.env.has_todo())
-
-        # add group on company-dependent field
-        self.assertFalse(user0.has_group('base.group_system'))
-        self.patch(type(record).foo, 'groups', 'base.group_system')
-        with self.assertRaises(AccessError):
-            record.sudo(user0).foo = 'forbidden'
-
-        user0.write({'groups_id': [(4, self.env.ref('base.group_system').id)]})
-        record.sudo(user0).foo = 'yes we can'
-
-        # add ir.rule to prevent access on record
-        self.assertTrue(user0.has_group('base.group_user'))
-        rule = self.env['ir.rule'].create({
-            'model_id': self.env['ir.model']._get_id(record._name),
-            'groups': [self.env.ref('base.group_user').id],
-            'domain_force': str([('id', '!=', record.id)]),
-        })
-        with self.assertRaises(AccessError):
-            record.sudo(user0).foo = 'forbidden'
 
     def test_30_read(self):
         """ test computed fields as returned by read(). """
