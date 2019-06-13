@@ -34,6 +34,25 @@ class PosController(http.Controller):
     def test_mobile_suite(self, mod=None, **kwargs):
         return request.render('point_of_sale.qunit_mobile_suite')
 
+    @http.route('/pos2/web', type='http', auth='user')
+    def pos2_web(self, **k):
+        # if user not logged in, log him in
+        pos_sessions = request.env['pos.session'].search([
+            ('state', '=', 'opened'),
+            ('user_id', '=', request.session.uid),
+            ('rescue', '=', False)])
+        if not pos_sessions:
+            return werkzeug.utils.redirect('/web#action=point_of_sale.action_client_pos_menu')
+        pos_sessions.login()
+        context = {
+            'session_info': json.dumps(request.env['ir.http'].session_info())
+        }
+        return request.render('point_of_sale.index_owl', qcontext=context)
+
+    @http.route('/pos2/web/tests', type='http', auth="user")
+    def test_suite(self, mod=None, **kwargs):
+        return request.render('point_of_sale.qunit_suite')
+
     @http.route('/pos/sale_details_report', type='http', auth='user')
     def print_sale_details(self, date_start=False, date_stop=False, **kw):
         r = request.env['report.point_of_sale.report_saledetails']
