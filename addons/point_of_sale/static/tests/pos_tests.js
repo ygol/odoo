@@ -2,7 +2,7 @@ odoo.define("point_of_sale.PointOfSaleTests", function(require) {
     "use strict";
 
     const RamStorage = require("web.RamStorage");
-    const { createActionManager } = require("web.test_utils");
+    const { createActionManager, dom } = require("web.test_utils");
     const PosDB = require("point_of_sale.DB");
 
     async function createPointOfSale(params) {
@@ -236,6 +236,57 @@ odoo.define("point_of_sale.PointOfSaleTests", function(require) {
                             .text()
                             .trim(),
                         "Mitchell Admin"
+                    );
+
+                    pos.destroy();
+                });
+            });
+
+            QUnit.module("OrderSelectorWidget", function() {
+                QUnit.test("basic rendering", async function(assert) {
+                    assert.expect(6);
+
+                    const pos = await loadPointOfSale({
+                        data: this.data,
+                        session: this.session,
+                    });
+
+                    const orderSelector = ".pos-topheader .order-selector";
+
+                    assert.containsOnce(
+                        pos.$(orderSelector),
+                        ".orders",
+                        "should have an order list"
+                    );
+                    assert.containsOnce(
+                        pos.$(orderSelector),
+                        ".neworder-button",
+                        "should have a new order button"
+                    );
+                    assert.containsOnce(
+                        pos.$(orderSelector),
+                        ".deleteorder-button",
+                        "should have a delete order button"
+                    );
+                    assert.containsOnce(
+                        pos.$(orderSelector),
+                        ".orders > .order-button",
+                        "should have 1 order by default"
+                    );
+
+                    await dom.click(pos.$(orderSelector).find(".neworder-button"));
+                    assert.containsN(
+                        pos.$(orderSelector),
+                        ".orders > .order-button",
+                        2,
+                        "should have 2 orders when clicking on new order button"
+                    );
+
+                    await dom.click(pos.$(orderSelector).find(".deleteorder-button"));
+                    assert.containsOnce(
+                        pos.$(orderSelector),
+                        ".orders > .order-button",
+                        "should have 1 order when clicking on delete order button"
                     );
 
                     pos.destroy();

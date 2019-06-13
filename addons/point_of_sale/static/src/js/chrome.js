@@ -5,6 +5,7 @@ var PosBaseWidget = require('point_of_sale.BaseWidget');
 var gui = require('point_of_sale.gui');
 var keyboard = require('point_of_sale.keyboard');
 var models = require('point_of_sale.models');
+var PosDB = require('point_of_sale.DB');
 var AbstractAction = require('web.AbstractAction');
 var core = require('web.core');
 var ajax = require('web.ajax');
@@ -556,7 +557,8 @@ var Chrome = PosBaseWidget.extend(AbstractAction.prototype, {
         this.started  = new $.Deferred(); // resolves when DOM is online
         this.ready    = new $.Deferred(); // resolves when the whole GUI has been loaded
 
-        this.pos = new models.PosModel(this.getSession(), {chrome:this}, this._rpc.bind(this));
+        this.db = new PosDB();
+        this.pos = new models.PosModel(this.getSession(), {chrome:this, db: this.db}, this._rpc.bind(this));
         this.gui = new gui.Gui({pos: this.pos, chrome: this});
         this.chrome = this; // So that chrome's childs have chrome set automatically
         this.pos.gui = this.gui;
