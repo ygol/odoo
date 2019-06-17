@@ -102,8 +102,11 @@ class Company(models.Model):
     @api.model
     def create_missing_inventory_loss_location(self):
         company_ids  = self.env['res.company'].search([])
-        inventory_loss_product_template_field = self.env['ir.model.fields'].search([('model','=','product.template'),('name','=','property_stock_inventory')])
-        companies_having_property = self.env['ir.property'].search([('fields_id', '=', inventory_loss_product_template_field.id)]).mapped('company_id')
+        Product = self.env['product.template']
+        self.env.cr.execute('select distinct(company_id) from {table}'.format(
+            table=Product._fields['property_stock_inventory']._company_table(Product)
+        ))
+        companies_having_property = self.env['res.company'].browse(id_ for id_ in self.env.cr.fetchall())
         company_without_property = company_ids - companies_having_property
         for company in company_without_property:
             company._create_inventory_loss_location()
@@ -111,8 +114,11 @@ class Company(models.Model):
     @api.model
     def create_missing_production_location(self):
         company_ids  = self.env['res.company'].search([])
-        production_product_template_field = self.env['ir.model.fields'].search([('model','=','product.template'),('name','=','property_stock_production')])
-        companies_having_property = self.env['ir.property'].search([('fields_id', '=', production_product_template_field.id)]).mapped('company_id')
+        Product = self.env['product.template']
+        self.env.cr.execute('select distinct(company_id) from {table}'.format(
+            table=Product._fields['property_stock_production']._company_table(Product)
+        ))
+        companies_having_property = self.env['res.company'].browse(id_ for id_ in self.env.cr.fetchall())
         company_without_property = company_ids - companies_having_property
         for company in company_without_property:
             company._create_production_location()

@@ -576,8 +576,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         cls._sequence = cls._sequence or (cls._table + '_id_seq')
         cls._constraints = list(cls._constraints.values())
         cls._sql_constraints = list(cls._sql_constraints.values())
-        cls._company_table = cls._company_table or (cls._table + '__company')
-        check_pg_name(cls._company_table)
 
         # update _inherits_children of parent models
         for parent_name in cls._inherits:
@@ -2336,9 +2334,9 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                    "  FROM pg_class c, pg_attribute a"
                    " WHERE c.relname=%s"
                    "   AND c.oid=a.attrelid"
-                   "   AND a.attisdropped=%s"
+                   "   AND a.attisdropped=false"
                    "   AND pg_catalog.format_type(a.atttypid, a.atttypmod) NOT IN ('cid', 'tid', 'oid', 'xid')"
-                   "   AND a.attname NOT IN %s", (self._table, False, tuple(cols))),
+                   "   AND a.attname NOT IN %s", (self._table, tuple(cols))),
 
         for row in cr.dictfetchall():
             if log:
@@ -2415,27 +2413,12 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
             if must_create_table:
                 tools.create_model_table(cr, self._table, self._description)
 
-            company_table = any(f.company_dependent for f in self._fields.values()) and self._company_table
-            company_columns = {}
-            if company_table:
-                _logger.info("Creating company table %r for %r", company_table, self._name)
-                if not tools.table_exists(cr, company_table):
-                    cr.execute("""
-                    CREATE TABLE {self._company_table} (
-                        record_id integer REFERENCES {self._table} (id),
-                        company_id integer REFERENCES res_company (id)
-                    );
-                    -- used for uniquity not indexing
-                    CREATE UNIQUE INDEX ON {self._company_table} (coalesce(record_id, 0), coalesce(company_id, 0));
-                    CREATE INDEX ON {self._company_table} (record_id, company_id);
-                    """.format(self=self))
-                company_columns = tools.table_columns(cr, company_table)
-
             if self._parent_store:
                 if not tools.column_exists(cr, self._table, 'parent_path'):
                     self._create_parent_columns()
                     parent_path_compute = True
 
+            # FIXME: drop company dependent side-tables
             self._check_removed_columns(log=False)
 
             # update the database schema for fields
@@ -2454,14 +2437,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                     continue            # don't update custom fields
 
                 if field.company_dependent:
-                    field.update_db(
-                        tools.PseudoModel(
-                            _name=self._name + '__company',
-                            _table=company_table,
-                            parent=self,
-                        ),
-                        company_columns
-                    )
+                    self._create_company_table(field)
                 else:
                     new = field.update_db(self, columns)
                     if new and field.compute:
@@ -2475,6 +2451,51 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
 
         if parent_path_compute:
             self._parent_store_compute()
+
+    def _create_company_table(self, field):
+        """ Creates a company-dependent table per company-dependent field.
+
+        This is not ideal but is a much simpler option than creating a single
+        table for all company-dependent fields of a model due to default /
+        fallback rules (unless we change those): if the field is not set for
+        a given (record, company) it should fallback to the "nearest" default
+        (+record-company, -record+company, -record-company) but if the field
+        is explicitly unset it should *not* fallback. This is mostly though
+        not only an issue for m2o, if an account is configured for the company
+        setting the account to False on a specific product should not reset
+        to company default. However because "null" stands out for "unset" and
+        "empty" using a single table this would require a flag per field
+        (not hard, just messy).
+
+        The alternative is to create a table per column, that way we keep the
+        benefits of proper typing and the fallback works the same way it does
+        in ir.property namely "row doesn't exist" (fallback) versus "row
+        exists and is set to null" (no fallback).
+        
+        Also avoids having to self-join the company table 4x and a big coalesce.
+        """
+        table_name = field._company_table(self)
+        check_pg_name(table_name)
+        if tools.table_exists(self.env.cr, table_name):
+            return # TODO: update/upgrade
+
+        # TODO: create implicit sub-models for this? Might work even better...
+        self.env.cr.execute("""
+        CREATE TABLE {field_table} (
+            record_id integer REFERENCES {self._table} (id) ON DELETE CASCADE,
+            company_id integer REFERENCES res_company (id) ON DELETE CASCADE
+        );
+        CREATE INDEX ON {field_table} (record_id, company_id);
+        -- used for uniquity not indexing
+        CREATE UNIQUE INDEX ON {field_table} (coalesce(record_id, 0), coalesce(company_id, 0));
+        """.format(self=self, field_table=table_name))
+        field.update_db(
+            tools.PseudoModel(
+                _name='%s__%s' % (self._name, field.name),
+                _table=table_name,
+                parent=self
+            ), {}
+        )
 
     @api.model_cr
     def init(self):
@@ -3223,14 +3244,11 @@ Fields:
         self.check_access_rights('unlink')
 
         # Check if the records are used as default properties.
-        refs = ['%s,%s' % (self._name, i) for i in self.ids]
-        if self.env['ir.property'].search([('res_id', '=', False), ('value_reference', 'in', refs)]):
-            raise UserError(_('Unable to delete this document because it is used as a default property'))
+        # FIXME: m2o should be required iff not bound to a record
 
         # Delete the records' properties.
         with self.env.norecompute():
             self.check_access_rule('unlink')
-            self.env['ir.property'].search([('res_id', 'in', refs)]).sudo().unlink()
 
             cr = self._cr
             Data = self.env['ir.model.data'].sudo().with_context({})

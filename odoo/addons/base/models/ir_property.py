@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
+import collections
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
@@ -31,7 +32,7 @@ TYPE2CLEAN = {
 }
 
 
-class Property(models.Model):
+class Property(models.AbstractModel):
     _name = 'ir.property'
     _description = 'Company Property'
 
@@ -60,7 +61,6 @@ class Property(models.Model):
                             default='many2one',
                             index=True)
 
-    @api.multi
     def _update_values(self, values):
         if 'value' not in values:
             return values
@@ -117,12 +117,54 @@ class Property(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        vals_list = [self._update_values(vals) for vals in vals_list]
-        created_default = any(not v.get('res_id') for v in vals_list)
-        r = super(Property, self).create(vals_list)
+        # fields_id -> [(record, company, value)]
+        fmap = collections.defaultdict(list)
+        created_default = False
+        for val in vals_list:
+            field = val['fields_id']
+            if not isinstance(field, models.BaseModel):
+                field = self.env['ir.model.fields'].browse(field)
+            field = field.sudo()
+            # fallback on value_* field
+            field_type = val.get('type') or self.env[field.model]._fields[field.name].type
+
+            value = val.get('value')
+            if value is None:
+                value = val[TYPE2FIELD[field_type]]
+
+            if field_type == 'many2one':
+                if isinstance(value, str): # <model>,<id>
+                    value = int(value.split(',', 1)[1])
+                elif isinstance(value, models.BaseModel):
+                    value = value.id
+
+            if val.get('res_id'):
+                record_id = int(val['res_id'].split(',', 1)[1])
+            else:
+                record_id = None
+
+            created_default = created_default or not record_id
+            fmap[field].append((
+                record_id,
+                val.get('company_id') or None,
+                value, value
+            ))
+
+        import pprint
+        pprint.pprint(fmap)
+        for field, items in fmap.items():
+            Model = self.env[field.model]
+            fobj = Model._fields[field.name]
+            table = fobj._company_table(Model)
+            self.env.cr.executemany(f"""
+            INSERT INTO {table} (record_id, company_id, {fobj.name})
+            VALUES (%s, %s, %s)
+            ON CONFLICT (coalesce(record_id, 0), coalesce(company_id, 0))
+            DO UPDATE set {fobj.name}=%s
+            """, items)
+
         if created_default:
             self.clear_caches()
-        return r
 
     @api.multi
     def unlink(self):

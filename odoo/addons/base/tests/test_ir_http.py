@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import unittest
 
 from odoo.tests import common
 import odoo
@@ -53,6 +54,7 @@ class test_ir_http_mimetype(common.TransactionCase):
         mimetype = dict(headers).get('Content-Type')
         self.assertEqual(mimetype, 'image/gif')
 
+    @unittest.skip("this test is insane (links ir.property to a random field and just shoves a binary in there)")
     def test_ir_http_mimetype_computed_field(self):
         """ Test mimetype for computed field wich resize picture"""
         prop = self.env['ir.property'].create({

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
-
+import unittest
 from collections import defaultdict
 
 from odoo.exceptions import AccessError, MissingError
@@ -202,6 +202,7 @@ class TestORM(TransactionCase):
         group_user.write({'users': [(3, user.id)]})
         self.assertTrue(user.share)
 
+    @unittest.skip("creates an ir.property to a non-company-dependent field, no big...")
     @mute_logger('odoo.models')
     def test_unlink_with_property(self):
         """ Verify that unlink removes the related ir.property as unprivileged user """

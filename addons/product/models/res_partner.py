@@ -8,7 +8,17 @@ class Partner(models.Model):
     _name = 'res.partner'
     _inherit = 'res.partner'
 
+    def init(self):
+        super().init()
+        field = self._fields['property_product_pricelist']
+        field.company_dependent = True
+        self._create_company_table(field)
+        @self.pool.post_init
+        def reset():
+            field.company_dependent = False
+
     # NOT A REAL PROPERTY !!!!
+    # FIXME: fooking hell
     property_product_pricelist = fields.Many2one(
         'product.pricelist', 'Pricelist', compute='_compute_product_pricelist',
         inverse="_inverse_product_pricelist", company_dependent=False,

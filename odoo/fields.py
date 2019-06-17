@@ -2,7 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 """ High-level objects for fields. """
-
+import hashlib
 from collections import OrderedDict, defaultdict
 from datetime import date, datetime, time
 from dateutil.relativedelta import relativedelta
@@ -652,35 +652,77 @@ class Field(MetaField('DummyField', (object,), {})):
     #
 
     def _default_company_dependent(self, model):
-        return model.env['ir.property'].get(self.name, self.model_name)
+        env = model.env
+        company = env.context.get('force_company', env.company.id)
+        
+        env.cr.execute("""
+        select {name} from {table} 
+        where record_id is null
+          and company_id = %s or company_id is null
+        order by company_id nulls last
+        """.format(name=self.name, table=self._company_table(model)),
+                       [company]
+                       )
+        if env.cr.rowcount:
+            return self.convert_to_cache(
+                env.cr.fetchone()[0], model, validate=False
+            )
+        return False
 
     def _compute_company_dependent(self, records):
-        # read property as superuser, as the current user may not have access
-        context = records.env.context
-        if 'force_company' not in context:
-            company = records.env.company
-            context = dict(context, force_company=company.id)
-        Property = records.env(user=SUPERUSER_ID, context=context)['ir.property']
-        values = Property.get_multi(self.name, self.model_name, records.ids)
+        # convert to cache then convert to record?
+
+        env = records.env
+        company = env.context.get('force_company', env.company.id)
+        env.cr.execute("""
+        SELECT record_id, {name}
+        FROM {table}
+        WHERE (record_id =any(%s) OR record_id IS NULL)
+          AND (company_id = %s OR company_id IS NULL)
+        ORDER BY company_id NULLS FIRST
+        """.format(
+            name=self.name,
+            table=self._company_table(records)
+        ), [records.ids, company])
+        matches = dict(env.cr.fetchall())
+        default = matches.pop(None, False)
         for record in records:
-            record[self.name] = values.get(record.id)
+            # FIXME: also convert_to_record?
+            record[self.name] = self.convert_to_cache(
+                matches.get(record.id, default), records, validate=False
+            )
+
+    def _company_table(self, model):
+        n = '%s__%s' % (model._table, self.name)
+        if len(n) > 63:
+            name_max = 40 - len(model._table)
+            # base32 is a 1.6x multiplier so 14 bytes -> 23c
+            h = base64.b32encode(hashlib.sha256(self.name.encode()).digest()[:14]).decode()
+            n = '%s__%s_%s' % (model._table, self.name[:name_max], h)
+        return n
 
     def _inverse_company_dependent(self, records):
-        # update property as superuser, as the current user may not have access
-        context = records.env.context
-        if 'force_company' not in context:
-            company = records.env.company
-            context = dict(context, force_company=company.id)
-        Property = records.env(user=SUPERUSER_ID, context=context)['ir.property']
-        values = {
-            record.id: self.convert_to_write(record[self.name], record)
+        env = records.env
+        company = env.context.get('force_company', env.company.id)
+        values = (
+            (record.id, self.convert_to_column(
+                self.convert_to_write(record[self.name], record),
+                record,
+                validate=False
+            ))
             for record in records
-        }
-        Property.set_multi(self.name, self.model_name, values)
+        )
+        env.cr.executemany("""
+        INSERT INTO {table} (record_id, company_id, {name})
+        VALUES (%s, %s, %s)
+        ON CONFLICT (coalesce(record_id, 0), coalesce(company_id, 0))
+        DO UPDATE SET {name}=%s
+        """.format(table=self._company_table(records), name=self.name),
+            [(id_, company, value, value) for id_, value in values]
+        )
 
     def _search_company_dependent(self, records, operator, value):
-        Property = records.env['ir.property']
-        return Property.search_multi(self.name, self.model_name, operator, value)
+        raise NotImplementedError
 
     #
     # Setup of field triggers
@@ -2160,6 +2202,9 @@ class Many2one(_Relational):
                 "as being 'set null'. Only 'restrict' and 'cascade' make sense."
                 % (self.name, model._name)
             )
+        if self.company_dependent:
+            self.ondelete = 'set null'
+            self.required = False
 
     def update_db(self, model, columns):
         comodel = model.env[self.comodel_name]
@@ -2179,12 +2224,12 @@ class Many2one(_Relational):
     def update_db_foreign_key(self, model, column):
         comodel = model.env[self.comodel_name]
         # ir_actions is inherited, so foreign key doesn't work on it
-        if not comodel._auto or comodel._table == 'ir_actions' or self.company_dependent:
+        if not comodel._auto or comodel._table == 'ir_actions':
             return
         # create/update the foreign key, and reflect it in 'ir.model.constraint'
         process = sql.fix_foreign_key if column else sql.add_foreign_key
         new = process(model._cr, model._table, self.name, comodel._table, 'id', self.ondelete or 'set null')
-        if new:
+        if new and not self.company_dependent:
             conname = '%s_%s_fkey' % (model._table, self.name)
             model.env['ir.model.constraint']._reflect_constraint(model, conname, 'f', None, self._module)
 
