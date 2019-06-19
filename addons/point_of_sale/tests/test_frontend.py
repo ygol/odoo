@@ -299,12 +299,7 @@ class TestUi(odoo.tests.HttpCase):
 
         # Change the default sale pricelist of customers,
         # so the js tests can expect deterministically this pricelist when selecting a customer.
-        field = env['ir.model.fields']._get('res.partner', 'property_product_pricelist')
-        env['ir.property'].search([
-            ('name', '=', 'property_product_pricelist'),
-            ('fields_id', '=', field.id),
-            ('res_id', '=', False)
-        ]).write({'value_reference': 'product.pricelist,%s' % public_pricelist.id})
+        env['ir.property'].set_multi('property_product_pricelist', 'res.partner', {None: public_pricelist})
 
         # open a session, the /pos/web controller will redirect to it
         main_pos_config.open_session_cb()

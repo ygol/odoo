@@ -448,8 +448,11 @@ class AccountChartTemplate(models.Model):
         :param company_id: company to generate properties for.
         :returns: True
         """
+        # FIXME: access rights?
+        # FIXME: set_multi on no company???
+
         self.ensure_one()
-        PropertyObj = self.env['ir.property']
+        PropertyObj = self.env['ir.property'].with_context(force_company=company.id)
         todo_list = [
             ('property_account_receivable_id', 'res.partner', 'account.account'),
             ('property_account_payable_id', 'res.partner', 'account.account'),
@@ -461,32 +464,23 @@ class AccountChartTemplate(models.Model):
             ('property_tax_receivable_account_id', 'account.tax.group', 'account.account'),
             ('property_advance_tax_payment_account_id', 'account.tax.group', 'account.account'),
         ]
-        for record in todo_list:
-            account = getattr(self, record[0])
-            value = account and 'account.account,' + str(acc_template_ref[account.id]) or False
-            if value:
-                field = self.env['ir.model.fields'].search([('name', '=', record[0]), ('model', '=', record[1]), ('relation', '=', record[2])], limit=1)
-                vals = {
-                    'name': record[0],
-                    'company_id': company.id,
-                    'fields_id': field.id,
-                    'value': value,
-                }
-                properties = PropertyObj.search([('name', '=', record[0]), ('company_id', '=', company.id)])
-                if properties:
-                    #the property exist: modify it
-                    properties.write(vals)
-                else:
-                    #create the property
-                    PropertyObj.create(vals)
+
+        for field, model, relation in todo_list:
+            account = self[field]
+            value = account and self.env['account.account'].browse(acc_template_ref[account.id])
+            if not value:
+                continue
+
+            PropertyObj.set_multi(field, model, {None: value})
+
         stock_properties = [
             'property_stock_account_input_categ_id',
             'property_stock_account_output_categ_id',
             'property_stock_valuation_account_id',
         ]
         for stock_property in stock_properties:
-            account = getattr(self, stock_property)
-            value = account and acc_template_ref[account.id] or False
+            account = self[stock_property]
+            value = account and acc_template_ref[account.id]
             if value:
                 company.write({stock_property: value})
         return True
