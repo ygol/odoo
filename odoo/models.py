@@ -270,7 +270,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
     _table = None               # SQL table name used by model
     _sequence = None            # SQL sequence to use for ID field
     _sql_constraints = []       # SQL constraints [(name, sql_def, message)]
-    _company_table = None
 
     _rec_name = None            # field to use for labeling records
     _order = 'id'               # default order for searching results
@@ -542,7 +541,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         """ Initialize base model attributes. """
         cls._description = cls._name
         cls._table = cls._name.replace('.', '_')
-        cls._company_table = None
         cls._sequence = None
         cls._log_access = cls._auto
         cls._inherits = {}
@@ -557,7 +555,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                     _logger.warning("The model %s has no _description", cls._name)
                 cls._description = base._description or cls._description
                 cls._table = base._table or cls._table
-                cls._company_table = base._company_table or cls._company_table
                 cls._sequence = base._sequence or cls._sequence
                 cls._log_access = getattr(base, '_log_access', cls._log_access)
 
@@ -2480,6 +2477,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
             return # TODO: update/upgrade
 
         # TODO: create implicit sub-models for this? Might work even better...
+        # FIXME: quote idents to avoid postgres lowercasing everything?
         self.env.cr.execute("""
         CREATE TABLE {field_table} (
             record_id integer REFERENCES {self._table} (id) ON DELETE CASCADE,

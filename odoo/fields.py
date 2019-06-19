@@ -672,6 +672,13 @@ class Field(MetaField('DummyField', (object,), {})):
     def _compute_company_dependent(self, records):
         # convert to cache then convert to record?
 
+        values = self._compute_company_dependent_(records)
+
+        for record in records:
+            # FIXME: also convert_to_record?
+            record[self.name] = values[record.id]
+
+    def _compute_company_dependent_(self, records):
         env = records.env
         company = env.context.get('force_company', env.company.id)
         env.cr.execute("""
@@ -686,19 +693,20 @@ class Field(MetaField('DummyField', (object,), {})):
         ), [records.ids, company])
         matches = dict(env.cr.fetchall())
         default = matches.pop(None, False)
-        for record in records:
-            # FIXME: also convert_to_record?
-            record[self.name] = self.convert_to_cache(
+        return {
+            record.id: self.convert_to_cache(
                 matches.get(record.id, default), records, validate=False
             )
+            for record in records
+        }
 
     def _company_table(self, model):
         n = '%s__%s' % (model._table, self.name)
         if len(n) > 63:
             name_max = 40 - len(model._table)
-            # base32 is a 1.6x multiplier so 14 bytes -> 23c
-            h = base64.b32encode(hashlib.sha256(self.name.encode()).digest()[:14]).decode()
-            n = '%s__%s_%s' % (model._table, self.name[:name_max], h)
+            # base32 is a 1.6x multiplier so 12 bytes -> 20c
+            h = base64.b32encode(hashlib.sha256(self.name.encode()).digest()[:12]).decode().rstrip('=')
+            n = '%s__%s_%s' % (model._table, self.name[:name_max], h.lower())
         return n
 
     def _inverse_company_dependent(self, records):
@@ -722,7 +730,23 @@ class Field(MetaField('DummyField', (object,), {})):
         )
 
     def _search_company_dependent(self, records, operator, value):
-        raise NotImplementedError
+        if operator in ('=', '!='):
+            if value:
+                cond = '%s %s %%s' % (self.name, operator)
+                params = [value]
+            else:
+                cond = ('%s IS NULL' if operator == '=' else '%s IS NOT NULL') % self.name
+                params = []
+
+            cr = records.env.cr
+            cr.execute(
+                "select record_id from {} where {}".format(self._company_table(records), cond),
+                params
+            )
+            return [('id', 'in', [id_ for [id_] in cr.fetchall()])]
+        raise NotImplementedError(
+            f'{self}._search_company_dependent(records={records}, operator={operator!r}, value={value!r}):'
+        )
 
     #
     # Setup of field triggers
@@ -986,9 +1010,14 @@ class Field(MetaField('DummyField', (object,), {})):
             :param model: an instance of the field's model
             :param column: the column's configuration (dict) if it exists, or ``None``
         """
+        # FIXME: indexname is probably going to be way too big (and broken) 
+        #        for company dependent fields... also indexing them makes 
+        #        little sense, but issue is the else clause which blows up
+        if self.company_dependent:
+            return
+
         indexname = '%s_%s_index' % (model._table, self.name)
         if self.index:
-            assert not self.company_dependent
             try:
                 with model._cr.savepoint():
                     sql.create_index(model._cr, indexname, model._table, ['"%s"' % self.name])
