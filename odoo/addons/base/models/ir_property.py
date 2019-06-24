@@ -61,43 +61,6 @@ class Property(models.AbstractModel):
                             default='many2one',
                             index=True)
 
-    def _update_values(self, values):
-        if 'value' not in values:
-            return values
-        value = values.pop('value')
-
-        prop = None
-        type_ = values.get('type')
-        if not type_:
-            if self:
-                prop = self[0]
-                type_ = prop.type
-            else:
-                type_ = self._fields['type'].default(self)
-
-        field = TYPE2FIELD.get(type_)
-        if not field:
-            raise UserError(_('Invalid type'))
-
-        if field == 'value_reference':
-            if not value:
-                value = False
-            elif isinstance(value, models.BaseModel):
-                value = '%s,%d' % (value._name, value.id)
-            elif isinstance(value, int):
-                field_id = values.get('fields_id')
-                if not field_id:
-                    if not prop:
-                        raise ValueError()
-                    field_id = prop.fields_id
-                else:
-                    field_id = self.env['ir.model.fields'].browse(field_id)
-
-                value = '%s,%d' % (field_id.sudo().relation, value)
-
-        values[field] = value
-        return values
-
     @api.multi
     def write(self, values):
         # if any of the records we're writing on has a res_id=False *or*
@@ -174,46 +137,6 @@ class Property(models.AbstractModel):
         # FIXME: return something more sensible
         return [self]*len(vals_list)
 
-    @api.multi
-    def unlink(self):
-        default_deleted = False
-        if self._ids:
-            self.env.cr.execute(
-                'SELECT EXISTS (SELECT 1 FROM ir_property WHERE id in %s)',
-                [self._ids]
-            )
-            default_deleted = self.env.cr.rowcount == 1
-        r = super().unlink()
-        if default_deleted:
-            self.clear_caches()
-        return r
-
-    @api.multi
-    def get_by_record(self):
-        self.ensure_one()
-        if self.type in ('char', 'text', 'selection'):
-            return self.value_text
-        elif self.type == 'float':
-            return self.value_float
-        elif self.type == 'boolean':
-            return bool(self.value_integer)
-        elif self.type == 'integer':
-            return self.value_integer
-        elif self.type == 'binary':
-            return self.value_binary
-        elif self.type == 'many2one':
-            if not self.value_reference:
-                return False
-            model, resource_id = self.value_reference.split(',')
-            return self.env[model].browse(int(resource_id)).exists()
-        elif self.type == 'datetime':
-            return self.value_datetime
-        elif self.type == 'date':
-            if not self.value_datetime:
-                return False
-            return fields.Date.to_string(fields.Datetime.from_string(self.value_datetime))
-        return False
-
     @api.model
     def get(self, name, model, res_id=False):
         Model = self.env[model]
@@ -234,36 +157,6 @@ class Property(models.AbstractModel):
         if vs:
             return field.convert_to_record(vs, self)
         return False
-
-    # only cache Property.get(res_id=False) as that's
-    # sub-optimally.
-    COMPANY_KEY = "self.env.context.get('force_company') or self.env.company.id"
-    @ormcache(COMPANY_KEY, 'name', 'model')
-    def _get_default_property(self, name, model):
-        raise NotImplementedError
-        prop = self._get_property(name, model, res_id=False)
-        if not prop:
-            return None, False
-        v = prop.get_by_record()
-        if prop.type != 'many2one':
-            return prop.type, v
-        return 'many2one', v and (v._name, v.id)
-
-    def _get_property(self, name, model, res_id):
-        domain = self._get_domain(name, model)
-        if domain is not None:
-            domain = [('res_id', '=', res_id)] + domain
-            #make the search with company_id asc to make sure that properties specific to a company are given first
-            return self.search(domain, limit=1, order='company_id')
-        return self.browse(())
-
-    def _get_domain(self, prop_name, model):
-        self._cr.execute("SELECT id FROM ir_model_fields WHERE name=%s AND model=%s", (prop_name, model))
-        res = self._cr.fetchone()
-        if not res:
-            return None
-        company_id = self._context.get('force_company') or self.env.company.id
-        return [('fields_id', '=', res[0]), ('company_id', 'in', [company_id, False])]
 
     def _load_records(self, data_list, update=False):
         for d in data_list:
