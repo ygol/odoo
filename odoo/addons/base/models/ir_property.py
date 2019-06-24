@@ -219,15 +219,21 @@ class Property(models.AbstractModel):
         Model = self.env[model]
         field = Model._fields[name]
         if not res_id:
-            return field._default_company_dependent(Model)
+            return field.convert_to_record(
+                field._default_company_dependent(Model),
+                self,
+            )
 
         if isinstance(res_id, str):
             mod, id_ = res_id.split(',')
             assert mod == model, "got different model & res_model: %r, %r" % (model, mod)
             res_id = int(id_)
         assert isinstance(res_id, int)
-        vs = field._compute_company_dependent_(Model.browse(res_id))
-        return vs.get(res_id) or False
+        vs = field._compute_company_dependent_(Model.browse(res_id)).get(res_id)
+        print(f"get({name} ({field}), {model}, {res_id}) -> {vs}")
+        if vs:
+            return field.convert_to_record(vs, self)
+        return False
 
     # only cache Property.get(res_id=False) as that's
     # sub-optimally.
