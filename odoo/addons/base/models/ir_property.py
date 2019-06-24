@@ -345,7 +345,7 @@ class Property(models.AbstractModel):
     @api.model
     def search_multi(self, name, model, operator, value):
         """ Return a domain for the records that match the given condition. """
-        raise NotImplementedError(f"test_01_pos_basic_ordersearch_multi(name={name}, model={model}, operator={operator}, value={value})")
+        raise NotImplementedError(f"search_multi(name={name}, model={model}, operator={operator}, value={value})")
         default_matches = False
         include_zero = False
 

@@ -663,11 +663,11 @@ class Field(MetaField('DummyField', (object,), {})):
         """.format(name=self.name, table=self._company_table(model)),
                        [company]
                        )
+        value = False
         if env.cr.rowcount:
-            return self.convert_to_cache(
-                env.cr.fetchone()[0], model, validate=False
-            )
-        return False
+            value = env.cr.fetchone()[0]
+
+        return self.convert_to_cache(value, model, validate=False)
 
     def _compute_company_dependent(self, records):
         # convert to cache then convert to record?

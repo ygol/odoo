@@ -149,6 +149,7 @@ class IrDefault(models.Model):
             # keep the highest priority default for each field
             if row[0] not in result:
                 result[row[0]] = json.loads(row[1])
+        print(f"get_model_defaults({self.env.uid}, {model_name}, {condition}) -> {result}")
         return result
 
     @api.model

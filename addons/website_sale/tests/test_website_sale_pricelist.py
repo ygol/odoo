@@ -261,7 +261,12 @@ class TestWebsitePriceListAvailableGeoIP(TestWebsitePriceListAvailable):
     def setUp(self):
         super(TestWebsitePriceListAvailableGeoIP, self).setUp()
         # clean `property_product_pricelist` for partner for this test (clean setup)
-        self.env['ir.property'].search([('res_id', '=', 'res.partner,%s' % self.env.user.partner_id.id)]).unlink()
+        partner_ = self.env.user.partner_id
+        self.env.cr.execute('''
+        delete from {} where record_id = %s
+        '''.format(partner_._fields['property_product_pricelist']._company_table(partner_)), [partner_.id])
+        partner_.clear_caches()
+        partner_.invalidate_cache()
 
         # set different country groups on pricelists
         c_EUR = self.env.ref('base.europe')
@@ -387,19 +392,19 @@ class TestWebsitePriceListMultiCompany(TransactionCase):
         # Ensure everything was done correctly
         self.assertEqual(self.demo_user.partner_id.with_context(force_company=self.company1.id).property_product_pricelist, self.c1_pl)
         self.assertEqual(self.demo_user.partner_id.with_context(force_company=self.company2.id).property_product_pricelist, self.c2_pl)
-        irp1 = self.env['ir.property'].search([
-            ('name', '=', 'property_product_pricelist'),
-            ('company_id', '=', self.company1.id),
-            ('res_id', '=', 'res.partner,%s' % self.demo_user.partner_id.id),
-            ('value_reference', '=', 'product.pricelist,%s' % self.c1_pl.id),
-        ])
-        irp2 = self.env['ir.property'].search([
-            ('name', '=', 'property_product_pricelist'),
-            ('company_id', '=', self.company2.id),
-            ('res_id', '=', 'res.partner,%s' % self.demo_user.partner_id.id),
-            ('value_reference', '=', 'product.pricelist,%s' % self.c2_pl.id),
-        ])
-        self.assertEqual(len(irp1 + irp2), 2, "Ensure there is an `ir.property` for demo partner for every company, and that the pricelist is the company specific one.")
+        # irp1 = self.env['ir.property'].search([
+        #     ('name', '=', 'property_product_pricelist'),
+        #     ('company_id', '=', self.company1.id),
+        #     ('res_id', '=', 'res.partner,%s' % self.demo_user.partner_id.id),
+        #     ('value_reference', '=', 'product.pricelist,%s' % self.c1_pl.id),
+        # ])
+        # irp2 = self.env['ir.property'].search([
+        #     ('name', '=', 'property_product_pricelist'),
+        #     ('company_id', '=', self.company2.id),
+        #     ('res_id', '=', 'res.partner,%s' % self.demo_user.partner_id.id),
+        #     ('value_reference', '=', 'product.pricelist,%s' % self.c2_pl.id),
+        # ])
+        # self.assertEqual(len(irp1 + irp2), 2, "Ensure there is an `ir.property` for demo partner for every company, and that the pricelist is the company specific one.")
         simulate_frontend_context(self)
         # ---------------------------------- IR.PROPERTY -------------------------------------
         # id |            name              |     res_id    | company_id |   value_reference
