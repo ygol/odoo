@@ -117,6 +117,7 @@ class CrmTeam(models.Model):
             return ['', _('Sales: Untaxed Total')] # no more title
         return super(CrmTeam, self)._graph_title_and_key()
 
+    @api.depends_context('in_sales_app', 'lang')
     def _compute_dashboard_button_name(self):
         super(CrmTeam,self)._compute_dashboard_button_name()
         if self._context.get('in_sales_app'):

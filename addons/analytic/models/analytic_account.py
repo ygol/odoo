@@ -79,6 +79,7 @@ class AccountAnalyticAccount(models.Model):
         return res
 
     @api.multi
+    @api.depends_context('from_date', 'to_date', 'tag_ids', 'company_ids')
     def _compute_debit_credit_balance(self):
         Curr = self.env['res.currency']
         analytic_line_obj = self.env['account.analytic.line']

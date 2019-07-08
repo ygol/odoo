@@ -1140,6 +1140,7 @@ class TestFields(common.TransactionCase):
         # read the related field discussion_name
         self.assertEqual(message.discussion.env, env)
         self.assertEqual(message.discussion_name, discussion.name)
+        discussion.invalidate_cache(['name'])
         with self.assertRaises(AccessError):
             message.discussion.name
 

@@ -60,6 +60,7 @@ class Currency(models.Model):
 
     @api.multi
     @api.depends('rate_ids.rate')
+    @api.depends_context('date', 'company_id')
     def _compute_current_rate(self):
         date = self._context.get('date') or fields.Date.today()
         company = self.env['res.company'].browse(self._context.get('company_id')) or self.env.company

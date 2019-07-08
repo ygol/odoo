@@ -102,6 +102,7 @@ class HolidaysType(models.Model):
 
     @api.multi
     @api.depends('validity_start', 'validity_stop')
+    @api.depends_context('default_date_from')
     def _compute_valid(self):
         dt = self._context.get('default_date_from') or fields.Date.context_today(self)
 

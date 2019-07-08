@@ -141,6 +141,7 @@ class Message(models.Model):
                 raise ValidationError(_("Author must be among the discussion participants."))
 
     @api.depends('author.name', 'discussion.name')
+    @api.depends_context('compute_name')
     def _compute_name(self):
         for message in self:
             message.name = self._context.get('compute_name',

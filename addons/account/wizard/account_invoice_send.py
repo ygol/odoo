@@ -53,6 +53,7 @@ class AccountInvoiceSend(models.TransientModel):
             self.composer_id.onchange_template_id_wrapper()
 
     @api.onchange('is_email')
+    @api.depends_context('lang')
     def _compute_invoice_without_email(self):
         for wizard in self:
             if wizard.is_email and len(wizard.invoice_ids) > 1:

@@ -473,6 +473,7 @@ class PricelistItem(models.Model):
 
     @api.depends('categ_id', 'product_tmpl_id', 'product_id', 'compute_price', 'fixed_price', \
         'pricelist_id', 'percent_price', 'price_discount', 'price_surcharge')
+    @api.depends_context('lang')
     def _get_pricelist_item_name_price(self):
         for item in self:
             if item.categ_id:

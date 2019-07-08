@@ -225,6 +225,7 @@ class HolidaysAllocation(models.Model):
 
     @api.multi
     @api.depends('number_of_hours_display', 'number_of_days_display')
+    @api.depends_context('lang')
     def _compute_duration_display(self):
         for allocation in self:
             allocation.duration_display = '%g %s' % (

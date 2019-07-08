@@ -766,6 +766,7 @@ class Meeting(models.Model):
                 return round(duration, 2)
             return 0.0
 
+    @api.depends_context('active_model', 'active_id')
     def _compute_is_highlighted(self):
         if self.env.context.get('active_model') == 'res.partner':
             partner_id = self.env.context.get('active_id')

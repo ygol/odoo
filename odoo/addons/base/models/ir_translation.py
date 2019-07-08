@@ -198,6 +198,7 @@ class IrTranslation(models.Model):
         return [(lang.code, lang.name) for lang in langs]
 
     @api.depends('type', 'name', 'res_id')
+    @api.depends_context('lang')
     def _compute_source(self):
         ''' Get source name for the translation. If object type is model, return
         the value stored in db. Otherwise, return value store in src field.

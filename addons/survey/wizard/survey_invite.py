@@ -78,6 +78,7 @@ class SurveyInvite(models.TransientModel):
         self.existing_emails = '\n'.join(email for email in emails if email in existing_emails)
 
     @api.depends('existing_partner_ids', 'existing_emails')
+    @api.depends_context('lang')
     def _compute_existing_text(self):
         existing_text = False
         if self.existing_partner_ids:

@@ -1015,6 +1015,7 @@ class AccountMove(models.Model):
             r.invoice_has_matching_supsense_amount = res
 
     @api.depends('partner_id', 'invoice_source_email')
+    @api.depends_context('lang')
     def _compute_invoice_vendor_display_info(self):
         for move in self:
             vendor_display_name = move.partner_id.name
@@ -1024,7 +1025,7 @@ class AccountMove(models.Model):
                     vendor_display_name = _('From: ') + move.invoice_source_email
                     move.invoice_vendor_icon = '@'
                 else:
-                    vendor_display_name = ('Created by: ') + move.create_uid.name
+                    vendor_display_name = _('Created by: ') + move.create_uid.name
                     move.invoice_vendor_icon = '#'
             move.invoice_vendor_display_name = vendor_display_name
 
@@ -1082,6 +1083,7 @@ class AccountMove(models.Model):
                 date_sequence.number_next_actual = int(result.group(2))
 
     @api.multi
+    @api.depends_context('lang')
     def _compute_payments_widget_to_reconcile_info(self):
         for move in self:
             move.invoice_outstanding_credits_debits_widget = json.dumps(False)
@@ -1168,6 +1170,7 @@ class AccountMove(models.Model):
         return reconciled_vals
 
     @api.depends('type', 'line_ids.amount_residual')
+    @api.depends_context('lang')
     def _compute_payments_widget_reconciled_info(self):
         for move in self:
             if move.state != 'posted' or not move.is_invoice(include_receipts=True):

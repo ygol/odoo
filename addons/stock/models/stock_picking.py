@@ -301,6 +301,7 @@ class Picking(models.Model):
             picking.has_tracking = any(m.has_tracking != 'none' for m in picking.move_lines)
 
     @api.depends('picking_type_id.show_operations')
+    @api.depends_context('force_detailed_view')
     def _compute_show_operations(self):
         for picking in self:
             if self.env.context.get('force_detailed_view'):

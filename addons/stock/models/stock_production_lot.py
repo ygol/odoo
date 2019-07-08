@@ -37,6 +37,7 @@ class ProductionLot(models.Model):
                 raise UserError(_('You are not allowed to create a lot or serial number with this operation type. To change this, go on the operation type and tick the box "Create New Lots/Serial Numbers".'))
 
     @api.depends('name')
+    @api.depends_context('display_complete')
     def _compute_display_complete(self):
         """ Defines if we want to display all fields in the stock.production.lot form view.
         It will if the record exists (`id` set) or if we precised it into the context.

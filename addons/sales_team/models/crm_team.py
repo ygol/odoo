@@ -191,6 +191,7 @@ class CrmTeam(models.Model):
         color = '#875A7B' if '+e' in version else '#7c7bad'
         return [{'values': values, 'area': True, 'title': graph_title, 'key': graph_key, 'color': color}]
 
+    @api.depends_context('lang')
     def _compute_dashboard_button_name(self):
         """ Sets the adequate dashboard button name depending on the Sales Team's options
         """

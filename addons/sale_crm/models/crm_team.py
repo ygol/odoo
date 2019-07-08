@@ -7,6 +7,7 @@ from odoo import models,fields, api, _
 class CrmTeam(models.Model):
     _inherit = 'crm.team'
 
+    @api.depends_context('in_sales_app', 'lang')
     def _compute_dashboard_button_name(self):
         super(CrmTeam, self)._compute_dashboard_button_name()
         teams_with_opp = self.filtered(lambda team: team.use_opportunities)

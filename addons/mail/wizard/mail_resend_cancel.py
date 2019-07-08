@@ -13,6 +13,7 @@ class MailCancelResend(models.TransientModel):
 
     @api.multi
     @api.depends('model')
+    @api.depends_context('lang', 'unread_counter')
     def _compute_help_message(self):
         for wizard in self:
             wizard.help_message = _("Are you sure you want to discard %s mail delivery failures. You won't be able to re-send these mails later!") % (wizard._context.get('unread_counter'))

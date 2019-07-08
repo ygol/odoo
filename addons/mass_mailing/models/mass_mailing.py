@@ -255,6 +255,7 @@ class MassMailingContact(models.Model):
             raise UserError('Search opt out cannot be executed without a unique and valid active mailing list context.')
 
     @api.depends('subscription_list_ids')
+    @api.depends_context('default_list_ids')
     def _compute_opt_out(self):
         if 'default_list_ids' in self._context and isinstance(self._context['default_list_ids'], (list, tuple)) and len(self._context['default_list_ids']) == 1:
             [active_list_id] = self._context['default_list_ids']

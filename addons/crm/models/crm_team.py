@@ -122,6 +122,7 @@ class Team(models.Model):
         action['context'] = action_context
         return action
 
+    @api.depends_context('lang')
     def _compute_dashboard_button_name(self):
         super(Team,self)._compute_dashboard_button_name()
         team_with_pipelines = self.filtered(lambda el: el.use_opportunities)

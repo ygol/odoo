@@ -321,6 +321,7 @@ class StockMove(models.Model):
                 total_availability = self.env['stock.quant']._get_available_quantity(move.product_id, move.location_id)
                 move.availability = min(move.product_qty, total_availability)
 
+    @api.depends_context('lang')
     def _compute_string_qty_information(self):
         precision = self.env['decimal.precision'].precision_get('Product Unit of Measure')
         void_moves = self.filtered(lambda move: move.state in ('draft', 'done', 'cancel') or move.location_id.usage != 'internal')

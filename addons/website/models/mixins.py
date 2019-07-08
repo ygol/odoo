@@ -195,6 +195,7 @@ class WebsitePublishedMultiMixin(WebsitePublishedMixin):
 
     @api.multi
     @api.depends('is_published', 'website_id')
+    @api.depends_context('website_id')
     def _compute_website_published(self):
         current_website_id = self._context.get('website_id')
         for record in self:

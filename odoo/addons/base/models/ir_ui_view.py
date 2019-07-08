@@ -246,6 +246,7 @@ actual arch.
          """)
 
     @api.depends('arch_db', 'arch_fs', 'arch_updated')
+    @api.depends_context('lang')
     def _compute_arch(self):
         def resolve_external_ids(arch_fs, view_xml_id):
             def replacer(m):
@@ -1520,6 +1521,7 @@ class ResetViewArchWizard(models.TransientModel):
     ], string='Reset Mode', default='soft', required=True, help="You might want to try a soft reset first.")
 
     @api.depends('reset_mode', 'view_id')
+    @api.depends_context('lang')
     def _compute_arch_diff(self):
         ''' Return the differences between the current view arch and either its
         previous or initial arch, depending of `reset_mode` (soft/hard).

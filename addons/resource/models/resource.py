@@ -191,6 +191,7 @@ class ResourceCalendar(models.Model):
     two_weeks_explanation = fields.Char('Explanation', compute="_compute_two_weeks_explanation")
 
     @api.depends('two_weeks_calendar')
+    @api.depends_context('lang')
     def _compute_two_weeks_explanation(self):
         today = fields.Date.today()
         week_type = _("odd") if int(math.floor((today.toordinal() - 1) / 7) % 2) else _("even")

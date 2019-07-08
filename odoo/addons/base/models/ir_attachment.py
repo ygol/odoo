@@ -184,6 +184,7 @@ class IrAttachment(models.Model):
         _logger.info("filestore gc %d checked, %d removed", len(checklist), removed)
 
     @api.depends('store_fname', 'db_datas')
+    @api.depends_context('bin_size')
     def _compute_datas(self):
         bin_size = self._context.get('bin_size')
         for attach in self:

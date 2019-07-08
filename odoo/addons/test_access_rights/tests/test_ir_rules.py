@@ -65,16 +65,20 @@ class TestRules(TransactionCase):
 
         # check the container as the public user
         container_user = container_admin.with_user(self.browse_ref('base.public_user'))
+        container_user.invalidate_cache()
         self.assertItemsEqual(container_user.some_ids.ids, [self.id1])
 
         # this should not fail
         container_user.write({'some_ids': [(6, 0, ids)]})
         self.assertItemsEqual(container_user.some_ids.ids, [self.id1])
+        container_admin.invalidate_cache()
         self.assertItemsEqual(container_admin.some_ids.ids, ids)
 
         # this removes accessible records only
+        container_user.invalidate_cache()
         container_user.write({'some_ids': [(5,)]})
         self.assertItemsEqual(container_user.some_ids.ids, [])
+        container_admin.invalidate_cache()
         self.assertItemsEqual(container_admin.some_ids.ids, [self.id2])
 
     def test_access_rule_performance(self):
