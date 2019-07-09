@@ -135,12 +135,15 @@ class TestNotifications(BaseFunctionalTest, MockEmails):
         self.assertTrue(msg.starred)
 
         # Employee set as starred
+        msg_emp.invalidate_cache()              # 'starred' depends on env.uid
         msg_emp.toggle_message_starred()
         self.assertTrue(msg_emp.starred)
 
         # Do: Admin unstars msg
         msg.toggle_message_starred()
+        msg.invalidate_cache()                  # 'starred' depends on env.uid
         self.assertFalse(msg.starred)
+        msg_emp.invalidate_cache()              # 'starred' depends on env.uid
         self.assertTrue(msg_emp.starred)
 
 
