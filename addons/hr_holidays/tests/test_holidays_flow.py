@@ -151,11 +151,11 @@ class TestHolidaysFlow(TestHrHolidaysBase):
         # Check left days: - 1 day taken
         _check_holidays_status(hol_status_2_employee_group, 2.0, 1.0, 1.0, 1.0)
 
-        # HrManager finds an error: he refuses the leave request
         hol2.with_user(self.user_hrmanager_id).action_refuse()
         self.assertEqual(hol2.state, 'refuse',
                          'hr_holidays: refuse should lead to refuse state')
         # Check left days: 2 days left again
+        hol_status_2_employee_group.invalidate_cache()
         _check_holidays_status(hol_status_2_employee_group, 2.0, 0.0, 2.0, 2.0)
 
         self.assertEqual(hol2.state, 'refuse',
