@@ -159,6 +159,7 @@ class Message(models.Model):
         return ['!', ('notification_ids.email_status', 'in', ('bounce', 'exception'))]  # this wont work and will be equivalent to "not in" beacause of orm restrictions. Dont use "has_error = False"
 
     @api.depends('starred_partner_ids')
+    @api.depends_context('uid')
     def _get_starred(self):
         """ Compute if the message is starred by the current user. """
         # TDE FIXME: use SQL
