@@ -961,6 +961,8 @@ def users(*logins):
                     # switch user and execute func
                     self.uid = user_id[login]
                     func(*args, **kwargs)
+                    # do not share cache with the next user
+                    self.env.cache.invalidate()
         finally:
             self.uid = old_uid
 
