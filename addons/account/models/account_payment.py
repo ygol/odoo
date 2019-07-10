@@ -362,7 +362,7 @@ class account_payment(models.Model):
         }
 
     @api.depends('invoice_ids', 'payment_type', 'partner_type', 'partner_id')
-    @api.depends_context('force_company')       # TODO: add 'allowed_company_ids'
+    @api.depends_context('force_company')
     def _compute_destination_account_id(self):
         for payment in self:
             if payment.invoice_ids:

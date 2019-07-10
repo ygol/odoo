@@ -343,6 +343,7 @@ class Post(models.Model):
             post.has_validated_answer = any(answer.is_correct for answer in post.child_ids)
 
     @api.multi
+    @api.depends_context('uid')
     def _get_post_karma_rights(self):
         user = self.env.user
         is_admin = self.env.is_admin()
