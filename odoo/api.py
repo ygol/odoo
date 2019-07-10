@@ -209,9 +209,9 @@ def depends(*args):
 
 
 def depends_context(*args):
-    """ Return a decorator that specifies the context  dependencies of a non-stored "compute"
-        method (for new-style function fields). Each argument must be a string
-        that consists in a key in the context::
+    """ Return a decorator that specifies the context dependencies of a non-
+        stored "compute" method. Each argument is a key in the context dict
+        (usually a string)::
 
             price = fields.Float(compute='_compute_product_price')
 
@@ -223,6 +223,10 @@ def depends_context(*args):
                     else:
                         pricelist = self.env['product.pricelist'].get_default_pricelist()
                     product.price = pricelist.get_products_price(product).get(product.id, 0.0)
+
+        There is special support for two keys: ``'force_company'`` stands for
+        the value ``env.context.get('force_company') or env.company.id``, and
+        ``'uid'`` stands for the value ``(env.uid, env.su)``.
     """
     return attrsetter('_depends_context', args)
 
@@ -719,12 +723,17 @@ class Cache(object):
         self._data = defaultdict(dict)
 
     def _get_context_key(self, env, field):
-        context = env.context
-        # DLE P73: `test_27_company_dependent`
-        # Needs to ensure `force_company` is set in the context when getting or setting values
-        if field.company_dependent and 'force_company' not in context:
-            context = dict(context, force_company=env.company.id)
-        return tuple(context.get(key) for key in field.depends_context)
+        get_context = env.context.get
+
+        def get(key):
+            if key == 'force_company':
+                return get_context('force_company') or env.company.id
+            elif key == 'uid':
+                return (env.uid, env.su)
+            else:
+                return get_context(key)
+
+        return tuple(get(key) for key in field.depends_context)
 
     def contains(self, record, field):
         """ Return whether ``record`` has a value for ``field``. """
