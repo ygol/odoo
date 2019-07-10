@@ -77,6 +77,7 @@ class ProductProduct(models.Model):
                         re[l] = res_val[key][l]
         return res
 
+    @api.depends_context('date_from', 'date_to', 'invoice_state', 'force_company')
     def _compute_product_margin_fields_values(self, field_names=None):
         res = {}
         if field_names is None:
