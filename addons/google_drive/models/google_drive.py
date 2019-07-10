@@ -192,7 +192,6 @@ class GoogleDrive(models.Model):
         return None
 
     @api.multi
-    @api.depends_context('lang')
     def _compute_ressource_id(self):
         result = {}
         for record in self:
