@@ -3,8 +3,6 @@
 
 """ High-level objects for fields. """
 
-import inspect
-
 from collections import OrderedDict, defaultdict
 from datetime import date, datetime, time
 from dateutil.relativedelta import relativedelta
@@ -513,20 +511,6 @@ class Field(MetaField('DummyField', (object,), {})):
                 for method in resolve_mro(model, self.compute, callable)
                 for dep in get_depends_context(method)
             )
-            if not depends_context:
-                for method in resolve_mro(model, self.compute, callable):
-                    lines, index = inspect.getsourcelines(method)
-                    context_lines = [
-                        line
-                        for line in lines
-                        if any(sub in line for sub in ('_(', '.context', '._context')) and 'raise ' not in line
-                    ]
-                    if context_lines:
-                        _logger.warning(
-                            "Missing depends_context on %s (%s:%s)\n%s",
-                            method, inspect.getfile(method), index,
-                            "".join(context_lines),
-                        )
         else:
             self.depends = tuple(get_depends(self.compute))
             depends_context = tuple(get_depends_context(self.compute))
