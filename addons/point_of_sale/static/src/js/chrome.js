@@ -554,7 +554,6 @@ var Chrome = PosBaseWidget.extend(AbstractAction.prototype, {
         var self = this;
         this._super(arguments[0],{});
 
-        this.started  = new $.Deferred(); // resolves when DOM is online
         this.ready    = new $.Deferred(); // resolves when the whole GUI has been loaded
 
         this.db = new PosDB();
