@@ -556,8 +556,15 @@ var Chrome = PosBaseWidget.extend(AbstractAction.prototype, {
 
         this.ready    = new $.Deferred(); // resolves when the whole GUI has been loaded
 
+        this.loading_message = this.loading_message.bind(this);
+        this.loading_progress = this.loading_progress.bind(this);
+        this.loading_skip = this.loading_skip.bind(this);
+
         this.db = new PosDB();
         this.pos = new models.PosModel(this.getSession(), {chrome:this, db: this.db}, this._rpc.bind(this));
+        this.pos.on("loading", this.loading_message);
+        this.pos.on("loading:progress", this.loading_progress);
+        this.pos.on("connecting:proxy", this.loading_skip);
         this.gui = new gui.Gui({pos: this.pos, chrome: this});
         this.chrome = this; // So that chrome's childs have chrome set automatically
         this.pos.gui = this.gui;
@@ -757,15 +764,14 @@ var Chrome = PosBaseWidget.extend(AbstractAction.prototype, {
             this.$('.loader .progress').addClass('oe_hidden');
         }
     },
-    loading_skip: function(callback){
-        if(callback){
-            this.$('.loader .loader-feedback').removeClass('oe_hidden');
-            this.$('.loader .button.skip').removeClass('oe_hidden');
-            this.$('.loader .button.skip').off('click');
-            this.$('.loader .button.skip').click(callback);
-        }else{
-            this.$('.loader .button.skip').addClass('oe_hidden');
-        }
+    loading_skip: function() {
+        var self = this;
+        this.$('.loader .loader-feedback').removeClass('oe_hidden');
+        this.$('.loader .button.skip').removeClass('oe_hidden');
+        this.$('.loader .button.skip').off('click');
+        this.$('.loader .button.skip').click(function () {
+            self.pos.trigger("loading:skip");
+        });
     },
     loading_hide: function(){
         var self = this;
@@ -890,6 +896,9 @@ var Chrome = PosBaseWidget.extend(AbstractAction.prototype, {
     },
 
     destroy: function() {
+        this.pos.off("loading", this.loading_message);
+        this.pos.off("loading:progress", this.loading_progress);
+        this.pos.off("connecting:proxy", this.loading_skip);
         this.pos.destroy();
         this._super();
     }
