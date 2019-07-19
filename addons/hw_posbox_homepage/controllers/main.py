@@ -46,12 +46,19 @@ remote_connect_template = jinja_env.get_template('remote_connect.html')
 configure_wizard_template = jinja_env.get_template('configure_wizard.html')
 six_payment_terminal_template = jinja_env.get_template('six_payment_terminal.html')
 list_credential_template = jinja_env.get_template('list_credential.html')
+opcua_server_template = jinja_env.get_template('opcua_server.html')
 
 class IoTboxHomepage(web.Home):
 
     def get_six_terminal(self):
         terminal_id = helpers.read_file_first_line('odoo-six-payment-terminal.conf')
         return terminal_id or 'Not Configured'
+
+    def get_opcua_server(self):
+        path = Path.home() / 'odoo-opcua-server.conf'
+        if path.exists():
+            return path.read_text()
+        return 'Not Configured'
 
     def get_homepage_data(self):
         hostname = str(socket.gethostname())
@@ -84,6 +91,7 @@ class IoTboxHomepage(web.Home):
             'iot_device_status': iot_device,
             'server_status': helpers.get_odoo_server_url() or 'Not Configured',
             'six_terminal': self.get_six_terminal(),
+            'opcua_server': self.get_opcua_server(),
             'network_status': network,
             'version': helpers.get_version(),
             }
@@ -285,5 +293,25 @@ class IoTboxHomepage(web.Home):
     @http.route('/six_payment_terminal_clear', type='http', auth='none', cors='*', csrf=False)
     def clear_six_payment_terminal(self):
         helpers.unlink_file('odoo-six-payment-terminal.conf')
+        subprocess.check_call(["sudo", "service", "odoo", "restart"])
+        return "<meta http-equiv='refresh' content='0; url=http://" + helpers.get_ip() + ":8069'>"
+
+    @http.route('/opcua_server', type='http', auth='none', cors='*', csrf=False)
+    def opcua_server(self):
+        return opcua_server_template.render({
+            'title': 'Opc-Ua Server',
+            'breadcrumb': 'Opc-Ua Server',
+            'opcuaServer': self.get_opcua_server(),
+        })
+
+    @http.route('/opcua_server_add', type='http', auth='none', cors='*', csrf=False)
+    def add_opcua_server(self, opcua_server):
+        helpers.write_file('odoo-opcua-server.conf', opcua_server)
+        subprocess.check_call(["sudo", "service", "odoo", "restart"])
+        return 'http://' + helpers.get_ip() + ':8069'
+
+    @http.route('/opcua_server_clear', type='http', auth='none', cors='*', csrf=False)
+    def clear_opcua_server(self):
+        helpers.unlink_file('odoo-opcua-server.conf')
         subprocess.check_call(["sudo", "service", "odoo", "restart"])
         return "<meta http-equiv='refresh' content='0; url=http://" + helpers.get_ip() + ":8069'>"
