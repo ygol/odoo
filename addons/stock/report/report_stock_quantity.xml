@@ -27,6 +27,7 @@
                 </group>
                 <group expand="0" string="Group By">
                     <filter string="Date" name="groupby_date" domain="[]" context="{'group_by':'date:day'}"/>
+                    <filter string="Location" name="locationgroup" domain="[]" context="{'group_by':'location_id'}"/>
                 </group>
             </search>
         </field>

@@ -20,6 +20,7 @@ class ReportStockQuantity(models.Model):
     product_qty = fields.Float(string='Quantity', readonly=True)
     move_ids = fields.One2many('stock.move', readonly=True)
     company_id = fields.Many2one('res.company', readonly=True)
+    location_id = fields.Many2one('stock.location', readonly=True)
 
     def init(self):
         tools.drop_view_if_exists(self._cr, 'report_stock_quantity')
@@ -37,24 +38,32 @@ SELECT
         WHEN (ls.usage = 'internal' OR ls.usage = 'transit' AND ls.company_id IS NOT NULL) AND ld.usage != 'internal' THEN -product_qty
         WHEN ls.usage != 'internal' AND (ld.usage = 'internal' OR ld.usage = 'transit' AND ld.company_id IS NOT NULL) THEN product_qty
     END AS product_qty,
-    m.company_id
+    m.company_id,
+    CASE
+        WHEN (ls.usage = 'internal' OR ls.usage = 'transit' AND ls.company_id IS NOT NULL) AND ld.usage != 'internal' THEN ls.id
+        WHEN ls.usage != 'internal' AND (ld.usage = 'internal' OR ld.usage = 'transit' AND ld.company_id IS NOT NULL) THEN ld.id
+    END AS location_id
 FROM
     stock_move m
 LEFT JOIN stock_location ls on (ls.id=m.location_id)
 LEFT JOIN stock_location ld on (ld.id=m.location_dest_id)
+LEFT JOIN product_product pp on pp.id=m.product_id
+LEFT JOIN product_template pt on pt.id=pp.product_tmpl_id
 WHERE
+    pt.type = 'product' AND
     product_qty != 0 AND (
     (ls.usage = 'internal' OR ls.usage = 'transit' AND ls.company_id IS NOT NULL) AND ld.usage != 'internal' OR
     ls.usage != 'internal' AND (ld.usage = 'internal' OR ld.usage = 'transit' AND ld.company_id IS NOT NULL)) AND
     m.state NOT IN ('cancel', 'draft', 'done')
 UNION
 SELECT
-    -MIN(q.id) as id,
+    -q.id as id,
     product_id,
     'forecast' as state,
     date.*::date,
-    SUM(quantity) as product_qty,
-    q.company_id
+    quantity as product_qty,
+    q.company_id,
+    l.id as location_id
 FROM
     GENERATE_SERIES((now() at time zone 'utc')::date - interval '3month',
     (now() at time zone 'utc')::date + interval '3 month', '1 day'::interval) date,
@@ -62,8 +71,6 @@ FROM
 LEFT JOIN stock_location l on (l.id=q.location_id)
 WHERE
     l.usage = 'internal'
-GROUP BY
-    product_id, date, q.company_id
 UNION
 SELECT
     m.id,
@@ -84,12 +91,19 @@ SELECT
         WHEN (ls.usage = 'internal' OR ls.usage = 'transit' AND ls.company_id IS NOT NULL) AND ld.usage != 'internal' THEN -product_qty
         WHEN ls.usage != 'internal' AND (ld.usage = 'internal' OR ld.usage = 'transit' AND ld.company_id IS NOT NULL) THEN product_qty
     END AS product_qty,
-    m.company_id
+    m.company_id,
+    CASE
+        WHEN (ls.usage = 'internal' OR ls.usage = 'transit' AND ls.company_id IS NOT NULL) AND ld.usage != 'internal' THEN ls.id
+        WHEN ls.usage != 'internal' AND (ld.usage = 'internal' OR ld.usage = 'transit' AND ld.company_id IS NOT NULL) THEN ld.id
+    END AS location_id
 FROM
     stock_move m
 LEFT JOIN stock_location ls on (ls.id=m.location_id)
 LEFT JOIN stock_location ld on (ld.id=m.location_dest_id)
+LEFT JOIN product_product pp on pp.id=m.product_id
+LEFT JOIN product_template pt on pt.id=pp.product_tmpl_id
 WHERE
+    pt.type = 'product' AND
     product_qty != 0 AND (
     (ls.usage = 'internal' OR ls.usage = 'transit' AND ls.company_id IS NOT NULL) AND ld.usage != 'internal' OR
     ls.usage != 'internal' AND (ld.usage = 'internal' OR ld.usage = 'transit' AND ld.company_id IS NOT NULL)) AND
