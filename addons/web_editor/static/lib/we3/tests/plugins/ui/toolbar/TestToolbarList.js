@@ -289,7 +289,7 @@ var TestToolbarList = class extends we3.AbstractPlugin {
                     '<tbody>' +
                     '<tr>' +
                     '<td><br></td>' +
-                    '<td>▶<img data-src="/web_editor/static/src/img/transparent.png">◀</td>' +
+                    '<td><img data-src="/web_editor/static/src/img/transparent.png"></td>' +
                     '<td><br></td>' +
                     '</tr>' +
                     '<tr>' +
@@ -301,6 +301,7 @@ var TestToolbarList = class extends we3.AbstractPlugin {
                     '</table>' +
                     '</div>',
                 do: async function () {
+                    await self.dependencies.Test.click(self.editable.querySelector('img'));
                     await self.dependencies.Test.triggerNativeEvents(self.btnOl, ['mousedown', 'click']);
                 },
                 test: '<div>' +

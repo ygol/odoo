@@ -7,18 +7,6 @@ var BaseRange = class extends we3.AbstractPlugin {
     constructor () {
         super(...arguments);
         this.dependencies = ['Arch', 'Renderer', 'BaseArch', 'BaseRenderer'];
-        this.editableDomEvents = {
-            'mouseup': '_onMouseUpEditable',
-            'click': '_onClick',
-            'keydown': '_onKeydown',
-            'keyup': '_onKeyup',
-        };
-        this.documentDomEvents = {
-            'mousedown': '_onMouseDown',
-            'touchstart': '_onMouseDown',
-            'mouseup': '_onMouseUp',
-            'touchend': '_onMouseUp',
-        };
     }
     willStart () {
         this._focusedNodeID = 1;
@@ -112,15 +100,6 @@ var BaseRange = class extends we3.AbstractPlugin {
      */
     getSelectedNodes (pred) {
         return this.getRange().getSelectedNodes(pred);
-    }
-    /**
-     * Get the range from the selection in the DOM.
-     *
-     * @private
-     * @returns {WrappedRange}
-     */
-    getRangeFromDOM () {
-        return new WrappedRange(this.dependencies.Arch, this.dependencies.Renderer, {});
     }
     /**
      * Return true if the start range is the same point as the end range.
@@ -227,7 +206,7 @@ var BaseRange = class extends we3.AbstractPlugin {
         points = this._moveOutOfNotEditable(points);
         points = this._moveOutOfUnbreakable(points, ltr);
         points = this._moveToDeepest(points);
-        points = this._moveUpToVoidoid(points);
+        points = this._moveUpToVoidoid(points, options);
         points = this._moveToEndOfInline(points);
         points = this._moveToBeforeInline(points);
         if (!options.moveLeft && !options.moveRight) {
@@ -678,6 +657,12 @@ var BaseRange = class extends we3.AbstractPlugin {
         var ecArch = this.dependencies.BaseArch.getArchNode(points.ecID);
         var left = doReverseSelection ? ecArch : scArch;
         var right = doReverseSelection ? scArch : ecArch;
+        if (moveLeft && !left.isVoidoid()) {
+            return points;
+        }
+        if (!moveLeft && !right.isVoidoid()) {
+            return points;
+        }
         var node = moveLeft ? left.parent : right.parent;
         if (isCollapsed) {
             points.so = points.eo = moveLeft ? 0 : node.length();
@@ -714,19 +699,37 @@ var BaseRange = class extends we3.AbstractPlugin {
             doCrossUnbreakables: true,
             doNotInsertVirtual: true,
         };
-        var left = doReverseSelection ? ecArch : scArch;
-        var right = doReverseSelection ? scArch : ecArch;
-        var prev = left.prev(prevOptions);
-        var next = right.next(prevOptions);
-        if (isCollapsed) {
-            points.so = points.eo = moveLeft ? prev.length() : 0;
-            points.scID = points.ecID = moveLeft ? prev.id : next.id;
-        } else if (moveLeft) {
-            points[doReverseSelection ? 'eo' : 'so'] = doReverseSelection ? next.length() : prev.length();
-            points[doReverseSelection ? 'ecID' : 'scID'] = doReverseSelection ? next.id : prev.id;
+
+        if (doReverseSelection) {
+            var prev = ecArch.prev(prevOptions);
+            var next = scArch.next(prevOptions);
+            if (isCollapsed) {
+                points.so = points.eo = moveLeft ? prev.length() : 0;
+                points.scID = points.ecID = moveLeft ? prev.id : next.id;
+            } else if (ecArch.isVoidoid()) {
+                if (moveLeft) {
+                    points.eo = 0;
+                    points.ecID = next.id;
+                } else {
+                    points.so = next.length();
+                    points.scID = prev.id;
+                }
+            }
         } else {
-            points[doReverseSelection ? 'so' : 'eo'] = 0
-            points[doReverseSelection ? 'scID' : 'ecID'] = doReverseSelection ? prev.id : next.id;
+            var prev = scArch.prev(prevOptions);
+            var next = ecArch.next(prevOptions);
+            if (isCollapsed) {
+                points.so = points.eo = moveLeft ? prev.length() : 0;
+                points.scID = points.ecID = moveLeft ? prev.id : next.id;
+            } else if (scArch.isVoidoid()) {
+                if (moveLeft) {
+                    points.so = prev.length();
+                    points.scID = prev.id;
+                } else {
+                    points.eo = 0
+                    points.ecID = next.id;
+                }
+            }
         }
         return points;
     }
@@ -752,7 +755,7 @@ var BaseRange = class extends we3.AbstractPlugin {
 
         var unbreakableAncestorOf = function (node) {
             return node.ancestor(function (ancestor) {
-                return ancestor.isUnbreakable() && ancestor.isNotVoidoid();
+                return (ancestor.isUnbreakable() || ancestor.isBlock()) && ancestor.isNotVoidoid();
             });
         };
         var left = doReverseSelection ? ecArch : scArch;
@@ -761,12 +764,11 @@ var BaseRange = class extends we3.AbstractPlugin {
         var isRightEdge = right.isRightEdgeOf(unbreakableAncestorOf(right));
 
         if (isLeftEdge && moveLeft || isRightEdge && !moveLeft) {
-            return this._moveToSideOfEdgeVoidoid(points, moveLeft, isCollapsed, doReverseSelection);
+            points = this._moveToSideOfEdgeVoidoid(points, moveLeft, isCollapsed, doReverseSelection);
         } else if (!isLeftEdge && !isRightEdge) {
-            return this._moveToSideOfMiddleVoidoid(points, moveLeft, isCollapsed, doReverseSelection);
-        } else {
-            return points;
+            points = this._moveToSideOfMiddleVoidoid(points, moveLeft, isCollapsed, doReverseSelection);
         }
+        return points;
     }
     /**
      * Move the points from WITHIN a voidoid to select the whole voidoid instead if needed.
@@ -779,19 +781,30 @@ var BaseRange = class extends we3.AbstractPlugin {
      * @param {Number} points.eo
      * @returns {Object}
      */
-    _moveUpToVoidoid (points) {
+    _moveUpToVoidoid (points, options) {
         var self = this;
-        var startPoint = __moveUpToVoidoid(points.scID, points.so);
-        var endPoint = __moveUpToVoidoid(points.ecID, points.eo);
-        function __moveUpToVoidoid(id, offset) {
+        var moveRight = options.moveRight;
+        var isCollapsed = points.scID === points.ecID && points.so === points.eo;
+        var startPoint = __moveUpToVoidoid(points.scID, points.so, isCollapsed, true);
+        var endPoint = !isCollapsed && __moveUpToVoidoid(points.ecID, points.eo, isCollapsed, moveRight) || startPoint;
+        function __moveUpToVoidoid(id, offset, isCollapsed, isStart) {
             var archNode = self.dependencies.BaseArch.getArchNode(id);
-            if (!archNode) {
-                return;
-            }
             var voidoidAncestor = archNode.ancestor('isVoidoid', true);
-            if (voidoidAncestor) {
+            if (voidoidAncestor && !voidoidAncestor.isVoid()) {
                 id = voidoidAncestor.id;
                 offset = 0;
+                if (!isCollapsed) {
+                    var archNode = voidoidAncestor.index() && voidoidAncestor[moveRight ? 'nextUntil' : 'prevUntil'](function (archNode) {
+                        return archNode.id !== id && (archNode.isUnbreakable() || archNode.isBlock() || archNode.isText() || archNode.isVoidoid());
+                    }, { doNotInsertVirtual: true });
+                    if (archNode) {
+                        id = archNode.id;
+                        offset = moveRight ? 0 : archNode.length();
+                    } else {
+                        id = voidoidAncestor.parent.id;
+                        offset = voidoidAncestor.index() + (moveRight ? 1 : 0);
+                    }
+                }
             }
             return {
                 id: id,
@@ -801,8 +814,8 @@ var BaseRange = class extends we3.AbstractPlugin {
         return {
             scID: startPoint ? startPoint.id : 1,
             so: startPoint ? startPoint.offset : 0,
-            ecID: endPoint ? endPoint.id : (startPoint ? startPoint.id : 1),
-            eo: endPoint ? endPoint.offset : (startPoint ? startPoint.offset : 0),
+            ecID: endPoint ? endPoint.id : 1,
+            eo: endPoint ? endPoint.offset : 0,
         }
     }
     /**
@@ -883,9 +896,9 @@ var BaseRange = class extends we3.AbstractPlugin {
             oldRange.ec !== nativeReadyNewRange.ec || oldRange.eo !== nativeReadyNewRange.eo)) {
             // only if the native range change, after the redraw
             // the renderer can associate existing note to the arch (to prevent error on mobile)
-            if (nativeReadyNewRange.sc && nativeReadyNewRange.ec) {
+            try {
                 this._select(nativeReadyNewRange.sc, nativeReadyNewRange.so, nativeReadyNewRange.ec, nativeReadyNewRange.eo, !this._range.ltr);
-            } else {
+            } catch (e) {
                 var msg = 'Wrong Range! The nodes could node be found in the DOM.';
                 console.warn(msg + '\nnewRange: ', newRange, '\nnativeRange:', nativeReadyNewRange);
             }
@@ -915,25 +928,6 @@ var BaseRange = class extends we3.AbstractPlugin {
         }
 
         return res;
-    }
-    /**
-     * Set the range from the selection in the DOM.
-     *
-     * @private
-     * @param {Object} [options]
-     * @param {Boolean} [options.moveLeft] true if a movement is initiated from right to left
-     * @param {Boolean} [options.moveRight] true if a movement is initiated from left to right
-     */
-    _setRangeFromDOM (options) {
-        var range = this.getRangeFromDOM();
-        if (!range.scID || range.scArch && (range.scArch.type === 'TEXT-VIRTUAL' ? 1 : range.scArch.length()) < range.so ||
-            !range.ecID || range.ecArch && (range.ecArch.type === 'TEXT-VIRTUAL' ? 1 : range.ecArch.length()) < range.eo) {
-            console.warn("Try to take the range from DOM but does not seem synchronized", range);
-            return;
-        }
-        range = this._voidoidSelectToWE3(range);
-        this._computeSetRange(range, options);
-        this._setRange(range);
     }
     /**
      * Return the node targeted by the given ArchNode ID and its offset.
@@ -973,7 +967,6 @@ var BaseRange = class extends we3.AbstractPlugin {
      * For a native range, we need to select the voidoid from within its parent.
      *
      * @private
-     * @see _voidoidSelectToWE3
      * @param {object} range
      * @param {Node} range.sc
      * @param {number} range.so
@@ -990,8 +983,8 @@ var BaseRange = class extends we3.AbstractPlugin {
         }
         var ec = range.ec;
         var eo = range.eo;
-        if (range.ecArch.isVoidoid() && sc && sc.parentNode) {
-            eo = [].indexOf.call(ec.parentNode.childNodes, ec);
+        if (range.ecArch.isVoidoid() && ec && ec.parentNode) {
+            eo = [].indexOf.call(ec.parentNode.childNodes, ec) + (range.ecArch.isBR() ? 0 : 1);
             ec = ec.parentNode;
         }
         return {
@@ -1000,38 +993,6 @@ var BaseRange = class extends we3.AbstractPlugin {
             ec: ec,
             eo: eo,
         };
-    }
-    /**
-     * Convert a native voidoid selection to ensure deepest selection.
-     * For a native range, we need to select the voidoid from within its parent.
-     * In we3, a selected voidoid is within the voidoid.
-     *
-     * @private
-     * @see _voidoidSelectToNative
-     * @param {object} range
-     * @param {ArchNode} range.scArch
-     * @param {number} range.so
-     * @param {ArchNode} range.ecArch
-     * @param {number} range.eo
-     * @returns {object} {scID, so, ecID, eo}
-     */
-    _voidoidSelectToWE3 (range) {
-        if (!range.scArch || !range.ecArch || range.isCollapsed()) {
-            return range;
-        }
-        var startIsBeforeVoidoid = range.scArch.isText() &&
-            range.so === range.scArch.length() && range.scArch.nextSibling() &&
-            range.scArch.nextSibling().isVoidoid();
-        var endIsAfterVoidoid = range.ecArch.isText() && range.eo === 0 &&
-            range.ecArch.previousSibling() &&
-            range.ecArch.previousSibling().isVoidoid()
-        if (startIsBeforeVoidoid && endIsAfterVoidoid) {
-            range.scID = range.scArch.nextSibling().id;
-            range.so = 0;
-            range.ecID = range.ecArch.previousSibling().id;
-            range.eo = 0;
-        }
-        return range;
     }
     /**
      * Return true if the range will change once set to the given points.
@@ -1050,106 +1011,6 @@ var BaseRange = class extends we3.AbstractPlugin {
         var willNodesChange = this.dependencies.BaseRenderer.getElement(points.scID) !== this.dependencies.BaseRenderer.getElement(this._range.scID) ||
             this.dependencies.BaseRenderer.getElement(points.ecID) !== this.dependencies.BaseRenderer.getElement(this._range.ecID);
         return willOffsetChange || willIDsChange || willNodesChange;
-    }
-
-    //--------------------------------------------------------------------------
-    // Handlers
-    //--------------------------------------------------------------------------
-
-    /**
-     * @private
-     * @param {MouseEvent} e
-     */
-    _onClick (e) {
-        e.preventDefault();
-    }
-    /**
-     * @private
-     * @param {KeyEvent} e
-     */
-    _onKeydown (e) {
-        if (e.keyCode !== 38 && e.keyCode !== 40) { // up and down arrow
-            return;
-        }
-        var self = this;
-        this._keydownNavigationKey = [];
-        this.dependencies.Arch.getClonedArchNode(1).nextUntil(function (next) {
-            if (next.isVoidoid() && !next.isVoid() && !next.isText()) {
-                var el = self.dependencies.Renderer.getElement(next.id);
-                if (el) {
-                    el.setAttribute('contenteditable', 'false');
-                    self._keydownNavigationKey.push(next.id);
-                }
-            }
-        });
-    }
-    /**
-     * @private
-     * @param {KeyEvent} e
-     */
-    _onKeyup (e) {
-        var self = this;
-        var isSelectAll = e.ctrlKey && e.key === 'a';
-        if (isSelectAll) {
-            return this.selectAll();
-        }
-        var isNavigationKey = e.keyCode >= 33 && e.keyCode <= 40;
-        var leftish = [33, 36, 37, 38];
-        var rightish = [34, 35, 39, 40];
-        if (isNavigationKey) {
-            this._setRangeFromDOM({
-                moveLeft: leftish.indexOf(e.keyCode) !== -1,
-                moveRight: rightish.indexOf(e.keyCode) !== -1,
-            });
-        }
-        if (e.keyCode === 38 || e.keyCode === 40) {
-            this._keydownNavigationKey.forEach(function (id) {
-                self.dependencies.Renderer.getElement(id).removeAttribute('contenteditable', 'false');
-            });
-        }
-    }
-    /**
-     * @private
-     * @param {MouseEvent} e
-     */
-    _onMouseDown (e) {
-        this._mousedownInEditable = this.editable === e.target || this.editable.contains(e.target);
-    }
-    /**
-     * @private
-     * @param {MouseEvent} e
-     */
-    _onMouseUp (e) {
-        if (!this._mousedownInEditable) {
-            return;
-        }
-        this._mousedownInEditable = false;
-        this._setRangeFromDOM();
-        if (!this.editor.contains(e.target) || this.editable === e.target || this.editable.contains(e.target)) {
-            return;
-        }
-        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-            this.editable.focus();
-            this.restore();
-        }
-    }
-    /**
-     * @private
-     * @param {MouseEvent} e
-     */
-    _onMouseUpEditable (e) {
-        var range = this.getRangeFromDOM();
-        if (!range || range.sc !== e.target && !e.target.contains(range.sc) && range.ec !== e.target && !e.target.contains(range.ec)) {
-            var archNodeID = this.dependencies.Renderer.getID(e.target);
-            var archNode = archNodeID && this.dependencies.Arch.getClonedArchNode(archNodeID);
-            var voidoid = archNode && archNode.ancestor('isVoidoid', true);
-            if (voidoid) {
-                this.setRange({
-                    scID: voidoid.id,
-                    so: 0,
-                });
-            }
-        }
     }
 };
 

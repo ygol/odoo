@@ -64,17 +64,19 @@ var TestOdooWebsite = class extends we3.AbstractPlugin {
         this.dependencies.Test.add(this);
         return super.start();
     }
-    test (assert) {
+    async test (assert) {
         var Arch = this.dependencies.Arch;
         var Test = this.dependencies.Test;
         var wrapArchNode = Arch.getClonedArchNode(1).nextUntil(function (archNode) {
             return archNode.isWebsiteEditable && archNode.isWebsiteEditable() && archNode.attributes.id === 'wrap';
         });
-        this.tests.forEach(function (test) {
-            Test.setValue(test.content, wrapArchNode.id);
+
+        for (var k = 0; k < this.tests.length; k++) {
+            var test = this.tests[k];
+            await Test.setValue(test.content, wrapArchNode.id);
             var value = Test.getValue(wrapArchNode.id).replace(/^<div [^>]+>/, '').replace(/<\/div>$/, '');
             assert.strictEqual(value, test.test, test.name);
-        });
+        }
     }
 };
 

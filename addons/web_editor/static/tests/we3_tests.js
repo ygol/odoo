@@ -129,7 +129,7 @@ QUnit.module('web_editor', {
         await createFormAndTest(this);
     });
     QUnit.test('range', async function (assert) {
-        assert.expect(9);
+        assert.expect(10);
         this.testOptions = {
             assert: assert,
             plugins: Object.assign({}, disableAllTests, {TestRange: true}),
@@ -161,7 +161,7 @@ QUnit.module('web_editor', {
         await createFormAndTest(this);
     });
     QUnit.test('change range with arrow', async function (assert) {
-        assert.expect(123);
+        assert.expect(121);
         this.testOptions = {
             assert: assert,
             plugins: Object.assign({}, disableAllTests, {TestKeyboardArrow: true}),
@@ -341,7 +341,7 @@ QUnit.module('web_editor', {
     ];
 
     QUnit.test('range + popover + rules + char + DropBlock', async function (assert) {
-        assert.expect(139);
+        assert.expect(140);
 
         this.testOptions = {
             assert: assert,

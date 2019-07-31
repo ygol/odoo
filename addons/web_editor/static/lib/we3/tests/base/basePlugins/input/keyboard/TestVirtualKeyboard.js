@@ -182,6 +182,16 @@ var TestVirtualKeyboard = class extends we3.AbstractPlugin {
             }],
         ]);
 
+        var textNode = this.editable.querySelector('p').firstChild;
+        var nativeRange = textNode.ownerDocument.createRange();
+        nativeRange.setStart(textNode, 0);
+        nativeRange.setEnd(textNode, 3);
+        var selection = textNode.ownerDocument.getSelection();
+        if (selection.rangeCount > 0) {
+            selection.removeAllRanges();
+        }
+        selection.addRange(nativeRange);
+
         await new Promise(setTimeout);
 
         await this._triggerKey([

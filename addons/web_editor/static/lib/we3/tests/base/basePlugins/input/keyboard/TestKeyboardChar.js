@@ -15,6 +15,30 @@ var TestKeyboardChar = class extends we3.AbstractPlugin {
 
         this.keyboardTests = [
             {
+                name: "'a' on a selection of most contents of a complex dom",
+                content: "<p><b>dom</b></p><p><b>▶to<br>partly</b>remov<i>e◀</i></p>",
+                steps: [{
+                    key: 'a',
+                }],
+                test: "<p><b>dom</b></p><p><b>a◆</b></p>",
+            },
+            {
+                name: "'a' on a selection of all the contents of a complex dom",
+                content: "<p><b>▶dom</b></p><p><b>to<br>completely</b>remov<i>e◀</i></p>",
+                steps: [{
+                    key: 'a',
+                }],
+                test: "<p><b>a◆</b></p>",
+            },
+            {
+                name: "'a' on a selection of all the contents of a complex dom (2)",
+                content: '<h1 class="a"><font style="font-size: 62px;"><b>▶dom to</b>edit◀</font></h1>',
+                steps: [{
+                    key: 'a',
+                }],
+                test: '<h1 class="a"><font style="font-size:62px"><b>a◆</b></font></h1>',
+            },
+            {
                 name: "no changes",
                 content: "<p>dom▶ to◀ edit</p>",
                 steps: [],
@@ -83,30 +107,6 @@ var TestKeyboardChar = class extends we3.AbstractPlugin {
                     key: 'a',
                 }],
                 test: '<div><a href="#">a◆</a></div>',
-            },
-            {
-                name: "'a' on a selection of most contents of a complex dom",
-                content: "<p><b>dom</b></p><p><b>▶to<br>partly</b>remov<i>e◀</i></p>",
-                steps: [{
-                    key: 'a',
-                }],
-                test: "<p><b>dom</b></p><p><b>a◆</b></p>",
-            },
-            {
-                name: "'a' on a selection of all the contents of a complex dom",
-                content: "<p><b>▶dom</b></p><p><b>to<br>completely</b>remov<i>e◀</i></p>",
-                steps: [{
-                    key: 'a',
-                }],
-                test: "<p><b>a◆</b></p>",
-            },
-            {
-                name: "'a' on a selection of all the contents of a complex dom (2)",
-                content: '<h1 class="a"><font style="font-size: 62px;"><b>▶dom to</b>edit◀</font></h1>',
-                steps: [{
-                    key: 'a',
-                }],
-                test: '<h1 class="a"><font style="font-size:62px"><b>a◆</b></font></h1>',
             },
             {
                 name: "'a' before an image",

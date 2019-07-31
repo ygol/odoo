@@ -33,15 +33,16 @@ var TestKeyboard = class extends we3.AbstractPlugin {
     test (assert, keyboardTests) {
         var self = this;
         keyboardTests.forEach(function (test, i) {
-            keyboardTests[i].do = keyboardTests[i].do || function () {
-                var def = Promise.resolve();
-                if (!test.steps) {
-                    return def;
+            var doMethod = keyboardTests[i].do;
+            keyboardTests[i].do = async function () {
+                if (doMethod) {
+                    await doMethod(assert, test.name);
                 }
-                test.steps.forEach(function (step) {
-                    def = def.then(self._execStep.bind(self, assert, step, test.name));
-                });
-                return def;
+                if (test.steps) {
+                    for (var k = 0; k < test.steps.length; k++) {
+                        await self._execStep(assert, test.steps[k], test.name);
+                    }
+                }
             }
         });
         return this.dependencies.Test.execTests(assert, keyboardTests);

@@ -97,8 +97,8 @@
                     await _clickLink(async function () {
                         await _editInput($('.modal-dialog:visible #o_link_dialog_url_input'), '#');
                         await _editInput($('.modal-dialog:visible [name="link_style_shape"]'), "outline");
-                        await self.dependencies.Test.triggerNativeEvents($('.modal-dialog:visible .o_link_dialog_color .o_link_dialog_color_item.btn-alpha')[0], ['mousedown', 'click']);
-                        await self.dependencies.Test.triggerNativeEvents($('.modal-dialog:visible .o_switch [name="is_new_window"]')[0], ['mousedown', 'click']);
+                        await self.dependencies.Test.click($('.modal-dialog:visible .o_link_dialog_color .o_link_dialog_color_item.btn-alpha')[0]);
+                        await self.dependencies.Test.click($('.modal-dialog:visible .o_switch [name="is_new_window"]')[0]);
                     });
                 },
                 test: '<p><a href="#" class="btn btn-outline-alpha" target="_blank">dom to edit</a>◆</p>',

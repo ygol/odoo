@@ -20,6 +20,11 @@ var TestRange = class extends we3.AbstractPlugin {
             test: "<p>aa◆a</p>",
         },
         {
+            name: "Range on image (click test)",
+            content: '<p>aa▶<img src="/web_editor/static/src/img/transparent.png"/>◀aa</p>',
+            test: '<p>aa▶<img src="/web_editor/static/src/img/transparent.png"/>◀aa</p>',
+        },
+        {
             name: "Range at the end of a table",
             content: "<p>a</p><table><tbody><tr><td>b</td><td>c◆</td></tr></tbody></table><p>d</p>",
             test: "<p>a</p><table><tbody><tr><td>b</td><td>c◆</td></tr></tbody></table><p>d</p>",
@@ -41,13 +46,13 @@ var TestRange = class extends we3.AbstractPlugin {
         this.dependencies.Test.add(this);
         return super.start();
     }
-    test (assert) {
-        var self = this;
-        this.tests.forEach(function (test) {
-            self.dependencies.Test.setValue(test.content);
-            var value = self.dependencies.Test.getValue();
+    async test (assert) {
+        for (var k = 0; k < this.tests.length; k++) {
+            var test = this.tests[k];
+            await this.dependencies.Test.setValue(test.content);
+            var value = this.dependencies.Test.getValue();
             assert.strictEqual(value, test.test, test.name);
-        });
+        }
     }
 };
 
