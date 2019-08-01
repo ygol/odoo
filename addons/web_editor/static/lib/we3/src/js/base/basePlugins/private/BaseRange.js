@@ -46,7 +46,8 @@ var BaseRange = class extends we3.AbstractPlugin {
      * @returns {ArchNode}
      */
     getFocusedNode () {
-        return this.dependencies.BaseArch.getClonedArchNode(this._focusedNodeID) || this.dependencies.BaseArch.getClonedArchNode(1);
+        var BaseArch = this.dependencies.BaseArch;
+        return BaseArch.getArchNode(this._focusedNodeID) || BaseArch.root;
     }
     /**
      * Get the current range.
@@ -58,16 +59,16 @@ var BaseRange = class extends we3.AbstractPlugin {
         var Arch = this.dependencies.Arch;
         var sc = Renderer.getElement(this._range.scID);
         var ec = this._range.scID === this._range.ecID ? sc : Renderer.getElement(this._range.ecID);
-        if (!Arch.getClonedArchNode(this._range.scID)) {
+        if (!Arch.getArchNode(this._range.scID)) {
             console.warn('The range is corrupt');
         }
         return new WrappedRange(Arch, Renderer, {
             sc: sc,
-            scArch: Arch.getClonedArchNode(this._range.scID),
+            scArch: Arch.getArchNode(this._range.scID),
             scID: this._range.scID,
             so: this._range.so,
             ec: ec,
-            ecArch: Arch.getClonedArchNode(this._range.ecID),
+            ecArch: Arch.getArchNode(this._range.ecID),
             ecID: this._range.ecID,
             eo: this._range.eo,
             ltr: this._range.ltr,
@@ -117,8 +118,9 @@ var BaseRange = class extends we3.AbstractPlugin {
      * @returns {object} {scID: {Number}, so: {Number}, ecID: {Number}, eo: {Number}}
      */
     rangeOn (start, end) {
-        var scArch = typeof start === 'number' ? this.dependencies.Arch.getClonedArchNode(start) : start;
-        var ecArch = typeof end === 'number' ? this.dependencies.Arch.getClonedArchNode(end) : end;
+        var BaseArch = this.dependencies.BaseArch;
+        var scArch = typeof start === 'number' ? BaseArch.getArchNode(start) : start;
+        var ecArch = typeof end === 'number' ? BaseArch.getArchNode(end) : end;
         return {
             scID: scArch.id,
             so: scArch.isVirtual() ? 1 : 0, // if virtual, move after it
@@ -247,6 +249,7 @@ var BaseRange = class extends we3.AbstractPlugin {
      * @returns {Object}
      */
     _deducePoints (pointsWithIDs) {
+        var BaseArch = this.dependencies.BaseArch;
         if (!pointsWithIDs.sc && !pointsWithIDs.scID) {
             return this._deducePoints({
                 scID: 1,
@@ -258,10 +261,10 @@ var BaseRange = class extends we3.AbstractPlugin {
         var ecID = pointsWithIDs.ecID || scID;
         var eo = pointsWithIDs.eo;
         if (!pointsWithIDs.ecID) {
-            eo = typeof pointsWithIDs.so === 'number' ? so : this.dependencies.BaseArch.getArchNode(scID).length();
+            eo = typeof pointsWithIDs.so === 'number' ? so : BaseArch.getArchNode(scID).length();
         }
         if (!eo && eo !== 0) {
-            eo = this.dependencies.BaseArch.getArchNode(ecID).length();
+            eo = BaseArch.getArchNode(ecID).length();
         }
         return {
             scID: scID,

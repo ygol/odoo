@@ -153,6 +153,7 @@ var TestVirtualKeyboard = class extends we3.AbstractPlugin {
     }
     async _testMultikeypressCTRLA (assert) {
         var ev;
+        this.dependencies.Arch.setValue(); // reset the editor
         var Test = this.dependencies.Test;
         await Test.setValue("<p>aaa◆</p>");
 
