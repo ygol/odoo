@@ -20,7 +20,7 @@ tour.register("editor_unit_tests", {
 }, {
     content: "Check if all tests are loaded",
     trigger: "we3-editor we3-dropdown[data-plugin='Test']:has(we3-button:last.good, we3-button:last.fail) we3-toggler",
-    timeout: 120000,
+    timeout: 160000,
 }, {
     content: "Log Error",
     trigger: "we3-editor",
