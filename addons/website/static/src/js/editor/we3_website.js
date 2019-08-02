@@ -88,6 +88,8 @@ var OdooWebsite = class extends we3.AbstractPlugin {
             if (next.isWebsiteEditable && next.isWebsiteEditable()) {
                 archNodes.push(next);
             }
+        }, {
+            doNotInsertVirtual: true,
         });
         return archNodes;
     }

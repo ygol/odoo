@@ -551,7 +551,7 @@ class TestManagerPlugin extends we3.AbstractPlugin {
             };
         }
 
-        archNode = this.dependencies.Arch.getClonedArchNode(range.scID);
+        archNode = this.dependencies.Arch.getArchNode(range.scID);
         if (archNode.parent.childNodes.length === 1 && archNode.parent.id === range.ecID) {
             // eg: <p>▶<img/>◀</p> => select whole P
             range = {
