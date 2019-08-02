@@ -26,7 +26,7 @@ class MediaSizePlugin extends we3.AbstractPlugin {
         if (size === 'auto') {
             size = '';
         }
-        return (focusNode.style.width ? focusNode.style.width.replace('%', '') : '') ===  size;
+        return (focusNode.style.width ? focusNode.style.width.replace('%', '') : '') === size;
     }
     _enabled (buttonName, focusNode) {
         return focusNode.isMedia && focusNode.isMedia();

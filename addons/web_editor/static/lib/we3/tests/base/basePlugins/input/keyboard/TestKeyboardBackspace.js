@@ -41,7 +41,7 @@ var TestKeyboardBackspace = class extends we3.AbstractPlugin {
                 key: 'BACKSPACE',
             }],
             test: "<p>▶<br/>◀</p>",
-        },{
+        }, {
             name: "in p: 2 x BACKSPACE after br + 1 char",
             content: "<p>aaa</p><p><br>a◆</p>",
             steps: [{

@@ -13,7 +13,7 @@ var TestToolbarWand = class extends we3.AbstractPlugin {
         // range collapsed: ◆
         // range start: ▶
         // range end: ◀
-    
+
         this.toolbarTests = [{
                 name: "Click H1: p -> h1",
                 content: '<p>dom not to edit</p><p>d◆om to edit</p>',

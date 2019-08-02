@@ -35,7 +35,7 @@ var TestRenderer = class extends we3.AbstractPlugin {
                 name: "ENTER after click bold, at the end of b in p",
                 content: "<p>▶dom to edit◀</p><p>other content</p>",
                 steps: [{
-                    do:  async function () {
+                    do: async function () {
                         var p = self.editable.querySelector('test-container p');
                         var bold = self.editor.querySelector('we3-button[data-method="formatText"][data-value="b"]');
                         await self.dependencies.Test.triggerNativeEvents(bold, ['mousedown', 'click', 'mouseup']);

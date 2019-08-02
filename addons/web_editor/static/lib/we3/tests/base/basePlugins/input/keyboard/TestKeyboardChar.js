@@ -185,7 +185,7 @@ var TestKeyboardChar = class extends we3.AbstractPlugin {
                 }, {
                     key: 'a',
                 }],
-                test:   '<table><tbody>' +
+                test: '<table><tbody>' +
                             '<tr>' +
                                 '<td>' +
                                     '<p>xxx</p>' +
@@ -220,7 +220,7 @@ var TestKeyboardChar = class extends we3.AbstractPlugin {
                 }, {
                     key: 'a',
                 }],
-                test:   '<table><tbody>' +
+                test: '<table><tbody>' +
                             '<tr>' +
                                 '<td>' +
                                     '<p>xxx</p>' +
@@ -255,7 +255,7 @@ var TestKeyboardChar = class extends we3.AbstractPlugin {
                 }, {
                     key: 'a',
                 }],
-                test:   '<table><tbody>' +
+                test: '<table><tbody>' +
                             '<tr>' +
                                 '<td>' +
                                     '<p>xxx</p>' +

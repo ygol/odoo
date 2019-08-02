@@ -184,7 +184,7 @@ we3.utils = {
                 var json1 = obj1[key].toJSON();
                 var isObj2ArchNode = obj2[key] instanceof we3.ArchNode;
                 var json2 = isObj2ArchNode && obj2[key].toJSON();
-                return  isObj2ArchNode && JSON.stringify(json1) === JSON.stringify(json2);
+                return isObj2ArchNode && JSON.stringify(json1) === JSON.stringify(json2);
             }
             switch (typeof obj1[key]) {
                 case 'object':
@@ -350,7 +350,7 @@ we3.utils = {
                 exp: '\\uFEFF',
             },
             newline: {
-                name: 'Newline', 
+                name: 'Newline',
                 exp: '\\n\\r',
             },
         };
@@ -415,7 +415,7 @@ we3.utils = {
         return array.filter(function (value, index) {
             var indexOfValue;
             if (typeof value !== 'object' || !options.deepCompare) {
-                indexOfValue = array.indexOf(value)
+                indexOfValue = array.indexOf(value);
             } else {
                 indexOfValue = array.map(function (val, i) {
                     return self.deepCompare(value, val) && i;

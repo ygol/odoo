@@ -188,7 +188,6 @@ var TestToolbarFontStyle = class extends we3.AbstractPlugin {
                 test: '<p>d▶<u>om</u><b><u>to</u></b><u> edit</u></p><p><b><u>dom t◀</u>o edit</b></p>',
             },
         ];
-    
         this.removeFontStyleTests = [
             {
                 name: "Click REMOVE FONT STYLE: bold -> normal",

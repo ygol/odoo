@@ -83,7 +83,7 @@ class Arch extends we3.AbstractPlugin {
     findAll (fn) {
         var archNodes = [];
         this.dependencies.BaseArch.root.nextUntil(function (a) {
-            if(a.id !== 1 && (typeof fn === 'string' ? a[fn] && a[fn].call(a, a) : fn.call(a, a))) {
+            if (a.id !== 1 && (typeof fn === 'string' ? a[fn] && a[fn].call(a, a) : fn.call(a, a))) {
                 archNodes.push(a);
             }
         });

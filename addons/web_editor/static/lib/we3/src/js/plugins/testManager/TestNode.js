@@ -3,7 +3,7 @@
 
 const regex = we3.utils.regex.TestManagerPlugin;
 
-class TestNode extends  we3.ArchNodeVirtualText {
+class TestNode extends we3.ArchNodeVirtualText {
     //--------------------------------------------------------------------------
     // static
     //--------------------------------------------------------------------------
@@ -45,7 +45,7 @@ class TestNode extends  we3.ArchNodeVirtualText {
     //--------------------------------------------------------------------------
 
     constructor (params, nodeName, attributes, nodeValue) {
-        super(...arguments)
+        super(...arguments);
         this.nodeValue = nodeValue;
     }
     isVisibleText () {

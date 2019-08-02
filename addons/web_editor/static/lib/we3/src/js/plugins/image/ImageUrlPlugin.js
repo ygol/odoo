@@ -40,7 +40,7 @@ class ImageUrlPlugin extends we3.AbstractPlugin {
     //--------------------------------------------------------------------------
 
     _onSaveMedia (panel) {
-        debugger
+        // todo
     }
     _onURLInputChange (value, ev) {
         var form = ev.target.closest('form');

@@ -89,17 +89,18 @@ var TestToolbar = class extends we3.AbstractPlugin {
 
         return [baseElement];
     }
-    _querySelectorAllWithContents  (testName, assert, selector) {
+    _querySelectorAllWithContents (testName, assert, selector) {
         // eg: ".class:contents()[0]->1" selects the first contents of the 'class' class, with an offset of 1
         var wysiwyg = document.getElementsByTagName('we3-editor')[0];
         var sel = selector.match(reDOMSelection);
+        var node;
         try {
-            var node = this._querySelectorAllWithEq(sel[1], wysiwyg)
+            node = this._querySelectorAllWithEq(sel[1], wysiwyg);
             // var node = wysiwyg.querySelectorAll(sel[1]);
         } catch (e) {
             console.error(e);
             assert.notOk(e.message, testName);
-            var node = $(sel[1], wysiwyg);
+            node = $(sel[1], wysiwyg);
         }
         node = node[0];
         var point = {
@@ -111,7 +112,7 @@ var TestToolbar = class extends we3.AbstractPlugin {
         }
         return point;
     }
-    _endOfAreaBetweenTwoNodes  (point) {
+    _endOfAreaBetweenTwoNodes (point) {
         // move the position because some browsers put the carret at the end of the previous area after normalize
         if (
             !point.node.tagName &&

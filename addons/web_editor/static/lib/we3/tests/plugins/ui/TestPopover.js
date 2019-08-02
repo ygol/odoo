@@ -79,7 +79,7 @@ var TestPopover = class extends we3.AbstractPlugin {
             click: 'we3-editable a',
             test: '<table><tbody><tr><td>wrong TD</td></tr><tr><td>free text in table <a href="https://www.odoo.com">◆Odoo</a></td></tr></tbody></table>',
             activePopovers: this.options.popover['Text.get'] ? ['Table', 'Link', 'Text'] : ['Table', 'Link'],
-        },];
+        }];
     }
 
     start () {
@@ -101,7 +101,7 @@ var TestPopover = class extends we3.AbstractPlugin {
                 activePopovers.push(popover.getAttribute('name'));
             }
         });
-        var popoverNames = test.activePopovers.slice();
+        // var popoverNames = test.activePopovers.slice();
         test.activePopovers.sort();
         activePopovers.sort();
         assert.strictEqual(activePopovers.join(','), test.activePopovers.join(','), test.name + ' (popovers)');

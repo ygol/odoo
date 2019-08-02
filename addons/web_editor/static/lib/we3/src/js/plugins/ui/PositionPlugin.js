@@ -50,6 +50,7 @@ class PositionPlugin extends we3.AbstractPlugin {
         }
     }
     _getNodePosition (node, offset) {
+        var box;
         if (!node.tagName) {
             var parent = node.parentNode;
             var clone = node.cloneNode();
@@ -73,19 +74,19 @@ class PositionPlugin extends we3.AbstractPlugin {
                 left: box.left,
             };
         } else if (offset === 0) {
-            var box = node.getBoundingClientRect();
+            box = node.getBoundingClientRect();
             return {
                 top: box.top,
                 left: box.left,
             };
         } else if (node.childNodes[offset]) {
-            var box = node.childNodes[offset].getBoundingClientRect();
+            box = node.childNodes[offset].getBoundingClientRect();
             return {
                 top: box.top,
                 left: box.left,
             };
         } else {
-            var box = node.getBoundingClientRect();
+            box = node.getBoundingClientRect();
             return {
                 top: box.top,
                 left: box.left + box.width,

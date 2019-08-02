@@ -48,7 +48,7 @@ class MediaPlugin extends we3.AbstractPlugin {
             priority: priority,
             name: name,
         });
-        this._panels.sort(function (a, b) { return a.priority - b.priority; });
+        this._panels.sort((a, b) => a.priority - b.priority);
     }
     getArchNode (archNode) {
         return archNode.ancestor('isMedia');
@@ -147,11 +147,11 @@ class MediaPlugin extends we3.AbstractPlugin {
             var activePanel = tabpanels.querySelector('we3-tabpanel.active');
             var pluginOnSave = self._panels[[].indexOf.call(tabpanels.children, activePanel)].onSave;
             pluginOnSave(activePanel).then(function (media) {
-                console.log('TODO use', mediaArchNode);
+                // TODO: use mediaArchNode
                 if (mediaArchNode) {
                     self.dependencies.Range.setRange({
                         scID: mediaArchNode.parent.id,
-                        so:   mediaArchNode.index() + 1,
+                        so: mediaArchNode.index() + 1,
                     });
                     self.dependencies.Arch.insert(media);
                     self.dependencies.Arch.remove(mediaArchNode);

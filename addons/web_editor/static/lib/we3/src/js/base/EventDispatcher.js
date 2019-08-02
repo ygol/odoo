@@ -110,7 +110,7 @@ var Event = class {
     get isStopped () {
         this._stopped = true;
     }
-}
+};
 
 /**
  * Backbone's events. Do not ever use it directly, use EventDispatcherMixin instead.
@@ -164,12 +164,14 @@ var Events = class {
             while ((ev = events.shift())) {
                 node = calls[ev];
                 delete calls[ev];
-                if (!callback || !node)
+                if (!callback || !node) {
                     continue;
+                }
                 while ((node = node.next) && node.next) {
                     if (node.callback === callback
-                            && (!context || node.context === context))
+                            && (!context || node.context === context)) {
                         continue;
+                    }
                     this.on(ev, node.callback, node.context);
                 }
             }
@@ -200,34 +202,37 @@ var Events = class {
     /**
      * Trigger events.
      *
-     * @param {string} events 
+     * @param {string} events
      * @returns {Events} self
      */
     trigger (events) {
         var event, node, calls, tail, args, all, rest;
-        if (!(calls = this._callbacks))
+        if (!(calls = this._callbacks)) {
             return this;
+        }
         all = calls.all;
         (events = events.split(/\s+/)).push(null);
         // Save references to the current heads & tails.
         while ((event = events.shift())) {
-            if (all)
+            if (all) {
                 events.push({
-                    next : all.next,
-                    tail : all.tail,
-                    event : event
+                    next: all.next,
+                    tail: all.tail,
+                    event: event,
                 });
-            if (!(node = calls[event]))
+            }
+            if (!(node = calls[event])) {
                 continue;
+            }
             events.push({
-                next : node.next,
-                tail : node.tail
+                next: node.next,
+                tail: node.tail,
             });
         }
         rest = Array.prototype.slice.call(arguments, 1);
         while ((node = events.pop())) {
             tail = node.tail;
-            args = node.event ? [ node.event ].concat(rest) : rest;
+            args = node.event ? [node.event].concat(rest) : rest;
             while ((node = node.next) !== tail) {
                 node.callback.apply(node.context || this, args);
             }

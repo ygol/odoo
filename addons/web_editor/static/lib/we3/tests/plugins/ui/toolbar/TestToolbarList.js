@@ -1013,7 +1013,7 @@ var TestToolbarList = class extends we3.AbstractPlugin {
                         '</li>' +
                     '</ul>',
             },
-        ]
+        ];
         this.indentTests = [
             {
                 name: "Click INDENT: li -> indented li",

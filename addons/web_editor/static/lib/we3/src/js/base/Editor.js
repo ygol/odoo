@@ -116,7 +116,9 @@ we3.Editor = class extends we3.EventDispatcher {
         this.target.wysiwygEditor = this;
         this.target.dataset.dataWysiwygId = this.id;
 
-        this.on('command', this, function () { throw new Error(); });
+        this.on('command', this, function () {
+            throw new Error();
+        });
         this.on('get_value', this, this._onGetValue);
         this.on('set_value', this, this._onSetValue);
 
@@ -508,7 +510,7 @@ we3.Editor = class extends we3.EventDispatcher {
             self.options.translateTemplateNodes(pluginName, fragment);
             return fragment.innerHTML;
         },
-        params.hasFocus = function () {return self._isFocused;};
+        params.hasFocus = () => this._isFocused;
 
         this.plugins = params.plugins;
         delete params.plugins;
@@ -587,14 +589,14 @@ we3.Editor = class extends we3.EventDispatcher {
             var i = nodes.length;
             while (i--) {
                 var node = nodes[i];
-                if (node.nodeType == 3) {
+                if (node.nodeType === 3) {
                     var text = node.nodeValue.match(regExpText);
                     if (text && text[2].length) {
                         var value = text[1] + self.options.translate(pluginName, text[2]) + text[3];
                         value = self._pluginsManager.translatePluginString(pluginName, value, text[2], node, 'nodeValue');
                         node.nodeValue = value;
                     }
-                } else if (node.nodeType == 1 || node.nodeType == 9 || node.nodeType == 11) {
+                } else if (node.nodeType === 1 || node.nodeType === 9 || node.nodeType === 11) {
                     translateNodes(node);
                 }
             }

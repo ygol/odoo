@@ -150,10 +150,11 @@ var BaseArch = class extends we3.AbstractPlugin {
     parse (toInsert) {
         var self = this;
         var fragment;
+        var archNode;
         if (typeof toInsert === 'string') {
             fragment = this._parse(toInsert);
         } else if (typeof toInsert === 'number') {
-            var archNode = this.getArchNode(toInsert);
+            archNode = this.getArchNode(toInsert);
             if (archNode !== this._arch && !archNode.isFragment()) {
                 fragment = new FragmentNode(this._arch.params);
                 fragment.append(archNode);
@@ -161,7 +162,7 @@ var BaseArch = class extends we3.AbstractPlugin {
                 fragment = archNode;
             }
         } else if (toInsert instanceof ArchNode) {
-            var archNode = toInsert;
+            archNode = toInsert;
             fragment = new FragmentNode(this._arch.params);
             fragment.append(archNode);
         } else if (toInsert.ATTRIBUTE_NODE && toInsert.DOCUMENT_NODE) {
@@ -175,7 +176,7 @@ var BaseArch = class extends we3.AbstractPlugin {
                 fragment.append(self._parseElement(node));
             });
         } else {
-            var archNode = this._importJSON(toInsert);
+            archNode = this._importJSON(toInsert);
             if (archNode.isFragment()) {
                 fragment = archNode;
             } else {
@@ -699,7 +700,7 @@ var BaseArch = class extends we3.AbstractPlugin {
         options = options || {};
         var range = this.dependencies.BaseRange.getRange();
         var start, end;
-        var scArch = this.getArchNode(range.scID)
+        var scArch = this.getArchNode(range.scID);
         if (range.isCollapsed()) {
             start = end = this.createArchNode();
             start._triggerChange(0);
@@ -916,7 +917,7 @@ var BaseArch = class extends we3.AbstractPlugin {
         var self = this;
         var range;
 
-        this.dependencies.BaseRules.applyRules(this._changes.map(function (c) {return c.archNode}));
+        this.dependencies.BaseRules.applyRules(this._changes.map(c => c.archNode));
 
         this._changes.forEach(function (c, i) {
             var id = c.archNode.id || c.id;
@@ -995,7 +996,9 @@ var BaseArch = class extends we3.AbstractPlugin {
                     so: isSc ? (isPrevText ? textNode.length() : 0) : range.so,
                     ecID: isEc ? textNode.id : range.ecID,
                     eo: isEc ? (isPrevText ? textNode.length() : 0) : range.eo,
-                }, { muteDOMRange: true });
+                }, {
+                    muteDOMRange: true,
+                });
             }
         });
     }
@@ -1175,7 +1178,7 @@ var BaseArch = class extends we3.AbstractPlugin {
         var reVoidNodes = new RegExp('<(' + reTags + reAttribute + ')>', 'g');
         var xml = html.replace(reVoidNodes, '<\$1/>').replace(/&/g, '&amp;');
         var parser = new DOMParser();
-        var element = parser.parseFromString("<root>" + xml + "</root>","text/xml");
+        var element = parser.parseFromString("<root>" + xml + "</root>", "text/xml");
 
         var root;
         if (element.querySelector('parsererror')) {
@@ -1340,7 +1343,9 @@ var BaseArch = class extends we3.AbstractPlugin {
             id = 1;
             this._id = 1;
             this._arch.id = 1;
-            this._archNodeList = {'1':  this._arch};
+            this._archNodeList = {
+                '1': this._arch,
+            };
             this._arch.parent = null;
             this._arch.childNodes = [];
         } else {
@@ -1356,7 +1361,7 @@ var BaseArch = class extends we3.AbstractPlugin {
                 value.attributes = null;
             }
             this._insert(value, id, 0);
-            this.dependencies.BaseRules.applyRules(this._changes.map(function (c) {return c.archNode}));
+            this.dependencies.BaseRules.applyRules(this._changes.map(c => c.archNode));
         }
 
         var json = [this._arch.toJSON({
@@ -1409,7 +1414,9 @@ var BaseArch = class extends we3.AbstractPlugin {
         it as it was likely introduced to mark the position of the cursor. */
         var rangeChange = changes.filter(c => c.isRange)[0];
         if (rangeChange && rangeChange.archNode.isVirtual()) {
-           return { scID: rangeChange.archNode.id }; // select the virtual
+           return {
+               scID: rangeChange.archNode.id,
+            }; // select the virtual
         }
 
         /* If the changes modified the range in a way that makes the previous
@@ -1506,7 +1513,7 @@ var BaseArch = class extends we3.AbstractPlugin {
                     return {
                         id: c.id,
                         element: BaseRenderer.getElement(c.id),
-                    }
+                    };
                 }),
                 removed: Object.values(result.removed).filter(function (c) {
                     return c.element && !BaseRenderer.getID(c.element); // element can be attach to an other node

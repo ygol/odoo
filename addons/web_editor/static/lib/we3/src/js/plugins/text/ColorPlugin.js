@@ -227,10 +227,13 @@ class ColorPlugin extends we3.AbstractPlugin {
      * @returns {ArchNode []}
      */
     _getNodesToColor (start, startOffset, end, endOffset) {
+        var nextOptions = {
+            leafToLeaf: true,
+        };
         var endFont = end.ancestor('isFont');
         if (endFont) {
             end = end.splitUntil(endFont, endOffset);
-            end = end.lastLeaf().next({ leafToLeaf: true });
+            end = end.lastLeaf().next(nextOptions);
         } else {
             end = end.split(endOffset) || end;
         }
@@ -238,7 +241,7 @@ class ColorPlugin extends we3.AbstractPlugin {
         if (startFont) {
             start = start.splitUntil(startFont, startOffset);
             if (!start.isVoidoid()) {
-                start = start.firstLeaf().next({ leafToLeaf: true });
+                start = start.firstLeaf().next(nextOptions);
             }
         } else {
             start = start.split(startOffset) || start;

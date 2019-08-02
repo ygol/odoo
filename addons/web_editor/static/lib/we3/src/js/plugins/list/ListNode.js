@@ -99,14 +99,17 @@ class ListNode extends we3.ArchNode {
      * @param {ArchNode []} contents
      */
     _cleanEdgesAfterUnlistMerge (contents) {
+        const deleteEdgeOptions = {
+            doNotRemoveEmpty: true,
+        };
         // merge two p's in a li, not two li's
         if (contents.length && !(contents[0].isText() && contents[0].parent.isLi())) {
-            contents[0].deleteEdge(true, { doNotRemoveEmpty: true });
+            contents[0].deleteEdge(true, deleteEdgeOptions);
         }
         var prev = this.previousSibling();
         this.remove();
         if (prev) {
-            prev.deleteEdge(false, { doNotRemoveEmpty: true });
+            prev.deleteEdge(false, deleteEdgeOptions);
         }
     }
     /**

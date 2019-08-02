@@ -252,7 +252,7 @@ class UploadPlugin extends we3.AbstractPlugin {
     }
     _onSearch (value, ev) {
         var form = ev.target.closest('form');
-        var documents = form.querySelector('we3-documents');
+        // var documents = form.querySelector('we3-documents');
         form._records = false;
         return this._search(form, 0);
     }

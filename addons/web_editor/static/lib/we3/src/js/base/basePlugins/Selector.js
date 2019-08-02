@@ -1,9 +1,8 @@
 (function () {
 'use strict';
 
-var booleans = "checked|selected|disabled|readonly|required",
     // http://www.w3.org/TR/css3-selectors/#whitespace
-    whitespace = "[\\x20\\t\\r\\n\\f]",
+var whitespace = "[\\x20\\t\\r\\n\\f]",
     // http://www.w3.org/TR/CSS21/syndata.html#value-def-identifier
     identifier = "(?:\\\\.|[\\w-]|[^\0-\\xa0])+",
     // Attribute selectors: http://www.w3.org/TR/selectors/#attribute-selectors
@@ -23,12 +22,12 @@ var booleans = "checked|selected|disabled|readonly|required",
         ".*" +
         ")\\)|)",
     // Leading and non-escaped trailing whitespace, capturing some non-whitespace characters preceding the latter
-    rcomma = new RegExp( "^" + whitespace + "*," + whitespace + "*" ),
-    rcombinators = new RegExp( "^" + whitespace + "*([>+~]|" + whitespace + ")" + whitespace + "*" ),
+    rcomma = new RegExp("^" + whitespace + "*," + whitespace + "*"),
+    rcombinators = new RegExp("^" + whitespace + "*([>+~]|" + whitespace + ")" + whitespace + "*"),
     // CSS escapes
     // http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
-    runescape = new RegExp( "\\\\([\\da-f]{1,6}" + whitespace + "?|(" + whitespace + ")|.)", "ig" ),
-    funescape = function( _, escaped, escapedWhitespace ) {
+    runescape = new RegExp("\\\\([\\da-f]{1,6}" + whitespace + "?|(" + whitespace + ")|.)", "ig"),
+    funescape = function (_, escaped, escapedWhitespace) {
         var high = "0x" + escaped - 0x10000;
         // NaN means non-codepoint
         // Support: Firefox<24
@@ -37,18 +36,18 @@ var booleans = "checked|selected|disabled|readonly|required",
             escaped :
             high < 0 ?
                 // BMP codepoint
-                String.fromCharCode( high + 0x10000 ) :
+                String.fromCharCode(high + 0x10000) :
                 // Supplemental Plane codepoint (surrogate pair)
-                String.fromCharCode( high >> 10 | 0xD800, high & 0x3FF | 0xDC00 );
+                String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
     },
-    rpseudo = new RegExp( pseudos ),
+    rpseudo = new RegExp(pseudos),
     nthchild = /^\s*(([+-])?([0-9]+)?n\s*)?([+-])?\s*([0-9]+)$/,
     reqExp = {
-        "ID": new RegExp( "^#(" + identifier + ")" ),
-        "CLASS": new RegExp( "^\\.(" + identifier + ")" ),
-        "TAG": new RegExp( "^(" + identifier + "|[*])" ),
-        "ATTR": new RegExp( "^" + attributes ),
-        "PSEUDO": new RegExp( "^" + pseudos ),
+        "ID": new RegExp("^#(" + identifier + ")"),
+        "CLASS": new RegExp("^\\.(" + identifier + ")"),
+        "TAG": new RegExp("^(" + identifier + "|[*])"),
+        "ATTR": new RegExp("^" + attributes),
+        "PSEUDO": new RegExp("^" + pseudos),
     };
 
 var Selector = class extends we3.AbstractPlugin {
@@ -152,7 +151,7 @@ var Selector = class extends we3.AbstractPlugin {
     }
     _tokenize (selector) {
         var self = this;
-        var matched, match, tokens, type, soFar, groups;
+        var matched, match, tokens, soFar, groups;
 
         if (this._cacheSearchToken[selector]) {
             return this._cacheSearchToken[selector];
@@ -161,22 +160,22 @@ var Selector = class extends we3.AbstractPlugin {
         soFar = selector;
         groups = [];
 
-        while ( soFar ) {
+        while (soFar) {
 
             // Comma and first run
-            if ( !matched || (match = rcomma.exec( soFar )) ) {
-                if ( match ) {
+            if (!matched || (match = rcomma.exec(soFar))) {
+                if (match) {
                     // Don't consume trailing commas as valid
-                    soFar = soFar.slice( match[0].length ) || soFar;
+                    soFar = soFar.slice(match[0].length) || soFar;
                 }
-                groups.push( (tokens = []) );
+                groups.push((tokens = []));
             }
 
             matched = false;
 
             // Filters
             this._tokenizeExprList.forEach(function (type) {
-                if (match = self[ type ]( soFar )) {
+                if (match = self[ type ](soFar)) {
                     matched = true;
                     type = type.slice(14);
                     tokens.push({
@@ -184,17 +183,17 @@ var Selector = class extends we3.AbstractPlugin {
                         identifier: type === 'TAG' && match[1] !== 'EDITABLE' ? match[1].toLowerCase() : match[1],
                         value: match[2],
                     });
-                    soFar = soFar.slice( match[0].length );
+                    soFar = soFar.slice(match[0].length);
                 }
             });
 
-            if ( !matched ) {
+            if (!matched) {
                 break;
             }
         }
 
         if (soFar) {
-            console.error( selector );
+            console.error(selector);
         }
 
         this._cacheSearchToken[selector] = {
@@ -220,13 +219,13 @@ var Selector = class extends we3.AbstractPlugin {
             return;
         }
 
-        match[1] = match[1].replace( runescape, funescape );
+        match[1] = match[1].replace(runescape, funescape);
         // Move the given value to match[3] whether quoted or unquoted
-        match[3] = ( match[3] || match[4] || match[5] || "" ).replace( runescape, funescape );
-        if ( match[2] === "~=" ) {
+        match[3] = (match[3] || match[4] || match[5] || "").replace(runescape, funescape);
+        if (match[2] === "~=") {
             match[3] = " " + match[3] + " ";
         }
-        return [match[0], match[1], match.slice( 2, 4 )]
+        return [match[0], match[1], match.slice(2, 4)];
     }
     _tokenizeExpr_BROWSE (string) {
         return rcombinators.exec(string);
@@ -241,23 +240,23 @@ var Selector = class extends we3.AbstractPlugin {
             unquoted = !match[6] && match[2];
 
         // Accept quoted arguments as-is
-        if ( match[3] ) {
+        if (match[3]) {
             match[2] = match[4] || match[5] || "";
 
         // Strip excess characters from unquoted arguments
-        } else if ( unquoted && rpseudo.test( unquoted ) &&
+        } else if (unquoted && rpseudo.test(unquoted) &&
             // Get excess from tokenize (recursively)
-            (excess = this._tokenize( unquoted ).rest.length) &&
+            (excess = this._tokenize(unquoted).rest.length) &&
             // advance to the next closing parenthesis
-            (excess = unquoted.indexOf( ")", unquoted.length - excess ) - unquoted.length) ) {
+            (excess = unquoted.indexOf(")", unquoted.length - excess) - unquoted.length)) {
 
             // excess is a negative index
-            match[0] = match[0].slice( 0, excess );
-            match[2] = unquoted.slice( 0, excess );
+            match[0] = match[0].slice(0, excess);
+            match[2] = unquoted.slice(0, excess);
         }
 
         // Return only captures needed by the pseudo filter method (type and argument)
-        return match.slice( 0, 3 );
+        return match.slice(0, 3);
     }
 
 
@@ -269,7 +268,7 @@ var Selector = class extends we3.AbstractPlugin {
         return archNodes;
     }
     _isFromToken (archNodes, token, options) {
-        for (var k = token.length - 1; k >= 0 ; k--) {
+        for (var k = token.length - 1; k >= 0; k--) {
             var t = token[k];
             var method = this['_isFromToken_' + t.type] || this['_searchFromToken_' + t.type];
             archNodes = method.call(this, archNodes, t.identifier, t.value, options);
@@ -284,7 +283,7 @@ var Selector = class extends we3.AbstractPlugin {
             var filterIds = options && options.filterIds;
             var childNodes = archNode.childNodes;
             for (var k = 0, len = childNodes.length; k < len; k++) {
-                var archNode = childNodes[k];
+                archNode = childNodes[k];
                 if (filterIds && !filterIds[archNode.id]) {
                     continue;
                 }
@@ -302,7 +301,6 @@ var Selector = class extends we3.AbstractPlugin {
 
 
     _isFromToken_BROWSE (archNodes, identifier, value, options) {
-        var self = this;
         var nodes = [];
         if (identifier === '>') {
             archNodes.forEach(function (archNode) {
@@ -430,7 +428,7 @@ var Selector = class extends we3.AbstractPlugin {
     _getSiblingsType (archNode) {
         var siblings = this._getChildren(archNode.parent);
         var group = {__group__: []};
-        for (var k = 0, len = siblings; k < len ; k++) {
+        for (var k = 0, len = siblings; k < len; k++) {
             var sibling = siblings[k];
             if (!group[sibling.nodeName]) {
                 group.__group__.push(sibling.nodeName);
@@ -458,16 +456,14 @@ var Selector = class extends we3.AbstractPlugin {
             throw new Error('Wrong value "' + value + '" for "nth-child" selector');
         }
 
-        var self = this;
         var neg = pos[2] && pos[2] === '-';
         var n = pos[3];
         var val = pos[5];
         var nodes = [];
         archNodes.forEach(function (archNode) {
-            var group = this._getSiblingsType(archNode);
             var siblings = nthOfType ? this._getSiblingsType(archNode)[archNode.nodeName] : this._getChildren(archNode.parent);
             var archNodeIndex = siblings.indexOf(archNode);
-            var max =   neg ? val : siblings.length;
+            var max = neg ? val : siblings.length;
             var index = neg ? 0 : negVal ? max - val : val;
 
             while (index < max) {

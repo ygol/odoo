@@ -32,7 +32,7 @@ class DocumentUrlPlugin extends we3.AbstractPlugin {
     //--------------------------------------------------------------------------
 
     _onSaveMedia (panel) {
-        debugger
+        // todo
     }
 }
 

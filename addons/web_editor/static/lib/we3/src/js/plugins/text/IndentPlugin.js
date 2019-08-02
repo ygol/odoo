@@ -47,7 +47,7 @@ class IndentPlugin extends we3.AbstractPlugin {
             return false;
         }
         var listType = buttonName.split('-')[1];
-        var method = 'is' + listType.slice(0,1).toUpperCase() + listType.slice(1);
+        var method = 'is' + listType.slice(0, 1).toUpperCase() + listType.slice(1);
         return !!focusNode.ancestor(node => node[method] && node[method]());
     }
 

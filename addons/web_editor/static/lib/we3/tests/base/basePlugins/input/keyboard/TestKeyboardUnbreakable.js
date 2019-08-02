@@ -500,7 +500,7 @@ var TestKeyboardUnbreakable = class extends we3.AbstractPlugin {
                 steps: [{
                     key: '1',
                 }],
-                test:   '<noteditable>' +
+                test: '<noteditable>' +
                             '<p><b data-oe-type="monetary" class="editable oe_price">$ <span class="oe_currency_value">1◆750.00</span></b></p>' +
                         '</noteditable>',
             },

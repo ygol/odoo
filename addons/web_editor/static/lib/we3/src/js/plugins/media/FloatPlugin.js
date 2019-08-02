@@ -28,7 +28,7 @@ class FloatPlugin extends we3.AbstractPlugin {
             case 'align-left': return focusNode.className.contains('pull-left');
             case 'align-center': return focusNode.className.contains('mx-auto');
             case 'align-right': return focusNode.className.contains('pull-right');
-            case 'align-none':  return !(focusNode.className.contains('pull-left') || focusNode.className.contains('mx-auto') || focusNode.className.contains('pull-right'));
+            case 'align-none': return !(focusNode.className.contains('pull-left') || focusNode.className.contains('mx-auto') || focusNode.className.contains('pull-right'));
         }
     }
     _enabled (buttonName, focusNode) {

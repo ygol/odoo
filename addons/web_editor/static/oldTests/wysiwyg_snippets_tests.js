@@ -129,7 +129,7 @@ QUnit.test('clean the dom before save, after drag&drop', function (assert) {
 
         testUtils.mock.intercept(wysiwyg, "snippet_focused", function () {
             wysiwyg.save().then(function (result) {
-                var isDirty = result.isDirty;
+                // var isDirty = result.isDirty;
                 var html = result.html;
                 assert.strictEqual(html.replace(/\s+/g, ' '),
                     '<p>toto toto toto</p><div class=\"s_hr pt32 pb32 built cleanForSave\"> <hr class=\"s_hr_1px s_hr_solid w-100 mx-auto\"> </div><p>tata</p>',

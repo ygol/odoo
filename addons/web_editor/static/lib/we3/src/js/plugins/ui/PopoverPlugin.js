@@ -285,8 +285,9 @@ class PopoverPlugin extends we3.AbstractPlugin {
                 dependencies.push(checkMethod.split('.')[0]);
             }
             plugins.forEach(function (plugin) {
-            if (plugin !== '|' && dependencies.indexOf(plugin) === -1)
-                dependencies.push(plugin);
+                if (plugin !== '|' && dependencies.indexOf(plugin) === -1) {
+                    dependencies.push(plugin);
+                }
             });
         });
         this.dependencies = dependencies;
@@ -524,13 +525,13 @@ class PopoverPlugin extends we3.AbstractPlugin {
                 return;
             }
         }
-        var buttonOptions;
+        /* var buttonOptions;
         if (button.getAttribute('options')) {
             buttonOptions = JSON.parse(button.getAttribute('options'));
-        }
+        } */
 
         var args = [value, focusNode];
-        var noTransaction = button.hasAttribute('no-transaction')
+        var noTransaction = button.hasAttribute('no-transaction');
         this.call(plugin.pluginName, method, args, noTransaction);
 
         if (this.dependencies.Range.getFocusedNode().id === focusNode.id) {

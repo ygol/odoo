@@ -27,7 +27,6 @@ var BaseUserInput = class extends we3.AbstractPlugin {
             mousedown: '_onMouseDown',
             touchstart: '_onMouseDown',
         };
-        var self = this;
         this.documentDomEvents = {
             selectionchange: '_onSelectionChange',
             click: '_onClick',
@@ -211,7 +210,7 @@ var BaseUserInput = class extends we3.AbstractPlugin {
             archNode: range.scArch,
             offset: range.so,
         });
-        return !pointArch.offset && range.isCollapsed() && pointArch.archNode
+        return !pointArch.offset && range.isCollapsed() && pointArch.archNode;
     }
     _isOnLeftEdgeOf (ancestorOrMethodName, range) {
         var ancestor = typeof ancestorOrMethodName === 'string' ? range.scArch.ancestor(ancestorOrMethodName) : ancestorOrMethodName;
@@ -376,7 +375,7 @@ var BaseUserInput = class extends we3.AbstractPlugin {
                         }
                     }
 
-                    var newOffset = self._findOffsetInsertion(lastTextNodeNewValue, offset, param.data);
+                    newOffset = self._findOffsetInsertion(lastTextNodeNewValue, offset, param.data);
                     newOffset = newOffset !== -1 ? newOffset : offset;
 
                     if (lastTextNodeNewValue[newOffset] === ' ') {
@@ -476,10 +475,10 @@ var BaseUserInput = class extends we3.AbstractPlugin {
         // because the browser can split other than our arch and we must fix the errors
         var targets = [];
         mutationsList.forEach(function (mutation) {
-            if (mutation.type == 'characterData' && targets.indexOf(mutation.target) === -1) {
+            if (mutation.type === 'characterData' && targets.indexOf(mutation.target) === -1) {
                 targets.push(mutation.target);
             }
-            if (mutation.type == 'childList') {
+            if (mutation.type === 'childList') {
                 mutation.addedNodes.forEach(function (target) {
                     if (targets.indexOf(target) === -1) {
                         targets.push(target);
@@ -561,7 +560,7 @@ var BaseUserInput = class extends we3.AbstractPlugin {
                 }
              } else {
                 var virtualText = self.dependencies.BaseArch.removeFromRange();
-                virtualText.parent.deleteEdge(false,  {
+                virtualText.parent.deleteEdge(false, {
                     keepRight: true,
                 });
             }
@@ -591,7 +590,7 @@ var BaseUserInput = class extends we3.AbstractPlugin {
             range.scArch.nextSibling().isVoidoid();
         var endIsAfterVoidoid = range.ecArch.isText() && range.eo === 0 &&
             range.ecArch.previousSibling() &&
-            range.ecArch.previousSibling().isVoidoid()
+            range.ecArch.previousSibling().isVoidoid();
         if (startIsBeforeVoidoid && endIsAfterVoidoid) {
             range.scID = range.scArch.nextSibling().id;
             range.so = 0;
@@ -657,7 +656,7 @@ var BaseUserInput = class extends we3.AbstractPlugin {
         } else if (e.inputType === "insertText") {
             if (param.type.indexOf('key') === 0 && param.key.length === 1 && e.data.length === 1) {
                 param.key = e.data; // keep accent
-            } else if(e.data && e.data.length === 1 && e.data !== param.data && param.type === 'composition') {
+            } else if (e.data && e.data.length === 1 && e.data !== param.data && param.type === 'composition') {
                 // swiftKey add automatically a space after the composition, without this line the arch is correct but not the range
                 param.data += e.data;
             } else if (param.key === 'Unidentified') {

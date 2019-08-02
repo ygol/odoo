@@ -110,7 +110,8 @@ var TestKeyboardArrow = class extends we3.AbstractPlugin {
                 rightTest: '<p>dom to <img src="/web_editor/static/src/img/transparent.png"/>◆ edit</p>',
                 shiftLeftTest: '<p>dom to ▶<img src="/web_editor/static/src/img/transparent.png"/> ◀edit</p>',
                 // shiftRightTest: '<p>dom to▶ <img src="/web_editor/static/src/img/transparent.png"/>◀ edit</p>',
-            },            {
+            },
+            {
                 repeat: 3,
                 name: "through image",
                 leftContent: '<p>dom to <img src="/web_editor/static/src/img/transparent.png"/> ◆edit</p>',

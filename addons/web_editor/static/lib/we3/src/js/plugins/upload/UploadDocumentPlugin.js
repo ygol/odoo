@@ -30,7 +30,7 @@ class UploadDocumentPlugin extends we3.AbstractPlugin {
 
     _addPanel () {
         var title = this.options.translate(this.pluginName, 'Document');
-        this.dependencies.Media.addPanel('upload-document' ,title, this._renderMediaTab.bind(this), this._onSaveMedia.bind(this), 20);
+        this.dependencies.Media.addPanel('upload-document', title, this._renderMediaTab.bind(this), this._onSaveMedia.bind(this), 20);
     }
     _displayRecord (record) {
         return this.dependencies[this._dep].displayRecord(record);

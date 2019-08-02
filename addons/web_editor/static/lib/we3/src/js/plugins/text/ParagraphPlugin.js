@@ -43,7 +43,7 @@ class ParagraphPlugin extends we3.AbstractPlugin {
             cssAlign = alignedAncestor.style['text-align'];
             alignedAncestor = alignedAncestor.parent;
         }
-        if (alignName == 'left' && !cssAlign) {
+        if (alignName === 'left' && !cssAlign) {
             return true;
         }
         return alignName === cssAlign;

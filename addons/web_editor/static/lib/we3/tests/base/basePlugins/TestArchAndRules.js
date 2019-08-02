@@ -52,8 +52,6 @@ var TestArchAndRules = class extends we3.AbstractPlugin {
                 name: 'Fix forbidden dom',
                 content: '<table><p><p><b>test</b></p></p><p>thing</p></table>',
                 test: '<table><tbody><tr><td><p><b>test</b></p></td></tr><tr><td><p>thing</p></td></tr></tbody></table>',
-
-                µ:    '<table><tbody><tr><td><p><b>test</b></p></td></tr><tr><td>thing</td></tr></tbody></table>'
             },
             {
                 name: 'Fix forbidden dom (2)',
@@ -150,7 +148,7 @@ TOTO
                     </p>
                 `,
                 test: '<p>Bonjour, <br/>' +
-                      '<i>comment va-</i><b><i>tu</i></b><i> ?</i></p>' + 
+                      '<i>comment va-</i><b><i>tu</i></b><i> ?</i></p>' +
                       '<table><tbody><tr><td>wrong TD</td></tr><tr><td>free text in table</td></tr></tbody></table>' +
                       '<p><font color="red"><i>comment</i></font><i> </i><font color="blue"><i>va-</i><b><i>tu</i></b></font><i> ?</i></p>' +
                       "<div>text dans div ? if (div) { console.log('div'); }</div>" +

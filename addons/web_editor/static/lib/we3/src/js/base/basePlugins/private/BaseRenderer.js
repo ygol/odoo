@@ -314,7 +314,6 @@ var BaseRenderer = class extends we3.AbstractPlugin {
             return;
         }
 
-        var self = this;
         var oldJSON = this.jsonById[newJSON.id] || {};
         var changes = this.changes[newJSON.id] || {};
 
@@ -419,7 +418,7 @@ var BaseRenderer = class extends we3.AbstractPlugin {
                 if (el && !self.editable.contains(el)) {
                     self.markAsDirty(id);
                 }
-            })
+            });
         }
 
         this.changes.forEach(function (changes, id) {
@@ -496,7 +495,6 @@ var BaseRenderer = class extends we3.AbstractPlugin {
             return;
         }
 
-        var self = this;
         var json = this.jsonById[changes.id] = (this.jsonById[changes.id] || {id: changes.id});
         if (changes.nodeName) {
             json.nodeName = changes.nodeName;

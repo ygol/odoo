@@ -112,7 +112,7 @@ class HistoryPlugin extends we3.AbstractPlugin {
     _enabled (buttonName) {
         if (buttonName === 'undo') {
             var steps = this._eachNodeHistory[0].slice(0, this.stackOffset + 1);
-            var nb = steps.length ? steps.reduce(function (a, b) {return a + b;}) : 0;
+            var nb = steps.length ? steps.reduce((a, b) => a + b) : 0;
             return nb > 1;
         } else if (buttonName === 'redo') {
             return this.stackOffset + 1 < this._range.length;
@@ -195,7 +195,7 @@ class HistoryPlugin extends we3.AbstractPlugin {
         if (this._muteUpdate) {
             return;
         }
-        if (this.stackOffset < this._eachNodeHistory[0].length -1) {
+        if (this.stackOffset < this._eachNodeHistory[0].length - 1) {
             return;
         }
 

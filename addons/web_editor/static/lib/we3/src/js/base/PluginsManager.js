@@ -3,7 +3,7 @@
 
 var pluginsRegistry = we3.pluginsRegistry = {};
 function whiteList (pluginName) {
-    return [ 'Arch', 'Range', 'Renderer', 'Rules', 'BaseArch', 'BaseRange', 'BaseRenderer', 'BaseRules', 'BaseUserInput', 'Selector'].indexOf(pluginName) !== -1;
+    return ['Arch', 'Range', 'Renderer', 'Rules', 'BaseArch', 'BaseRange', 'BaseRenderer', 'BaseRules', 'BaseUserInput', 'Selector'].indexOf(pluginName) !== -1;
 }
 function isBase (pluginName) {
     return ['BaseArch', 'BaseRange', 'BaseRenderer', 'BaseRules', 'BaseUserInput'].indexOf(pluginName) !== -1;
@@ -61,11 +61,11 @@ we3.PluginsManager = class extends we3.EventDispatcher {
      * @returns {Promise}
      */
     async start () {
-        var promises = [];
-        for (var i = 0; i < this._pluginNames.length; i++) {
+        var i;
+        for (i = 0; i < this._pluginNames.length; i++) {
             await this._plugins[this._pluginNames[i]].willStart();
         }
-        for (var i = this._pluginNames.length - 1; i >= 0; i--) {
+        for (i = this._pluginNames.length - 1; i >= 0; i--) {
             await this._plugins[this._pluginNames[i]].start();
         }
         this._afterStartAddDomTools();
@@ -219,7 +219,6 @@ we3.PluginsManager = class extends we3.EventDispatcher {
         this._each('_afterStartAddDomReferences', this.editor);
     }
     /**
-     * 
      * @private
      * @param {Object} params
      * @param {Object} options
@@ -271,7 +270,7 @@ we3.PluginsManager = class extends we3.EventDispatcher {
      */
     _createPluginInstanceAutoInstall (params, options, pluginInstances, pluginNames, autoInstallPlugins, conflictsPlugins) {
         autoInstallloop:
-        for (var k = autoInstallPlugins.length - 1; k >= 0 ; k--) {
+        for (var k = autoInstallPlugins.length - 1; k >= 0; k--) {
             var autoInstall = autoInstallPlugins[k];
             var pluginName = autoInstall.name;
 
@@ -323,7 +322,8 @@ we3.PluginsManager = class extends we3.EventDispatcher {
 
             // add dependencies
 
-            for (var k = 0; k < pluginInstance.dependencies.length; k++) {
+            var k;
+            for (k = 0; k < pluginInstance.dependencies.length; k++) {
                 var pName = pluginInstance.dependencies[k];
                 if (pluginNames.indexOf(pName) === -1 && !pluginInstances[pName]) {
                     pluginNames.push(pName);
@@ -333,7 +333,7 @@ we3.PluginsManager = class extends we3.EventDispatcher {
 
             // add autoInstall plugins
 
-            for (var k = 0; k < autoInstallPlugins.length; k++) {
+            for (k = 0; k < autoInstallPlugins.length; k++) {
                 var autoInstall = autoInstallPlugins[k];
                 var index;
                 while ((index = autoInstall.need.indexOf(pluginName)) !== -1) {

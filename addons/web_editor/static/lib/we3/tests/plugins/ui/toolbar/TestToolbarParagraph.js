@@ -112,7 +112,7 @@ var TestToolbarParagraph = class extends we3.AbstractPlugin {
                 test: '<p>dom not to edit</p><p style="text-align:justify">d▶om to edit</p><p style="text-align:justify">dom t◀o edit</p>',
             },
         ];
-        
+
         this.toolbarTests = this.leftTests
             .concat(this.centerTests)
             .concat(this.rightTests)

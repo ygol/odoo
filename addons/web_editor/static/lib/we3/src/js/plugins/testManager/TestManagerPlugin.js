@@ -67,12 +67,12 @@ function _eventType(eventName) {
 function _eventKeyName(eventName) {
     eventName = eventName.toLowerCase();
     if (eventName.indexOf('left') !== -1) {
-        return 'ArrowLeft'
+        return 'ArrowLeft';
     }
     if (eventName.indexOf('right') !== -1) {
-        return 'ArrowRight'
+        return 'ArrowRight';
     }
-    return eventName.substr(0,1).toUpperCase() + eventName.substr(1, eventName.length);
+    return eventName.substr(0, 1).toUpperCase() + eventName.substr(1, eventName.length);
 }
 
 class TestManagerPlugin extends we3.AbstractPlugin {
@@ -88,7 +88,7 @@ class TestManagerPlugin extends we3.AbstractPlugin {
      *@param {function} options.test.callback called at the test ending
      **/
     constructor (parent, params, options) {
-        super(...arguments)
+        super(...arguments);
         var self = this;
         this.dependencies = ['Arch', 'Range', 'Rules', 'Renderer'];
 
@@ -245,7 +245,7 @@ class TestManagerPlugin extends we3.AbstractPlugin {
         await this.triggerNativeEvents(node, 'mousedown', {
             afterEvent: function (ev) {
                 if (!ev.defaultPrevented) {
-                    self._selectRange(target, DOMRangeOffset|0);
+                    self._selectRange(target, DOMRangeOffset | 0);
                     ev.target.focus();
                 }
             }
@@ -297,7 +297,9 @@ class TestManagerPlugin extends we3.AbstractPlugin {
                 },
             ];
         }
-        var result = container.toString({ markers: markers });
+        var result = container.toString({
+            markers: markers,
+        });
         return this._cleanValue(result)
             .replace(/^<[^>]+>/, '').replace(/<\/[^>]+>$/, '') // remove container
             .replace(regex.rangeToCollapsed, regex.rangeCollapsedMarker);
@@ -465,8 +467,8 @@ class TestManagerPlugin extends we3.AbstractPlugin {
 
         Arch.setValue(value, container.id);
 
-        var start = Arch.getClonedArchNode(1).nextUntil(function (a) { return a.type === 'TEST'; });
-        var end = start ? start.nextUntil(function (a) { return a.type === 'TEST'; }, {doCrossUnbreakables: true}) : null;
+        var start = Arch.getClonedArchNode(1).nextUntil(a => a.type === 'TEST');
+        var end = start ? start.nextUntil(a => a.type === 'TEST', {doCrossUnbreakables: true}) : null;
 
         var archNode = Arch.getClonedArchNode(container.id, true);
 
@@ -482,7 +484,7 @@ class TestManagerPlugin extends we3.AbstractPlugin {
                 eo: 0,
             };
         } else {
-            var archNode = Arch.getClonedArchNode(1);
+            archNode = Arch.getClonedArchNode(1);
             function __getPoint(o, isEnd) {
                 var offset = 0;
                 var path = o.path();
@@ -520,7 +522,7 @@ class TestManagerPlugin extends we3.AbstractPlugin {
                             path[path.length - i]--;
                         }
                         return true;
-                    })
+                    });
                 }
 
                 var arch = archNode.applyPath(path.slice());
@@ -549,10 +551,12 @@ class TestManagerPlugin extends we3.AbstractPlugin {
             };
         }
 
-        var archNode = this.dependencies.Arch.getClonedArchNode(range.scID);
+        archNode = this.dependencies.Arch.getClonedArchNode(range.scID);
         if (archNode.parent.childNodes.length === 1 && archNode.parent.id === range.ecID) {
             // eg: <p>▶<img/>◀</p> => select whole P
-            range = { scID: archNode.parent.id };
+            range = {
+                scID: archNode.parent.id,
+            };
         }
         await this.setRange(range);
     }
@@ -605,7 +609,7 @@ class TestManagerPlugin extends we3.AbstractPlugin {
             isMulti = false;
             events = [events];
         }
-        var triggeredEvents = []
+        var triggeredEvents = [];
         for (var k = 0; k < events.length; k++) {
             var eventName = events[k];
             var type = _eventType(eventName);
@@ -632,12 +636,12 @@ class TestManagerPlugin extends we3.AbstractPlugin {
             }
 
             if (!self.options.test || !self.options.test.assert) {
-                var onerror = window.onerror
+                var onerror = window.onerror;
                 window.onerror = function (e) {
                     window.onerror = onerror;
                     console.error(e);
                     self.assert.notOk(e, 'ERROR Event: ' + eventName);
-                }
+                };
             }
 
             el.dispatchEvent(ev);
@@ -669,6 +673,7 @@ class TestManagerPlugin extends we3.AbstractPlugin {
     //--------------------------------------------------------------------------
 
     async _afterTriggerNativeKeyPressEvents (target, keyPress) {
+        var range, offset, specialKeys;
         if (keyPress.key.length === 1) {
             if (!keyPress.noTextInput) {
                 await this._textInput(target, keyPress.key);
@@ -698,14 +703,14 @@ class TestManagerPlugin extends we3.AbstractPlugin {
                 document.execCommand("insertBrOnReturn", true);
                 return;
             } else {
-                var range = this.dependencies.Range.getRange();
+                range = this.dependencies.Range.getRange();
                 if (range.isCollapsed() || document.queryCommandSupported('delete')) {
                     if (!range.isCollapsed()) {
                         document.execCommand("delete", true);
                     }
                     var nextRangeNode;
                     var node = range.sc;
-                    var offset = range.so;
+                    offset = range.so;
                     while (node !== this.editable && node.tagName !== "TEST-CONTAINER" && node.parentNode) {
                         var n = node.cloneNode(false);
                         if (node.tagName) {
@@ -742,9 +747,8 @@ class TestManagerPlugin extends we3.AbstractPlugin {
         }
 
 
-        var range = this.dependencies.Range.dependencies.BaseRange.getRangeFromDOM();
+        range = this.dependencies.Range.dependencies.BaseRange.getRangeFromDOM();
         var isCollapsed = range.sc === range.ec && range.so === range.eo;
-        var range;
         if (keyPress.key === 'ArrowLeft' || keyPress.key === 'ArrowRight') {
             if (range.sc.tagName && range.sc.childNodes[range.so]) {
                 range.sc = range.sc.childNodes[range.so];
@@ -756,17 +760,18 @@ class TestManagerPlugin extends we3.AbstractPlugin {
             }
         }
 
+        var prev, next;
         if (keyPress.key === 'ArrowLeft') {
             if (keyPress.ctrlKey || keyPress.altKey) {
-                var specialKeys = (keyPress.ctrlKey ? 'CTRL + ' : '') + (keyPress.altKey ? 'ALT + ' : '');
+                specialKeys = (keyPress.ctrlKey ? 'CTRL + ' : '') + (keyPress.altKey ? 'ALT + ' : '');
                 console.debug('"' + specialKeys + keyPress.key + '" is not supported in test');
             } else if (keyPress.shiftKey) {
                 if (range.ltr && !isCollapsed) {
                     if (range.eo >= 1) {
                         this._selectRange(range.sc, range.so, range.ec, range.eo - 1);
                     } else if (range.ec.previousSibling) {
-                        var prev = range.ec.previousSibling;
-                        var offset = !prev.tagName ? (prev.length ? prev.length - 1 : 0) : prev.childNodes.length;
+                        prev = range.ec.previousSibling;
+                        offset = !prev.tagName ? (prev.length ? prev.length - 1 : 0) : prev.childNodes.length;
                         this._selectRange(range.sc, range.so, prev, offset);
                     } else {
                         console.debug('Native "' + keyPress.key + '" is not exactly supported in test');
@@ -775,8 +780,7 @@ class TestManagerPlugin extends we3.AbstractPlugin {
                     if (range.so >= 1) {
                         this._selectRange(range.sc, range.so - 1, range.ec, range.eo, true);
                     } else if (range.sc.previousSibling) {
-                        var prev = range.sc.previousSibling;
-                        var offset;
+                        prev = range.sc.previousSibling;
                         if (!prev.tagName) {
                             offset = prev.length;
                         } else if (prev.childNodes.length) {
@@ -797,7 +801,7 @@ class TestManagerPlugin extends we3.AbstractPlugin {
                 }
             } else {
                 if (!isCollapsed) {
-                    var prev = range.sc.previousSibling;
+                    prev = range.sc.previousSibling;
                     if (range.sc.tagName && prev && !prev.tagName) {
                         range.sc = prev;
                         range.so = prev.length;
@@ -806,8 +810,8 @@ class TestManagerPlugin extends we3.AbstractPlugin {
                 } else if (range.so > 1) {
                     this._selectRange(range.sc, range.so - 1);
                 } else if (range.sc.previousSibling) {
-                    var prev = range.sc.previousSibling;
-                    var offset = !prev.tagName ? prev.length : prev.childNodes.length;
+                    prev = range.sc.previousSibling;
+                    offset = !prev.tagName ? prev.length : prev.childNodes.length;
                     this._selectRange(prev, offset);
                 } else {
                     console.debug('Native "' + keyPress.key + '" is not exactly supported in test');
@@ -818,7 +822,7 @@ class TestManagerPlugin extends we3.AbstractPlugin {
 
         if (keyPress.key === 'ArrowRight') {
             if (keyPress.ctrlKey || keyPress.altKey) {
-                var specialKeys = (keyPress.ctrlKey ? 'CTRL + ' : '') + (keyPress.altKey ? 'ALT + ' : '');
+                specialKeys = (keyPress.ctrlKey ? 'CTRL + ' : '') + (keyPress.altKey ? 'ALT + ' : '');
                 console.debug('"' + specialKeys + keyPress.key + '" is not supported in test');
             } else if (keyPress.shiftKey) {
                 if (range.ltr || isCollapsed) {
@@ -831,8 +835,8 @@ class TestManagerPlugin extends we3.AbstractPlugin {
                         }
                         this._selectRange(range.sc, range.so, range.ec, range.eo + 1);
                     } else if (range.ec.nextSibling) {
-                        var next = range.ec.nextSibling;
-                        var offset = !next.tagName && next.length ? 1 : 0;
+                        next = range.ec.nextSibling;
+                        offset = !next.tagName && next.length ? 1 : 0;
                         this._selectRange(range.sc, range.so, next, offset);
                     } else {
                         console.debug('Native "' + keyPress.key + '" is not exactly supported in test');
@@ -841,8 +845,8 @@ class TestManagerPlugin extends we3.AbstractPlugin {
                     if (range.so < ('length' in range.sc ? range.sc.length : range.sc.childNodes.length)) {
                         this._selectRange(range.sc, range.so + 1, range.ec, range.eo, true);
                     } else if (range.sc.nextSibling) {
-                        var next = range.sc.nextSibling;
-                        var offset = !next.tagName && next.length ? 1 : 0;
+                        next = range.sc.nextSibling;
+                        offset = !next.tagName && next.length ? 1 : 0;
                         this._selectRange(next, offset, range.ec, range.eo, true);
                     } else {
                         console.debug('Native "' + keyPress.key + '" is not exactly supported in test');
@@ -851,7 +855,7 @@ class TestManagerPlugin extends we3.AbstractPlugin {
             } else {
                 console.log();
                 if (!isCollapsed) {
-                    var next = range.ec.nextSibling;
+                    next = range.ec.nextSibling;
                     if (range.ec.tagName && next && !next.tagName) {
                         range.ec = next;
                         range.so = 0;
@@ -860,8 +864,8 @@ class TestManagerPlugin extends we3.AbstractPlugin {
                 } else if (range.so < ('length' in range.sc ? range.sc.length : range.sc.childNodes.length)) {
                     this._selectRange(range.sc, range.so + 1);
                 } else if (range.sc.nextSibling) {
-                    var next = range.sc.nextSibling;
-                    var offset = !next.tagName && next.length ? 1 : 0;
+                    next = range.sc.nextSibling;
+                    offset = !next.tagName && next.length ? 1 : 0;
                     this._selectRange(next, offset);
                 } else {
                     console.debug('Native "' + keyPress.key + '" is not exactly supported in test');
@@ -893,13 +897,14 @@ class TestManagerPlugin extends we3.AbstractPlugin {
      */
     _execAssert (assert, test) {
         var ok = false;
+        var value;
         if (test.test) {
-            var value = this.getValue();
+            value = this.getValue();
             if (assert.strictEqual(this._cleanValue(value), this._cleanValue(test.test), test.name)) {
                 ok = true;
             }
         }
-        var value = this.getDomValue();
+        value = this.getDomValue();
         if (test.testDOM) {
             if (assert.strictEqual(value, this._cleanValue(test.testDOM), test.name + ' (DOM)')) {
                 ok = true;

@@ -291,14 +291,12 @@ var BaseRules = class extends we3.AbstractPlugin {
         var alreadyTested = [];
         var alreadyTestedNumber = [];
 
-        var nb = 0;
         while (this._nodesUpdatedToApplyRules.length) {
             this._curentTargetArchNode = this._nodesUpdatedToApplyRules.shift();
             if (this._curentTargetArchNode.__removed) {
                 continue;
             }
 
-            nb++;
             var index = alreadyTested.indexOf(this._curentTargetArchNode);
             if (index === -1) {
                 alreadyTested.push(this._curentTargetArchNode);
@@ -396,7 +394,7 @@ var BaseRules = class extends we3.AbstractPlugin {
     parse (archNode, preventPropagation) {
         var self = this;
         var BaseArch = this.dependencies.BaseArch;
-        for (var k = 0, len = this.parserRuleList.length; k < len ; k++) {
+        for (var k = 0, len = this.parserRuleList.length; k < len; k++) {
             var ruleMethod = this.parserRuleList[k];
             if (ruleMethod.__Constructor__ && (ruleMethod.__Constructor__ === archNode.constructor || ruleMethod.__type__ === archNode.type)) {
                 continue;

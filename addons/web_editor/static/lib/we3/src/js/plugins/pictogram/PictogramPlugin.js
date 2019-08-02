@@ -137,7 +137,7 @@ class PictogramPlugin extends we3.AbstractPlugin {
                 continue;
             }
 
-            for (var r = 0 ; r < rules.length ; r++) {
+            for (var r = 0; r < rules.length; r++) {
                 var selectorText = rules[r].selectorText;
                 if (!selectorText) {
                     continue;

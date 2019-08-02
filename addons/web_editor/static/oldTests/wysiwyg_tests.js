@@ -127,9 +127,9 @@ QUnit.test('Font style', function (assert) {
         var $btnBold = $fontStyleGroup.find('button[title*="Bold"]');
         var $btnItalic = $fontStyleGroup.find('button[title*="Italic"]');
         var $btnUnderline = $fontStyleGroup.find('button[title*="Underline"]');
-        var $strikethrough = $fontStyleGroup.find('button[title*="Strikethrough"]');
+        /* var $strikethrough = $fontStyleGroup.find('button[title*="Strikethrough"]');
         var $superscript = $fontStyleGroup.find('button[title*="Superscript"]');
-        var $subscript = $fontStyleGroup.find('button[title*="Subscript"]');
+        var $subscript = $fontStyleGroup.find('button[title*="Subscript"]'); */
         var $btnRemoveStyles = $fontStyleGroup.find('button[title*="Remove Font Style"]');
 
         var styleTests = [
@@ -1013,7 +1013,7 @@ QUnit.test('Text forecolor', function (assert) {
                 Wysiwyg.setRange(range);
                 var target = range.sc.tagName ? range.sc : range.sc.parentNode;
                 await testUtils.dom.triggerNativeEvents(target, ['mousedown', 'mouseup']);
-                await test.do($editable)
+                await test.do($editable);
                 if (!test.async) {
                     assert.deepEqual(wysiwyg.getValue(), test.test.content, testName);
                     assert.deepEqual(Wysiwyg.getRange($editable[0]).getPoints(), weTestUtils.select(test.test.start, test.test.end, $editable), testName + carretTestSuffix);
@@ -2052,7 +2052,7 @@ QUnit.test('Ordered list', function (assert) {
             });
         });
 
-        return def.then(function(){
+        return def.then(function() {
             wysiwyg.destroy();
         });
     });
@@ -2895,7 +2895,7 @@ QUnit.test('Checklist', function (assert) {
         var def = Promise.resolve();
 
         _.each(checklistTests, function (test) {
-            def = def.then(async function(){
+            def = def.then(async function() {
                 testName = test.name;
                 wysiwyg.setValue(test.content);
                 await test.do();
@@ -2915,7 +2915,7 @@ QUnit.test('Table', function (assert) {
     async function createTable(wysiwyg, dim) {
         await testUtils.dom.triggerNativeEvents(wysiwyg.$('dropdown[data-plugin="TablePicker"] toggler')[0], ['mousedown', 'click']);
 
-        var $cellBtn = wysiwyg.$('tablepicker button[data-value="' + dim + '"]')
+        var $cellBtn = wysiwyg.$('tablepicker button[data-value="' + dim + '"]');
         await testUtils.dom.triggerNativeEvents($cellBtn[0], ['mousedown', 'click']);
     }
 
@@ -3639,7 +3639,7 @@ QUnit.test('Image crop', function (assert) {
                         await testUtils.dom.triggerNativeEvents($zoomBtn[0], ['mousedown', 'click']);
                         await testUtils.dom.triggerNativeEvents($('.modal-dialog .modal-footer .btn.btn-primary:contains("Save")')[0], ['mousedown', 'click']);
 
-                        var $img = $(wysiwyg.getValue()).find('img.o_cropped_img_to_save');
+                        $img = $(wysiwyg.getValue()).find('img.o_cropped_img_to_save');
                         assert.strictEqual($img.data('aspect-ratio'), '16/9', testName + " (aspect-ratio)");
                         assert.strictEqual($img.data('width'), imgWidth / zoomRatio, testName + " (zoom)");
                     },
@@ -3664,7 +3664,7 @@ QUnit.test('Image crop', function (assert) {
                         await testUtils.dom.triggerNativeEvents($('.o_crop_image_dialog .o_crop_options .btn:has(.fa-arrows-h)')[0], ['mousedown', 'click']);
                         await testUtils.dom.triggerNativeEvents($('.modal-dialog .modal-footer .btn.btn-primary:contains("Save")')[0], ['mousedown', 'click']);
 
-                        var $img = $(wysiwyg.getValue()).find('img.o_cropped_img_to_save');
+                        $img = $(wysiwyg.getValue()).find('img.o_cropped_img_to_save');
                         assert.strictEqual($img.data('rotate'), -45, testName + " (rotate)");
                         assert.strictEqual($img.data('scale-x'), -1, testName + " (flip)");
                     },
@@ -3700,7 +3700,7 @@ QUnit.test('Image crop', function (assert) {
                         $pointW.trigger('pointerup');
                         await testUtils.dom.triggerNativeEvents($('.modal-dialog .modal-footer .btn.btn-primary:contains("Save")')[0], ['mousedown', 'click']);
 
-                        var $img = $(wysiwyg.getValue()).find('img.o_cropped_img_to_save');
+                        $img = $(wysiwyg.getValue()).find('img.o_cropped_img_to_save');
                         assert.strictEqual(Math.round($img.data('width')), Math.round(imgWidth - (imgWidth / cropFactor)), testName + " (rotate)");
                     },
                 },

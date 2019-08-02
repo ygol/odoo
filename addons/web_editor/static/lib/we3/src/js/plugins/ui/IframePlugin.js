@@ -11,8 +11,8 @@ class IframePlugin extends we3.AbstractPlugin {
     constructor () {
         super(...arguments);
         this.loaderKey = 'wysiwygPluginIframeOnLoad';
-        this.defaultCSS = 'body {background-color: transparent;}'+
-                'editable {width: 100%; display: block; min-height: 92%;}'+
+        this.defaultCSS = 'body {background-color: transparent;}' +
+                'editable {width: 100%; display: block; min-height: 92%;}' +
                 'editable, editable:focus {outline: none;}';
 
 
@@ -132,7 +132,7 @@ class IframePlugin extends we3.AbstractPlugin {
         this._preloadIframePromise = this._createPreloadIframe();
         document.body.appendChild(this._preloadIframe);
 
-        var cached = cache[this.options.iframeCssAssets+''] = {
+        var cached = cache[this.options.iframeCssAssets + ''] = {
             promise: this._preloadIframePromise,
         };
 
@@ -151,7 +151,7 @@ class IframePlugin extends we3.AbstractPlugin {
      */
     _initPreloadIframeCached () {
         var self = this;
-        var cached = cache[this.options.iframeCssAssets+''];
+        var cached = cache[this.options.iframeCssAssets + ''];
         if (cached) {
             cached.promise.then(function () {
                 var node = document.createElement('we3-editor');

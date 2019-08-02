@@ -43,8 +43,12 @@ var TestComplexInteraction = class extends we3.AbstractPlugin {
                 name: "In p: ENTER -> BACKSPACE -> Select across merge -> ENTER",
                 content: "<p>ab◆cd</p>",
                 do: async function () {
-                    await self.dependencies.Test.keydown(self.editable, { keyCode: 13 }); // ENTER
-                    await self.dependencies.Test.keydown(self.editable, { keyCode: 8 }); // BACKSPACE
+                    await self.dependencies.Test.keydown(self.editable, {
+                        keyCode: 13,
+                    }); // ENTER
+                    await self.dependencies.Test.keydown(self.editable, {
+                        keyCode: 8,
+                    }); // BACKSPACE
                     var currentRange = self.dependencies.Range.getRange();
                     var root = currentRange.scArch.ancestor('isRoot');
                     var p = root.descendents(node => node.nodeName === 'p')[0];
@@ -56,7 +60,9 @@ var TestComplexInteraction = class extends we3.AbstractPlugin {
                         ecID: textEnd.id,
                         eo: textEnd.length() - 1,
                     });
-                    await self.dependencies.Test.keydown(self.editable, { keyCode: 13 }); // ENTER
+                    await self.dependencies.Test.keydown(self.editable, {
+                        keyCode: 13,
+                    }); // ENTER
                 },
                 test: "<p>a</p><p>◆d</p>",
             },
@@ -64,7 +70,9 @@ var TestComplexInteraction = class extends we3.AbstractPlugin {
                 name: "(<=>) In p: ENTER on selection across virtual",
                 content: "<p>a▶b\uFEFFc◀d</p>",
                 do: async function () {
-                    await self.dependencies.Test.keydown(self.editable, { keyCode: 13 }); // ENTER
+                    await self.dependencies.Test.keydown(self.editable, {
+                        keyCode: 13,
+                    }); // ENTER
                 },
                 test: "<p>a</p><p>◆d</p>",
             },

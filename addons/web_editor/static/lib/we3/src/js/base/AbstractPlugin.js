@@ -295,7 +295,7 @@ we3.AbstractPlugin = class extends we3.EventDispatcher {
             }
             lastCall = now;
             return fn.apply(null, args);
-        }
+        };
     }
 };
 

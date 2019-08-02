@@ -76,7 +76,7 @@ var ListPlugin = class extends we3.AbstractPlugin {
             return false;
         }
         var listType = buttonName.split('-')[1];
-        var method = 'is' + listType.slice(0,1).toUpperCase() + listType.slice(1);
+        var method = 'is' + listType.slice(0, 1).toUpperCase() + listType.slice(1);
         return !!focusNode.ancestor(node => node[method] && node[method]());
     }
     /**
@@ -143,7 +143,7 @@ var ListPlugin = class extends we3.AbstractPlugin {
         if (type === 'ul') {
             method = node => node.isUl && node.isUl() && (!node.isChecklist || !node.isChecklist());
         } else {
-            var methodName = 'is' + type.slice(0,1).toUpperCase() + type.slice(1);
+            var methodName = 'is' + type.slice(0, 1).toUpperCase() + type.slice(1);
             method = node => node[methodName] && node[methodName]();
         }
         var firstListAncestors = nodes.map(node => node.ancestor('isList'));
@@ -157,18 +157,21 @@ var ListPlugin = class extends we3.AbstractPlugin {
      * @param {ArchNode} list
      */
     _mergeSiblingLists (list) {
+        var deleteEdgeOptions = {
+            mergeOnlyIfSameType: true,
+        };
         function __mergeNextList (list, isPrev) {
             var nextList = list[isPrev ? 'previousSibling' : 'nextSibling']();
             if (nextList && nextList.listType === list.listType) {
                 var nextEdge = isPrev ? list : nextList;
-                nextEdge.deleteEdge(true, { mergeOnlyIfSameType: true });
+                nextEdge.deleteEdge(true, deleteEdgeOptions);
             }
         }
         __mergeNextList(list, false);
         __mergeNextList(list, true);
         var parentOfIndented = list.ancestor('isParentOfIndented');
         if (parentOfIndented) {
-            parentOfIndented.deleteEdge(false, { mergeOnlyIfSameType: true });
+            parentOfIndented.deleteEdge(false, deleteEdgeOptions);
         }
     }
     /**

@@ -293,7 +293,7 @@ var BaseRange = class extends we3.AbstractPlugin {
             return start.id;
         } else if (points.scID === points.ecID && points.so === points.eo - 1) {
             return start.id;
-        }  else if ((!points.eo || end.id !== points.ecID) && start.isVoidoid() && start === end.previousSibling()) {
+        } else if ((!points.eo || end.id !== points.ecID) && start.isVoidoid() && start === end.previousSibling()) {
             return start.id;
         } else {
             return (start.commonAncestor(end) || start).id;
@@ -329,12 +329,13 @@ var BaseRange = class extends we3.AbstractPlugin {
         var oldEnd = this.dependencies.BaseArch.getArchNode(this._range.ecID);
         var end = this.dependencies.BaseArch.getArchNode(points.ecID);
         var isCollapsed = points.scID === points.ecID && points.so === points.eo;
+        var prev;
         if (start.id === end.id && start.type === 'TEXT-VIRTUAL') {
             points.eo = points.so;
         }
         // range start is on a virtual node or it already moved from one
         if (options.moveLeft && (start.type === 'TEXT-VIRTUAL' || oldStart.type === 'TEXT-VIRTUAL' && !points.so)) {
-            var prev = start.prevUntil(a => a.type !== 'TEXT-VIRTUAL', {doCrossUnbreakables: true, doNotInsertVirtual: true});
+            prev = start.prevUntil(a => a.type !== 'TEXT-VIRTUAL', {doCrossUnbreakables: true, doNotInsertVirtual: true});
             if (prev) {
                 points.scID = prev.id;
                 points.so = prev.length();
@@ -347,15 +348,16 @@ var BaseRange = class extends we3.AbstractPlugin {
             points.so = points.so - 1;
         } else if (!isCollapsed && options.moveLeft && (end.type === 'TEXT-VIRTUAL' || oldEnd.type === 'TEXT-VIRTUAL' && points.eo === end.length())) {
             // deselect a virtual node to the left (on end)
-            var prev = end.prevUntil(a => a.type !== 'TEXT-VIRTUAL', {doCrossUnbreakables: true, doNotInsertVirtual: true});
+            prev = end.prevUntil(a => a.type !== 'TEXT-VIRTUAL', {doCrossUnbreakables: true, doNotInsertVirtual: true});
             if (prev) {
                 points.ecID = prev.id;
                 points.eo = prev.length();
             }
         }
+        var next;
         // range end is on a virtual node or it already moved from one
         if (options.moveRight && (end.type === 'TEXT-VIRTUAL' || oldEnd.type === 'TEXT-VIRTUAL' && points.eo === end.length())) {
-            var next = end.nextUntil(a => a.type !== 'TEXT-VIRTUAL', {doCrossUnbreakables: true, doNotInsertVirtual: true});
+            next = end.nextUntil(a => a.type !== 'TEXT-VIRTUAL', {doCrossUnbreakables: true, doNotInsertVirtual: true});
             if (next) {
                 points.ecID = next.id;
                 points.eo = next.isText() && end.type === 'TEXT-VIRTUAL' ? 1 : 0;
@@ -364,7 +366,7 @@ var BaseRange = class extends we3.AbstractPlugin {
             // range moved from a virtual and is not at the end of next
             points.eo = points.eo + 1;
         } else if (!isCollapsed && options.moveRight && (start.type === 'TEXT-VIRTUAL' || oldStart.type === 'TEXT-VIRTUAL' && !points.so)) {
-            var next = start.nextUntil(a => a.type !== 'TEXT-VIRTUAL', {doCrossUnbreakables: true, doNotInsertVirtual: true});
+            next = start.nextUntil(a => a.type !== 'TEXT-VIRTUAL', {doCrossUnbreakables: true, doNotInsertVirtual: true});
             if (next) {
                 points.scID = next.id;
                 points.so = next.isText() && end.type === 'TEXT-VIRTUAL' ? 1 : 0;
@@ -415,7 +417,7 @@ var BaseRange = class extends we3.AbstractPlugin {
             so: startPoint ? startPoint.offset : 0,
             ecID: endPoint ? endPoint.id : 1,
             eo: endPoint ? endPoint.offset : 0,
-        }
+        };
     }
     /**
      * Move the points out of unbreakable nodes.
@@ -454,7 +456,7 @@ var BaseRange = class extends we3.AbstractPlugin {
                 };
             };
             var prevNext;
-            var toStart = !ltr;;
+            var toStart = !ltr;
             if (endUnbreakable.isVoidoid()) {
                 prevNext = ltr ? 'nextUntil' : 'prevUntil';
                 end = end[prevNext](nextPred(), nextOptions);
@@ -524,7 +526,7 @@ var BaseRange = class extends we3.AbstractPlugin {
         function __isEdgeVoidoid(node) {
             var isLeftEdge = node.isLeftEdgeOfBlock();
             var isRightEdge = node.isRightEdgeOfBlock();
-            return node.isVoidoid() && (isLeftEdge  || isRightEdge);
+            return node.isVoidoid() && (isLeftEdge || isRightEdge);
         }
         function __moveToDeepest(id, offset) {
             var archNode = self.dependencies.BaseArch.getArchNode(id);
@@ -703,9 +705,10 @@ var BaseRange = class extends we3.AbstractPlugin {
             doNotInsertVirtual: true,
         };
 
+        var prev, next;
         if (doReverseSelection) {
-            var prev = ecArch.prev(prevOptions);
-            var next = scArch.next(prevOptions);
+            prev = ecArch.prev(prevOptions);
+            next = scArch.next(prevOptions);
             if (isCollapsed) {
                 points.so = points.eo = moveLeft ? prev.length() : 0;
                 points.scID = points.ecID = moveLeft ? prev.id : next.id;
@@ -719,8 +722,8 @@ var BaseRange = class extends we3.AbstractPlugin {
                 }
             }
         } else {
-            var prev = scArch.prev(prevOptions);
-            var next = ecArch.next(prevOptions);
+            prev = scArch.prev(prevOptions);
+            next = ecArch.next(prevOptions);
             if (isCollapsed) {
                 points.so = points.eo = moveLeft ? prev.length() : 0;
                 points.scID = points.ecID = moveLeft ? prev.id : next.id;
@@ -729,7 +732,7 @@ var BaseRange = class extends we3.AbstractPlugin {
                     points.so = prev.length();
                     points.scID = prev.id;
                 } else {
-                    points.eo = 0
+                    points.eo = 0;
                     points.ecID = next.id;
                 }
             }
@@ -797,9 +800,11 @@ var BaseRange = class extends we3.AbstractPlugin {
                 id = voidoidAncestor.id;
                 offset = 0;
                 if (!isCollapsed) {
-                    var archNode = voidoidAncestor.index() && voidoidAncestor[moveRight ? 'nextUntil' : 'prevUntil'](function (archNode) {
+                    archNode = voidoidAncestor.index() && voidoidAncestor[moveRight ? 'nextUntil' : 'prevUntil'](function (archNode) {
                         return archNode.id !== id && (archNode.isUnbreakable() || archNode.isBlock() || archNode.isText() || archNode.isVoidoid());
-                    }, { doNotInsertVirtual: true });
+                    }, {
+                        doNotInsertVirtual: true,
+                    });
                     if (archNode) {
                         id = archNode.id;
                         offset = moveRight ? 0 : archNode.length();
@@ -819,7 +824,7 @@ var BaseRange = class extends we3.AbstractPlugin {
             so: startPoint ? startPoint.offset : 0,
             ecID: endPoint ? endPoint.id : 1,
             eo: endPoint ? endPoint.offset : 0,
-        }
+        };
     }
     /**
      * Reset the range on the starting point of the editor.

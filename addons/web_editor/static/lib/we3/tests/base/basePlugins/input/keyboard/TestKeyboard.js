@@ -43,7 +43,7 @@ var TestKeyboard = class extends we3.AbstractPlugin {
                         await self._execStep(assert, test.steps[k], test.name);
                     }
                 }
-            }
+            };
         });
         return this.dependencies.Test.execTests(assert, keyboardTests);
     }
@@ -89,7 +89,7 @@ var TestKeyboard = class extends we3.AbstractPlugin {
             return step.do();
         }
         if (step.start) {
-            await self._testSelect(assert, step, testName)
+            await self._testSelect(assert, step, testName);
         }
         var options = {
             key: step.key,
@@ -167,13 +167,14 @@ var TestKeyboard = class extends we3.AbstractPlugin {
     _querySelectorAllWithContents (testName, assert, selector) {
         // eg: ".class:contents()[0]->1" selects the first contents of the 'class' class, with an offset of 1
         var sel = selector.match(reDOMSelection);
+        var node;
         try {
-            var node = this._querySelectorAllWithEq(sel[1], this.editable)
+            node = this._querySelectorAllWithEq(sel[1], this.editable);
             // var node = this.editable.querySelectorAll(sel[1]);
         } catch (e) {
             console.error(e);
             assert.notOk(e.message, testName);
-            var node = $(sel[1], this.editable);
+            node = $(sel[1], this.editable);
         }
         node = node[0];
         var point = {

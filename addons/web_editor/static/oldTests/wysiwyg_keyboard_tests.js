@@ -4348,7 +4348,7 @@ keyboardTestsDelete.push({
     steps: [{
         start: "p->2",
         key: 'DELETE',
-    }, ],
+    }],
     test: {
         content: keyboardTestsDeleteDOM.replace('<br>', ''),
         start: "p:contents()[2]->0",
@@ -4360,7 +4360,7 @@ keyboardTestsDelete.push({
         start: "strong:eq(0):contents()[0]->0",
         end: 'strong:eq(0):contents()[0]->5',
         key: 'DELETE',
-    }, ],
+    }],
     test: {
         content: keyboardTestsDeleteDOM.replace(/<strong>SO003<\/strong>\s+/, '&nbsp;'),
         start: "p:contents()[3]->43",
@@ -4372,7 +4372,7 @@ keyboardTestsDelete.push({
         start: "strong:eq(2):contents()[0]->17",
         end: 'strong:eq(2):contents()[0]->23',
         key: 'DELETE',
-    }, ],
+    }],
     test: {
         content: keyboardTestsDeleteDOM.replace(/Design/, ''),
         start: "strong:eq(2):contents()[0]->17",
