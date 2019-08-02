@@ -1,7 +1,7 @@
 (function () {
 'use strict';
 
-var TestToolbarKeymap = class extends we3.AbstractPlugin {
+var TestKeymap = class extends we3.AbstractPlugin {
     static get autoInstall() {
         return ['Test', 'TestToolbar', 'Keymap'];
     }
@@ -53,6 +53,6 @@ var TestToolbarKeymap = class extends we3.AbstractPlugin {
     }
 };
 
-we3.addPlugin('TestToolbarKeymap', TestToolbarKeymap);
+we3.addPlugin('TestKeymap', TestKeymap);
 
 })();

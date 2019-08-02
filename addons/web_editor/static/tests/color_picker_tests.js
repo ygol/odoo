@@ -94,7 +94,7 @@ QUnit.module('web_editor', {
         assert.expect(31);
         this.testOptions = {
             assert: assert,
-            plugins: Object.assign({}, { disableAllTests: true }, { TestToolbarColorPicker: true }),
+            plugins: Object.assign({}, { disableAllTests: true }, { TestColorPicker: true }),
         };
         await createFormAndTest(this);
     });

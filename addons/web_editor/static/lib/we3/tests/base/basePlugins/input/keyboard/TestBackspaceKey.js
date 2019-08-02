@@ -1,7 +1,7 @@
 (function () {
 'use strict';
 
-var TestKeyboardBackspace = class extends we3.AbstractPlugin {
+var TestBackspaceKey = class extends we3.AbstractPlugin {
     static get autoInstall () {
         return ['Test', 'TestKeyboard'];
     }
@@ -888,6 +888,6 @@ var TestKeyboardBackspace = class extends we3.AbstractPlugin {
     }
 };
 
-we3.addPlugin('TestKeyboardBackspace', TestKeyboardBackspace);
+we3.addPlugin('TestBackspaceKey', TestBackspaceKey);
 
 })();

@@ -137,20 +137,23 @@
     <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/TestRenderer.js"/>
 
     <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestKeyboard.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestKeyboardArrow.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestKeyboardBackspace.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestKeyboardChar.js"/>
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestArrowKeys.js"/>
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestBackspaceKey.js"/>
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestCharKeys.js"/>
     <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestKeyboardComplex.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestKeyboardDelete.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestKeyboardEnter.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestKeyboardTab.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestKeyboardUnbreakable.js"/>
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestDeleteKey.js"/>
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestEnterKey.js"/>
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestTabKey.js"/>
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestUnbreakable.js"/>
     <script type="text/javascript" src="/web_editor/static/lib/we3/tests/base/basePlugins/input/keyboard/TestVirtualKeyboard.js"/>
 
     <script type="text/javascript" src="/web_editor/static/lib/we3/tests/integration/TestComplexInteraction.js"/>
     <script type="text/javascript" src="/web_editor/static/lib/we3/tests/integration/TestUI.js"/>
 
     <!-- Tests plugins -->
+
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/ui/toolbar/TestToolbar.js"/>
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/ui/toolbar/TestKeymap.js"/>
 
     <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/drop/TestClipboard.js"/>
     <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/drop/TestDropBlock.js"/>
@@ -163,17 +166,14 @@
     <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/misc/TestHistory.js"/>
     <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/misc/TestJinja.js"/>
 
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/text/TestColor.js"/>
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/text/TestFontStyle.js"/>
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/text/TestIndent.js"/>
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/text/TestParagraph.js"/>
+    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/text/TestWand.js"/>
+
     <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/ui/TestCodeView.js"/>
     <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/ui/TestPopover.js"/>
-
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/ui/toolbar/TestToolbar.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/ui/toolbar/TestToolbarColor.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/ui/toolbar/TestToolbarFontStyle.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/ui/toolbar/TestToolbarIndent.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/ui/toolbar/TestToolbarKeymap.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/ui/toolbar/TestToolbarList.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/ui/toolbar/TestToolbarParagraph.js"/>
-    <script type="text/javascript" src="/web_editor/static/lib/we3/tests/plugins/ui/toolbar/TestToolbarWand.js"/>
 
     <!-- todo: place this test in the proper folder and place the following line in the proper file -->
     <!-- <script type="text/javascript" src="/web_editor/static/tests/plugins/TestDynamicFields.js"/> -->
@@ -197,10 +197,10 @@
     <!-- lib we3 -->
 
     <t t-call="web_editor.we3"/>
-    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/tests/TestToolbarLink.js"/>
-    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/tests/TestToolbarMedia.js"/>
-    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/tests/TestToolbarCrop.js"/>
-    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/tests/TestToolbarColorPicker.js"/>
+    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/tests/TestLink.js"/>
+    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/tests/TestMedia.js"/>
+    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/tests/TestCropImage.js"/>
+    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/plugin/tests/TestColorPicker.js"/>
 
     <!-- odoo -->
 

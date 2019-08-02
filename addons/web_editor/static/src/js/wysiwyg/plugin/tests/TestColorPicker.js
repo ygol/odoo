@@ -1,9 +1,9 @@
 (function () {
 'use strict';
 
-var TestToolbarColorPicker = class extends we3.AbstractPlugin {
+var TestColorPicker = class extends we3.AbstractPlugin {
     static get autoInstall() {
-        return ['Test', 'TestToolbar', 'Paragraph', 'TestToolbarColor'];
+        return ['Test', 'TestToolbar', 'Paragraph', 'TestColor'];
     }
     constructor() {
         super(...arguments);
@@ -153,6 +153,6 @@ var TestToolbarColorPicker = class extends we3.AbstractPlugin {
     }
 };
 
-we3.addPlugin('TestToolbarColorPicker', TestToolbarColorPicker);
+we3.addPlugin('TestColorPicker', TestColorPicker);
 
 })();

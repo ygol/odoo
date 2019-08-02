@@ -122,7 +122,7 @@ QUnit.module('web_editor', {
         assert.expect(11);
         this.testOptions = {
             assert: assert,
-            plugins: Object.assign({}, { disableAllTests: true }, { TestToolbarCrop: true }),
+            plugins: Object.assign({}, { disableAllTests: true }, { TestCropImage: true }),
         };
         await createFormAndTest(this);
     });

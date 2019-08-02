@@ -1,7 +1,7 @@
 (function () {
 'use strict';
 
-var TestToolbarWand = class extends we3.AbstractPlugin {
+var TestWand = class extends we3.AbstractPlugin {
     static get autoInstall () {
         return ['Test', 'TestToolbar', 'Text'];
     }
@@ -147,6 +147,6 @@ var TestToolbarWand = class extends we3.AbstractPlugin {
     }
 };
 
-we3.addPlugin('TestToolbarWand', TestToolbarWand);
+we3.addPlugin('TestWand', TestWand);
 
 })();

@@ -1,7 +1,7 @@
 (function () {
 'use strict';
 
-var TestToolbarFontStyle = class extends we3.AbstractPlugin {
+var TestFontStyle = class extends we3.AbstractPlugin {
     static get autoInstall () {
         return ['Test', 'TestToolbar', 'FontStyle'];
     }
@@ -306,6 +306,6 @@ var TestToolbarFontStyle = class extends we3.AbstractPlugin {
     }
 };
 
-we3.addPlugin('TestToolbarFontStyle', TestToolbarFontStyle);
+we3.addPlugin('TestFontStyle', TestFontStyle);
 
 })();

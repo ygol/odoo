@@ -1,7 +1,7 @@
 (function () {
 'use strict';
 
-var TestKeyboardDelete = class extends we3.AbstractPlugin {
+var TestDeleteKey = class extends we3.AbstractPlugin {
     static get autoInstall () {
         return ['TestKeyboard'];
     }
@@ -706,6 +706,6 @@ var TestKeyboardDelete = class extends we3.AbstractPlugin {
     }
 };
 
-we3.addPlugin('TestKeyboardDelete', TestKeyboardDelete);
+we3.addPlugin('TestDeleteKey', TestDeleteKey);
 
 })();

@@ -1,7 +1,7 @@
 (function () {
 'use strict';
 
-var TestKeyboardArrow = class extends we3.AbstractPlugin {
+var TestArrowKeys = class extends we3.AbstractPlugin {
     static get autoInstall () {
         return ['TestKeyboard'];
     }
@@ -372,6 +372,6 @@ var TestKeyboardArrow = class extends we3.AbstractPlugin {
     }
 };
 
-we3.addPlugin('TestKeyboardArrow', TestKeyboardArrow);
+we3.addPlugin('TestArrowKeys', TestArrowKeys);
 
 })();

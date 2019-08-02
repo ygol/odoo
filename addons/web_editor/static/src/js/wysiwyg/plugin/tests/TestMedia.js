@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var TestToolbarMedia = class extends we3.AbstractPlugin {
+    var TestMedia = class extends we3.AbstractPlugin {
         static get autoInstall() {
             return ['Test', 'TestToolbar', 'Text'];
         }
@@ -350,6 +350,6 @@
         }
     };
 
-    we3.addPlugin('TestToolbarMedia', TestToolbarMedia);
+    we3.addPlugin('TestMedia', TestMedia);
 
 })();

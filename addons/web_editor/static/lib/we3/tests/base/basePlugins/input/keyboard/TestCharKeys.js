@@ -1,7 +1,7 @@
 (function () {
 'use strict';
 
-var TestKeyboardChar = class extends we3.AbstractPlugin {
+var TestCharKeys = class extends we3.AbstractPlugin {
     static get autoInstall () {
         return ['TestKeyboard'];
     }
@@ -398,6 +398,6 @@ var TestKeyboardChar = class extends we3.AbstractPlugin {
     }
 };
 
-we3.addPlugin('TestKeyboardChar', TestKeyboardChar);
+we3.addPlugin('TestCharKeys', TestCharKeys);
 
 })();

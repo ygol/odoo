@@ -1,7 +1,7 @@
 (function () {
 'use strict';
 
-var TestToolbarCrop = class extends we3.AbstractPlugin {
+var TestCropImage = class extends we3.AbstractPlugin {
     constructor() {
         super(...arguments);
         this.dependencies = ['Test', 'TestToolbar'];
@@ -100,6 +100,6 @@ var TestToolbarCrop = class extends we3.AbstractPlugin {
     }
 };
 
-    we3.addPlugin('TestToolbarCrop', TestToolbarCrop);
+    we3.addPlugin('TestCropImage', TestCropImage);
 
 })();

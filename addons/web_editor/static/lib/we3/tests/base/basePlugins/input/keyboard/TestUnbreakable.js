@@ -43,7 +43,7 @@ var EDITABLE = class extends we3.ArchNode {
 };
 we3.addArchNode('EDITABLE', EDITABLE);
 
-var TestKeyboardUnbreakable = class extends we3.AbstractPlugin {
+var TestUnbreakable = class extends we3.AbstractPlugin {
     static get autoInstall () {
         return ['TestKeyboard'];
     }
@@ -554,6 +554,6 @@ var TestKeyboardUnbreakable = class extends we3.AbstractPlugin {
     }
 };
 
-we3.addPlugin('TestKeyboardUnbreakable', TestKeyboardUnbreakable);
+we3.addPlugin('TestUnbreakable', TestUnbreakable);
 
 })();

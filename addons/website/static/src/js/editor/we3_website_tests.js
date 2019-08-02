@@ -255,7 +255,7 @@ QUnit.module('website', {
         assert.ok($('we3-editor #wrapwrap:visible'), "Html value should be appear in the editable area");
 
         await wysiwyg.editor._editor._pluginsManager.call('Test', 'loadTest', ['TestOdooWebsite'], true);
-        await wysiwyg.editor._editor._pluginsManager.call('Test', 'loadTest', ['TestKeyboardChar'], true);
+        await wysiwyg.editor._editor._pluginsManager.call('Test', 'loadTest', ['TestCharKeys'], true);
         await wysiwyg.editor._editor._pluginsManager.call('Test', 'loadTest', ['TestArchAndRules'], true);
 
         var target = $('we3-editable #wrap h2 b:first')[0].firstChild;

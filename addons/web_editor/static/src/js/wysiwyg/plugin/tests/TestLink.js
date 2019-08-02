@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var TestToolbarLink = class extends we3.AbstractPlugin {
+    var TestLink = class extends we3.AbstractPlugin {
         static get autoInstall() {
             return ['Test', 'TestToolbar', 'Text'];
         }
@@ -143,6 +143,6 @@
         }
     };
 
-    we3.addPlugin('TestToolbarLink', TestToolbarLink);
+    we3.addPlugin('TestLink', TestLink);
 
 })();
