@@ -4,20 +4,20 @@ odoo.define('mail.store.MutationTests', function (require) {
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
-    createStore,
     pause,
-} = require('mail.owl.test_utils');
+    start: utilsStart,
+} = require('mail.owl.testUtils');
 
 QUnit.module('mail.owl', {}, function () {
 QUnit.module('store', {}, function () {
 QUnit.module('Mutations', {
     beforeEach() {
         utilsBeforeEach(this);
-        this.createStore = async params => {
+        this.start = async params => {
             if (this.widget) {
                 this.widget.destroy();
             }
-            let { store, widget } = await createStore({
+            let { store, widget } = await utilsStart({
                 ...params,
                 data: this.data,
             });
@@ -38,7 +38,7 @@ QUnit.module('Mutations', {
 QUnit.test('createAttachment: txt', async function (assert) {
     assert.expect(10);
 
-    await this.createStore();
+    await this.start();
 
     assert.notOk(this.store.state.attachments['ir.attachment_750']);
 
@@ -69,7 +69,7 @@ QUnit.test('createAttachment: txt', async function (assert) {
 QUnit.test('createMessage', async function (assert) {
     assert.expect(42);
 
-    await this.createStore({
+    await this.start({
         session: {
             partner_id: 3,
         }
@@ -157,7 +157,7 @@ QUnit.test('createMessage', async function (assert) {
 QUnit.test('createThread: channel', async function (assert) {
     assert.expect(26);
 
-    await this.createStore();
+    await this.start();
 
     assert.notOk(this.store.state.partners['res.partner_9']);
     assert.notOk(this.store.state.partners['res.partner_10']);
@@ -221,7 +221,7 @@ QUnit.test('createThread: channel', async function (assert) {
 QUnit.test('createThread: chat', async function (assert) {
     assert.expect(17);
 
-    await this.createStore();
+    await this.start();
 
     assert.notOk(this.store.state.partners['res.partner_5']);
     assert.notOk(this.store.state.threads['mail.channel_200']);

@@ -125,7 +125,8 @@
                         t-att-class="{
                             'o-mobile': props.isMobile,
                         }"
-                        t-on-o-emoji-selection.stop="_onEmojiSelection"/>
+                        t-on-o-emoji-selection.stop="_onEmojiSelection"
+                        t-ref="emojisButton"/>
                     <button
                         aria-label="Add attachment"
                         class="

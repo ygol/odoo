@@ -7,7 +7,7 @@ const utils = require('web.utils');
 /**
  * ComposerInput relies on a minimal HTML editor in order to support mentions.
  */
-class ComposerInput extends owl.Component {
+class ComposerTextInput extends owl.store.ConnectedComponent {
 
     /**
      * @param {...any} args
@@ -511,6 +511,9 @@ class ComposerInput extends owl.Component {
         if (ev.shiftKey) {
             return;
         }
+        if (this.props.isMobile) {
+            return;
+        }
         this.trigger('o-keydown-enter');
         ev.preventDefault();
     }
@@ -536,6 +539,16 @@ class ComposerInput extends owl.Component {
     }
 }
 
-return ComposerInput;
+ComposerTextInput.mapStoreToProps = function (state) {
+    return {
+        isMobile: state.isMobile,
+    };
+};
+
+ComposerTextInput.props = {
+    isMobile: Boolean,
+};
+
+return ComposerTextInput;
 
 });

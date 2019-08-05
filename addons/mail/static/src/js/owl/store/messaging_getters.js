@@ -11,6 +11,12 @@ const getters = {
     //--------------------------------------------------------------------------
 
     /**
+     * @return {boolean}
+     */
+    areVisibleChatWindows({ state }) {
+        return state.chatWindowManager.computed.visible.length > 0;
+    },
+    /**
      * @param {Object} param0
      * @param {Object} param0.getters
      * @param {Object} param0.state

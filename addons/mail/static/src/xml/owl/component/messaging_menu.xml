@@ -6,6 +6,7 @@
         owl="1"
         t-att-class="{
             show: props.isOpen,
+            'o-mobile': props.isMobile,
         }"
         t-att-data-id="id"
         t-name="mail.component.MessagingMenu">
@@ -24,7 +25,7 @@
             }"
             t-if="!props.isMobile or
                 !props.activeMobileThread"
-            t-on-click.stop="_onClickToggler">
+            t-on-click.stop.prevent="_onClickToggler">
             <i
                 aria-label="Messages"
                 class="

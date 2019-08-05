@@ -66,11 +66,9 @@ class ChatWindowHeader extends owl.store.ConnectedComponent {
                     this.env.store.commit('closeDiscuss'),
             });
         } else {
-            this.env.do_action({
-                type: 'ir.actions.act_window',
-                res_model: this.props.thread._model,
-                views: [[false, 'form']],
-                res_id: this.props.thread.id,
+            this.env.store.dispatch('openDocument', {
+                id: this.props.thread.id,
+                model: this.props.thread._model,
             });
         }
     }

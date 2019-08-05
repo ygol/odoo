@@ -78,6 +78,12 @@ class MessagingMenu extends owl.store.ConnectedComponent {
      * @param {MouseEvent} ev
      */
     _onClickCaptureGlobal(ev) {
+        if (
+            this.props.isMobile &&
+            this.env.store.getters.areVisibleChatWindows()
+        ) {
+            return;
+        }
         if (ev.target === this.el) {
             return;
         }
@@ -116,7 +122,6 @@ class MessagingMenu extends owl.store.ConnectedComponent {
      * @param {MouseEvent} ev
      */
     _onClickToggler(ev) {
-        ev.preventDefault(); // no redirect href
         this.env.store.commit('toggleMessagingMenuOpen');
     }
 
@@ -148,7 +153,9 @@ class MessagingMenu extends owl.store.ConnectedComponent {
                 type: 'chat'
             });
         }
-        this.env.store.commit('closeMessagingMenu');
+        if (!this.props.isMobile) {
+            this.env.store.commit('closeMessagingMenu');
+        }
     }
 
     /**
@@ -193,7 +200,9 @@ class MessagingMenu extends owl.store.ConnectedComponent {
      */
     _onSelectThread(ev) {
         this.env.store.commit('openThread', ev.detail.threadLocalId);
-        this.env.store.commit('closeMessagingMenu');
+        if (!this.props.isMobile) {
+            this.env.store.commit('closeMessagingMenu');
+        }
     }
 }
 

@@ -35,6 +35,7 @@
             haveMessagesAuthorRedirect="props.haveMessagesAuthorRedirect"
             haveMessagesMarkAsReadIcon="props.haveMessagesMarkAsReadIcon"
             haveMessagesReplyIcon="props.haveMessagesReplyIcon"
+            isScrollToEndOnMount="props.isMessageListScrollToEndOnMount"
             order="props.order"
             scrollTop="props.scrollTop"
             selectedMessageLocalId="props.selectedMessageLocalId"

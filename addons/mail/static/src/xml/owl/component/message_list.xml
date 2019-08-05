@@ -26,6 +26,12 @@
                 </div>
                 You can mark any message as 'starred', and it shows up in this mailbox.
             </t>
+            <t t-elif="props.thread.localId === 'mail.box_history'">
+                <div class="o_MessageList_emptyTitle o-neutral-face-icon">
+                    No history messages
+                </div>
+                Messages marked as read will appear in the history.
+            </t>
             <t t-else="">
                 There are no messages in this conversation.
             </t>

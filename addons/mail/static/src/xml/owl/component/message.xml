@@ -7,11 +7,9 @@
         t-att-data-message-local-id="props.messageLocalId"
         t-att-class="{
             'o-clicked': state.isClicked,
-            'o-discussion': props.message.is_discussion or
-                props.message.is_notification,
+            'o-discussion': props.message.is_discussion or props.message.is_notification,
             'o-mobile': props.isMobile,
-            'o-not-discussion': !(props.message.is_discussion or
-                props.message.is_notification),
+            'o-not-discussion': !(props.message.is_discussion or props.message.is_notification),
             'o-notification': props.message.message_type === 'notification',
             'o-selected': props.isSelected,
             'o-squashed': props.isSquashed,
@@ -41,20 +39,17 @@
                         t-att-src="avatar"
                         t-att-title="hasAuthorRedirect ? 'Open chat' : ''"
                         t-on-click="_onClickAuthor"/>
-                    <div
-                        class="o_Message_partnerImStatusIconContainer">
-                        <PartnerImStatusIcon
-                            class="o_Message_partnerImStatusIcon"
-                            partnerLocalId="props.author.localId"
-                            t-att-class="{
-                                'o-message-not-discussion': !(
-                                    props.message.is_discussion or
-                                    props.message.is_notification),
-                                'o-message-selected': props.isSelected,
-                                'o_Message_partnerImStatusIcon-mobile': props.isMobile,
-                            }"
-                            t-if="props.author.im_status"/>
-                    </div>
+                    <PartnerImStatusIcon
+                        class="o_Message_partnerImStatusIcon"
+                        partnerLocalId="props.author.localId"
+                        t-att-class="{
+                            'o-message-not-discussion': !(
+                                props.message.is_discussion or
+                                props.message.is_notification),
+                            'o-message-selected': props.isSelected,
+                            'o_Message_partnerImStatusIcon-mobile': props.isMobile,
+                        }"
+                        t-if="props.author.im_status"/>
                 </div>
             </t>
             <t t-else="">

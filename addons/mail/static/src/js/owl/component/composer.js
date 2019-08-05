@@ -26,6 +26,8 @@ class Composer extends owl.store.ConnectedComponent {
          * should auto focus this composer when patched.
          */
         this._focusCounter = 0;
+
+        this._globalCaptureClickEventListener = ev => this._onClickCaptureGlobal(ev);
     }
 
     mounted() {
@@ -40,6 +42,7 @@ class Composer extends owl.store.ConnectedComponent {
         this.env.store.commit('createComposer', this.props.id, {
             attachmentLocalIds: [],
         });
+        document.addEventListener('click', this._globalCaptureClickEventListener, true);
     }
 
     /**
@@ -62,6 +65,7 @@ class Composer extends owl.store.ConnectedComponent {
     willUnmount() {
         this.env.store.commit('deleteComposer', this.props.id);
         $(window).off(this.fileuploadId, this._attachmentUploadedEventListener);
+        document.removeEventListener('click', this._globalCaptureClickEventListener, true);
     }
 
     //--------------------------------------------------------------------------
@@ -104,7 +108,9 @@ class Composer extends owl.store.ConnectedComponent {
     //--------------------------------------------------------------------------
 
     focus() {
-        this.el.scrollIntoView();
+        if (this.props.isMobile) {
+            this.el.scrollIntoView();
+        }
         this.refs.textInput.focus();
     }
 
@@ -228,6 +234,23 @@ class Composer extends owl.store.ConnectedComponent {
 
     /**
      * @private
+     * @param {MouseEvent} ev
+     */
+    _onClickCaptureGlobal(ev) {
+        if (!this.props.isDiscardOnClickAway) {
+            return;
+        }
+        if (ev.target.closest(`[data-id="${this.props.id}"]`)) {
+            return;
+        }
+        if (this.refs.emojisButton.isInsideEventTarget(ev.target)) {
+            return;
+        }
+        this.trigger('o-discarded');
+    }
+
+    /**
+     * @private
      */
     async _onClickFullComposer() {
         const attachmentIds = this.props.attachmentLocalIds
@@ -342,6 +365,7 @@ Composer.defaultProps = {
     hasFollowers: false,
     hasSendButton: true,
     hasThreadName: false,
+    isDiscardOnClickAway: false,
     isExpandable: false,
     isFocusOnMount: false,
     isLog: false,
@@ -389,6 +413,7 @@ Composer.props = {
         optional: true,
     },
     id: String,
+    isDiscardOnClickAway: Boolean,
     isExpandable: Boolean,
     isFocusOnMount: Boolean,
     isLog: Boolean,

@@ -1,4 +1,4 @@
-odoo.define('mail.owl.test_utils', function (require) {
+odoo.define('mail.owl.testUtils', function (require) {
 "use strict";
 
 const BusService = require('bus.BusService');
@@ -92,9 +92,88 @@ function beforeEach(self) {
             starred_counter: 0,
         },
         'mail.message': {
-            fields: {},
+            fields: {
+                body: {
+                    string: "Contents",
+                    type: 'html',
+                },
+                author_id: {
+                    string: "Author",
+                    relation: 'res.partner',
+                },
+                channel_ids: {
+                    string: "Channels",
+                    type: 'many2many',
+                    relation: 'mail.channel',
+                },
+                starred: {
+                    string: "Starred",
+                    type: 'boolean',
+                },
+                needaction: {
+                    string: "Need Action",
+                    type: 'boolean',
+                },
+                needaction_partner_ids: {
+                    string: "Partners with Need Action",
+                    type: 'many2many',
+                    relation: 'res.partner',
+                },
+                starred_partner_ids: {
+                    string: "Favorited By",
+                    type: 'many2many',
+                    relation: 'res.partner',
+                },
+                history_partner_ids: {
+                    string: "Partners with History",
+                    type: 'many2many',
+                    relation: 'res.partner',
+                },
+                model: {
+                    string: "Related Document model",
+                    type: 'char',
+                },
+                res_id: {
+                    string: "Related Document ID",
+                    type: 'integer',
+                },
+            },
+        },
+        'res.partner': {
+            fields: {
+                im_status: {
+                    string: "status",
+                    type: 'char',
+                },
+            },
+        },
+        'mail.notification': {
+            fields: {
+                is_read: {
+                    string: "Is Read",
+                    type: 'boolean',
+                },
+                mail_message_id: {
+                    string: "Message",
+                    type: 'many2one',
+                    relation: 'mail.message',
+                },
+                res_partner_id: {
+                    string: "Needaction Recipient",
+                    type: 'many2one',
+                    relation: 'res.partner',
+                },
+            },
         },
     };
+}
+
+function getMailServices() {
+    return new MockMailService().getServices();
+}
+
+async function pause() {
+    await new Promise(resolve => {});
 }
 
 /**
@@ -112,7 +191,7 @@ function beforeEach(self) {
  * @param {integer} [params.session.uid=2]
  * @return {Promise}
  */
-async function createAll(params) {
+async function start(params) {
     const Parent = Widget.extend({
         do_push_state: function () {},
     });
@@ -120,7 +199,7 @@ async function createAll(params) {
     params.archs = params.archs || {
         'mail.message,false,search': '<search/>',
     };
-    params.services = new MockMailService().getServices();
+    params.services = params.services || getMailServices();
     params.session = params.session || {};
     _.defaults(params.session, {
         name: "Admin",
@@ -185,75 +264,6 @@ async function createAll(params) {
     return { store, widget };
 }
 
-/**
- * Create messaging store
- *
- * @param {Object} params
- * @param {boolean} [params.debug=false]
- * @param {Object} [params.initStoreStateAlteration]
- * @param {Object} [params.session={}]
- * @param {string} [params.session.name="Admin"]
- * @param {integer} [params.session.partner_id=3]
- * @param {string} [params.session.partner_display_name="Your Company, Admin"]
- * @param {integer} [params.session.uid=2]
- * @return {Promise}
- */
-async function createStore(params) {
-    const Parent = Widget.extend({
-        do_push_state: function () {},
-    });
-    const parent = new Parent();
-    const selector = params.debug ? 'body' : '#qunit-fixture';
-    params.services = new MockMailService().getServices();
-    params.session = params.session || {};
-    _.defaults(params.session, {
-        name: "Admin",
-        partner_id: 3,
-        partner_display_name: "Your Company, Admin",
-        uid: 2,
-    });
-    params.services.env.prototype.TEST_ENV.active = true;
-    let ORIGINAL_STORE_SERVICE_TEST_ENV = params.services.store.prototype.TEST_ENV;
-    Object.assign(params.services.store.prototype.TEST_ENV, {
-        active: true,
-        initStateAlteration: params.initStoreStateAlteration || {
-            globalWindow: {
-                innerHeight: 1080,
-                innerWidth: 1920,
-            },
-            isMobile: false,
-        }
-    });
-
-    testUtils.mock.addMockEnvironment(parent, params);
-    const widget = new Widget(parent);
-
-    Object.assign(widget, {
-        destroy() {
-            params.services.env.prototype.TEST_ENV.active = false;
-            params.services.store.prototype.TEST_ENV = ORIGINAL_STORE_SERVICE_TEST_ENV;
-            delete widget.destroy;
-            delete window.o_test_store;
-            parent.destroy();
-        },
-    });
-
-    await widget.appendTo($(selector));
-    const store = await widget.call('store', 'get');
-    if (params.debug) {
-        window.o_test_store = store;
-    }
-    return { store, widget };
-}
-
-async function pause() {
-    await new Promise(resolve => {});
-}
-
-function getMailServices() {
-    return new MockMailService().getServices();
-}
-
 //------------------------------------------------------------------------------
 // Export
 //------------------------------------------------------------------------------
@@ -261,10 +271,9 @@ function getMailServices() {
 return {
     afterEach,
     beforeEach,
-    createAll,
-    createStore,
-    pause,
     getMailServices,
+    pause,
+    start,
 };
 
 });

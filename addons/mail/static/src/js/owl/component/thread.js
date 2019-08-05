@@ -73,6 +73,13 @@ class Thread extends owl.store.ConnectedComponent {
         return this.refs.messageList.getScrollTop();
     }
 
+    /**
+     * @param {integer} value
+     */
+    setScrollTop(value) {
+        this.refs.messageList.setScrollTop(value);
+    }
+
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
@@ -141,12 +148,12 @@ Thread.props = {
     haveMessagesAuthorRedirect: Boolean,
     haveMessagesMarkAsReadIcon: Boolean,
     haveMessagesReplyIcon: Boolean,
-    isMobile: Boolean,
-    order: String, // ['asc', 'desc']
-    scrollTop: {
-        type: Number,
+    isMessageListScrollToEndOnMount: {
+        type: Boolean,
         optional: true,
     },
+    isMobile: Boolean,
+    order: String, // ['asc', 'desc']
     selectedMessageLocalId: {
         type: String,
         optional: true,

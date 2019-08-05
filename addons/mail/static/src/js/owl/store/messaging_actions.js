@@ -10,6 +10,32 @@ const utils = require('web.utils');
 
 const _t = core._t;
 
+//------------------------------------------------------------------------------
+// Private
+//------------------------------------------------------------------------------
+
+/**
+ * @private
+ * @param {Object} param0
+ * @param {Array} param0.domain
+ * @param {Object} param0.thread
+ * @return {Array}
+ */
+function _extendMessageDomainWithThreadDomain({ domain, thread }) {
+    if (thread._model === 'mail.channel') {
+        return domain.concat([['channel_ids', 'in', [thread.id]]]);
+    } else if (thread.localId === 'mail.box_inbox') {
+        return domain.concat([['needaction', '=', true]]);
+    } else if (thread.localId === 'mail.box_starred') {
+        return domain.concat([['starred', '=', true]]);
+    } else if (thread.localId === 'mail.box_history') {
+        return domain.concat([['needaction', '=', false]]);
+    } else if (thread.localId === 'mail.box_moderation') {
+        return domain.concat([['need_moderation', '=', true]]);
+    }
+    return domain;
+}
+
 /**
  * @private
  * @param {Object[]} notifications
@@ -105,24 +131,6 @@ const actions = {
     // Public
     //--------------------------------------------------------------------------
 
-    /**
-     * @param {Object} param0
-     * @param {function} param0.commit
-     * @param {Object} param0.env
-     * @param {Object} param0.state
-     * @param {string} partnerLocalId
-     */
-    async checkPartnerIsUser({ commit, env, state }, partnerLocalId) {
-        const partner = state.partners[partnerLocalId];
-        const userIds = await env.rpc({
-            model: 'res.users',
-            method: 'search',
-            args: [[['partner_id', '=', partner.id]]],
-        });
-        commit('updatePartner', partnerLocalId, {
-            userId: userIds.length ? userIds[0] : null,
-        });
-    },
     /**
      * @param {Object} param0
      * @param {function} param0.commit
@@ -301,20 +309,14 @@ const actions = {
         threadLocalId,
         { searchDomain=[] }={}
     ) {
-        const thread = state.threads[threadLocalId];
         const stringifiedDomain = JSON.stringify(searchDomain);
         const threadCacheLocalId = `${threadLocalId}_${stringifiedDomain}`;
         const threadCache = state.threadCaches[threadCacheLocalId];
         let domain = searchDomain.length ? searchDomain : [];
-        if (thread._model === 'mail.channel') {
-            domain = domain.concat([['channel_ids', 'in', [thread.id]]]);
-        } else if (threadLocalId === 'mail.box_inbox') {
-            domain = domain.concat([['needaction', '=', true]]);
-        } else if (threadLocalId === 'mail.box_starred') {
-            domain = domain.concat([['starred', '=', true]]);
-        } else if (threadLocalId === 'mail.box_moderation') {
-            domain = domain.concat([['need_moderation', '=', true]]);
-        }
+        domain = _extendMessageDomainWithThreadDomain({
+            domain,
+            thread: state.threads[threadLocalId],
+        });
         if (threadCache.isAllHistoryLoaded && threadCache.isLoadingMore) {
             return;
         }
@@ -445,6 +447,24 @@ const actions = {
     },
     /**
      * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.env
+     * @param {Object} param1
+     * @param {integer} param1.id
+     * @param {string} param1.model
+     */
+    openDocument({ commit, env }, { id, model }) {
+        env.do_action({
+            type: 'ir.actions.act_window',
+            res_model: model,
+            views: [[false, 'form']],
+            res_id: id,
+        });
+        commit('closeMessagingMenu');
+        commit('closeAllChatWindows');
+    },
+    /**
+     * @param {Object} param0
      * @param {functon} param0.commit
      * @param {function} param0.dispatch
      * @param {Object} param0.env
@@ -551,6 +571,78 @@ const actions = {
             commit('updateThreadCache', threadCacheLocalId, {
                 currentPartnerMessagePostCounter:
                     state.threadCaches[threadCacheLocalId].currentPartnerMessagePostCounter + 1,
+            });
+        }
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {function} param0.dispatch
+     * @param {Object} param0.env
+     * @param {Object} param0.getters
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {Event} param1.ev
+     * @param {integer} param1.id
+     * @param {string} param1.model
+     */
+    async redirect(
+        { commit, dispatch, env, getters, state },
+        { ev, id, model }
+    ) {
+        if (model === 'mail.channel') {
+            ev.stopPropagation();
+            const threadLocalId = `${model}_${id}`;
+            const channel = state.threads[threadLocalId];
+            if (!channel) {
+                dispatch('joinChannel', id, {
+                    autoselect: true,
+                });
+                return;
+            }
+            commit('openThread', threadLocalId);
+            return;
+        } else if (model === 'res.partner') {
+            if (id === env.session.partner_id) {
+                dispatch('openDocument', {
+                    model: 'res.partner',
+                    id,
+                });
+                return;
+            }
+            const partnerLocalId = `res.partner_${id}`;
+            let partner = state.partners[partnerLocalId];
+            if (!partner) {
+                commit('insertPartner', { id });
+                partner = state.partners[partnerLocalId];
+            }
+            if (partner.userId === undefined) {
+                // rpc to check that
+                await dispatch('_checkPartnerIsUser', partnerLocalId);
+            }
+            if (partner.userId === null) {
+                // partner is not a user, open document instead
+                dispatch('openDocument', {
+                    model: 'res.partner',
+                    id: partner.id,
+                });
+                return;
+            }
+            ev.stopPropagation();
+            const chat = getters.chatFromPartner(`res.partner_${id}`);
+            if (!chat) {
+                dispatch('createChannel', {
+                    autoselect: true,
+                    partnerId: id,
+                    type: 'chat',
+                });
+                return;
+            }
+            commit('openThread', chat.localId);
+        } else {
+            dispatch('openDocument', {
+                model: 'res.partner',
+                id,
             });
         }
     },
@@ -690,6 +782,25 @@ const actions = {
     // Private
     //--------------------------------------------------------------------------
 
+    /**
+     * @private
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.env
+     * @param {Object} param0.state
+     * @param {string} partnerLocalId
+     */
+    async _checkPartnerIsUser({ commit, env, state }, partnerLocalId) {
+        const partner = state.partners[partnerLocalId];
+        const userIds = await env.rpc({
+            model: 'res.users',
+            method: 'search',
+            args: [[['partner_id', '=', partner.id]]],
+        });
+        commit('updatePartner', partnerLocalId, {
+            userId: userIds.length ? userIds[0] : null,
+        });
+    },
     /**
      * @private
      * @param {Object} param0
@@ -1064,7 +1175,7 @@ const actions = {
         //         args: [[thread.id], ['message_ids']]
         //     });
         // }
-        const threadCacheLocalId = `${threadLocalId}_[]`;
+        const threadCacheLocalId = thread.cacheLocalIds['[]'];
         const threadCache = state.threadCaches[threadCacheLocalId];
         const loadedMessageIds = threadCache.messageLocalIds
             .filter(localId => messageIds.includes(state.messages[localId].id))
@@ -1126,15 +1237,10 @@ const actions = {
             return;
         }
         let domain = searchDomain.length ? searchDomain : [];
-        if (thread._model === 'mail.channel') {
-            domain = domain.concat([['channel_ids', 'in', [thread.id]]]);
-        } else if (threadLocalId === 'mail.box_inbox') {
-            domain = domain.concat([['needaction', '=', true]]);
-        } else if (threadLocalId === 'mail.box_starred') {
-            domain = domain.concat([['starred', '=', true]]);
-        } else if (threadLocalId === 'mail.box_moderation') {
-            domain = domain.concat([['need_moderation', '=', true]]);
-        }
+        domain = _extendMessageDomainWithThreadDomain({
+            domain,
+            thread,
+        });
         commit('updateThreadCache', threadCacheLocalId, {
             isLoading: true,
         });

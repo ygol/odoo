@@ -5,9 +5,9 @@ const Message = require('mail.component.Message');
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
-    createStore,
     pause,
-} = require('mail.owl.test_utils');
+    start: startUtils,
+} = require('mail.owl.testUtils');
 
 const testUtils = require('web.test_utils');
 
@@ -24,11 +24,11 @@ QUnit.module('Message', {
             });
             await this.message.mount(this.widget.$el[0]);
         };
-        this.createStore = async params => {
+        this.start = async params => {
             if (this.wiget) {
                 this.widget.destroy();
             }
-            let { store, widget } = await createStore({
+            let { store, widget } = await startUtils({
                 ...params,
                 data: this.data,
             });
@@ -51,7 +51,7 @@ QUnit.module('Message', {
 QUnit.test('default', async function (assert) {
     assert.expect(12);
 
-    await this.createStore();
+    await this.start();
 
     const messageLocalId = this.store.commit('createMessage', {
         author_id: [7, "Demo User"],

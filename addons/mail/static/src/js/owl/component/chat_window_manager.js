@@ -83,6 +83,9 @@ class ChatWindowManager extends owl.store.ConnectedComponent {
         let handled = false;
         const dcwm = this.env.store.state.chatWindowManager;
         const lastNotifiedAutofocusCounter = dcwm.notifiedAutofocusCounter;
+        if (this.props.isMobile) {
+            handled = true; // never autofocus in mobile
+        }
         if (
             !handled &&
             this.props.autofocusCounter === lastNotifiedAutofocusCounter
@@ -186,63 +189,12 @@ class ChatWindowManager extends owl.store.ConnectedComponent {
      * @param {integer} ev.detail.id
      * @param {string} ev.detail.model
      */
-    async _onRedirect(ev) {
-        const { id, model } = ev.detail;
-        if (model === 'mail.channel') {
-            ev.stopPropagation();
-            const threadLocalId = `${model}_${id}`;
-            const channel = this.env.store.state.threads[threadLocalId];
-            if (!channel) {
-                this.env.store.dispatch('joinChannel', id, {
-                    autoselect: true,
-                });
-                return;
-            }
-            this.env.store.commit('openThread', threadLocalId);
-            return;
-        }
-        if (model === 'res.partner') {
-            if (id === this.env.session.partner_id) {
-                this.env.do_action({
-                    type: 'ir.actions.act_window',
-                    res_model: 'res.partner',
-                    views: [[false, 'form']],
-                    res_id: id,
-                });
-                return;
-            }
-            const partnerLocalId = `res.partner_${id}`;
-            let partner = this.env.store.state.partners[partnerLocalId];
-            if (!partner) {
-                this.env.store.commit('insertPartner', { id });
-                partner = this.env.store.state.partners[partnerLocalId];
-            }
-            if (partner.userId === undefined) {
-                // rpc to check that
-                await this.env.store.dispatch('checkPartnerIsUser', partnerLocalId);
-            }
-            if (partner.userId === null) {
-                // partner is not a user, open document instead
-                this.env.do_action({
-                    type: 'ir.actions.act_window',
-                    res_model: 'res.partner',
-                    views: [[false, 'form']],
-                    res_id: partner.id,
-                });
-                return;
-            }
-            ev.stopPropagation();
-            const chat = this.env.store.getters.chatFromPartner(`res.partner_${id}`);
-            if (!chat) {
-                this.env.store.dispatch('createChannel', {
-                    autoselect: true,
-                    partnerId: id,
-                    type: 'chat',
-                });
-                return;
-            }
-            this.env.store.commit('openThread', chat.localId);
-        }
+    _onRedirect(ev) {
+        this.env.store.dispatch('redirect', {
+            ev,
+            id: ev.detail.id,
+            model: ev.detail.model,
+        });
     }
 
     /**

@@ -4,20 +4,20 @@ odoo.define('mail.store.StateTests', function (require) {
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
-    createStore,
     pause,
-} = require('mail.owl.test_utils');
+    start: utilsStart,
+} = require('mail.owl.testUtils');
 
 QUnit.module('mail.owl', {}, function () {
 QUnit.module('store', {}, function () {
 QUnit.module('State', {
     beforeEach() {
         utilsBeforeEach(this);
-        this.createStore = async params => {
+        this.start = async params => {
             if (this.widget) {
                 this.widget.destroy();
             }
-            const { store, widget } = await createStore({
+            const { store, widget } = await utilsStart({
                 ...params,
                 data: this.data,
             });
@@ -38,7 +38,7 @@ QUnit.module('State', {
 QUnit.test("current partner", async function (assert) {
     assert.expect(6);
 
-    await this.createStore({
+    await this.start({
         session: {
             name: "Admin",
             partner_id: 3,
@@ -61,7 +61,7 @@ QUnit.test("current partner", async function (assert) {
 QUnit.test("inbox & starred mailboxes", async function (assert) {
     assert.expect(12);
 
-    await this.createStore();
+    await this.start();
 
     const mailboxInbox = this.store.state.threads['mail.box_inbox'];
     const mailboxStarred = this.store.state.threads['mail.box_starred'];
@@ -84,7 +84,7 @@ QUnit.test("inbox & starred mailboxes", async function (assert) {
 QUnit.test("global state after default '/mail/init_messaging' RPC data", async function (assert) {
     assert.expect(1);
 
-    await this.createStore({
+    await this.start({
         session: {
             partner_id: 3,
         },
@@ -169,6 +169,17 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
             },
             temporaryAttachmentLocalIds: {},
             threadCaches: {
+                'mail.box_history_[]': {
+                    currentPartnerMessagePostCounter: 0,
+                    isAllHistoryLoaded: false,
+                    isLoaded: false,
+                    isLoading: false,
+                    isLoadingMore: false,
+                    localId: 'mail.box_history_[]',
+                    messageLocalIds: [],
+                    stringifiedDomain: '[]',
+                    threadLocalId: 'mail.box_history',
+                },
                 'mail.box_inbox_[]': {
                     currentPartnerMessagePostCounter: 0,
                     isAllHistoryLoaded: false,
@@ -180,7 +191,7 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
                     stringifiedDomain: '[]',
                     threadLocalId: 'mail.box_inbox',
                 },
-                "mail.box_starred_[]": {
+                'mail.box_starred_[]': {
                     currentPartnerMessagePostCounter: 0,
                     isAllHistoryLoaded: false,
                     isLoaded: false,
@@ -189,10 +200,42 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
                     localId: 'mail.box_starred_[]',
                     messageLocalIds: [],
                     stringifiedDomain: '[]',
-                    threadLocalId: 'mail.box_starred'
+                    threadLocalId: 'mail.box_starred',
                 }
             },
             threads: {
+                'mail.box_history': {
+                    cacheLocalIds: {
+                        '[]': 'mail.box_history_[]',
+                    },
+                    channel_type: undefined,
+                    counter: undefined,
+                    create_uid: undefined,
+                    custom_channel_name: undefined,
+                    direct_partner: undefined,
+                    directPartnerLocalId: undefined,
+                    group_based_subscription: undefined,
+                    id: 'history',
+                    isPinned: true,
+                    is_minimized: undefined,
+                    is_moderator: undefined,
+                    localId: 'mail.box_history',
+                    mass_mailing: undefined,
+                    memberLocalIds: [],
+                    members: undefined,
+                    messageLocalIds: [],
+                    message_needaction_counter: undefined,
+                    message_unread_counter: undefined,
+                    moderation: undefined,
+                    name: "History",
+                    public: undefined,
+                    seen_message_id: undefined,
+                    seen_partners_info: undefined,
+                    state: undefined,
+                    typingMemberLocalIds: [],
+                    uuid: undefined,
+                    _model: 'mail.box',
+                },
                 'mail.box_inbox': {
                     cacheLocalIds: {
                         '[]': 'mail.box_inbox_[]',
@@ -216,7 +259,7 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
                     message_needaction_counter: undefined,
                     message_unread_counter: undefined,
                     moderation: undefined,
-                    name: 'Inbox',
+                    name: "Inbox",
                     public: undefined,
                     seen_message_id: undefined,
                     seen_partners_info: undefined,
@@ -236,7 +279,7 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
                     direct_partner: undefined,
                     directPartnerLocalId: undefined,
                     group_based_subscription: undefined,
-                    id: 'starred',
+                    id: "starred",
                     isPinned: true,
                     is_minimized: undefined,
                     is_moderator: undefined,

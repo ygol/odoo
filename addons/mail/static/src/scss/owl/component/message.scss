@@ -71,6 +71,19 @@
     .o_Message_headerCommand {
         padding-left: 5px;
         padding-right: 5px;
+
+        &.o-mobile {
+            padding-left: 10px;
+            padding-right: 10px;
+
+            &:first-child {
+                padding-left: 5px;
+            }
+
+            &:last-child {
+                padding-right: 5px;
+            }
+        }
     }
 
     .o_Message_headerCommand:first-child {
@@ -89,11 +102,7 @@
 }
 
 .o_Message_partnerImStatusIcon {
-    padding: 1px;
-}
-
-.o_Message_partnerImStatusIconContainer {
-    @include o-position-absolute($bottom: 1px, $right: 1px);
+    @include o-position-absolute($bottom: 0, $right: 0);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -156,16 +165,16 @@
         }
     }
 
-    .o_Message_partnerImStatusIconContainer {
-        background-color: white;
+    .o_Message_partnerImStatusIcon {
+        color: white;
     }
 
     &.o-not-discussion {
         background-color: lighten(gray('300'), 5%);
         border-bottom: 1px solid darken(gray('300'), 5%);
 
-        .o_Message_partnerImStatusIconContainer {
-            background-color: lighten(gray('300'), 5%);
+        .o_Message_partnerImStatusIcon {
+            color: lighten(gray('300'), 5%);
         }
 
         &.o-selected {
@@ -176,8 +185,8 @@
     &.o-selected {
         background-color: gray('400');
 
-        .o_Message_partnerImStatusIconContainer {
-            background-color: gray('400');
+        .o_Message_partnerImStatusIcon {
+            color: gray('400');
         }
     }
 
@@ -271,12 +280,8 @@
     font-size: 1.25em; // original size
 }
 
-.o_Message_partnerImStatusIconContainer:not(.o_Message_partnerImStatusIcon-mobile) {
+.o_Message_partnerImStatusIcon:not(.o_Message_partnerImStatusIcon-mobile) {
     font-size: x-small;
-}
-
-.o_Message_partnerImStatusIconContainer {
-    border-radius: 50%;
 }
 
 .o_Message_sidebarCommands {

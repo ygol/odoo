@@ -14,14 +14,18 @@
         t-name="mail.component.DiscussSidebarItem"
         t-on-click="_onClick">
         <div
-            class="o_DiscussSidebarItem_activeIndicator"
+            class="
+                o_DiscussSidebarItem_activeIndicator
+                o_DiscussSidebarItem_item"
             t-att-class="{
                 'o-item-active': props.isActive,
             }"/>
         <Icon
+            class="o_DiscussSidebarItem_item"
             threadLocalId="props.threadLocalId"/>
         <div
             class="
+                o_DiscussSidebarItem_item
                 o_DiscussSidebarItem_name
                 o-editable"
             t-if="
@@ -36,16 +40,22 @@
                value="props.threadName"/>
         </div>
         <div
-            class="o_DiscussSidebarItem_name"
+            class="
+                o_DiscussSidebarItem_item
+                o_DiscussSidebarItem_name"
             t-att-class="{
                 'o-item-unread': props.thread.message_unread_counter > 0,
             }"
             t-else="">
             <t t-esc="props.threadName"/>
         </div>
-        <div class="o-autogrow"/>
+        <div class="
+            o-autogrow
+            o_DiscussSidebarItem_item"/>
         <div
-            class="o_DiscussSidebarItem_commands"
+            class="
+                o_DiscussSidebarItem_commands
+                o_DiscussSidebarItem_item"
             t-if="props.thread._model !== 'mail.box'">
             <t t-if="props.thread.channel_type === 'channel'">
                 <div
@@ -100,7 +110,8 @@
             class="
                 badge
                 badge-pill
-                o_DiscussSidebarItem_counter"
+                o_DiscussSidebarItem_counter
+                o_DiscussSidebarItem_item"
             t-if="counter > 0">
             <t t-esc="counter"/>
         </div>

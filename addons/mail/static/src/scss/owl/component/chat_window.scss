@@ -8,7 +8,7 @@
     display: flex;
     flex-flow: column;
 
-    &.o-docked {
+    &:not(.o-mobile) {
         max-width: 100%;
         max-height: 100%;
         width: 325px;
@@ -20,6 +20,10 @@
         &:not(.o-folded) {
             height: 400px;
         }
+    }
+
+    &.o-mobile {
+        position: fixed;
     }
 
     &.o-fullscreen {
@@ -62,7 +66,7 @@
     box-shadow: -5px -5px 10px rgba(black, 0.09);
     outline: none;
 
-    &.o-docked {
+    &:not(.o-mobile) {
 
         &:not(.o-focused) {
             filter: brightness(0.95);
@@ -100,6 +104,6 @@
 // Animation
 // ------------------------------------------------------------------
 
-.o_ChatWindow.o-docked {
+.o_ChatWindow:not(.o-mobile) {
     transition: height 0.3s;
 }

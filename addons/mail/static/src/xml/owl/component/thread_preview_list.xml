@@ -19,8 +19,9 @@
                 threadLocalId="threadLocalId"
                 t-as="threadLocalId"
                 t-att-class="{
-                    'o-targeted': props.targetThreadLocalId
-                        and props.targetThreadLocalId === threadLocalId
+                    'o-targeted': props.targetThreadLocalId and
+                        props.targetThreadLocalId === threadLocalId,
+                    'o_ThreadPreviewList_preview-mobile': props.isMobile,
                 }"
                 t-foreach="props.threadLocalIds"
                 t-key="threadLocalId"

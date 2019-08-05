@@ -24,17 +24,14 @@
                         o_ThreadPreview_image
                         rounded-circle"
                     t-att-src="image"/>
-                <div
-                    class="o_ThreadPreview_partnerImStatusIconContainer">
-                    <PartnerImStatusIcon
-                        class="o_ThreadPreview_partnerImStatusIcon"
-                        partnerLocalId="props.threadDirectPartner.localId"
-                        t-att-class="{
-                            'o_ThreadPreview_partnerImStatusIcon-mobile': props.isMobile,
-                        }"
-                        t-if="props.threadDirectPartner and
-                            props.threadDirectPartner.im_status"/>
-                </div>
+                <PartnerImStatusIcon
+                    class="o_ThreadPreview_partnerImStatusIcon"
+                    partnerLocalId="props.threadDirectPartner.localId"
+                    t-att-class="{
+                        'o_ThreadPreview_partnerImStatusIcon-mobile': props.isMobile,
+                    }"
+                    t-if="props.threadDirectPartner and
+                        props.threadDirectPartner.im_status"/>
             </div>
         </div>
         <div class="o_ThreadPreview_content">
@@ -65,7 +62,10 @@
                 <span
                     class="
                         o_ThreadPreview_coreItem
-                        o_ThreadPreview_inlineText">
+                        o_ThreadPreview_inlineText"
+                    t-att-class="{
+                        'o-empty': inlineLastMessageBody.length === 0,
+                    }">
                     <t t-if="props.lastMessageAuthor">
                         <t t-if="isMyselfLastMessageAuthor">
                             <i

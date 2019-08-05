@@ -43,11 +43,7 @@
             class="o_Discuss_mobileMailboxSelection"
             t-if="
                 props.isMobile and
-                props.activeMobileNavbarTabId === 'mailbox' and
-                (
-                    !props.activeThread or
-                    props.activeThread._model === 'mail.box'
-                )"
+                props.activeMobileNavbarTabId === 'mailbox'"
             t-on-o-select-thread="_onSelectThread"/>
         <div
             class="o_Discuss_mobileAddItemHeader"
@@ -79,7 +75,10 @@
             haveMessagesAuthorRedirect="props.activeThread.channel_type !== 'chat'"
             haveMessagesMarkAsReadIcon="props.activeThread.localId === 'mail.box_inbox'"
             haveMessagesReplyIcon="props.activeThread.localId === 'mail.box_inbox'"
-            scrollTop="state.threadCachesStoredScrollTop[props.activeThreadCacheLocalId]"
+            isMessageListScrollToEndOnMount="
+                state.threadCachesStoredScrollTop[props.activeThreadCacheLocalId]
+                ? false
+                : true"
             selectedMessageLocalId="state.replyingToMessageMessageLocalId"
             threadLocalId="props.activeThreadLocalId"
             t-att-class="{
@@ -89,7 +88,8 @@
                 (
                     props.isMobile and
                     props.activeMobileNavbarTabId === 'mailbox' and
-                    props.activeThreadLocalId
+                    props.activeThreadLocalId and
+                    props.activeThread._model === 'mail.box'
                 ) or
                 (
                     !props.isMobile and
@@ -116,7 +116,6 @@
             targetThreadLocalId="props.targetThreadLocalId"
             t-if="
                 props.isMobile and
-                !props.activeThreadLocalId and
                 props.activeMobileNavbarTabId !== 'mailbox'"
             t-key="props.activeMobileNavbarTabId"
             t-on-o-select-thread="_onSelectThread"
@@ -127,10 +126,6 @@
             tabs="mobileNavbarTabs"
             t-if="
                 props.isMobile and
-                (
-                    !props.activeThreadLocalId or
-                    props.activeThread._model === 'mail.box'
-                ) and
                 !state.isReplyingToMessage"
             t-on-o-select-mobile-messaging-navbar-tab.stop="_onSelectMobileNavbarTab"/>
         <Composer
@@ -140,6 +135,7 @@
             hasDiscardButton="true"
             hasThreadName="true"
             id="id + '_replyingToMessageComposer'"
+            isDiscardOnClickAway="true"
             isFocusOnMount="true"
             threadLocalId="state.replyingToMessageThreadLocalId"
             t-if="state.isReplyingToMessage"

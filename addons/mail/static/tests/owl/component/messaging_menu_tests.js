@@ -4,9 +4,9 @@ odoo.define('mail.component.MessagingMenuTests', function (require) {
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
-    createAll,
     pause,
-} = require('mail.owl.test_utils');
+    start: utilsStart,
+} = require('mail.owl.testUtils');
 
 const testUtils = require('web.test_utils');
 
@@ -15,11 +15,11 @@ QUnit.module('component', {}, function () {
 QUnit.module('MessagingMenu', {
     beforeEach() {
         utilsBeforeEach(this);
-        this.createAll = async params => {
+        this.start = async params => {
             if (this.widget) {
                 this.widget.destroy();
             }
-            let { widget } = await createAll({ ...params, data: this.data });
+            let { widget } = await utilsStart({ ...params, data: this.data });
             this.widget = widget;
         };
     },
@@ -34,7 +34,7 @@ QUnit.module('MessagingMenu', {
 QUnit.test('basic rendering', async function (assert) {
     assert.expect(21);
 
-    await this.createAll({
+    await this.start({
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return Promise.resolve([]);
@@ -188,7 +188,7 @@ QUnit.test('basic rendering', async function (assert) {
 QUnit.test('switch tab', async function (assert) {
     assert.expect(15);
 
-    await this.createAll({
+    await this.start({
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return Promise.resolve([]);
@@ -315,7 +315,7 @@ QUnit.test('switch tab', async function (assert) {
 QUnit.test('new message', async function (assert) {
     assert.expect(3);
 
-    await this.createAll({
+    await this.start({
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return Promise.resolve([]);
@@ -357,7 +357,7 @@ QUnit.test('new message', async function (assert) {
 QUnit.test('no new message when discuss is open', async function (assert) {
     assert.expect(3);
 
-    await this.createAll({
+    await this.start({
         autoOpenDiscuss: true,
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
@@ -413,7 +413,7 @@ QUnit.test('channel preview: basic rendering', async function (assert) {
         },
     });
 
-    await this.createAll({
+    await this.start({
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return Promise.resolve([{
@@ -547,7 +547,7 @@ QUnit.test('filtered previews', async function (assert) {
         },
     });
 
-    await this.createAll({
+    await this.start({
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return Promise.resolve([{
@@ -724,7 +724,7 @@ QUnit.test('open chat window from preview', async function (assert) {
         },
     });
 
-    await this.createAll({
+    await this.start({
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return Promise.resolve([]);

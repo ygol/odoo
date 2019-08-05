@@ -5,9 +5,9 @@ const Attachment = require('mail.component.Attachment');
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
-    createStore,
     pause,
-} = require('mail.owl.test_utils');
+    start: utilsStart,
+} = require('mail.owl.testUtils');
 
 QUnit.module('mail.owl', {}, function () {
 QUnit.module('component', {}, function () {
@@ -21,11 +21,11 @@ QUnit.module('Attachment', {
             });
             await this.attachment.mount(this.widget.$el[0]);
         };
-        this.createStore = async params => {
+        this.start = async params => {
             if (this.wiget) {
                 this.widget.destroy();
             }
-            let { store, widget } = await createStore({
+            let { store, widget } = await utilsStart({
                 ...params,
                 data: this.data,
             });
@@ -48,7 +48,7 @@ QUnit.module('Attachment', {
 QUnit.test('default: TXT', async function (assert) {
     assert.expect(8);
 
-    await this.createStore();
+    await this.start();
 
     const attachmentLocalId = this.store.commit('createAttachment', {
         filename: "test.txt",
@@ -108,7 +108,7 @@ QUnit.test('default: TXT', async function (assert) {
 QUnit.test('default: PNG', async function (assert) {
     assert.expect(10);
 
-    await this.createStore({
+    await this.start({
         mockRPC(route, args) {
             if (route.includes('web/image/750')) {
                 assert.ok(
@@ -131,7 +131,6 @@ QUnit.test('default: PNG', async function (assert) {
     await this.createAttachment(attachmentLocalId);
 
     assert.verifySteps(['fetch_image']);
-
     assert.strictEqual(
         document.querySelectorAll('.o_Attachment').length,
         1,
@@ -177,7 +176,7 @@ QUnit.test('default: PNG', async function (assert) {
 QUnit.test('default: PDF', async function (assert) {
     assert.expect(7);
 
-    await this.createStore();
+    await this.start();
 
     const attachmentLocalId = this.store.commit('createAttachment', {
         filename: "test.pdf",
@@ -233,7 +232,7 @@ QUnit.test('default: PDF', async function (assert) {
 QUnit.test('default: video', async function (assert) {
     assert.expect(7);
 
-    await this.createStore();
+    await this.start();
 
     const attachmentLocalId = this.store.commit('createAttachment', {
         filename: "test.mp4",

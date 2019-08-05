@@ -21,6 +21,10 @@
 
 .o_ThreadPreviewList_preview {
     padding: 3px;
+
+    &.o_ThreadPreviewList_preview-mobile {
+        padding: 5px;
+    }
 }
 
 // ------------------------------------------------------------------

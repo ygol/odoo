@@ -4,6 +4,7 @@
 
 .o_ThreadPreview {
     display: flex;
+    align-items: center;
 
     &:hover .o_ThreadPreview_markAsRead {
         display: flex;
@@ -14,6 +15,7 @@
     display: flex;
     flex-flow: column;
     flex: 1 1 auto;
+    align-self: flex-start;
     min-width: 0;
     margin: 3px;
 }
@@ -62,6 +64,10 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    &.o-empty::before {
+        content: '\00a0'; // keep line-height as if it had content
+    }
 }
 
 .o_ThreadPreview_inlineTextPrefix {
@@ -83,11 +89,7 @@
 }
 
 .o_ThreadPreview_partnerImStatusIcon {
-    padding: 1px;
-}
-
-.o_ThreadPreview_partnerImStatusIconContainer {
-    @include o-position-absolute($bottom: 1px, $right: 1px);
+    @include o-position-absolute($bottom: 0, $right: 0);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -106,30 +108,30 @@
     cursor: pointer;
     user-select: none;
 
-    .o_ThreadPreview_partnerImStatusIconContainer {
-        background-color: gray('100');
+    .o_ThreadPreview_partnerImStatusIcon {
+        color: gray('100');
     }
 
     &:hover {
         background-color: darken(gray('100'), 3%);
 
-        .o_ThreadPreview_partnerImStatusIconContainer {
-            background-color: darken(gray('100'), 3%);
+        .o_ThreadPreview_partnerImStatusIcon {
+            color: darken(gray('100'), 3%);
         }
     }
 
     &.o-unread {
         background-color: white;
 
-        .o_ThreadPreview_partnerImStatusIconContainer {
-            background-color: white;
+        .o_ThreadPreview_partnerImStatusIcon {
+            color: white;
         }
 
         &:hover {
             background-color: darken(white, 3%);
 
-            .o_ThreadPreview_partnerImStatusIconContainer {
-                background-color: darken(white, 3%);
+            .o_ThreadPreview_partnerImStatusIcon {
+                color: darken(white, 3%);
             }
         }
 
@@ -168,8 +170,4 @@
 
 .o_ThreadPreview_partnerImStatusIcon:not(.o_ThreadPreview_partnerImStatusIcon-mobile) {
     font-size: x-small;
-}
-
-.o_ThreadPreview_partnerImStatusIconContainer {
-    border-radius: 50%;
 }

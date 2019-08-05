@@ -7,7 +7,21 @@ class MobileMessagingNavbar extends owl.Component {
      */
     constructor(...args) {
         super(...args);
+        this.state = {
+            targetTabId: null,
+            targetTabCounter: 0,
+        };
         this.template = 'mail.component.MobileMessagingNavbar';
+
+        this._onClickCaptureGlobalEventListener = ev => this._onClickCaptureGlobal(ev);
+    }
+
+    mounted() {
+        document.addEventListener('click', this._onClickCaptureGlobalEventListener, true);
+    }
+
+    willUnmount() {
+        document.removeEventListener('click', this._onClickCaptureGlobalEventListener, true);
     }
 
     //--------------------------------------------------------------------------
@@ -19,9 +33,27 @@ class MobileMessagingNavbar extends owl.Component {
      * @param {MouseEvent} ev
      */
     _onClick(ev) {
+        const tabId = ev.currentTarget.dataset.tabId;
+        this.state.targetTabId = tabId;
+        this.state.targetTabCounter++;
         this.trigger('o-select-mobile-messaging-navbar-tab', {
-            tabId: ev.currentTarget.dataset.tabId,
+            tabId,
         });
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onClickCaptureGlobal(ev) {
+        if (!ev.target.closest(`[data-id="${this.id}"]`)) {
+            return;
+        }
+        if (ev.target.dataset.tabId === this.props.activeTabId) {
+            return;
+        }
+        this.state.targetTabId = null;
+        this.state.targetTabCounter++;
     }
 }
 

@@ -222,7 +222,11 @@ const Discuss = AbstractAction.extend(EnvMixin, {
                 .find('.o_unstar_all')
                 .removeClass('o_hidden')
                 .prop('disabled', !hasMessages);
-        } else {
+        }
+        if (
+            activeThreadLocalId !== 'mail.box_starred' ||
+            activeMobileNavbarTabId !== 'mailbox'
+        ) {
             this.$buttons
                 .find('.o_unstar_all')
                 .addClass('o_hidden');

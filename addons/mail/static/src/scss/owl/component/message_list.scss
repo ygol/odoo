@@ -83,6 +83,12 @@
 .o_MessageList_emptyTitle {
     font-weight: bold;
     font-size: 1.3rem;
+
+    &.o-neutral-face-icon:before {
+        @extend %o-nocontent-init-image;
+        @include size(120px, 140px);
+        background: transparent url(/web/static/src/img/neutral_face.svg) no-repeat center;
+    }
 }
 
 .o_MessageList_loadMore {

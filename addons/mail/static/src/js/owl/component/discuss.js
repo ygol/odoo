@@ -2,7 +2,6 @@ odoo.define('mail.component.Discuss', function (require) {
 'use strict';
 
 const AutocompleteInput = require('mail.component.AutocompleteInput');
-// const ChatWindow = require('mail.component.ChatWindow');
 const Composer = require('mail.component.Composer');
 const MobileMailboxSelection = require('mail.component.DiscussMobileMailboxSelection');
 const Sidebar = require('mail.component.DiscussSidebar');
@@ -20,7 +19,6 @@ class Discuss extends owl.store.ConnectedComponent {
         this.DEBUG = true;
         this.components = {
             AutocompleteInput,
-            // ChatWindow,
             Composer,
             MobileMailboxSelection,
             MobileNavbar,
@@ -36,11 +34,18 @@ class Discuss extends owl.store.ConnectedComponent {
             replyingToMessageCounter: 0,
             replyingToMessageMessageLocalId: null,
             replyingToMessageThreadLocalId: null,
-            threadCachesStoredScrollTop: {},
+            threadCachesStoredScrollTop: {}, // key: threadCachelocalId, value: { value } (obj. to prevent 0 being falsy)
         };
         this.template = 'mail.component.Discuss';
         this._addingChannelValue = "";
         this._globalCaptureClickEventListener = ev => this._onClickCaptureGlobal(ev);
+        /**
+         * Tracked thread cache rendered, useful to-set scroll position from
+         * last stored one.
+         */
+        this._patchTrackedInfo = {
+            activeThreadCacheLocalId: null,
+        };
         /**
          * Tracked last targeted thread. Used to determine whether it should
          * autoscroll and style target thread, in either sidebar or in mobile.
@@ -82,6 +87,7 @@ class Discuss extends owl.store.ConnectedComponent {
                 resetDiscussDomain: true,
             });
         }
+        this._patchTrackedInfo.activeThreadCacheLocalId = this.props.activeThreadCacheLocalId;
     }
 
     /**
@@ -152,46 +158,57 @@ class Discuss extends owl.store.ConnectedComponent {
         this.trigger('o-push-state-action-manager', {
             activeThreadLocalId: this.props.activeThreadLocalId,
         });
-        if (
-            this.props.targetThreadLocalId &&
-            (
-                this._targetThreadLocalId !== this.props.targetThreadLocalId ||
-                this._targetThreadCounter !== this.props.targetThreadCounter
-            )
-        ) {
-            if (!this.props.isMobile) {
-                const isItemPartiallyVisible =
-                    this
-                        .refs
-                        .sidebar
-                        .isItemPartiallyVisible(this.props.targetThreadLocalId);
-                if (!isItemPartiallyVisible) {
-                    this.refs.sidebar.scrollToItem(this.props.targetThreadLocalId);
-                }
-            } else if (!this.props.activeThreadLocalId) {
-                const targetThread =
-                    this
-                        .env
-                        .store
-                        .state
-                        .threads[this.props.targetThreadLocalId];
-                if (targetThread._model !== 'mail.box') {
-                    const isPreviewPartiallyVisible =
-                        this
-                            .refs
-                            .threadPreviewList
-                            .isPreviewPartiallyVisible(this.props.targetThreadLocalId);
-                    if (!isPreviewPartiallyVisible) {
-                        this
-                            .refs
-                            .threadPreviewList
-                            .scrollToPreview(this.props.targetThreadLocalId);
-                    }
-                }
-            }
-        }
+        // // target thread
+        // if (
+        //     this.props.targetThreadLocalId &&
+        //     (
+        //         this._targetThreadLocalId !== this.props.targetThreadLocalId ||
+        //         this._targetThreadCounter !== this.props.targetThreadCounter
+        //     )
+        // ) {
+        //     if (!this.props.isMobile) {
+        //         const isItemPartiallyVisible =
+        //             this
+        //                 .refs
+        //                 .sidebar
+        //                 .isItemPartiallyVisible(this.props.targetThreadLocalId);
+        //         if (!isItemPartiallyVisible) {
+        //             this.refs.sidebar.scrollToItem(this.props.targetThreadLocalId);
+        //         }
+        //     } else if (!this.props.activeThreadLocalId) {
+        //         const targetThread =
+        //             this
+        //                 .env
+        //                 .store
+        //                 .state
+        //                 .threads[this.props.targetThreadLocalId];
+        //         if (targetThread._model !== 'mail.box') {
+        //             const isPreviewPartiallyVisible =
+        //                 this
+        //                     .refs
+        //                     .threadPreviewList
+        //                     .isPreviewPartiallyVisible(this.props.targetThreadLocalId);
+        //             if (!isPreviewPartiallyVisible) {
+        //                 this
+        //                     .refs
+        //                     .threadPreviewList
+        //                     .scrollToPreview(this.props.targetThreadLocalId);
+        //             }
+        //         }
+        //     }
+        // }
         this._targetThreadCounter = this.props.targetThreadCounter;
         this._targetThreadLocalId = this.props.targetThreadLocalId;
+        // stored scrolltop for new thread cache
+        const threadCacheStoreScrollTop =
+            this.state.threadCachesStoredScrollTop[this.props.activeThreadCacheLocalId];
+        if (
+            this._patchTrackedInfo.activeThreadCacheLocalId !== this.props.activeThreadCacheLocalId &&
+            threadCacheStoreScrollTop
+        ) {
+            this.refs.thread.setScrollTop(threadCacheStoreScrollTop.value);
+        }
+        this._patchTrackedInfo.activeThreadCacheLocalId = this.props.activeThreadCacheLocalId;
     }
 
     willUnmount() {
@@ -304,13 +321,16 @@ class Discuss extends owl.store.ConnectedComponent {
                 owl.core.Observer.set(
                     this.state.threadCachesStoredScrollTop,
                     this.props.activeThreadCacheLocalId,
-                    scrollTop);
+                    { value: scrollTop });
             }
         }
         if (this.state.isReplyingToMessage) {
             this._cancelReplyingToMessage();
         }
-        this.env.store.commit('openThread', threadLocalId);
+        this.env.store.commit('setDiscussActiveThread', threadLocalId);
+        this.env.store.commit('openThread', threadLocalId, {
+            markAsDiscussTarget: true,
+        });
     }
 
     //--------------------------------------------------------------------------
@@ -433,7 +453,16 @@ class Discuss extends owl.store.ConnectedComponent {
      * @param {MouseEvent} ev
      */
     _onClickCaptureGlobal(ev) {
-        if (this.props.targetThreadLocalId) {
+        if (
+            (
+                !this.props.isMobile &&
+                this.props.targetThreadLocalId
+            ) ||
+            (
+                this.props.isMobile &&
+                !this.env.store.getters.areVisibleChatWindows()
+            )
+        ) {
             this.env.store.commit('setDiscussTargetThread', null);
         }
     }
@@ -485,65 +514,12 @@ class Discuss extends owl.store.ConnectedComponent {
      * @param {integer} ev.detail.id
      * @param {string} ev.detail.model
      */
-    async _onRedirect(ev) {
-        const { id, model } = ev.detail;
-        if (model === 'mail.channel') {
-            ev.stopPropagation();
-            const threadLocalId = `${model}_${id}`;
-            const channel = this.env.store.state.threads[threadLocalId];
-            if (!channel) {
-                this.env.store.dispatch('joinChannel', id, {
-                    autoselect: true,
-                });
-                return;
-            }
-            this.env.store.commit('openThread', threadLocalId);
-            return;
-        } else if (model === 'res.partner') {
-            if (id === this.env.session.partner_id) {
-                this.env.do_action({
-                    type: 'ir.actions.act_window',
-                    res_model: 'res.partner',
-                    views: [[false, 'form']],
-                    res_id: id,
-                });
-                return;
-            }
-            const partnerLocalId = `res.partner_${id}`;
-            const partner = this.env.store.state.partners[partnerLocalId];
-            if (partner.userId === undefined) {
-                // rpc to check that
-                await this.env.store.dispatch('checkPartnerIsUser', partnerLocalId);
-            }
-            if (partner.userId === null) {
-                // partner is not a user, open document instead
-                this.env.do_action({
-                    type: 'ir.actions.act_window',
-                    res_model: 'res.partner',
-                    views: [[false, 'form']],
-                    res_id: partner.id,
-                });
-                return;
-            }
-            ev.stopPropagation();
-            const chat = this.env.store.getters.chatFromPartner(`res.partner_${id}`);
-            if (!chat) {
-                this.env.store.dispatch('createChannel', {
-                    autoselect: true,
-                    partnerId: id,
-                    type: 'chat',
-                });
-                return;
-            }
-            this.env.store.commit('openThread', chat.localId);
-        } else {
-            this.env.do_action({
-                type: 'ir.actions.act_window',
-                res_model: model,
-                views: [[false, 'form']],
-                res_id: id,
-            });
-        }
+    _onRedirect(ev) {
+        this.env.store.dispatch('redirect', {
+            ev,
+            id: ev.detail.id,
+            model: ev.detail.model,
+        });
     }
 
     /**

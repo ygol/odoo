@@ -40,10 +40,8 @@ class MessageList extends owl.store.ConnectedComponent {
     }
 
     mounted() {
-        if (typeof this.props.scrollTop === 'number') {
-            this.el.scrollTop = this.props.scrollTop;
-        } else if (
-            this.props.thread._model === 'mail.channel' &&
+        if (
+            this.props.isScrollToEndOnMount &&
             this.props.messages.length > 0
         ) {
             this._scrollToLastMessage();
@@ -404,6 +402,7 @@ MessageList.defaultProps = {
     haveMessagesAuthorRedirect: false,
     haveMessagesMarkAsReadIcon: false,
     haveMessagesReplyIcon: false,
+    isScrollToEndOnMount: true,
     order: 'asc',
 };
 
@@ -432,6 +431,7 @@ MessageList.props = {
     haveMessagesAuthorRedirect: Boolean,
     haveMessagesMarkAsReadIcon: Boolean,
     haveMessagesReplyIcon: Boolean,
+    isScrollToEndOnMount: Boolean,
     isMobile: Boolean,
     messageLocalIds: {
         type: Array,
@@ -442,10 +442,6 @@ MessageList.props = {
         element: Object, // {mail.store.model.Message}
     },
     order: String, // ['asc', 'desc']
-    scrollTop: {
-        type: Number,
-        optional: true,
-    },
     selectedMessageLocalId: {
         type: String,
         optional: true,

@@ -4,9 +4,9 @@ odoo.define('mail.component.ChatWindowManagerTests', function (require) {
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
-    createAll,
     pause,
-} = require('mail.owl.test_utils');
+    start: utilsStart,
+} = require('mail.owl.testUtils');
 
 const testUtils = require('web.test_utils');
 
@@ -15,11 +15,11 @@ QUnit.module('component', {}, function () {
 QUnit.module('ChatWindowManager', {
     beforeEach() {
         utilsBeforeEach(this);
-        this.createAll = async params => {
+        this.start = async params => {
             if (this.widget) {
                 this.widget.destroy();
             }
-            let { widget } = await createAll({ ...params, data: this.data });
+            let { widget } = await utilsStart({ ...params, data: this.data });
             this.widget = widget;
         };
     },
@@ -34,7 +34,7 @@ QUnit.module('ChatWindowManager', {
 QUnit.test('initial mount', async function (assert) {
     assert.expect(1);
 
-    await this.createAll();
+    await this.start();
 
     assert.strictEqual(
         document
@@ -47,7 +47,7 @@ QUnit.test('initial mount', async function (assert) {
 QUnit.test('chat window new message: basic rendering', async function (assert) {
     assert.expect(10);
 
-    await this.createAll({
+    await this.start({
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return Promise.resolve([]);
@@ -146,7 +146,7 @@ QUnit.test('chat window new message: basic rendering', async function (assert) {
 QUnit.test('chat window new message: focused on open', async function (assert) {
     assert.expect(2);
 
-    await this.createAll({
+    await this.start({
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return Promise.resolve([]);
@@ -180,7 +180,7 @@ QUnit.test('chat window new message: focused on open', async function (assert) {
 QUnit.test('chat window new message: close', async function (assert) {
     assert.expect(1);
 
-    await this.createAll({
+    await this.start({
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return Promise.resolve([]);
@@ -219,7 +219,7 @@ QUnit.test('chat window new message: close', async function (assert) {
 QUnit.test('chat window new message: fold', async function (assert) {
     assert.expect(3);
 
-    await this.createAll({
+    await this.start({
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return Promise.resolve([]);
@@ -289,7 +289,7 @@ QUnit.test('chat window: basic rendering', async function (assert) {
         },
     });
 
-    await this.createAll({
+    await this.start({
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return Promise.resolve([{
@@ -443,7 +443,7 @@ QUnit.test('open 2 different chat windows: enough screen width', async function 
         },
     });
 
-    await this.createAll({
+    await this.start({
         mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return Promise.resolve([{
@@ -588,7 +588,7 @@ QUnit.test('open 3 different chat windows: not enough screen width', async funct
         },
     });
 
-    await this.createAll({
+    await this.start({
         initStoreStateAlteration: {
             globalWindow: {
                 innerHeight: 900,

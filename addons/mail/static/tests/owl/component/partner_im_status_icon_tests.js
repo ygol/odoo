@@ -5,9 +5,9 @@ const PartnerImStatusIcon = require('mail.component.PartnerImStatusIcon');
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
-    createStore,
     pause,
-} = require('mail.owl.test_utils');
+    start: utilsStart,
+} = require('mail.owl.testUtils');
 
 const testUtils = require('web.test_utils');
 
@@ -23,11 +23,11 @@ QUnit.module('PartnerImStatusIcon', {
             });
             await this.partnerImStatusIcon.mount(this.widget.$el[0]);
         };
-        this.createStore = async params => {
+        this.start = async params => {
             if (this.wiget) {
                 this.widget.destroy();
             }
-            let { store, widget } = await createStore({
+            let { store, widget } = await utilsStart({
                 ...params,
                 data: this.data,
             });
@@ -50,7 +50,7 @@ QUnit.module('PartnerImStatusIcon', {
 QUnit.test('initially online', async function (assert) {
     assert.expect(3);
 
-    await this.createStore();
+    await this.start();
 
     const partnerLocalId = this.store.commit('createPartner', {
         id: 7,
@@ -76,7 +76,7 @@ QUnit.test('initially online', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll(`.o_PartnerImStatusIcon_online`)
+            .querySelectorAll(`.o_PartnerImStatusIcon.o-online`)
             .length,
         1,
         "partner IM status icon should have online status rendering");
@@ -85,7 +85,7 @@ QUnit.test('initially online', async function (assert) {
 QUnit.test('initially offline', async function (assert) {
     assert.expect(1);
 
-    await this.createStore();
+    await this.start();
 
     const partnerLocalId = this.store.commit('createPartner', {
         id: 7,
@@ -97,7 +97,7 @@ QUnit.test('initially offline', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll(`.o_PartnerImStatusIcon_offline`)
+            .querySelectorAll(`.o_PartnerImStatusIcon.o-offline`)
             .length,
         1,
         "partner IM status icon should have offline status rendering");
@@ -106,7 +106,7 @@ QUnit.test('initially offline', async function (assert) {
 QUnit.test('initially away', async function (assert) {
     assert.expect(1);
 
-    await this.createStore();
+    await this.start();
 
     const partnerLocalId = this.store.commit('createPartner', {
         id: 7,
@@ -118,7 +118,7 @@ QUnit.test('initially away', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll(`.o_PartnerImStatusIcon_away`)
+            .querySelectorAll(`.o_PartnerImStatusIcon.o-away`)
             .length,
         1,
         "partner IM status icon should have away status rendering");
@@ -127,7 +127,7 @@ QUnit.test('initially away', async function (assert) {
 QUnit.test('change icon on change partner im_status', async function (assert) {
     assert.expect(4);
 
-    await this.createStore();
+    await this.start();
 
     const partnerLocalId = this.store.commit('createPartner', {
         id: 7,
@@ -139,7 +139,7 @@ QUnit.test('change icon on change partner im_status', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll(`.o_PartnerImStatusIcon_online`)
+            .querySelectorAll(`.o_PartnerImStatusIcon.o-online`)
             .length,
         1,
         "partner IM status icon should have online status rendering");
@@ -151,7 +151,7 @@ QUnit.test('change icon on change partner im_status', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll(`.o_PartnerImStatusIcon_offline`)
+            .querySelectorAll(`.o_PartnerImStatusIcon.o-offline`)
             .length,
         1,
         "partner IM status icon should have offline status rendering");
@@ -163,7 +163,7 @@ QUnit.test('change icon on change partner im_status', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll(`.o_PartnerImStatusIcon_away`)
+            .querySelectorAll(`.o_PartnerImStatusIcon.o-away`)
             .length,
         1,
         "partner IM status icon should have away status rendering");
@@ -175,7 +175,7 @@ QUnit.test('change icon on change partner im_status', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll(`.o_PartnerImStatusIcon_online`)
+            .querySelectorAll(`.o_PartnerImStatusIcon.o-online`)
             .length,
         1,
         "partner IM status icon should have online status rendering in the end");

@@ -5,23 +5,39 @@
 .o_PartnerImStatusIcon {
     display: flex;
     flex-flow: column;
-    overflow: auto;
 
-    > i {
-        font-size: 1em;
-        position: relative;
-    }
+    width: 1.5em;
+    height: 1.5em;
+    line-height: 1.5em;
+}
+
+.o_PartnerImStatusIcon_outerBackground {
+    transform: scale(1.3);
 }
 
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
 
-
-.o_PartnerImStatusIcon_away {
-    color: theme-color('warning');
+.o_PartnerImStatusIcon_innerBackground {
+    color: white;
 }
 
-.o_PartnerImStatusIcon_online {
-    color: $o-enterprise-primary-color;
+.o_PartnerImStatusIcon_icon {
+
+    &.o-away {
+        color: theme-color('warning');
+    }
+
+    &.o-offline {
+        color: gray('700');
+    }
+
+    &.o-online {
+        color: $o-enterprise-primary-color;
+    }
 }
+
+
+
+

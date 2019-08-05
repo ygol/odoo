@@ -4,11 +4,15 @@
 
 .o_Composer {
     display: grid;
-    grid-template-columns: [sidebar] auto [core] 1fr;
-    grid-template-rows: [header] auto [main] 1fr [footer] auto;
+    grid-template-areas:
+        "sidebar-header core-header"
+        "sidebar-main core-main"
+        "sidebar-footer core-footer";
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto 1fr auto;
 
     &.o-has-current-partner-avatar {
-        grid-template-columns: [sidebar] 50px [core] 1fr;
+        grid-template-columns: 50px 1fr;
         padding: 0px 13px 10px 3px;
 
         &:not(.o-has-footer) {
@@ -37,20 +41,17 @@
 }
 
 .o_Composer_coreFooter {
-    grid-column-start: core;
-    grid-row-start: footer;
+    grid-area: core-footer;
     margin: 10px;
 }
 
 .o_Composer_coreHeader {
-    grid-column-start: core;
-    grid-row-start: header;
+    grid-area: core-header;
     margin: 10px;
 }
 
 .o_Composer_coreMain {
-    grid-column-start: core;
-    grid-row-start: main;
+    grid-area: core-main;
     min-width: 0;
     display: flex;
     flex-wrap: nowrap;
@@ -74,18 +75,13 @@
 }
 
 .o_Composer_sidebarMain {
-    grid-column-start: sidebar;
-    grid-row-start: main;
+    grid-area: sidebar-main;
     justify-self: center;
 }
 
 .o_Composer_textInput {
     flex: 1 1 auto;
     align-self: stretch;
-
-    &.o_Composer_textInput-mobile {
-        padding: 5px 0;
-    }
 }
 
 .o_Composer_toolButton {
@@ -138,7 +134,7 @@
 // ------------------------------------------------------------------
 
 .o_Composer {
-    background-color: lighten(gray('300'), 5%);
+    background-color: lighten(gray('300'), 7%);
 
     &.o-has-current-partner-avatar {
 

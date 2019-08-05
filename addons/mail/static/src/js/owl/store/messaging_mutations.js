@@ -18,6 +18,17 @@ const mutations = {
      * @param {Object} param0
      * @param {function} param0.commit
      * @param {Object} param0.state
+     */
+    closeAllChatWindows({ commit, state }) {
+        const chatWindowLocalIds = state.chatWindowManager.chatWindowLocalIds;
+        for (const chatWindowLocalId of chatWindowLocalIds) {
+            commit('closeChatWindow', chatWindowLocalId);
+        }
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.state
      * @param {string} chatWindowLocalId either 'new_message' or thread local Id, a
      *   valid Id in `chatWindowLocalIds` list of chat window manager.
      */
@@ -51,15 +62,7 @@ const mutations = {
         if (!state.discuss.isOpen) {
             return;
         }
-        Object.assign(state.discuss, {
-            activeMobileNavbarTabId: 'mailbox',
-            activeThreadLocalId: undefined,
-            domain: [],
-            isOpen: false,
-            stringifiedDomain: '[]',
-            targetThreadCounter: 0,
-            targetThreadLocalId: null,
-        });
+        state.discuss.isOpen = false;
         commit('_computeChatWindows');
     },
     /**
@@ -168,6 +171,7 @@ const mutations = {
      * @param {string} param1.customer_email_status
      * @param {string} param1.date
      * @param {string} param1.email_from
+     * @param {integer[]} param1.history_partner_ids
      * @param {integer} param1.id
      * @param {boolean} [param1.isTransient=false]
      * @param {boolean} param1.is_discussion
@@ -210,6 +214,7 @@ const mutations = {
             customer_email_status,
             date,
             email_from,
+            history_partner_ids,
             id,
             isTransient=false,
             is_discussion,
@@ -241,6 +246,7 @@ const mutations = {
             customer_email_status,
             date,
             email_from,
+            history_partner_ids,
             id,
             isTransient,
             is_discussion,
@@ -671,9 +677,18 @@ const mutations = {
         for (const cacheLocalId of Object.values(inbox.cacheLocalIds)) {
             for (const messageId of message_ids) {
                 const messageLocalId = `mail.message_${messageId}`;
+                const history = state.threads['mail.box_history'];
                 commit('_unlinkMessageFromThreadCache', {
                     messageLocalId,
                     threadCacheLocalId: cacheLocalId,
+                });
+                commit('_linkMessageToThread', {
+                    messageLocalId,
+                    threadLocalId: 'mail.box_history',
+                });
+                commit('linkMessageToThreadCache', {
+                    messageLocalId,
+                    threadCacheLocalId: history.cacheLocalIds['[]'],
                 });
             }
         }
@@ -1002,7 +1017,16 @@ const mutations = {
             resetDiscussDomain=false
         }={}
     ) {
-        if (state.discuss.isOpen) {
+        if (
+            (
+                !state.isMobile &&
+                state.discuss.isOpen
+            ) ||
+            (
+                state.isMobile &&
+                state.threads[threadLocalId]._model === 'mail.box'
+            )
+        ) {
             if (resetDiscussDomain) {
                 commit('setDiscussDomain', []);
             }
@@ -1012,7 +1036,9 @@ const mutations = {
                 mode: chatWindowMode,
             });
         }
-        commit('closeMessagingMenu');
+        if (!state.isMobile) {
+            commit('closeMessagingMenu');
+        }
     },
     /**
      * @param {Object} param0
@@ -1038,16 +1064,28 @@ const mutations = {
     },
     /**
      * @param {Object} param0
+     * @param {function} param0.commit
      * @param {Object} param0.state
      * @param {string} tabId
      */
-    setDiscussActiveMobileNavbarTab({ state }, tabId) {
-        state.discuss.activeMobileNavbarTabId = tabId;
-        if (state.discuss.activeMobileNavbarTabId === 'mailbox') {
-            state.discuss.activeThreadLocalId = 'mail.box_inbox';
-        } else {
-            state.discuss.activeThreadLocalId = null;
+    setDiscussActiveMobileNavbarTab({ commit, state }, tabId) {
+        if (state.discuss.activeMobileNavbarTabId === tabId) {
+            return;
         }
+        state.discuss.activeMobileNavbarTabId = tabId;
+        if (tabId === 'mailbox') {
+            commit('setDiscussActiveThread', 'mail.box_inbox');
+        }
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.state
+     * @param {string} threadLocalId
+     */
+    setDiscussActiveThread({ commit, state }, threadLocalId) {
+        state.discuss.activeThreadLocalId = threadLocalId;
+        commit('setDiscussTargetThread', threadLocalId);
     },
     /**
      * @param {Object} param0
@@ -1472,6 +1510,7 @@ const mutations = {
             author_id,
             channel_ids,
             date,
+            history_partner_ids,
             id,
             model,
             needaction_partner_ids,
@@ -1494,6 +1533,12 @@ const mutations = {
             starred_partner_ids.includes(currentPartner.id)
         ) {
             threadLocalIds.push('mail.box_starred');
+        }
+        if (
+            history_partner_ids &&
+            history_partner_ids.includes(currentPartner.id)
+        ) {
+            threadLocalIds.push('mail.box_history');
         }
         if (model && res_id) {
             const originThreadLocalId = `${model}_${res_id}`;
@@ -1698,6 +1743,11 @@ const mutations = {
             counter: starred_counter,
             id: 'starred',
             name: _t("Starred"),
+        });
+        commit('createThread', {
+            _model: 'mail.box',
+            id: 'history',
+            name: _t("History"),
         });
         if (is_moderator) {
             commit('createThread', {
@@ -1970,8 +2020,7 @@ const mutations = {
         if (state.discuss.activeThreadLocalId === threadLocalId) {
             return;
         }
-        state.discuss.activeThreadLocalId = threadLocalId;
-        commit('setDiscussTargetThread', threadLocalId);
+        commit('setDiscussActiveThread', threadLocalId);
     },
     /**
      * @private

@@ -24,12 +24,13 @@
                 chatWindowLocalId="data.chatWindowLocalId"
                 dockDirection="direction"
                 dockOffset="data.offset"
+                isFullscreen="props.isMobile"
                 hasCloseAsBackButton="props.isMobile"
                 hasShiftLeft="!props.isMobile and
                     data_index !== 0"
                 hasShiftRight="!props.isMobile and
                     chatWindowShiftRight(data_index)"
-                isDocked="true"
+                isDocked="!props.isMobile"
                 isExpandable="!props.isMobile and
                     data.chatWindowLocalId !== 'new_message'"
                 t-key="data.chatWindowLocalId"

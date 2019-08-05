@@ -1,7 +1,7 @@
 odoo.define('mail.chatter_tests', function (require) {
 "use strict";
 
-var mailTestUtilsOwl = require('mail.owl.test_utils');
+var mailTestUtilsOwl = require('mail.owl.testUtils');
 
 var core = require('web.core');
 var FormRenderer = require('web.FormRenderer');

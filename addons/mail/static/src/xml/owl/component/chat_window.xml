@@ -6,10 +6,10 @@
         owl="1"
         tabindex="0"
         t-att-class="{
-            'o-docked': props.isDocked,
             'o-focused': state.focused,
             'o-folded': isFolded(),
             'o-fullscreen': props.isFullscreen,
+            'o-mobile': props.isMobile,
             'o-new-message': props.chatWindowLocalId === 'new_message',
         }"
         t-att-data-chat-window-local-id="props.chatWindowLocalId"

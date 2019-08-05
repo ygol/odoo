@@ -81,6 +81,12 @@
             <div
                 class="
                     fa
+                    fa-history
+                    o_ThreadIcon_mailboxHistory"
+                t-elif="props.thread.localId === 'mail.box_history'"/>
+            <div
+                class="
+                    fa
                     fa-envelope
                     o_ThreadIcon_mailboxModeration"
                 t-elif="props.thread.localId === 'mail.box_moderation'"/>
