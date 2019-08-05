@@ -161,6 +161,7 @@ var BaseRange = class extends we3.AbstractPlugin {
      * @param {Boolean} [options.moveLeft] true if a movement is initiated from right to left
      * @param {Boolean} [options.moveRight] true if a movement is initiated from left to right
      * @param {Boolean} [options.muteTrigger]
+     * @param {Boolean} [options.muteDOMRange]
      * @returns {Object|undefined} {range: {WrappedRange}, focus: {ArchNode}}
      */
     setRange (points, options) {

@@ -411,10 +411,11 @@ var BaseArch = class extends we3.AbstractPlugin {
                 insertIntoArchNode = range.scArch;
                 offset = range.so;
             } else {
-                insertIntoArchNode = this.removeFromRange({
+                var res = this.removeFromRange({
                     doNotRemoveEmpty: true,
                 });
-                offset = 0;
+                insertIntoArchNode = res.archNode;
+                offset = res.offset;
             }
         }
         var index = this._changes.length;
@@ -482,12 +483,31 @@ var BaseArch = class extends we3.AbstractPlugin {
      * @private
      * @param {Object} [options]
      * @param {Object} [options.doNotRemoveEmpty] true to prevent the removal of empty nodes
-     * @returns {VirtualText} the VirtualText node inserted at the beginning of the range
+     * @returns {Object} {archNode, offset} the VirtualText node inserted at the beginning of the range or begin archNode
      */
     removeFromRange (options) {
         var range = this.dependencies.BaseRange.getRange();
         if (range.isCollapsed()) {
-            return;
+            return {
+                archNode: range.scArch,
+                offset: range.so,
+            };
+        }
+
+        if (range.scID === range.ecID && range.scArch.isText() && range.so || range.eo < range.scArch.length()) {
+            var before = range.scArch.nodeValue.slice(0, range.so);
+            var after = range.scArch.nodeValue.slice(range.eo);
+            if (after[0] === ' ' && (!before.length || before[before.length - 1] === ' ')) {
+                before = '\u00A0' + before.slice(1);
+            } else if (!after.length && before[before.length - 1] === ' ') {
+                before = before.slice(0, -1) + '\u00A0';
+            }
+            range.scArch.nodeValue = before + after;
+            this._changeArch(range.scArch, range.so);
+            return {
+                archNode: range.scArch,
+                offset: range.so,
+            };
         }
 
         options = options || {};
@@ -540,7 +560,10 @@ var BaseArch = class extends we3.AbstractPlugin {
 
         this._removeAllVirtualText(virtualTextNodeBegin);
 
-        return virtualTextNodeBegin;
+        return {
+            archNode: virtualTextNodeBegin,
+            offset: 0,
+        };
     }
     /**
      * Set a technical data on an ArchNode. The technical data are never

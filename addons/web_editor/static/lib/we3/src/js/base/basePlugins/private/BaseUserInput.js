@@ -103,7 +103,7 @@ var BaseUserInput = class extends we3.AbstractPlugin {
         setTimeout(this._tickAfterUserInteraction.bind(this));
         return this._currentEvent;
     }
-    _eventsNormalization (param) {
+    _eventsNormalization (param, targets) {
         var ev = {
             preventDefault: function () {
                 param.defaultPrevented = true;
@@ -124,11 +124,7 @@ var BaseUserInput = class extends we3.AbstractPlugin {
             ev.data = param.data;
             ev.targetID = param.targetID;
         } else if (param.type === 'composition') {
-            ev.data = param.data;
-            // previous.update = audroid update for each char
-            // param.data[0] !== ' ' = audio insertion
-            ev.previous = param.data[0] !== ' ' && param.previous && param.previous.update ? param.previous.data : false;
-            ev.name = 'composition';
+            this._eventsNormalizationComposition(ev, param, targets);
         } else {
             ev.shiftKey = param.shiftKey;
             ev.ctrlKey = param.ctrlKey;
@@ -143,11 +139,7 @@ var BaseUserInput = class extends we3.AbstractPlugin {
                 ev.name = 'Enter';
             } else if ((!param.ctrlKey && !param.altKey || param.inputType === 'insertText') &&
                     (param.data && param.data.length === 1 || param.key && param.key.length === 1 || param.key === 'Space')) {
-                ev.data = param.data && param.data.length === 1 ? param.data : param.key;
-                if (param.data === 'Space') {
-                    param.data = ' ';
-                }
-                ev.name = 'char';
+                this._eventsNormalizationComposition(ev, param, targets);
             }
         }
 
@@ -160,14 +152,122 @@ var BaseUserInput = class extends we3.AbstractPlugin {
 
         return ev;
     }
-    async _eventsdDispatcher (ev, mutationsList) {
+    _eventsNormalizationComposition (ev, param, targets) {
+        var rangeDOM = this.dependencies.BaseRange.getRangeFromDOM();
+
+        ev.data = param.data;
+        // ev.previous = param.data[0] !== ' ' && param.previous && param.previous.update ? param.previous.data : false;
+        ev.range = this.dependencies.BaseRange.toJSON();
+
+        var ancestor;
+        if (targets.length > 0) {
+            ancestor = this._getCommonAncestor(targets);
+        } else {
+            var range = this.dependencies.BaseRange.getRange();
+            ancestor = range.scArch === range.ecArch ? range.scArch : range.scArch.commonAncestor(range.ecArch);
+        }
+        var DOM = this.dependencies.BaseRenderer.getElement(ancestor.id);
+
+        var textDOM = this.editable.contains(DOM) ? DOM.textContent.replace(/\u00A0/g, ' ') : '';
+        var start = 0;
+        var end = textDOM.length;
+
+        function compareStartText (text) {
+            for (var k = 0; k < text.length; k++) {
+                if (text[k] !== textDOM[start]) {
+                    return k;
+                }
+                start++;
+            }
+            return -1;
+        }
+        function compareEndText (text, min) {
+            for (var k = text.length - 1; k >= min ; k--) {
+                if (!end) {
+                    return -1;
+                }
+                if (text[k] !== textDOM[end - 1]) {
+                    return k + 1;
+                }
+                if (start === end) {
+                    return k;
+                }
+                end--;
+            }
+            return -1;
+        }
+
+        var texts = [];
+        if (ancestor.isText()) {
+            texts.push(ancestor);
+        } else {
+            ancestor.nextUntil(function (next) {
+                if (next.isText()) {
+                    texts.push(next);
+                }
+            }, {
+                leafToLeaf: true,
+                doNotLeaveNode: true,
+                doNotInsertVirtual: true
+            });
+        }
+
+        // find start node for update
+        for (var s = 0; s < texts.length; s++) {
+            var text = texts[s];
+            var offset = compareStartText(text.nodeValue.replace(/\u00A0/g, ' '));
+
+            if (s === texts.length - 1) {
+                ev.range.scID = text.id;
+                ev.range.so = offset >= 0 ? offset : text.length();
+                break;
+            }
+            if (offset !== -1) {
+                ev.range.scID = text.id;
+                ev.range.so = offset;
+                break;
+            }
+        }
+
+        // find end node for update
+        for (var k = texts.length - 1; k >= s; k--) {
+            var text = texts[k];
+            var offset = compareEndText(text.nodeValue.replace(/\u00A0/g, ' '), ev.range.scID === text.id ? start : 0);
+
+            if (offset !== -1) {
+                ev.range.ecID = text.id;
+                ev.range.eo = offset >= 0 ? offset : (ev.range.scID === ev.range.ecID ? ev.range.so : text.length());
+                break;
+            } else if (k === s) {
+                var last = texts[texts.length - 1];
+                ev.range.ecID = last.id;
+                ev.range.eo = last.length();
+                break;
+            }
+        }
+
+        var insert = textDOM.slice(start, end);
+        if (insert.length) {
+            ev.name = 'composition';
+            ev.insert = insert;
+            ev.offset = rangeDOM.eo;
+        } else {
+            ev.name = 'Backspace';
+            if (ev.range.scID === ev.range.ecID && ev.range.so === ev.range.eo) {
+                delete ev.range;
+            } else {
+                ev.offset = ev.range.so;
+            }
+        }
+    }
+    async _eventsdDispatcher (ev, targets) {
         this.dependencies.UserInput.trigger(ev.name, ev);
 
         if (ev.defaultPrevented && ev.name !== 'move') {
-            return this._redrawToRemoveArtefact(mutationsList);
+            return this._redrawToRemoveArtefact(targets);
         }
 
-        if (ev.name === 'composition') {
+        if (ev.name === 'composition' || ev.name === 'Backspace' && ev.range) {
             await this._pressInsertComposition(ev);
         } else if (ev.name === 'Backspace') {
             await this._removeSide(true);
@@ -177,14 +277,12 @@ var BaseUserInput = class extends we3.AbstractPlugin {
             await this._pressInsertTab(ev);
         } else if (ev.name === 'Enter') {
             await this._pressInsertEnter(ev);
-        } else if (ev.name === 'char') {
-            await this._pressInsertChar(ev);
         } else if (ev.name === 'move') {
             await this._pressMove(ev);
         }
 
         if (ev.name !== 'move') {
-            await this._redrawToRemoveArtefact(mutationsList);
+            await this._redrawToRemoveArtefact(targets);
         }
     }
     _findOffsetInsertion (text, offset, insert) {
@@ -204,6 +302,53 @@ var BaseUserInput = class extends we3.AbstractPlugin {
         } while (globalIndex < text.length);
 
         return -1;
+    }
+    _getCommonAncestor (targets) {
+        var BaseRenderer = this.dependencies.BaseRenderer;
+        var BaseArch = this.dependencies.BaseArch;
+        var ancestor = null;
+        var target;
+        var id;
+        var archNode;
+        targets = targets.slice();
+        while (target = targets.pop()) {
+            while (target && target !== this.editor && !(id = BaseRenderer.getID(target))) {
+                target = target.parentNode;
+            }
+            if (!id) {
+                continue;
+            }
+            archNode = BaseArch.getArchNode(id);
+            if (!ancestor) {
+                ancestor = archNode;
+                continue;
+            }
+            if (ancestor !== archNode && !ancestor.contains(archNode)) {
+                ancestor = ancestor.commonAncestor(archNode);
+            }
+        }
+        return ancestor;
+    }
+    _getTargetMutation (mutationsList) {
+        var targets = [];
+        mutationsList.forEach(function (mutation) {
+            if (mutation.type === 'characterData' && targets.indexOf(mutation.target) === -1) {
+                targets.push(mutation.target);
+            }
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach(function (target) {
+                    if (targets.indexOf(target) === -1) {
+                        targets.push(target);
+                    }
+                });
+                mutation.removedNodes.forEach(function (target) {
+                    if (targets.indexOf(target) === -1) {
+                        targets.push(target);
+                    }
+                });
+            }
+        });
+        return targets;
     }
     _isOffsetLeftEdge (range) {
         var pointArch = this._skipVirtual({
@@ -298,114 +443,33 @@ var BaseUserInput = class extends we3.AbstractPlugin {
      * @private
      * @param {object} param
      */
-    _pressInsertChar (param) {
-        if (param.data === ' ') {
-            return this.dependencies.BaseArch.insert(this.utils.char('nbsp'));
-        } else if (param.data.charCodeAt(0) === 10) {
-            return this.dependencies.BaseArch.insert('<br/>');
-        } else {
-            return this.dependencies.BaseArch.insert(param.data);
-        }
-    }
-    /**
-     * @private
-     * @param {object} param
-     */
     _pressInsertComposition (param) {
         var self = this;
-        var BaseArch = this.dependencies.BaseArch;
-        var BaseRenderer = this.dependencies.BaseRenderer;
-        var BaseRange = this.dependencies.BaseRange;
+        return this.dependencies.BaseArch.do(function () {
+            self.dependencies.BaseRange.setRange(param.range, {
+                muteTrigger: true,
+                muteDOMRange: true,
+            });
+            var res = self.dependencies.BaseArch.removeFromRange();
+            res.archNode.nodeValue = res.archNode.nodeValue.replace(/^\s|\s$/gi, '\u00A0');
 
-        return BaseArch.do(function () {
-            var range = BaseRange.getRange();
-            var archNode = range.scArch;
-            var arch = archNode.ancestor('isFormatNode') || archNode.ancestor('isUnbreakable');
-            var formatNode = BaseRenderer.getElement(arch);
 
-            if (!formatNode) {
-                return false; // default behavior of range from `Arch._processChanges`
-            }
-
-            var lastTextNode;
-            var lastTextNodeOldValue;
-            var newArch = BaseArch.parse(formatNode.cloneNode(true));
-            newArch.nextUntil(function (archNode) {
-                if (!archNode.isText()) {
-                    return;
+            if (param.insert && param.insert.length) {
+                var text = self.dependencies.BaseArch.createArchNode(null, null, param.insert);
+                res.archNode.insert(text, res.offset);
+            } else if (res.archNode.isVirtual() || !res.archNode.length()) {
+                var next = res.archNode.removeLeft(0);
+                if (next) {
+                    next.lastLeaf().deleteEdge(true, {
+                        doNotBreakBlocks: true,
+                    });
                 }
-                var target = arch.applyPath(archNode.path(newArch));
-                if (target && target.isText()) {
-                    lastTextNodeOldValue = target.nodeValue;
-                    lastTextNode = target;
-
-                    if (range.scID === lastTextNode.id && param.previous) {
-                        // eg: 'paaa' from replacement of 'a' in 'aa' ==> must be 'paa'
-                        var previous = param.previous ? param.previous.replace(/\u00A0/g, ' ') : '';
-                        var beforeRange = lastTextNodeOldValue.replace(/\u00A0/g, ' ').slice(0, range.so);
-                        var afterRange = lastTextNodeOldValue.replace(/\u00A0/g, ' ').slice(range.so);
-                        if (previous && beforeRange.slice(-previous.length) === previous) {
-                            beforeRange = beforeRange.slice(0, -previous.length);
-                        }
-                        archNode.nodeValue = beforeRange + param.data + afterRange;
-                    }
-
-                    target.setNodeValue(archNode.nodeValue);
-                } else if (target && target.isBR()) {
-                    var res = target.insert(archNode.params.create(null, null, archNode.nodeValue));
-                    lastTextNodeOldValue = archNode.nodeValue;
-                    lastTextNode = res[0];
-                }
-            }, {doNotLeaveNode: true});
-
-            if (lastTextNode) {
-                var lastTextNodeNewValue = lastTextNode.nodeValue.replace(/\u00A0/g, ' ');
-                var newOffset = lastTextNodeNewValue.length;
-
-                param.data = param.data.replace(/\u00A0/g, ' ');
-                if (lastTextNode.id === range.scID) {
-                    var offset = 0;
-                    if (lastTextNode.id === range.scID) {
-                        offset = range.so;
-                        if (lastTextNodeOldValue.length > lastTextNodeNewValue.length) {
-                            offset -= lastTextNodeOldValue.length - lastTextNodeNewValue.length;
-                            if (offset < 0) {
-                                offset = 0;
-                            }
-                        }
-                    }
-
-                    newOffset = self._findOffsetInsertion(lastTextNodeNewValue, offset, param.data);
-                    newOffset = newOffset !== -1 ? newOffset : offset;
-
-                    if (lastTextNodeNewValue[newOffset] === ' ') {
-                        newOffset++;
-                    }
-                }
-
-                newOffset = Math.min(newOffset, lastTextNode.nodeValue.length);
-                return {
-                    scID: lastTextNode.id,
-                    so: newOffset,
-                };
+                return false;
             }
-
-            var lastLeaf = formatNode.lastLeaf();
-            if (lastLeaf) {
-                return {
-                    scID: lastLeaf.id,
-                    so: lastLeaf.length(),
-                };
-            }
-
-            var rangeDOM = BaseRange.getRangeFromDOM();
-            if (rangeDOM && rangeDOM.scID && rangeDOM.scArch.length() <= rangeDOM.so) {
-                return {
-                    scID: rangeDOM.scID,
-                    so: rangeDOM.so,
-                };
-            }
-            return false; // default behavior of range from `Arch._processChanges`
+            return {
+                scID: res.archNode.id,
+                so: res.offset,
+            };
         });
     }
     /**
@@ -467,30 +531,13 @@ var BaseUserInput = class extends we3.AbstractPlugin {
             return this._setRangeFromDOM();
         }
     }
-    _redrawToRemoveArtefact (mutationsList) {
+    _redrawToRemoveArtefact (targets) {
         var BaseRenderer = this.dependencies.BaseRenderer;
         var BaseRange = this.dependencies.BaseRange;
+        var BaseArch = this.dependencies.BaseArch;
 
         // mark as dirty the new nodes to re-render it
         // because the browser can split other than our arch and we must fix the errors
-        var targets = [];
-        mutationsList.forEach(function (mutation) {
-            if (mutation.type === 'characterData' && targets.indexOf(mutation.target) === -1) {
-                targets.push(mutation.target);
-            }
-            if (mutation.type === 'childList') {
-                mutation.addedNodes.forEach(function (target) {
-                    if (targets.indexOf(target) === -1) {
-                        targets.push(target);
-                    }
-                });
-                mutation.removedNodes.forEach(function (target) {
-                    if (targets.indexOf(target) === -1) {
-                        targets.push(target);
-                    }
-                });
-            }
-        });
 
         targets.forEach(function (target) {
             var id = BaseRenderer.getID(target);
@@ -531,13 +578,14 @@ var BaseUserInput = class extends we3.AbstractPlugin {
         range = this._voidoidSelectToWE3(range);
         this.dependencies.BaseRange.setRange(range, options);
     }
-    async _tickAfterUserInteraction () {
+    _tickAfterUserInteraction () {
         var param = this._currentEvent;
         param.previous = this._previousEvent;
         this._previousEvent = param;
         this._currentEvent = null;
-        var ev = this._eventsNormalization(param);
-        await this._eventsdDispatcher(ev, param.mutationsList);
+        var targets = this._getTargetMutation(param.mutationsList);
+        var ev = this._eventsNormalization(param, targets);
+        return this._eventsdDispatcher(ev, targets);
     }
     /**
      * Remove to the side of the current range.
@@ -559,8 +607,8 @@ var BaseUserInput = class extends we3.AbstractPlugin {
                     });
                 }
              } else {
-                var virtualText = self.dependencies.BaseArch.removeFromRange();
-                virtualText.parent.deleteEdge(false, {
+                var res = self.dependencies.BaseArch.removeFromRange();
+                res.archNode.parent.deleteEdge(false, {
                     keepRight: true,
                 });
             }
@@ -645,11 +693,13 @@ var BaseUserInput = class extends we3.AbstractPlugin {
             param.update = param.update || param.type !== 'composition';
             param.type = 'composition';
             param.data = e.data;
-        } else if (e.inputType === 'insertParagraph' && param.key === 'Unidentified') {
+        } else if (param.key === 'Unidentified' && e.inputType === 'insertParagraph') {
             param.key = 'Enter';
-        } else if (e.inputType === 'deleteContentBackwards' && param.key === 'Unidentified') {
+        } else if (param.key === 'Unidentified' && (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteWordBackward')) {
+            param.type = 'composition';
             param.key = 'Backspace';
-        } else if (e.inputType === 'deleteContentForward' && param.key === 'Unidentified') {
+        } else if (param.key === 'Unidentified' && (e.inputType === 'deleteContentForward' || e.inputType === 'deleteWordForward')) {
+            param.type = 'composition';
             param.key = 'Delete';
         } else if (!param.data) {
             param.data = e.data;

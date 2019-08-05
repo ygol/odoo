@@ -207,7 +207,7 @@ we3.WrappedRange = class we3 {
      * @returns {Boolean}
      */
     isCollapsed () {
-        return this.scID === this.ecID && this.so === this.eo;
+        return (this.scID === this.ecID || !this.scID && this.sc === this.ec) && this.so === this.eo;
     }
     /**
      * Move the range to the given points.

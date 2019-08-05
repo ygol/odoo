@@ -135,7 +135,9 @@ we3.ArchNodeText = class extends we3.ArchNode {
             console.warn("can not update a not editable node");
             return [];
         }
-
+        if (this.nodeValue === nodeValue) {
+            return [];
+        }
         this.nodeValue = nodeValue;
         this.params.change(this, nodeValue.length);
         return [];
