@@ -16,6 +16,7 @@ from sales order. It adds sales name and sales Reference on production order.
     'depends': ['mrp', 'sale_stock'],
     'data': [
         'security/ir.model.access.csv',
+        'views/sale_order_view.xml'
     ],
     'demo': [],
     'installable': True,

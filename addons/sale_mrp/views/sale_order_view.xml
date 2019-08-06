@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="view_order_form_inherit_sale_mrp2" model="ir.ui.view">
+        <field name="name">sale.order.line.tree.sale.mrp</field>
+        <field name="inherit_id" ref="sale_stock.view_order_form_inherit_sale_stock_qty"/>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <xpath expr="//page/field[@name='order_line']/tree/field[@name='qty_to_deliver']" position="after">
+                <field name="bom_count" invisible="1"/>
+            </xpath>
+            <xpath expr="//page/field[@name='order_line']/tree/widget[@name='qty_at_date_widget']" position="attributes" >
+                <attribute name="attrs">
+                    {'invisible': ['|', '&amp;', ('product_type', '!=', 'product'), ('bom_count', '=', 0), ('qty_to_deliver', '&lt;=', 0)]}
+                </attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

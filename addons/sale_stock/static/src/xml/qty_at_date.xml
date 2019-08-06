@@ -1,0 +1,52 @@
+<templates>
+    <div t-name="sale_stock.qtyAtDate">
+        <div t-att-class="!widget.data.id ? 'd-none' : ''">
+            <t t-if="widget.data.virtual_available_at_date &lt; widget.data.qty_to_deliver and !widget.data.is_mto">
+                <a class="fa fa-info-circle text-danger"/>
+            </t>
+            <t t-else="">
+                <a class="fa fa-info-circle text-primary"/>
+            </t>
+        </div>
+    </div>
+    <div t-name="sale_stock.QtyDetailDialog">
+        <table class="col-10">
+            <tr>
+                <td><h5><b>Delivery Date</b></h5></td>
+                <td><t t-esc="data.delivery_datetime"/></td>
+            </tr>
+            <t t-if="!data.is_mto">
+                <tr>
+                    <td><h5><b>Forecasted Quantity at Delivery Date</b></h5></td>
+                    <td><t t-esc='data.virtual_available_at_date'/>
+                        <label><t t-esc='data.product_uom.data.display_name'/></label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Quantity On Hand Today</td>
+                    <td><t t-esc='data.qty_available_today'/>
+                        <label><t t-esc='data.product_uom.data.display_name'/></label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Quantity Available Today (On Hand - Reserved)</td>
+                    <td><t t-esc='data.free_qty_today'/>
+                        <label><t t-esc='data.product_uom.data.display_name'/></label>
+                    </td>
+                </tr>
+            </t>
+            <t t-else="">
+                <tr>
+                    <td>
+                        This product is replenished on demand.
+                    </td>
+                </tr>
+            </t>
+        </table>
+        <button class="btn btn-link action_open_forecast"
+            type="button">
+            <i class="fa fa-fw o_button_icon fa-arrow-right"></i>
+            Access the Detailed Forecast
+        </button>
+    </div>
+</templates>

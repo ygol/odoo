@@ -8,6 +8,18 @@ from odoo.tools import float_compare, float_round
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
+    bom_count = fields.Integer(related='product_id.bom_count')
+
+    def _get_forecastable_lines(self):
+        """ Filter so lines that are eligible to get qty_at_date value
+        (storable product or kit product) """
+        manufactured_lines = self.filtered(
+            lambda l: l.bom_count > 0 and
+            float_compare(l.qty_to_deliver, 0, precision_rounding=l.product_id.uom_id.rounding) > 0
+        )
+        res = super(SaleOrderLine, self)._get_forecastable_lines()
+        return res | manufactured_lines
+
     def _compute_qty_delivered(self):
         super(SaleOrderLine, self)._compute_qty_delivered()
         for order_line in self:
@@ -50,44 +62,6 @@ class SaleOrderLine(models.Model):
                     qty = from_uom._compute_quantity(qty, to_uom)
                 components[product] = {'qty': qty, 'uom': to_uom.id}
         return components
-
-    def _check_availability(self, product_id):
-        """ If the 'product_id' is a kit, this method check if every component's
-        availability and catch every warning returned in order to merge them in a single
-        comprehensive warning
-        """
-        bom_kit = self.env['mrp.bom']._bom_find(product=product_id, bom_type='phantom')
-        if not bom_kit:
-            return super(SaleOrderLine, self)._check_availability(product_id)
-
-        kit = product_id
-        kit_qty = self.product_uom._compute_quantity(self.product_uom_qty, self.product_id.uom_id)
-
-        # We check if we need to display the quantities of each missing components for all warehouses
-        kit_by_wh = self.product_id.with_context(warehouse=self.order_id.warehouse_id.id)
-        precision = self.env['decimal.precision'].precision_get('Product Unit of Measure')
-        if float_compare(kit_by_wh.virtual_available, kit_qty, precision_digits=precision) != -1:
-            return {}
-        ignore_warehouse = float_compare(kit.virtual_available, kit_qty, precision_digits=precision) != -1
-
-        message = ''
-        boms, bom_sub_lines = bom_kit.explode(kit, kit_qty)
-        for bom_line, bom_line_data in bom_sub_lines:
-            component = bom_line.product_id
-            component_uom_qty = bom_line_data['qty']
-            component_qty = bom_line.product_uom_id._compute_quantity(component_uom_qty, bom_line.product_id.uom_id)
-            component_warning = self._check_availability_warning(component, component_qty, ignore_warehouse=ignore_warehouse)
-            if component_warning:
-                message += component_warning['warning']['message'] + '\n'
-
-        warning = {}
-        if message:
-            warning_mess = {
-                'title': _('Not enough inventory!'),
-                'message': message
-            }
-            warning = {'warning': warning_mess}
-        return warning
 
     def _get_qty_procurement(self, previous_product_uom_qty=False):
         self.ensure_one()

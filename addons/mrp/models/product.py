@@ -64,6 +64,17 @@ class ProductProduct(models.Model):
         for product in self:
             product.used_in_bom_count = self.env['mrp.bom'].search_count([('bom_line_ids.product_id', '=', product.id)])
 
+    def get_components(self):
+        """ Return the components list ids in case of kit product.
+        Return the product itself otherwise"""
+        self.ensure_one()
+        bom_kit = self.env['mrp.bom']._bom_find(product=self, bom_type='phantom')
+        if bom_kit:
+            boms, bom_sub_lines = bom_kit.explode(self, 1)
+            return components = [bom_line.product_id.id for bom_line, data in bom_sub_lines if bom_line.product_id.type == 'product']
+        else:
+            return super(ProductProduct, self).get_components()
+
     def action_used_in_bom(self):
         self.ensure_one()
         action = self.env.ref('mrp.mrp_bom_form_action').read()[0]
