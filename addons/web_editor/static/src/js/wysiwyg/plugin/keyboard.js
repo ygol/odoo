@@ -15,7 +15,6 @@ var keycode = ({
     '13': 'ENTER',
     '46': 'DELETE',
 });
-var iPhone = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 
 var KeyboardPlugin = AbstractPlugin.extend({
@@ -1050,23 +1049,6 @@ var KeyboardPlugin = AbstractPlugin.extend({
             this._preventTextInEditableDiv();
             this.context.invoke('editor.saveRange');
             this.context.invoke('editor.afterCommand');
-
-            if (iPhone) {
-                // force reload autocomplete
-                var range = this.context.invoke('editor.createRange');
-                var $input = $('<input/>', {
-                    type: 'text',
-                    css: {
-                        'position': 'fixed',
-                        'top': '50%',
-                        'transform': 'translateY(-50%)',
-                        'z-index': '-1',
-                    },
-                }).appendTo('body').focus();
-                this.editable.focus();
-                range.select();
-                $input.remove();
-            }
         }
         return handled;
     },
@@ -1231,15 +1213,17 @@ var KeyboardPlugin = AbstractPlugin.extend({
         if (!text) {
             return;
         }
-        if (text.length > 1 && text[0] !== ' ' && text[0] !== '\u00A0') {
-            if (iPhone) {
-                text = ' ' + text;
-            }
+        if (text === 'Spacebar') {
+            text = ' ';
         }
         this.context.invoke('HelperPlugin.insertTextInline', text);
     },
 });
 
+var iPhone = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+if (iPhone) {
+    KeyboardPlugin = AbstractPlugin.extend({});
+}
 
 registry.add('KeyboardPlugin', KeyboardPlugin);
 
