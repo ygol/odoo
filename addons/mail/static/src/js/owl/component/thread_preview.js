@@ -1,6 +1,7 @@
 odoo.define('mail.component.ThreadPreview', function (require) {
 'use strict';
 
+const MessageAuthorPrefix = require('mail.component.MessageAuthorPrefix');
 const PartnerImStatusIcon = require('mail.component.PartnerImStatusIcon');
 const mailUtils = require('mail.utils');
 
@@ -12,6 +13,7 @@ class ThreadPreview extends owl.store.ConnectedComponent {
     constructor(...args) {
         super(...args);
         this.components = {
+            MessageAuthorPrefix,
             PartnerImStatusIcon,
         };
         this.template = 'mail.component.ThreadPreview';

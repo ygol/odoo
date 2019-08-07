@@ -94,6 +94,7 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
         this.store.state,
         {
             MESSAGE_FETCH_LIMIT: 30,
+            PREVIEW_MSG_MAX_SIZE: 350,
             attachmentNextTemporaryId: -1,
             attachments: {},
             cannedResponses: {},

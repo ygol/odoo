@@ -23,6 +23,7 @@ const Widget = require('web.Widget');
 const MockMailService = Class.extend({
     bus_service() {
         return BusService.extend({
+            _beep() {}, // Do nothing
             _poll() {}, // Do nothing
             isOdooFocused() { return true; },
             updateOption() {},
@@ -184,6 +185,7 @@ async function pause() {
  * @param {boolean} [params.autoOpenDiscuss=false]
  * @param {boolean} [params.debug=false]
  * @param {Object} [params.initStoreStateAlteration]
+ * @param {Object} [params.intercepts]
  * @param {Object} [params.session={}]
  * @param {string} [params.session.name="Admin"]
  * @param {integer} [params.session.partner_id=3]

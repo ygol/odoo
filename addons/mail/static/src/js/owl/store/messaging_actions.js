@@ -261,7 +261,8 @@ const actions = {
         });
         env.call('bus_service', 'onNotification', null, notifs =>
             dispatch('_handleNotifications', notifs));
-        env.call('bus_service', 'on', 'window_focus', null, () => dispatch('_handleGlobalWindowFocus'));
+        env.call('bus_service', 'on', 'window_focus', null, () =>
+            dispatch('_handleGlobalWindowFocus'));
 
         ready();
         env.call('bus_service', 'startPolling');
@@ -852,9 +853,9 @@ const actions = {
      * @param {function} param0.commit
      * @param {Object} param0.env
      */
-    async _handleGlobalWindowFocus({commit, env}){
-        commit('updateOutOfFocusUnreadMessageCounter', 0);
-        env.trigger_up('set_title_part', {part:'_chat'})
+    async _handleGlobalWindowFocus({ commit, env }){
+        commit('setOutOfFocusUnreadMessageCounter', 0);
+        env.trigger_up('set_title_part', { part: '_chat' });
     },
     /**
      * @private
@@ -898,17 +899,20 @@ const actions = {
      * @param {Object} param0
      * @param {function} param0.commit
      * @param {function} param0.dispatch
+     * @param {Object} param0.env
      * @param {Object} param0.state
-     * @param {Object[]} data
-     * @param {Array} [data.author_id]
-     * @param {integer} data.author_id[0]
-     * @param {integer} data.channelId
-     * @param {integer[]} data.channel_ids
+     * @param {Object} param1
+     * @param {integer} param1.channelId
+     * @param {...Object} param1.data
+     * @param {Array} [param1.data.author_id]
+     * @param {integer} param1.data.author_id[0]
+     * @param {integer[]} param1.data.channel_ids
      */
-    async _handleNotificationChannelMessage({ commit, dispatch, env, state }, data) {
+    async _handleNotificationChannelMessage(
+        { commit, dispatch, env, state },
+        { channelId, ...data }) {
         const {
             author_id: [authorPartnerId]=[],
-            channelId,
             channel_ids,
         } = data;
         if (channel_ids.length === 1) {
@@ -931,13 +935,17 @@ const actions = {
             return;
         }
 
-        const threadLocalId = `mail.channel_${channelId}`;
-        const thread = state.threads[threadLocalId];
-        if (!env.call('bus_service', 'isOdooFocused')){
-            dispatch('_handleNotificationOutOfFocusMessage', messageLocalId);
+        const channelLocalId = `mail.channel_${channelId}`;
+        const channel = state.threads[channelLocalId];
+        const isOdooFocused = env.call('bus_service', 'isOdooFocused');
+        if (!isOdooFocused) {
+            dispatch('_notifyNewChannelMessageWhileOutOfFocus', {
+                channelLocalId,
+                messageLocalId,
+            });
         }
-        commit('updateThread', threadLocalId, {
-            message_unread_counter: thread.message_unread_counter + 1,
+        commit('updateThread', channelLocalId, {
+            message_unread_counter: channel.message_unread_counter + 1,
         });
     },
     /**
@@ -967,30 +975,6 @@ const actions = {
             message_unread_counter: 0,
             seen_message_id: last_message_id,
         });
-    },
-    /**
-     * @private
-     * @param {Object} param0
-     * @param {Object} param0.env
-     * @param {Object} param0.state
-     * @param {function} param0.commit
-     * @param {integer} messageLocalId
-     */
-    async _handleNotificationOutOfFocusMessage({commit, env, state}, messageLocalId) {
-        const message = state.messages[messageLocalId];
-        const {body, authorLocalId} = message;
-        const notificationTitle = !authorLocalId ? _t("New message") : _.escape(state.partners[authorLocalId].name);
-        const notificationContent = mailUtils
-            .parseAndTransform(body, mailUtils.addLink)
-            .substr(0, state.PREVIEW_MSG_MAX_SIZE)
-        ;
-        env.call('bus_service', 'sendNotification', notificationTitle, notificationContent);
-        commit('updateOutOfFocusUnreadMessageCounter', state.outOfFocusUnreadMessageCounter + 1);
-        const title = _.str.sprintf(_t("%d Messages"), state.outOfFocusUnreadMessageCounter);
-        env.trigger_up('set_title_part', {
-            part: '_chat',
-            title
-        })
     },
     /**
      * @private
@@ -1307,6 +1291,62 @@ const actions = {
             await dispatch('_fetchPartnerImStatus');
             dispatch('_loopFetchPartnerImStatus');
         }, 50*1000);
+    },
+    /**
+     * @private
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.env
+     * @param {Object} param0.getters
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.channelLocalId
+     * @param {string} param1.messageLocalId
+     */
+    _notifyNewChannelMessageWhileOutOfFocus(
+        { commit, env, getters, state },
+        { channelLocalId, messageLocalId }
+    ) {
+        const channel = state.threads[channelLocalId];
+        const message = state.messages[messageLocalId];
+        const author = state.partners[message.authorLocalId];
+        let notificationTitle;
+        if (!author) {
+            notificationTitle = _t("New message");
+        } else {
+            const authorName = getters.partnerName(author.localId);
+            if (channel.channel_type === 'channel') {
+                // hack: notification template does not support OWL components,
+                // so we simply use their template to make HTML as if it comes
+                // from component
+                const channelIcon = env.qweb.renderToString('mail.component.ThreadIcon', {
+                    props: {
+                        thread: channel,
+                    },
+                });
+                const channelName = _.escape(getters.threadName(channelLocalId));
+                const channelNameWithIcon = channelIcon + channelName;
+                notificationTitle = _.str.sprintf(
+                    _t("%s from %s"),
+                    _.escape(authorName),
+                    channelNameWithIcon
+                );
+            } else {
+                notificationTitle = _.escape(authorName);
+            }
+        }
+        const notificationContent = getters
+            .messagePrettyBody(message.localId)
+            .substr(0, state.PREVIEW_MSG_MAX_SIZE);
+        env.call('bus_service', 'sendNotification', notificationTitle, notificationContent);
+        commit('setOutOfFocusUnreadMessageCounter', state.outOfFocusUnreadMessageCounter + 1);
+        const titlePattern = state.outOfFocusUnreadMessageCounter === 1
+            ? _t("%d Message")
+            : _t("%d Messages");
+        env.trigger_up('set_title_part', {
+            part: '_chat',
+            title: _.str.sprintf(titlePattern, state.outOfFocusUnreadMessageCounter),
+        });
     },
     /**
      * @private

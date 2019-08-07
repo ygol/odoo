@@ -4,6 +4,7 @@ odoo.define('mail.component.DiscussTests', function (require) {
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
+    getMailServices,
     pause,
     start: utilsStart,
 } = require('mail.owl.testUtils');
@@ -4380,6 +4381,270 @@ QUnit.test('messages marked as read move to "History" mailbox', async function (
             .length,
         2,
         "History mailbox should have 2 messages");
+});
+
+QUnit.test('receive new channel message: out of odoo focus (notification, channel)', async function (assert) {
+    assert.expect(7);
+
+    Object.assign(this.data.initMessaging, {
+        channel_slots: {
+            channel_channel: [{
+                channel_type: "channel",
+                id: 20,
+                message_unread_counter: 0,
+                name: "General",
+            }],
+        },
+    });
+
+    const services = getMailServices();
+    services.bus_service = services.bus_service.extend({
+        isOdooFocused: () => false,
+    });
+    await this.start({
+        intercepts: {
+            /**
+             * @param {OdooEvent} ev
+             * @param {Object} ev.data
+             * @param {string} ev.data.part
+             * @param {string} ev.data.title
+             */
+            set_title_part(ev) {
+                assert.step('set_title_part');
+                assert.strictEqual(ev.data.part, '_chat');
+                assert.strictEqual(ev.data.title, "1 Message");
+            },
+        },
+        services,
+    });
+
+    // simulate receiving a new message with odoo focused
+    const messageData = {
+        author_id: [7, "Demo User"],
+        body: "<p>Test</p>",
+        channel_ids: [20],
+        date: "2019-04-20 10:00:00",
+        id: 126,
+        message_type: 'comment',
+        model: 'mail.channel',
+        record_name: 'General',
+        res_id: 20,
+    };
+    const notifications = [ [['my-db', 'mail.channel', 20], messageData] ];
+    this.widget.call('bus_service', 'trigger', 'notification', notifications);
+    await testUtils.nextTick(); // re-render & store action fully handled
+
+    assert.verifySteps(['set_title_part']);
+    assert.strictEqual(
+        document
+            .querySelectorAll('.o_notification')
+            .length,
+        1,
+        "should display notification when out of focus");
+    assert.strictEqual(
+        document
+            .querySelector(`
+                .o_notification
+                .o_notification_title`)
+            .textContent,
+        "Demo User from General",
+        "should display author name and origin channel name as notification title");
+    assert.strictEqual(
+        document
+            .querySelector(`
+                .o_notification
+                .o_notification_content`)
+            .innerHTML,
+        "<p>Test</p>",
+        "should display message body as notification content");
+});
+
+QUnit.test('receive new channel message: out of odoo focus (notification, chat)', async function (assert) {
+    assert.expect(7);
+
+    Object.assign(this.data.initMessaging, {
+        channel_slots: {
+            channel_direct_message: [{
+                channel_type: "chat",
+                direct_partner: [{
+                    id: 7,
+                    name: "Demo User",
+                }],
+                id: 10,
+                message_unread_counter: 0,
+            }],
+        },
+    });
+
+    const services = getMailServices();
+    services.bus_service = services.bus_service.extend({
+        isOdooFocused: () => false,
+    });
+    await this.start({
+        intercepts: {
+            /**
+             * @param {OdooEvent} ev
+             * @param {Object} ev.data
+             * @param {string} ev.data.part
+             * @param {string} ev.data.title
+             */
+            set_title_part(ev) {
+                assert.step('set_title_part');
+                assert.strictEqual(ev.data.part, '_chat');
+                assert.strictEqual(ev.data.title, "1 Message");
+            },
+        },
+        services,
+    });
+
+    // simulate receiving a new message with odoo focused
+    const messageData = {
+        author_id: [7, "Demo User"],
+        body: "<p>Test</p>",
+        channel_ids: [10],
+        date: "2019-04-20 10:00:00",
+        id: 126,
+        message_type: 'comment',
+        model: 'mail.channel',
+        record_name: 'General',
+        res_id: 10,
+    };
+    const notifications = [ [['my-db', 'mail.channel', 10], messageData] ];
+    this.widget.call('bus_service', 'trigger', 'notification', notifications);
+    await testUtils.nextTick(); // re-render & store action fully handled
+
+    assert.verifySteps(['set_title_part']);
+    assert.strictEqual(
+        document
+            .querySelectorAll('.o_notification')
+            .length,
+        1,
+        "should display notification when out of focus");
+    assert.strictEqual(
+        document
+            .querySelector(`
+                .o_notification
+                .o_notification_title`)
+            .textContent,
+        "Demo User",
+        "should display author name as notification title");
+    assert.strictEqual(
+        document
+            .querySelector(`
+                .o_notification
+                .o_notification_content`)
+            .innerHTML,
+        "<p>Test</p>",
+        "should display message body as notification content");
+});
+
+QUnit.test('receive new channel messages: out of odoo focus (tab title)', async function (assert) {
+    assert.expect(12);
+
+    let step = 0;
+    Object.assign(this.data.initMessaging, {
+        channel_slots: {
+            channel_channel: [{
+                channel_type: "channel",
+                id: 20,
+                message_unread_counter: 0,
+                name: "General",
+            }],
+            channel_direct_message: [{
+                channel_type: "chat",
+                direct_partner: [{
+                    id: 7,
+                    name: "Demo User",
+                }],
+                id: 10,
+                message_unread_counter: 0,
+            }],
+        },
+    });
+
+    const services = getMailServices();
+    services.bus_service = services.bus_service.extend({
+        isOdooFocused: () => false,
+    });
+    await this.start({
+        intercepts: {
+            /**
+             * @param {OdooEvent} ev
+             * @param {Object} ev.data
+             * @param {string} ev.data.part
+             * @param {string} ev.data.title
+             */
+            set_title_part(ev) {
+                step++;
+                assert.step('set_title_part');
+                assert.strictEqual(ev.data.part, '_chat');
+                if (step === 1) {
+                    assert.strictEqual(ev.data.title, "1 Message");
+                }
+                if (step === 2) {
+                    assert.strictEqual(ev.data.title, "2 Messages");
+                }
+                if (step === 3) {
+                    assert.strictEqual(ev.data.title, "3 Messages");
+                }
+            },
+        },
+        services,
+    });
+
+    // simulate receiving a new message in general with odoo focused
+    const messageData1 = {
+        author_id: [7, "Demo User"],
+        body: "<p>Test1</p>",
+        channel_ids: [20],
+        date: "2019-04-20 10:00:00",
+        id: 126,
+        message_type: 'comment',
+        model: 'mail.channel',
+        record_name: 'General',
+        res_id: 20,
+    };
+    const notifications1 = [ [['my-db', 'mail.channel', 20], messageData1] ];
+    this.widget.call('bus_service', 'trigger', 'notification', notifications1);
+    await testUtils.nextTick(); // re-render & store action fully handled
+
+    assert.verifySteps(['set_title_part']);
+
+    // simulate receiving a new message in chat with odoo focused
+    const messageData2 = {
+        author_id: [7, "Demo User"],
+        body: "<p>Test2</p>",
+        channel_ids: [10],
+        date: "2019-04-20 10:00:00",
+        id: 127,
+        message_type: 'comment',
+        model: 'mail.channel',
+        record_name: 'General',
+        res_id: 10,
+    };
+    const notifications2 = [ [['my-db', 'mail.channel', 10], messageData2] ];
+    this.widget.call('bus_service', 'trigger', 'notification', notifications2);
+    await testUtils.nextTick(); // re-render & store action fully handled
+
+    assert.verifySteps(['set_title_part']);
+
+    // simulate receiving another new message in chat with odoo focused
+    const messageData3 = {
+        author_id: [7, "Demo User"],
+        body: "<p>Test3</p>",
+        channel_ids: [10],
+        date: "2019-04-20 10:00:00",
+        id: 128,
+        message_type: 'comment',
+        model: 'mail.channel',
+        record_name: 'General',
+        res_id: 10,
+    };
+    const notifications3 = [ [['my-db', 'mail.channel', 20], messageData3] ];
+    this.widget.call('bus_service', 'trigger', 'notification', notifications3);
+    await testUtils.nextTick(); // re-render & store action fully handled
+
+    assert.verifySteps(['set_title_part']);
 });
 
 });

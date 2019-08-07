@@ -1133,6 +1133,14 @@ const mutations = {
     },
     /**
      * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {integer} newValue
+     */
+    setOutOfFocusUnreadMessageCounter({ state }, newValue){
+        state.outOfFocusUnreadMessageCounter = newValue;
+    },
+    /**
+     * @param {Object} param0
      * @param {function} param0.commit
      * @param {Object} param0.state
      * @param {Object} chatWindowLocalId either 'new_message' or thread local Id
@@ -1313,14 +1321,6 @@ const mutations = {
         const threadCache = state.threadCaches[threadCacheLocalId];
         Object.assign(threadCache, changes);
         commit('_computeThreadCache', threadCache);
-    },
-    /**
-     * @param {Object} param0
-     * @param {Object} param0.state
-     * @param {integer} newValue
-     */
-    updateOutOfFocusUnreadMessageCounter({state}, newValue){
-        state.outOfFocusUnreadMessageCounter = newValue;
     },
     /**
      * @param {Object} param0

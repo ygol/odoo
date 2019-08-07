@@ -83,6 +83,7 @@
         'static/src/xml/owl/component/emojis_button.xml',
         'static/src/xml/owl/component/emojis_popover.xml',
         'static/src/xml/owl/component/message.xml',
+        'static/src/xml/owl/component/message_author_prefix.xml',
         'static/src/xml/owl/component/message_list.xml',
         'static/src/xml/owl/component/messaging_menu.xml',
         'static/src/xml/owl/component/mobile_messaging_navbar.xml',

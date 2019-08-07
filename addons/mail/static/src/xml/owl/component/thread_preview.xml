@@ -66,18 +66,10 @@
                     t-att-class="{
                         'o-empty': inlineLastMessageBody.length === 0,
                     }">
-                    <t t-if="props.lastMessageAuthor">
-                        <t t-if="isMyselfLastMessageAuthor">
-                            <i
-                                class="
-                                    fa
-                                    fa-mail-reply
-                                    o_ThreadPreview_inlineTextPrefix"/>You:
-                        </t>
-                        <t t-else="">
-                            <t t-esc="props.lastMessageAuthor.display_name"/>:
-                        </t>
-                    </t>
+                    <MessageAuthorPrefix
+                        messageLocalId="props.lastMessage.localId"
+                        threadLocalId="props.threadLocalId"
+                        t-if="props.lastMessageAuthor"/>
                     <t t-raw="inlineLastMessageBody"/>
                 </span>
                 <span

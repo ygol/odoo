@@ -27,11 +27,11 @@
 .o_ThreadPreview_coreItem {
     margin: 0 3px;
 
-    &:first-of-type {
+    &:first-child {
         margin-left: 0px;
     }
 
-    &:last-of-type {
+    &:last-child {
         margin-right: 0px;
     }
 }
@@ -68,10 +68,6 @@
     &.o-empty::before {
         content: '\00a0'; // keep line-height as if it had content
     }
-}
-
-.o_ThreadPreview_inlineTextPrefix {
-    margin-right: 3px;
 }
 
 .o_ThreadPreview_markAsRead {
