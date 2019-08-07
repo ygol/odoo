@@ -34,8 +34,8 @@ var QtyAtDateWidget = Widget.extend({
     _onClickButton: function (ev) {
         ev.stopPropagation();
         var self = this;
-        this.data.delivery_date = this.data.scheduled_date.clone().add(this.getSession().getTZOffset(this.data.scheduled_date), 'minutes').format('YYYY-MM-DD');
-        this.data.delivery_datetime = this.data.scheduled_date.clone().add(this.getSession().getTZOffset(this.data.scheduled_date), 'minutes').format('YYYY-MM-DD hh:mm:ss a');
+        this.data.delivery_date = this.data.scheduled_date.clone().add(this.getSession().getTZOffset(this.data.scheduled_date), 'minutes').format('MM/DD/YYYY');
+        this.data.delivery_datetime = this.data.scheduled_date.clone().add(this.getSession().getTZOffset(this.data.scheduled_date), 'minutes').format('MM/DD/YYYY hh:mm:ss a');
         var $content = $(QWeb.render('sale_stock.QtyDetailDialog', {
             data: this.data,
         }));

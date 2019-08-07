@@ -10,43 +10,44 @@
         </div>
     </div>
     <div t-name="sale_stock.QtyDetailDialog">
-        <table class="col-10">
-            <tr>
-                <td><h5><b>Delivery Date</b></h5></td>
-                <td><t t-esc="data.delivery_datetime"/></td>
-            </tr>
-            <t t-if="!data.is_mto">
-                <tr>
-                    <td><h5><b>Forecasted Quantity at Delivery Date</b></h5></td>
-                    <td><t t-esc='data.virtual_available_at_date'/>
-                        <label><t t-esc='data.product_uom.data.display_name'/></label>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Quantity On Hand Today</td>
-                    <td><t t-esc='data.qty_available_today'/>
-                        <label><t t-esc='data.product_uom.data.display_name'/></label>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Quantity Available Today (On Hand - Reserved)</td>
-                    <td><t t-esc='data.free_qty_today'/>
-                        <label><t t-esc='data.product_uom.data.display_name'/></label>
-                    </td>
-                </tr>
-            </t>
-            <t t-else="">
-                <tr>
-                    <td>
-                        This product is replenished on demand.
-                    </td>
-                </tr>
-            </t>
-        </table>
-        <button class="btn btn-link action_open_forecast"
-            type="button">
-            <i class="fa fa-fw o_button_icon fa-arrow-right"></i>
-            Access the Detailed Forecast
-        </button>
+        <div class="container my-2">
+            <div class="row">
+                <div class="col-6">
+                    <div class="row mt-2">
+                        <div class="col-6"><h5><b>Delivery Date</b></h5></div>
+                        <div class="col-6"><span t-esc="data.delivery_date"/></div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6"><h5 class="mb-0"><b>Forecasted Stock</b></h5><small>On delivery date</small></div>
+                        <div class="col-6"><t t-esc='data.virtual_available_at_date'/>
+                        <label class="mb-0"><t t-esc='data.product_uom.data.display_name'/></label></div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button class="text-left btn btn-link p-0 action_open_forecast"
+                            type="button">
+                                <i class="fa fa-fw o_button_icon fa-arrow-right mr-1"></i>
+                                View Detailed Forecast
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div t-if="!data.is_mto" class="col-6 text-muted">
+                    <div class="row mt-2">
+                        <div class="col-6"><p class="mb-0"><b>Stock On Hand</b></p></div>
+                        <div class="col-6"><t t-esc='data.qty_available_today'/>
+                        <label class="mb-0"><t t-esc='data.product_uom.data.display_name'/></label></div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6"><p class="mb-0"><b>Stock Available </b></p><small>On Hand - Reserved</small></div>
+                        <div class="col-6"><t t-esc='data.free_qty_today'/>
+                        <label class="mb-0"><t t-esc='data.product_uom.data.display_name'/></label></div>
+                    </div>
+                </div>
+                <div t-else="">
+                    <p>This product is replenished on demand.</p>
+                </div>
+            </div>
+        </div>
     </div>
 </templates>
