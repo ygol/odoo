@@ -1,4 +1,4 @@
-odoo.define('mail.store.MutationTests', function (require) {
+odoo.define('mail.store.MutationsTests', function (require) {
 "use strict";
 
 const {
@@ -53,14 +53,9 @@ QUnit.test('createAttachment: txt', async function (assert) {
     assert.strictEqual(attachmentLocalId, 'ir.attachment_750');
     assert.ok(attachment);
     assert.strictEqual(attachment._model, 'ir.attachment');
-    // assert.strictEqual(attachment.displayName, "test.txt"); // todo: test with getters (attachmentDisplayName)
-    // assert.strictEqual(attachment.extension, "txt"); // todo: test with getters (attachmentExtension)
-    // assert.strictEqual(attachment.fileType, 'text'); // todo: test with getters (attachmentFileType)
     assert.strictEqual(attachment.filename, "test.txt");
     assert.strictEqual(attachment.id, 750);
     assert.notOk(attachment.isTemporary);
-    // assert.ok(attachment.isTextFile); todo: test with getters (isAttachmentTextFile)
-    // assert.ok(attachment.isViewable); // todo: test with getters (isAttachmentViewable)
     assert.strictEqual(attachment.localId, 'ir.attachment_750');
     assert.strictEqual(attachment.mimetype, 'text/plain');
     assert.strictEqual(attachment.name, "test.txt");
@@ -127,14 +122,9 @@ QUnit.test('createMessage', async function (assert) {
     const attachment = this.store.state.attachments['ir.attachment_750'];
     assert.ok(attachment);
     assert.strictEqual(attachment._model, 'ir.attachment');
-    // assert.strictEqual(attachment.displayName, "test.txt"); // todo: test with getters (attachmentDisplayName)
-    // assert.strictEqual(attachment.extension, "txt"); // todo: test with getters (attachmentExtension)
-    // assert.strictEqual(attachment.fileType, 'text'); // todo: test with getters (attachmentFileType)
     assert.strictEqual(attachment.filename, "test.txt");
     assert.strictEqual(attachment.id, 750);
     assert.notOk(attachment.isTemporary);
-    // assert.ok(attachment.isTextFile); // todo: test with getters (isAttachmentTextFile)
-    // assert.ok(attachment.isViewable); // todo: test with getters (isAttachmentViewable)
     assert.strictEqual(attachment.localId, 'ir.attachment_750');
     assert.strictEqual(attachment.mimetype, 'text/plain');
     assert.strictEqual(attachment.name, "test.txt");

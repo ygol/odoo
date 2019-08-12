@@ -460,7 +460,7 @@ class Discuss extends owl.store.ConnectedComponent {
             ) ||
             (
                 this.props.isMobile &&
-                !this.env.store.getters.areVisibleChatWindows()
+                !this.env.store.getters.haveVisibleChatWindows()
             )
         ) {
             this.env.store.commit('setDiscussTargetThread', null);

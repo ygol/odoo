@@ -449,6 +449,7 @@ Message.props = {
     isSquashed: Boolean,
     message: Object, // {mail.store.model.Message}
     messageLocalId: String,
+    odoobot: Object, // {mail.store.model.Partner}
     originThread: {
         type: Object, // {mail.store.model.Thread}
         optional: true,

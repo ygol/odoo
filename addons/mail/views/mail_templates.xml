@@ -231,6 +231,7 @@
                 <script type="text/javascript" src="/mail/static/tests/owl/component/message_tests.js"></script>
                 <script type="text/javascript" src="/mail/static/tests/owl/component/messaging_menu_tests.js"></script>
                 <script type="text/javascript" src="/mail/static/tests/owl/component/partner_im_status_icon_tests.js"></script>
+                <script type="text/javascript" src="/mail/static/tests/owl/store/messaging_getters_tests.js"></script>
                 <script type="text/javascript" src="/mail/static/tests/owl/store/messaging_mutations_tests.js"></script>
                 <script type="text/javascript" src="/mail/static/tests/owl/store/messaging_state_tests.js"></script>
             </xpath>

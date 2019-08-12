@@ -9,8 +9,6 @@ const {
     start: startUtils,
 } = require('mail.owl.testUtils');
 
-const testUtils = require('web.test_utils');
-
 QUnit.module('mail.owl', {}, function () {
 QUnit.module('component', {}, function () {
 QUnit.module('Message', {

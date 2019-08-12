@@ -73,7 +73,6 @@ QUnit.test('initially online', async function (assert) {
             .partnerLocalId,
         'res.partner_7',
         "partner IM status icon should be linked to partner with ID 7");
-
     assert.strictEqual(
         document
             .querySelectorAll(`.o_PartnerImStatusIcon.o-online`)

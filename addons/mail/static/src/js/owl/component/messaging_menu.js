@@ -80,7 +80,7 @@ class MessagingMenu extends owl.store.ConnectedComponent {
     _onClickCaptureGlobal(ev) {
         if (
             this.props.isMobile &&
-            this.env.store.getters.areVisibleChatWindows()
+            this.env.store.getters.haveVisibleChatWindows()
         ) {
             return;
         }
