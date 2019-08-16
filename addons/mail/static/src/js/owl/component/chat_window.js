@@ -136,7 +136,7 @@ class ChatWindow extends owl.store.ConnectedComponent {
                 threadLocalId: chat.localId,
             });
         } else {
-            this._close();
+            this.env.store.commit('closeChatWindow', this.props.chatWindowLocalId);
             this.env.store.dispatch('createChannel', {
                 autoselect: true,
                 partnerId,
@@ -196,14 +196,6 @@ class ChatWindow extends owl.store.ConnectedComponent {
         } else {
             this.env.store.commit('toggleFoldThread', this.props.chatWindowLocalId);
         }
-    }
-
-    /**
-     * @private
-     * @param {CustomEvent} ev
-     */
-    _onCloseHeader(ev) {
-        this._close();
     }
 
     /**

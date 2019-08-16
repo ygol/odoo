@@ -135,16 +135,6 @@ class ChatWindowManager extends owl.store.ConnectedComponent {
     /**
      * @private
      * @param {CustomEvent} ev
-     * @param {Object} ev.detail
-     * @param {string} ev.detail.chatWindowLocalId
-     */
-    _onCloseChatWindow(ev) {
-        this.env.store.commit('closeChatWindow', ev.detail.chatWindowLocalId);
-    }
-
-    /**
-     * @private
-     * @param {CustomEvent} ev
      * @param {string} ev.detail.currentChatWindowLocalId
      */
     _onFocusNextChatWindow(ev) {

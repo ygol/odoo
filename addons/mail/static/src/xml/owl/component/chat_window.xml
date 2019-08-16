@@ -25,8 +25,7 @@
             hasShiftLeft="props.hasShiftLeft"
             hasShiftRight="props.hasShiftRight"
             isExpandable="props.isExpandable"
-            t-on-o-clicked.stop="_onClickedHeader"
-            t-on-o-close="_onCloseHeader"/>
+            t-on-o-clicked.stop="_onClickedHeader"/>
         <Thread
             areComposerAttachmentsEditable="true"
             class="o_ChatWindow_thread"
