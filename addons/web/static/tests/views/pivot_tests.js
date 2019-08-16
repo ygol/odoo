@@ -2416,7 +2416,7 @@ QUnit.module('Views', {
                 },
             },
         });
-
+        await testUtils.nextTick();
         await testUtils.dom.click($('td').eq(1));
 
         unpatchDate();
@@ -2520,7 +2520,7 @@ QUnit.module('Views', {
             ].join(''),
             "The row headers should be as expected"
         );
-        
+
         // Set a Row groupby
         await testUtils.dom.click(pivot.$('tbody .o_pivot_header_cell_closed').eq(0));
         await testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field=product_id]:first'));

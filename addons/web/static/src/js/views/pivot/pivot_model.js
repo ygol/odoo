@@ -13,7 +13,7 @@ odoo.define('web.PivotModel', function (require) {
  * However, we need to be able to manipulate the data in a somewhat efficient
  * way, and to transform it into a list of lines to be displayed by the renderer.
  *
- * Basicaly the pivot table presents aggregated values for various groups of records
+ * Basically the pivot table presents aggregated values for various groups of records
  * in one domain. If a comparison is asked for, two domains are considered.
  *
  * Let us consider a simple example and let us fix the vocabulary:

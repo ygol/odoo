@@ -133,10 +133,10 @@ odoo.define('hr_holidays.leave_stats_widget_tests', function (require) {
                 '</form>',
                 mockRPC: function (route, args) {
                     if (args.model === 'hr.leave' && args.method === 'search_read') {
-                        assert.ok(_.some(args.args[0], ['department_id', '=', 11]), "It should load department's leaves data");
+                        assert.strictEqual(JSON.stringify(args.args[0][0]), JSON.stringify(['department_id', '=', 11]), "It should load department's leaves data");
                     }
                     if (args.model === 'hr.leave' && args.method === 'read_group') {
-                        assert.ok(_.some(args.kwargs.domain, ['employee_id', '=', 200]), "It should load employee's leaves data");
+                        assert.strictEqual(JSON.stringify(args.kwargs.domain[0]), JSON.stringify(['employee_id', '=', 200]), "It should load employee's leaves data");
                     }
                     return this._super.apply(this, arguments);
                 },
