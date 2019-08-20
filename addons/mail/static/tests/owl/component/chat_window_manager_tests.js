@@ -409,6 +409,185 @@ QUnit.test('chat window: basic rendering', async function (assert) {
         "thread part should use component thread");
 });
 
+QUnit.test('chat window: fold', async function (assert) {
+    assert.expect(15);
+    let fold_call = 0;
+
+    Object.assign(this.data.initMessaging, {
+        channel_slots: {
+            channel_channel: [{
+                channel_type: "channel",
+                id: 20,
+                uuid: 'channel-20',
+                name: "General",
+            }],
+        },
+    });
+
+    await this.start({
+        mockRPC(route, args) {
+            if (args.method === 'channel_fetch_preview') {
+                return Promise.resolve([{
+                    id: 20,
+                    last_message: {
+                        author_id: [7, "Demo"],
+                        body: "<p>test</p>",
+                        channel_ids: [20],
+                        id: 100,
+                        message_type: 'comment',
+                        model: 'mail.channel',
+                        res_id: 20,
+                    },
+                }]);
+            }
+            else if (args.method === 'channel_fold'){
+                assert.step('rpc:'+args.method);
+                fold_call++;
+                const kwargs_keys = Object.keys(args.kwargs);
+                assert.strictEqual(args.args.length, 0, "channel_fold call have no args");
+                assert.strictEqual(kwargs_keys.length, 2, "channel_fold call have exactly 2 kwargs");
+                assert.ok(kwargs_keys.indexOf('state') > -1, "channel_fold call have 'state' kwargs");
+                assert.ok(kwargs_keys.indexOf('uuid') > -1, "channel_fold call have 'uuid' kwargs");
+                assert.strictEqual(args.kwargs.uuid, 'channel-20', "channel_fold call uuid is channel-20");
+                if (fold_call % 2 === 1)
+                {
+                    assert.strictEqual(args.kwargs.state, 'folded', "channel_fold call state is 'folded'");
+                }
+                else
+                {
+                    assert.strictEqual(args.kwargs.state, 'open', "channel_fold call state is 'open'");
+                }
+                return Promise.resolve([]);
+            }
+            return this._super.apply(this, arguments);
+        },
+    });
+
+    // Open Thread
+    document
+        .querySelector(`.o_MessagingMenu_toggler`)
+        .click()
+    ;
+    await testUtils.nextTick(); // re-render
+    document
+        .querySelector(`
+            .o_MessagingMenu_dropdownMenu
+            .o_ThreadPreviewList_preview`)
+        .click();
+    await testUtils.nextTick(); // re-render
+
+    // Fold chat window
+    document
+        .querySelector(`
+                .o_ChatWindow
+                .o_ChatWindowHeader`)
+        .click()
+    ;
+    await testUtils.nextTick(); // re-render
+
+    // Unfold chat window
+    document
+        .querySelector(`
+                .o_ChatWindow
+                .o_ChatWindowHeader`)
+        .click()
+    ;
+    await testUtils.nextTick(); // re-render
+
+    assert.verifySteps(
+        ['rpc:channel_fold', 'rpc:channel_fold'],
+        'RPC should be done in this order: , channel_fold (folded), channel_fold (open)'
+    );
+});
+
+QUnit.test('chat window: open / close', async function (assert) {
+    assert.expect(18);
+
+    Object.assign(this.data.initMessaging, {
+        channel_slots: {
+            channel_channel: [{
+                channel_type: "channel",
+                id: 20,
+                uuid: 'channel-20',
+                name: "General",
+            }],
+        },
+    });
+
+    await this.start({
+        mockRPC(route, args) {
+            if (args.method === 'channel_fetch_preview') {
+                return Promise.resolve([{
+                    id: 20,
+                    last_message: {
+                        author_id: [7, "Demo"],
+                        body: "<p>test</p>",
+                        channel_ids: [20],
+                        id: 100,
+                        message_type: 'comment',
+                        model: 'mail.channel',
+                        res_id: 20,
+                    },
+                }]);
+            }
+            else if (args.method === 'channel_fold') {
+                assert.step('rpc:fold');
+                const kwargs_keys = Object.keys(args.kwargs);
+                assert.strictEqual(args.args.length, 0, "channel_fold call have no args");
+                assert.strictEqual(kwargs_keys.length, 2, "channel_fold call have exactly 2 kwargs");
+                assert.ok(kwargs_keys.indexOf('state') > -1, "channel_fold call have 'state' kwargs");
+                assert.ok(kwargs_keys.indexOf('uuid') > -1, "channel_fold call have 'uuid' kwargs");
+                assert.strictEqual(args.kwargs.uuid, 'channel-20', "channel_fold call uuid is channel-20");
+                assert.strictEqual(args.kwargs.state, 'closed', "channel_fold call state is 'closed'");
+                return Promise.resolve([]);
+            }
+            else if (args.method === 'channel_minimize') {
+                assert.step('rpc:minimize');
+                assert.strictEqual(args.args.length, 2, "channel_minimize call have exactly 2 args");
+                assert.strictEqual(Object.keys(args.kwargs).length, 0, "channel_minimize call have no kwargs");
+                assert.strictEqual(args.args[0], 'channel-20', "channel_minimize call first param is channel-20");
+                assert.ok(args.args[1], "channel_minimize call second param is true");
+                return Promise.resolve([]);
+            }
+            return this._super.apply(this, arguments);
+        },
+    });
+
+    async function openThread() {
+        document
+            .querySelector(`.o_MessagingMenu_toggler`)
+            .click()
+        ;
+        await testUtils.nextTick(); // re-render
+        document
+            .querySelector(`
+                .o_MessagingMenu_dropdownMenu
+                .o_ThreadPreviewList_preview`)
+            .click();
+        await testUtils.nextTick(); // re-render
+    }
+
+    await openThread();
+
+    // Close chat window
+    document
+        .querySelector(`
+                .o_ChatWindow
+                .o_ChatWindowHeader
+                .o_ChatWindowHeader_commandClose`)
+        .click()
+    ;
+    await testUtils.nextTick(); // re-render
+
+    // Reopen chat window
+    await openThread();
+
+    assert.verifySteps(
+        ['rpc:minimize', 'rpc:fold', 'rpc:minimize'],
+        'RPC should be done in this order: channel_minimize (true), channel_fold, channel_minimize (true)'
+    );
+});
+
 QUnit.test('open 2 different chat windows: enough screen width', async function (assert) {
     /**
      * computation uses following info:

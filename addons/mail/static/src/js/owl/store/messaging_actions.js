@@ -596,7 +596,7 @@ const actions = {
     },
     /**
      * @param {Object} param0
-     * @param {functon} param0.commit
+     * @param {function} param0.commit
      * @param {function} param0.dispatch
      * @param {Object} param0.env
      * @param {Object} param0.state
@@ -784,7 +784,7 @@ const actions = {
      * @param {string} threadLocalId
      * @param {string} newName
      */
-    async renameThread({ commit, dispatch, env, state }, threadLocalId, newName) {
+    async renameThread({ commit, env, state }, threadLocalId, newName) {
         const thread = state.threads[threadLocalId];
         if (thread.channel_type === 'chat') {
             await env.rpc({

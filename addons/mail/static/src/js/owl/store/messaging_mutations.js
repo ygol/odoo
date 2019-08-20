@@ -1560,7 +1560,6 @@ const mutations = {
             }, {});
         Object.assign(state, { cannedResponses });
     },
-
     /**
      * @private
      * @param {Object} param0
