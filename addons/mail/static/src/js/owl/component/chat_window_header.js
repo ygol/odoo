@@ -44,7 +44,7 @@ class ChatWindowHeader extends owl.store.ConnectedComponent {
      * @param {MouseEvent} ev
      */
     _onClickClose(ev) {
-        this.env.store.commit('closeChatWindow', this.props.chatWindowLocalId);
+        this.env.store.dispatch('closeChatWindow', this.props.chatWindowLocalId);
     }
 
     /**

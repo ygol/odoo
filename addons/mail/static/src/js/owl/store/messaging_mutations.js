@@ -16,36 +16,6 @@ const mutations = {
 
     /**
      * @param {Object} param0
-     * @param {function} param0.commit
-     * @param {Object} param0.state
-     */
-    closeAllChatWindows({ commit, state }) {
-        const chatWindowLocalIds = state.chatWindowManager.chatWindowLocalIds;
-        for (const chatWindowLocalId of chatWindowLocalIds) {
-            commit('closeChatWindow', chatWindowLocalId);
-        }
-    },
-    /**
-     * @param {Object} param0
-     * @param {function} param0.commit
-     * @param {Object} param0.state
-     * @param {string} chatWindowLocalId either 'new_message' or thread local Id, a
-     *   valid Id in `chatWindowLocalIds` list of chat window manager.
-     */
-    closeChatWindow({ commit, state }, chatWindowLocalId) {
-        const cwm = state.chatWindowManager;
-        cwm.chatWindowLocalIds =
-            cwm.chatWindowLocalIds.filter(id => id !== chatWindowLocalId);
-        if (chatWindowLocalId !== 'new_message') {
-            commit('updateThread', chatWindowLocalId, {
-                is_minimized: false,
-                state: 'closed',
-            });
-        }
-        commit('_computeChatWindows');
-    },
-    /**
-     * @param {Object} param0
      * @param {Object} param0.state
      * @param {string} dialogId
      */
@@ -1044,28 +1014,6 @@ const mutations = {
      * @param {Object} param0
      * @param {function} param0.commit
      * @param {Object} param0.state
-     * @param {string} oldChatWindowLocalId chat window to replace
-     * @param {string} newChatWindowLocalId chat window to replace with
-     */
-    replaceChatWindow(
-        { commit, state },
-        oldChatWindowLocalId,
-        newChatWindowLocalId
-    ) {
-        commit('_swapChatWindows', newChatWindowLocalId, oldChatWindowLocalId);
-        commit('closeChatWindow', oldChatWindowLocalId);
-        const thread = state.threads[newChatWindowLocalId];
-        if (thread && !thread.state !== 'open') {
-            commit('updateThread', newChatWindowLocalId, {
-                state: 'open',
-            });
-        }
-        commit('focusChatWindow', newChatWindowLocalId);
-    },
-    /**
-     * @param {Object} param0
-     * @param {function} param0.commit
-     * @param {Object} param0.state
      * @param {string} tabId
      */
     setDiscussActiveMobileNavbarTab({ commit, state }, tabId) {
@@ -1181,22 +1129,6 @@ const mutations = {
     },
     /**
      * @param {Object} param0
-     * @param {function} param0.commit
-     * @param {Object} param0.state
-     * @param {string} threadLocalId
-     */
-    toggleFoldThread({ commit, state }, threadLocalId) {
-        const thread = state.threads[threadLocalId];
-        const newFoldState = thread.state === 'open' ? 'folded' : 'open';
-        commit('updateThread', threadLocalId, {
-            state: newFoldState,
-        });
-        if (newFoldState === 'open') {
-            commit('focusChatWindow', threadLocalId);
-        }
-    },
-    /**
-     * @param {Object} param0
      * @param {Object} param0.state
      */
     toggleMessagingMenuMobileNewMessage({ state }) {
@@ -1240,6 +1172,16 @@ const mutations = {
      */
     updateChatWindowManager({ state }, changes) {
         Object.assign(state.chatWindowManager, changes);
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {string} chatWindowLocalId
+     */
+    updateChatWindowLocalIds({ state }, chatWindowLocalId) {
+        const cwm = state.chatWindowManager;
+        cwm.chatWindowLocalIds =
+            cwm.chatWindowLocalIds.filter(id => id !== chatWindowLocalId);
     },
     /**
      * @param {Object} param0
@@ -1289,26 +1231,8 @@ const mutations = {
      */
     updateThread({ commit, state }, threadLocalId, changes) {
         const thread = state.threads[threadLocalId];
-        const wasMinimized = thread.is_minimized;
         Object.assign(thread, changes);
         commit('_computeThread', thread);
-        const cwm = state.chatWindowManager;
-        if (
-            !wasMinimized &&
-            thread.is_minimized &&
-            !cwm.chatWindowLocalIds.includes(threadLocalId)
-        ) {
-            commit('openThread', threadLocalId, {
-                chatWindowMode: 'last',
-            });
-        }
-        if (
-            wasMinimized &&
-            !thread.is_minimized &&
-            cwm.chatWindowLocalIds.includes(threadLocalId)
-        ) {
-            commit('closeChatWindow', threadLocalId);
-        }
     },
     /**
      * @param {Object} param0
@@ -1981,6 +1905,7 @@ const mutations = {
             // new chat window
             cwm.chatWindowLocalIds.push(chatWindowLocalId);
             if (chatWindowLocalId !== 'new_message') {
+                // FIXME hey I need to call an action here :D ....
                 commit('updateThread', chatWindowLocalId, {
                     is_minimized: true,
                     state: 'open',

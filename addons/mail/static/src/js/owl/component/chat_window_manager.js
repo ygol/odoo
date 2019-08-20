@@ -209,7 +209,7 @@ class ChatWindowManager extends owl.store.ConnectedComponent {
         if (!this.env.store.state.threads[threadLocalId].is_minimized) {
             this.env.store.commit('openThread', threadLocalId, { chatWindowMode: 'last' });
         }
-        this.env.store.commit('replaceChatWindow', chatWindowLocalId, threadLocalId);
+        this.env.store.dispatch('replaceChatWindow', chatWindowLocalId, threadLocalId);
     }
 
     /**

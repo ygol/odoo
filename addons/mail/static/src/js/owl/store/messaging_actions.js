@@ -168,6 +168,33 @@ const actions = {
             commit('openThread', threadLocalId);
         }
     },
+
+    /**
+     * @param {Object} param0
+     * @param {function} param0.dispatch
+     * @param {Object} param0.state
+     */
+    closeAllChatWindows({ dispatch, state }) {
+        const chatWindowLocalIds = state.chatWindowManager.chatWindowLocalIds;
+        for (const chatWindowLocalId of chatWindowLocalIds) {
+            dispatch('closeChatWindow', chatWindowLocalId);
+        }
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {function} param0.dispatch
+     * @param {Object} param0.state
+     * @param {string} chatWindowLocalId either 'new_message' or thread local Id, a
+     *   valid Id in `chatWindowLocalIds` list of chat window manager.
+     */
+    closeChatWindow({ commit, dispatch, state }, chatWindowLocalId) {
+        commit('updateChatWindowLocalIds', chatWindowLocalId);
+        if (chatWindowLocalId !== 'new_message') {
+            dispatch('setThreadState', chatWindowLocalId, 'closed');
+        }
+        commit('_computeChatWindows');
+    },
     /**
      * @param {Object} param0
      * @param {function} param0.commit
@@ -451,12 +478,13 @@ const actions = {
     /**
      * @param {Object} param0
      * @param {function} param0.commit
+     * @param {function} param0.dispatch
      * @param {Object} param0.env
      * @param {Object} param1
      * @param {integer} param1.id
      * @param {string} param1.model
      */
-    openDocument({ commit, env }, { id, model }) {
+    openDocument({ commit, dispatch, env }, { id, model }) {
         env.do_action({
             type: 'ir.actions.act_window',
             res_model: model,
@@ -464,7 +492,7 @@ const actions = {
             res_id: id,
         });
         commit('closeMessagingMenu');
-        commit('closeAllChatWindows');
+        dispatch('closeAllChatWindows');
     },
     /**
      * @param {Object} param0
@@ -657,7 +685,7 @@ const actions = {
      * @param {string} threadLocalId
      * @param {string} newName
      */
-    async renameThread({ commit, env, state }, threadLocalId, newName) {
+    async renameThread({ commit, dispatch, env, state }, threadLocalId, newName) {
         const thread = state.threads[threadLocalId];
         if (thread.channel_type === 'chat') {
             await env.rpc({
@@ -672,6 +700,27 @@ const actions = {
         commit('updateThread', threadLocalId, {
             custom_channel_name: newName,
         });
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {function} param0.dispatch
+     * @param {Object} param0.state
+     * @param {string} oldChatWindowLocalId chat window to replace
+     * @param {string} newChatWindowLocalId chat window to replace with
+     */
+    replaceChatWindow(
+        { commit, dispatch, state },
+        oldChatWindowLocalId,
+        newChatWindowLocalId
+    ) {
+        commit('_swapChatWindows', newChatWindowLocalId, oldChatWindowLocalId);
+        dispatch('closeChatWindow', oldChatWindowLocalId);
+        const thread = state.threads[newChatWindowLocalId];
+        if (thread && thread.state !== 'open') {
+            dispatch('setThreadState', newChatWindowLocalId, 'open');
+        }
+        commit('focusChatWindow', newChatWindowLocalId);
     },
     /**
      * @param {Object} param0
@@ -722,6 +771,53 @@ const actions = {
     },
     /**
      * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {function} param0.dispatch
+     * @param {string} threadLocalId
+     * @param {boolean} newState
+     */
+    async setThreadState({ commit, dispatch }, threadLocalId, newState){
+        commit('updateThread', threadLocalId, { state:newState });
+        dispatch('syncThreadState', threadLocalId, newState);
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.env
+     * @param {Object} param0.state
+     * @param {string} threadLocalId
+     * @param {string} newState
+     */
+    async syncThreadState({ env, state }, threadLocalId, newState){
+        env.rpc({
+            model: 'mail.channel',
+            method: 'channel_fold',
+            kwargs: {
+                uuid: state.threads[threadLocalId].uuid,
+                state: newState
+            }
+        }, {shadow:true});
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {function} param0.dispatch
+     * @param {Object} param0.env
+     * @param {Object} param0.state
+     * @param {string} threadLocalId
+     */
+    async syncThreadMinimized({ commit, dispatch, env, state }, threadLocalId){
+        const thread = state.threads[threadLocalId];
+        env.rpc({
+            model: 'mail.channel',
+            method: 'channel_minimize',
+            args: [
+                thread.uuid,
+                thread.is_minimized,
+            ]
+        }, {shadow:true});
+    },
+    /**
+     * @param {Object} param0
      * @param {Object} param0.env
      * @param {Object} param0.state
      * @param {string} messageLocalId
@@ -732,6 +828,20 @@ const actions = {
             method: 'toggle_message_starred',
             args: [[state.messages[messageLocalId].id]]
         });
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {function} param0.dispatch
+     * @param {Object} param0.state
+     * @param {string} threadLocalId
+     */
+    async toggleFoldThread({ commit, dispatch, state }, threadLocalId){
+        const newState = state.threads[threadLocalId].state === 'open' ? 'folded' : 'open';
+        dispatch('setThreadState', threadLocalId, newState);
+        if (newState === 'open') {
+            commit('focusChatWindow', threadLocalId);
+        }
     },
     /**
      * @param {Object} param0

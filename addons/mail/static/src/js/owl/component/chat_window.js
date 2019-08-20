@@ -136,7 +136,7 @@ class ChatWindow extends owl.store.ConnectedComponent {
                 threadLocalId: chat.localId,
             });
         } else {
-            this.env.store.commit('closeChatWindow', this.props.chatWindowLocalId);
+            this.env.store.dispatch('closeChatWindow', this.props.chatWindowLocalId);
             this.env.store.dispatch('createChannel', {
                 autoselect: true,
                 partnerId,
@@ -194,7 +194,7 @@ class ChatWindow extends owl.store.ConnectedComponent {
         if (!this.props.thread) {
             this.state.folded = !this.state.folded;
         } else {
-            this.env.store.commit('toggleFoldThread', this.props.chatWindowLocalId);
+            this.env.store.dispatch('toggleFoldThread', this.props.chatWindowLocalId);
         }
     }
 
