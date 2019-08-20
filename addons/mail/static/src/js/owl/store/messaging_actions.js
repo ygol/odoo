@@ -134,7 +134,9 @@ const actions = {
     /**
      * @param {Object} param0
      * @param {function} param0.commit
+     * @param {function} param0.dispatch
      * @param {Object} param0.env
+     * @param {Object} param0.state
      * @param {Object} param1
      * @param {boolean} [param1.autoselect=false]
      * @param {string} param1.name
@@ -143,7 +145,7 @@ const actions = {
      * @param {string} param1.type
      */
     async createChannel(
-        { commit, env },
+        { commit, dispatch, env, state },
         {
             autoselect=false,
             name,
@@ -164,11 +166,15 @@ const actions = {
             }
         });
         const threadLocalId = commit('createThread', { ...data });
+        if (state.threads[threadLocalId].is_minimized) {
+            dispatch('openThread', threadLocalId, {
+                chatWindowMode: 'last',
+            });
+        }
         if (autoselect) {
-            commit('openThread', threadLocalId);
+            dispatch('openThread', threadLocalId);
         }
     },
-
     /**
      * @param {Object} param0
      * @param {function} param0.dispatch
@@ -189,7 +195,7 @@ const actions = {
      *   valid Id in `chatWindowLocalIds` list of chat window manager.
      */
     closeChatWindow({ commit, dispatch, state }, chatWindowLocalId) {
-        commit('updateChatWindowLocalIds', chatWindowLocalId);
+        commit('removeChatWindowFromManager', chatWindowLocalId);
         if (chatWindowLocalId !== 'new_message') {
             dispatch('setThreadState', chatWindowLocalId, 'closed');
         }
@@ -286,6 +292,9 @@ const actions = {
             },
             ...data
         });
+        dispatch('_initMessagingChannels', data.channel_slots);
+
+
         env.call('bus_service', 'onNotification', null, notifs =>
             dispatch('_handleNotifications', notifs));
         env.call('bus_service', 'on', 'window_focus', null, () =>
@@ -296,8 +305,53 @@ const actions = {
         dispatch('_startLoopFetchPartnerImStatus');
     },
     /**
+     * @private
      * @param {Object} param0
      * @param {function} param0.commit
+     * @param {function} param0.dispatch
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {Object[]} [param1.channel_channel=[]]
+     * @param {Object[]} [param1.channel_direct_message=[]]
+     * @param {Object[]} [param1.channel_private_group=[]]
+     */
+    _initMessagingChannels(
+        { commit, dispatch, state },
+        {
+            channel_channel=[],
+            channel_direct_message=[],
+            channel_private_group=[],
+        }
+    ) {
+        for (const data of channel_channel) {
+            dispatch('_insertThread', {_model: 'mail.channel', ...data});
+        }
+        for (const data of channel_direct_message) {
+            dispatch('_insertThread', {_model: 'mail.channel', ...data});
+        }
+        for (const data of channel_private_group) {
+            dispatch('_insertThread', {_model: 'mail.channel', ...data});
+        }
+    },
+    /**
+     * @private
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {function} param0.dispatch
+     * @param {Object} param0.state
+     * @param {Object} threadData
+     */
+    async _insertThread({ commit, dispatch, state }, threadData){
+        const channelLocalId = commit('insertThread', threadData);
+        if (channelLocalId && state[channelLocalId] && state[channelLocalId].is_minimized)
+        {
+            dispatch('openThread', channelLocalId, {chatWindowMode: 'last'})
+        }
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {function} param0.dispatch
      * @param {Object} param0.env
      * @param {Object} param0.state
      * @param {integer} channelId
@@ -305,7 +359,7 @@ const actions = {
      * @param {boolean} [param2.autoselect=false]
      */
     async joinChannel(
-        { commit, env, state },
+        { commit, dispatch, env, state },
         channelId,
         { autoselect=false }={}
     ) {
@@ -319,8 +373,13 @@ const actions = {
             args: [[channelId]]
         });
         const threadLocalId = commit('createThread', { ...data });
+        if(state.threads[threadLocalId].is_minimized){
+            dispatch('openThread', threadLocalId, {
+                chatWindowMode: 'last',
+            });
+        }
         if (autoselect) {
-            commit('openThread', threadLocalId, {
+            dispatch('openThread', threadLocalId, {
                 resetDiscussDomain: true,
             });
         }
@@ -496,6 +555,47 @@ const actions = {
     },
     /**
      * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {function} param0.dispatch
+     * @param {Object} param0.state
+     * @param {string} threadLocalId
+     * @param {Object} param2
+     * @param {string} [param2.chatWindowMode]
+     * @param {boolean} [param2.resetDiscussDomain=false]
+     */
+    openThread(
+        { commit, dispatch, state },
+        threadLocalId,
+        {
+            chatWindowMode,
+            resetDiscussDomain=false
+        }={}
+    ) {
+        if (
+            (
+                !state.isMobile &&
+                state.discuss.isOpen
+            ) ||
+            (
+                state.isMobile &&
+                state.threads[threadLocalId]._model === 'mail.box'
+            )
+        ) {
+            if (resetDiscussDomain) {
+                commit('setDiscussDomain', []);
+            }
+            commit('_openThreadInDiscuss', threadLocalId);
+        } else {
+            dispatch('_openChatWindow', threadLocalId, {
+                mode: chatWindowMode,
+            });
+        }
+        if (!state.isMobile) {
+            commit('closeMessagingMenu');
+        }
+    },
+    /**
+     * @param {Object} param0
      * @param {functon} param0.commit
      * @param {function} param0.dispatch
      * @param {Object} param0.env
@@ -631,8 +731,7 @@ const actions = {
                 });
                 return;
             }
-            commit('openThread', threadLocalId);
-            return;
+            dispatch('openThread', threadLocalId);
         } else if (model === 'res.partner') {
             if (id === env.session.partner_id) {
                 dispatch('openDocument', {
@@ -669,7 +768,7 @@ const actions = {
                 });
                 return;
             }
-            commit('openThread', chat.localId);
+            dispatch('openThread', chat.localId);
         } else {
             dispatch('openDocument', {
                 model: 'res.partner',
@@ -774,47 +873,25 @@ const actions = {
      * @param {function} param0.commit
      * @param {function} param0.dispatch
      * @param {string} threadLocalId
-     * @param {boolean} newState
+     * @param {string} newState
      */
     async setThreadState({ commit, dispatch }, threadLocalId, newState){
         commit('updateThread', threadLocalId, { state:newState });
-        dispatch('syncThreadState', threadLocalId, newState);
-    },
-    /**
-     * @param {Object} param0
-     * @param {Object} param0.env
-     * @param {Object} param0.state
-     * @param {string} threadLocalId
-     * @param {string} newState
-     */
-    async syncThreadState({ env, state }, threadLocalId, newState){
-        env.rpc({
-            model: 'mail.channel',
-            method: 'channel_fold',
-            kwargs: {
-                uuid: state.threads[threadLocalId].uuid,
-                state: newState
-            }
-        }, {shadow:true});
+        dispatch('_syncThreadState', threadLocalId);
     },
     /**
      * @param {Object} param0
      * @param {function} param0.commit
      * @param {function} param0.dispatch
-     * @param {Object} param0.env
-     * @param {Object} param0.state
      * @param {string} threadLocalId
+     * @param {boolean} newIsMinimized
      */
-    async syncThreadMinimized({ commit, dispatch, env, state }, threadLocalId){
-        const thread = state.threads[threadLocalId];
-        env.rpc({
-            model: 'mail.channel',
-            method: 'channel_minimize',
-            args: [
-                thread.uuid,
-                thread.is_minimized,
-            ]
-        }, {shadow:true});
+    async setThreadIsMinimized({ commit, dispatch }, threadLocalId, newIsMinimized){
+        commit('updateThread', threadLocalId, {
+            is_minimized: newIsMinimized,
+            state: newIsMinimized ? 'open' : 'closed'
+        });
+        dispatch('_syncThreadIsMinimized', threadLocalId);
     },
     /**
      * @param {Object} param0
@@ -1141,6 +1218,7 @@ const actions = {
      * @private
      * @param {Object} param0
      * @param {function} param0.commit
+     * @param {function} param0.dispatch
      * @param {Object} param0.env
      * @param {Object} param0.state
      * @param {Object} data
@@ -1152,7 +1230,7 @@ const actions = {
      * @param {string} data.state
      * @param {string} data.uuid
      */
-    _handleNotificationPartnerChannel({ commit, env, state }, data) {
+    _handleNotificationPartnerChannel({ commit, dispatch, env, state }, data) {
         const {
             channel_type,
             id,
@@ -1181,7 +1259,12 @@ const actions = {
             );
         }
         if (!state.threads[`mail.channel_${id}`]) {
-            commit('createThread', data);
+            const threadLocalId = commit('createThread', data);
+            if(state.threads[threadLocalId].is_minimized){
+                dispatch('openThread', threadLocalId, {
+                    chatWindowMode: 'last',
+                });
+            }
         }
     },
     /**
@@ -1458,6 +1541,62 @@ const actions = {
             title: _.str.sprintf(titlePattern, state.outOfFocusUnreadMessageCounter),
         });
     },
+
+    /**
+     * @private
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {function} param0.dispatch
+     * @param {Object} param0.state
+     * @param {string} chatWindowLocalId either a thread local Id or
+     *   'new_message', if the chat window is already in `chatWindowLocalIds`
+     *   and visible, simply focuses it. If it is already in
+     *   `chatWindowLocalIds` and invisible, it swaps with last visible chat
+     *   window. New chat window is added based on provided mode.
+     * @param {Object} param2
+     * @param {boolean} [param2.focus=true]
+     * @param {string} [param2.mode='last_visible'] either 'last' or 'last_visible'
+     */
+    _openChatWindow(
+        { commit, dispatch, state },
+        chatWindowLocalId,
+        {
+            focus=true,
+            mode='last_visible',
+        }={}
+    ) {
+        const cwm = state.chatWindowManager;
+        const thread = state.threads[chatWindowLocalId];
+        if (cwm.chatWindowLocalIds.includes(chatWindowLocalId)) {
+            // open already minimized chat window
+            if (
+                mode === 'last_visible' &&
+                cwm.computed.hidden.chatWindowLocalIds.includes(chatWindowLocalId)
+            ) {
+                commit('makeChatWindowVisible', chatWindowLocalId);
+            }
+        } else {
+            // new chat window
+            commit('addChatWindowToManager', chatWindowLocalId);
+            if (chatWindowLocalId !== 'new_message') {
+                dispatch('setThreadIsMinimized', chatWindowLocalId, true);
+                commit('updateThread', chatWindowLocalId, {
+                    is_minimized: true,
+                    state: 'open',
+                });
+            }
+            commit('_computeChatWindows');
+            if (mode === 'last_visible') {
+                commit('makeChatWindowVisible', chatWindowLocalId);
+            }
+        }
+        if (thread && thread.state !== 'open') {
+            dispatch('setThreadState', chatWindowLocalId, 'open');
+        }
+        if (focus) {
+            commit('focusChatWindow', chatWindowLocalId);
+        }
+    },
     /**
      * @private
      * @param {Object} param0
@@ -1466,6 +1605,40 @@ const actions = {
     async _startLoopFetchPartnerImStatus({ dispatch }) {
         await dispatch('_fetchPartnerImStatus');
         dispatch('_loopFetchPartnerImStatus');
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.env
+     * @param {Object} param0.state
+     * @param {string} threadLocalId
+     */
+    async _syncThreadState({ env, state }, threadLocalId){
+        const thread = state.threads[threadLocalId];
+        env.rpc({
+            model: 'mail.channel',
+            method: 'channel_fold',
+            kwargs: {
+                uuid: thread.uuid,
+                state: thread.state
+            }
+        }, {shadow:true});
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.env
+     * @param {Object} param0.state
+     * @param {string} threadLocalId
+     */
+    async _syncThreadIsMinimized({ env, state }, threadLocalId){
+        const thread = state.threads[threadLocalId];
+        env.rpc({
+            model: 'mail.channel',
+            method: 'channel_minimize',
+            args: [
+                thread.uuid,
+                thread.is_minimized,
+            ]
+        }, {shadow:true});
     },
 };
 

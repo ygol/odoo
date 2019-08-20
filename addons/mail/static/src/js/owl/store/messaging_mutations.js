@@ -17,6 +17,14 @@ const mutations = {
     /**
      * @param {Object} param0
      * @param {Object} param0.state
+     * @param {string} chatWindowLocalId
+     */
+    addChatWindowToManager({ state }, chatWindowLocalId) {
+        state.chatWindowManager.chatWindowLocalIds.push(chatWindowLocalId);
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.state
      * @param {string} dialogId
      */
     closeDialog({ state }, dialogId) {
@@ -450,11 +458,6 @@ const mutations = {
         if (direct_partner && direct_partner[0]) {
             commit('insertPartner', direct_partner[0]);
         }
-        if (is_minimized) {
-            commit('openThread', threadLocalId, {
-                chatWindowMode: 'last',
-            });
-        }
         return threadLocalId;
     },
     /**
@@ -809,8 +812,7 @@ const mutations = {
                 userId: currentPartnerUserId,
             },
         });
-        commit('_initMessagingCommands', commands); // required for channels, hence before
-        commit('_initMessagingChannels', channel_slots);
+        commit('_initMessagingCommands', commands);
         commit('_initMessagingMailboxes', {
             is_moderator,
             moderation_counter,
@@ -972,43 +974,13 @@ const mutations = {
     },
     /**
      * @param {Object} param0
-     * @param {function} param0.commit
      * @param {Object} param0.state
-     * @param {string} threadLocalId
-     * @param {Object} param2
-     * @param {string} [param2.chatWindowMode]
-     * @param {boolean} [param2.resetDiscussDomain=false]
+     * @param {string} chatWindowLocalId
      */
-    openThread(
-        { commit, state },
-        threadLocalId,
-        {
-            chatWindowMode,
-            resetDiscussDomain=false
-        }={}
-    ) {
-        if (
-            (
-                !state.isMobile &&
-                state.discuss.isOpen
-            ) ||
-            (
-                state.isMobile &&
-                state.threads[threadLocalId]._model === 'mail.box'
-            )
-        ) {
-            if (resetDiscussDomain) {
-                commit('setDiscussDomain', []);
-            }
-            commit('_openThreadInDiscuss', threadLocalId);
-        } else {
-            commit('_openChatWindow', threadLocalId, {
-                mode: chatWindowMode,
-            });
-        }
-        if (!state.isMobile) {
-            commit('closeMessagingMenu');
-        }
+    removeChatWindowFromManager({ state }, chatWindowLocalId) {
+        const cwm = state.chatWindowManager;
+        cwm.chatWindowLocalIds =
+            cwm.chatWindowLocalIds.filter(id => id !== chatWindowLocalId);
     },
     /**
      * @param {Object} param0
@@ -1172,16 +1144,6 @@ const mutations = {
      */
     updateChatWindowManager({ state }, changes) {
         Object.assign(state.chatWindowManager, changes);
-    },
-    /**
-     * @param {Object} param0
-     * @param {Object} param0.state
-     * @param {string} chatWindowLocalId
-     */
-    updateChatWindowLocalIds({ state }, chatWindowLocalId) {
-        const cwm = state.chatWindowManager;
-        cwm.chatWindowLocalIds =
-            cwm.chatWindowLocalIds.filter(id => id !== chatWindowLocalId);
     },
     /**
      * @param {Object} param0
@@ -1598,33 +1560,7 @@ const mutations = {
             }, {});
         Object.assign(state, { cannedResponses });
     },
-    /**
-     * @private
-     * @param {Object} param0
-     * @param {function} param0.commit
-     * @param {Object} param1
-     * @param {Object[]} [param1.channel_channel=[]]
-     * @param {Object[]} [param1.channel_direct_message=[]]
-     * @param {Object[]} [param1.channel_private_group=[]]
-     */
-    _initMessagingChannels(
-        { commit },
-        {
-            channel_channel=[],
-            channel_direct_message=[],
-            channel_private_group=[],
-        }
-    ) {
-        for (const data of channel_channel) {
-            commit('insertThread', { _model: 'mail.channel', ...data });
-        }
-        for (const data of channel_direct_message) {
-            commit('insertThread', { _model: 'mail.channel', ...data });
-        }
-        for (const data of channel_private_group) {
-            commit('insertThread', { _model: 'mail.channel', ...data });
-        }
-    },
+
     /**
      * @private
      * @param {Object} param0
@@ -1868,62 +1804,6 @@ const mutations = {
         commit('updateThread', threadLocalId, {
             messageLocalIds: newMessageLocalIds,
         });
-    },
-    /**
-     * @private
-     * @param {Object} param0
-     * @param {function} param0.commit
-     * @param {Object} param0.state
-     * @param {string} chatWindowLocalId either a thread local Id or
-     *   'new_message', if the chat window is already in `chatWindowLocalIds`
-     *   and visible, simply focuses it. If it is already in
-     *   `chatWindowLocalIds` and invisible, it swaps with last visible chat
-     *   window. New chat window is added based on provided mode.
-     * @param {Object} param2
-     * @param {boolean} [param2.focus=true]
-     * @param {string} [param2.mode='last_visible'] either 'last' or 'last_visible'
-     */
-    _openChatWindow(
-        { commit, state },
-        chatWindowLocalId,
-        {
-            focus=true,
-            mode='last_visible',
-        }={}
-    ) {
-        const cwm = state.chatWindowManager;
-        const thread = state.threads[chatWindowLocalId];
-        if (cwm.chatWindowLocalIds.includes(chatWindowLocalId)) {
-            // open already minimized chat window
-            if (
-                mode === 'last_visible' &&
-                cwm.computed.hidden.chatWindowLocalIds.includes(chatWindowLocalId)
-            ) {
-                commit('makeChatWindowVisible', chatWindowLocalId);
-            }
-        } else {
-            // new chat window
-            cwm.chatWindowLocalIds.push(chatWindowLocalId);
-            if (chatWindowLocalId !== 'new_message') {
-                // FIXME hey I need to call an action here :D ....
-                commit('updateThread', chatWindowLocalId, {
-                    is_minimized: true,
-                    state: 'open',
-                });
-            }
-            commit('_computeChatWindows');
-            if (mode === 'last_visible') {
-                commit('makeChatWindowVisible', chatWindowLocalId);
-            }
-        }
-        if (thread && thread.state !== 'open') {
-            commit('updateThread', chatWindowLocalId, {
-                state: 'open',
-            });
-        }
-        if (focus) {
-            commit('focusChatWindow', chatWindowLocalId);
-        }
     },
     /**
      * @private

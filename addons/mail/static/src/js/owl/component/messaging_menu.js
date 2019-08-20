@@ -110,7 +110,7 @@ class MessagingMenu extends owl.store.ConnectedComponent {
      */
     _onClickNewMessage(ev) {
         if (!this.props.isMobile) {
-            this.env.store.commit('openThread', 'new_message');
+            this.env.store.dispatch('openThread', 'new_message');
             this.env.store.commit('closeMessagingMenu');
         } else {
             this.env.store.commit('toggleMessagingMenuMobileNewMessage');
@@ -145,7 +145,7 @@ class MessagingMenu extends owl.store.ConnectedComponent {
         const partnerId = ui.item.id;
         const chat = this.env.store.getters.chatFromPartner(`res.partner_${partnerId}`);
         if (chat) {
-            this.env.store.commit('openThread', chat.localId);
+            this.env.store.dispatch('openThread', chat.localId);
         } else {
             this.env.store.dispatch('createChannel', {
                 autoselect: true,
@@ -199,7 +199,7 @@ class MessagingMenu extends owl.store.ConnectedComponent {
      * @param {string} ev.detail.threadLocalId
      */
     _onSelectThread(ev) {
-        this.env.store.commit('openThread', ev.detail.threadLocalId);
+        this.env.store.dispatch('openThread', ev.detail.threadLocalId);
         if (!this.props.isMobile) {
             this.env.store.commit('closeMessagingMenu');
         }

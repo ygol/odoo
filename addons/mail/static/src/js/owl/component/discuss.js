@@ -83,7 +83,7 @@ class Discuss extends owl.store.ConnectedComponent {
                 activeThreadLocalId: this.props.initActiveThreadLocalId,
             });
         } else {
-            this.env.store.commit('openThread', this.props.initActiveThreadLocalId, {
+            this.env.store.dispatch('openThread', this.props.initActiveThreadLocalId, {
                 resetDiscussDomain: true,
             });
         }
@@ -328,7 +328,7 @@ class Discuss extends owl.store.ConnectedComponent {
             this._cancelReplyingToMessage();
         }
         this.env.store.commit('setDiscussActiveThread', threadLocalId);
-        this.env.store.commit('openThread', threadLocalId, {
+        this.env.store.dispatch('openThread', threadLocalId, {
             markAsDiscussTarget: true,
         });
     }
