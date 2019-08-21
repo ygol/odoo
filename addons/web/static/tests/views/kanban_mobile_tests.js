@@ -56,7 +56,7 @@ QUnit.module('Views', {
     QUnit.module('KanbanView Mobile');
 
     QUnit.test('mobile grouped rendering', async function (assert) {
-        assert.expect(13);
+        assert.expect(12);
 
         var kanban = await createView({
             View: KanbanView,
