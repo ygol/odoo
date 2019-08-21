@@ -1489,6 +1489,26 @@ const actions = {
      * @private
      * @param {Object} param0
      * @param {function} param0.commit
+     * @param {function} param0.dispatch
+     * @param {Object} param0.state
+     * @param {string} chatWindowLocalId chat Id that is invisible
+     */
+    _makeChatWindowVisible({ commit, dispatch, state }, chatWindowLocalId) {
+        const cwm = state.chatWindowManager;
+        const {
+            length: l,
+            [l-1]: { chatWindowLocalId: lastVisibleChatWindowLocalId }
+        } = cwm.computed.visible;
+        commit('_swapChatWindows', chatWindowLocalId, lastVisibleChatWindowLocalId);
+        const thread = state.threads[chatWindowLocalId];
+        if (thread && thread.state !== 'open') {
+            dispatch('setThreadState', chatWindowLocalId, 'open');
+        }
+    },
+    /**
+     * @private
+     * @param {Object} param0
+     * @param {function} param0.commit
      * @param {Object} param0.env
      * @param {Object} param0.getters
      * @param {Object} param0.state
@@ -1573,21 +1593,17 @@ const actions = {
                 mode === 'last_visible' &&
                 cwm.computed.hidden.chatWindowLocalIds.includes(chatWindowLocalId)
             ) {
-                commit('makeChatWindowVisible', chatWindowLocalId);
+                dispatch('_makeChatWindowVisible', chatWindowLocalId);
             }
         } else {
             // new chat window
             commit('addChatWindowToManager', chatWindowLocalId);
             if (chatWindowLocalId !== 'new_message') {
                 dispatch('setThreadIsMinimized', chatWindowLocalId, true);
-                commit('updateThread', chatWindowLocalId, {
-                    is_minimized: true,
-                    state: 'open',
-                });
             }
             commit('_computeChatWindows');
             if (mode === 'last_visible') {
-                commit('makeChatWindowVisible', chatWindowLocalId);
+                dispatch('_makeChatWindowVisible', chatWindowLocalId);
             }
         }
         if (thread && thread.state !== 'open') {

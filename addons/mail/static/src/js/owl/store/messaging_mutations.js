@@ -954,26 +954,6 @@ const mutations = {
     },
     /**
      * @param {Object} param0
-     * @param {function} param0.commit
-     * @param {Object} param0.state
-     * @param {string} chatWindowLocalId chat Id that is invisible
-     */
-    makeChatWindowVisible({ commit, state }, chatWindowLocalId) {
-        const cwm = state.chatWindowManager;
-        const {
-            length: l,
-            [l-1]: { chatWindowLocalId: lastVisibleChatWindowLocalId }
-        } = cwm.computed.visible;
-        commit('_swapChatWindows', chatWindowLocalId, lastVisibleChatWindowLocalId);
-        const thread = state.threads[chatWindowLocalId];
-        if (thread && thread.state !== 'open') {
-            commit('updateThread', chatWindowLocalId, {
-                state: 'open',
-            });
-        }
-    },
-    /**
-     * @param {Object} param0
      * @param {Object} param0.state
      * @param {string} chatWindowLocalId
      */

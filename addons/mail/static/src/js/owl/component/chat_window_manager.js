@@ -194,7 +194,7 @@ class ChatWindowManager extends owl.store.ConnectedComponent {
      * @param {string} ev.detail.chatWindowLocalId
      */
     _onSelectChatWindow(ev) {
-        this.env.store.commit('makeChatWindowVisible', ev.detail.chatWindowLocalId);
+        this.env.store.dispatch('makeChatWindowVisible', ev.detail.chatWindowLocalId);
     }
 
     /**
