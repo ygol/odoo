@@ -97,15 +97,6 @@ class ChatWindow extends owl.store.ConnectedComponent {
     /**
      * @private
      */
-    _close() {
-        this.trigger('o-close', {
-            chatWindowLocalId: this.props.chatWindowLocalId,
-        });
-    }
-
-    /**
-     * @private
-     */
     _focusout() {
         this.state.focused = false;
         if (!this.props.thread) {
