@@ -1542,9 +1542,9 @@ class MailThread(models.AbstractModel):
         normalized_email = tools.email_normalize(email)
         catchall_domain = self.env['ir.config_parameter'].sudo().get_param("mail.catchall.domain")
         if normalized_email and catchall_domain:
-            left_part = normalized_email.split('@')[0] if normalized_email.split('@')[1] == catchall_domain.lower() else False
-            if left_part:
-                if self.env['mail.alias'].sudo().search_count([('alias_name', '=', left_part)]):
+            (local_part, domain) = normalized_email.split('@')
+            if domain == catchall_domain.lower():
+                if self.env['mail.alias'].sudo().search_count([('alias_name', '=', local_part)]):
                     return self.env['res.users']
 
         if alias and alias.alias_parent_model_id and alias.alias_parent_thread_id:
@@ -1552,28 +1552,23 @@ class MailThread(models.AbstractModel):
                 ('res_model', '=', alias.alias_parent_model_id.model),
                 ('res_id', '=', alias.alias_parent_thread_id)]
             ).mapped('partner_id')
-        else:
-            followers = self.env['res.partner']
 
-        follower_users = self.env['res.users'].search([
-            ('partner_id', 'in', followers.ids), ('email_normalized', '=', normalized_email)
-        ], limit=1) if followers else self.env['res.users']
-        matching_user = follower_users[0] if follower_users else self.env['res.users']
-        if matching_user:
-            return matching_user
+            if followers:
+                follower_users = self.env['res.users'].search([
+                    ('partner_id', 'in', followers.ids), ('email_normalized', '=', normalized_email)
+                ], limit=1)
 
-        if not matching_user:
-            std_users = self.env['res.users'].sudo().search([('email_normalized', '=', normalized_email)], limit=1)
-            matching_user = std_users[0] if std_users else self.env['res.users']
-        if matching_user:
-            return matching_user
+                if follower_users:
+                    return follower_users
 
-        if not matching_user and alias and alias.alias_user_id:
-            matching_user = alias and alias.alias_user_id
-        if matching_user:
-            return matching_user
+        std_users = self.env['res.users'].sudo().search([('email_normalized', '=', normalized_email)], limit=1)
+        if std_users:
+            return std_users
 
-        return matching_user
+        if alias and alias.alias_user_id:
+            return alias.alias_user_id
+
+        return self.env['res.users']
 
     @api.model
     def _mail_find_partner_from_emails(self, emails, records=None, force_create=False):
