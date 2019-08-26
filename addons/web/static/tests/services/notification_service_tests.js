@@ -4,6 +4,7 @@ odoo.define('web.notification_tests', function (require) {
 var AbstractView = require('web.AbstractView');
 var Notification = require('web.Notification');
 var NotificationService = require('web.NotificationService');
+var concurrency = require('web.concurrency');
 
 var testUtils = require('web.test_utils');
 var createView = testUtils.createView;
@@ -26,7 +27,7 @@ QUnit.module('Services', {
             View: AbstractView,
             arch: '<fake/>',
             data: {
-            fake_model: {
+                fake_model: {
                     fields: {},
                     record: [],
                 },
@@ -62,7 +63,7 @@ QUnit.module('Services', {
             "<div class=\"toast-header\"> <span class=\"fa fa-2x mr-3 fa-lightbulb-o o_notification_icon\" role=\"img\" aria-label=\"Notification undefined\" title=\"Notification undefined\"></span> <div class=\"d-flex align-items-center mr-auto font-weight-bold o_notification_title\">a</div> </div> <div class=\"toast-body\"> <div class=\"o_notification_content\">b</div> </div>",
             "should display notification");
         assert.containsNone($notification, '.o_notification_close', "should not display the close button in ");
-        await waitCloseNotification();
+        await concurrency.delay(2);
         assert.strictEqual($notification.is(':hidden'), true, "should hide the notification");
         assert.strictEqual($('body .o_notification_manager .o_notification').length, 0, "should destroy the notification");
         view.destroy();
@@ -260,7 +261,7 @@ QUnit.module('Services', {
             Notification: Custom,
             customParams: true,
         });
-        await testUtils.nextMicrotaskTick();
+        await testUtils.nextTick();
         assert.containsOnce($('body'), '.o_notification_manager .o_notification:contains(Custom)',
             "should display the notification");
         view.destroy();

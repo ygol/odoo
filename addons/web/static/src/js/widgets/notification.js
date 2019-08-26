@@ -2,6 +2,7 @@ odoo.define('web.Notification', function (require) {
 'use strict';
 
 var Widget = require('web.Widget');
+var concurrency = require('web.concurrency');
 
 /**
  * Widget which is used to display a warning/information message on the top
@@ -73,20 +74,21 @@ var Notification = Widget.extend({
     /**
      * @override
      */
-    start: function () {
+    start: async function () {
+        await this._super.apply(this, arguments);
         this.$el.toast({
             animation: this._animation,
             autohide: false,
         });
         void this.$el[0].offsetWidth; // Force a paint refresh before showing the toast
         if (!this.sticky) {
-            this.autohide = _.throttle(this.close, this._autoCloseDelay, {leading: false});
-            this.$el.on('shown.bs.toast', () => {
-                this.autohide();
+            this.$el.on('shown.bs.toast', async() => {
+                await concurrency.delay(this._autoCloseDelay);
+                if (!this.isDestroyed())
+                    this.close();
             });
         }
         this.$el.toast('show');
-        return this._super.apply(this, arguments);
     },
     /**
      * @override
