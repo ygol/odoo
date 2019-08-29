@@ -46,10 +46,10 @@ def decode_spec(spec, regex):
 
 
 class lazymapping(defaultdict):
-    def __missing__(self, key): 
+    def __missing__(self, key):
         value = self.default_factory(key)
         self[key] = value
-        return value
+        return valueb
 
 def join(list):
     return ", ".join(list)
@@ -127,7 +127,6 @@ TIME_INTERVALS = {
 class Base(models.AbstractModel):
     _inherit = 'base'
 
-    @api.model
     def _get_annotated_groupby(self, groupby_spec, query, fetched_data):
         """ A groupby_spec defines a function (g: M -> T) from the model (M) to some other set (T)
             This defines by taking kernel pair an equivalence relation (R) on the model
@@ -215,7 +214,6 @@ class Base(models.AbstractModel):
         return annotated_groupby
 
 
-    @api.model
     def super_read_group(self, domain, groups, measure_specs, grouping_sets, orderby=False, limit=None, offset=0):
 
         # --------------------------------------------
@@ -490,13 +488,13 @@ class Base(models.AbstractModel):
         # --------------------------------------------------------------------------------
         # SET get_label attribute FOR ANNOTATED GROUPBYS WITH ATTRIBUTE type 'many2one'
         # --------------------------------------------------------------------------------
-µ
+
         def lazy_name_get(self):
             """ Evaluate self.name_get() lazily. """
             names = lazy(lambda: dict(self.name_get()))
             return [(rid, lazy(operator.getitem, names, rid)) for rid in self.ids]
 
-        def add_many2ones_get_label_function(annotated_groupbys, fetched_data):
+        def add_many2ones_get_label_function(self, annotated_groupbys, fetched_data):
             many2one_field_names = [
                 annotated_groupby['field_name']
                 for groupby_spec, annotated_groupby in annotated_groupbys.items()
@@ -588,21 +586,18 @@ class Base(models.AbstractModel):
         return result
 
 
-    @api.model
     def _get_domain(self, values, annotated_groupbys):
         return AND([
             [(annotated_groupbys[groupby_spec]['field_name'], '=', False)] if value is False else annotated_groupbys[groupby_spec]['get_domain'](value)
             for groupby_spec, value in values.items()
         ])
 
-    @api.model
     def _get_labels(self, values, annotated_groupbys):
         return {
             groupby_spec: False if value is False else annotated_groupbys[groupby_spec]['get_label'](value)
             for groupby_spec, value in values.items()
         }
 
-    @api.model
     def _process_values(self, values, annotated_groupbys):
         return {
             groupby_spec: False if value is None else annotated_groupbys[groupby_spec]['process_value'](value)
