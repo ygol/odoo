@@ -5,9 +5,7 @@
         owl="1"
         t-name="mail.component.DropZone"
         t-att-class="{
-            'd-none': state.value === 'hidden',
-            'o-dragging-outside': state.value === 'drag_out',
-            'o-dragging-inside': state.value === 'drag_in',
+            'o-dragging-inside': state.draggingInside
         }">
         <h4>
             Drag Files Here <i class="fa fa-download"/>

@@ -19,6 +19,7 @@ class Composer extends owl.store.ConnectedComponent {
         this.state = {
             hasAllSuggestedRecipients: false,
             hasTextInputContent: false,
+            isDropZoneShown: false
         };
         this.template = 'mail.component.Composer';
         /**
@@ -27,6 +28,8 @@ class Composer extends owl.store.ConnectedComponent {
          */
         this._focusCounter = 0;
         this._globalCaptureClickEventListener = ev => this._onClickCaptureGlobal(ev);
+        this._globalDragLeaveListener = ev => this._onDragLeave(ev);
+        this._globalDragOverListener = ev => this._onDragOver(ev);
     }
 
     mounted() {
@@ -42,6 +45,8 @@ class Composer extends owl.store.ConnectedComponent {
             attachmentLocalIds: this.props.initialAttachmentLocalIds || [],
         });
         document.addEventListener('click', this._globalCaptureClickEventListener, true);
+        document.addEventListener('dragleave', this._globalDragLeaveListener);
+        document.addEventListener('dragover', this._globalDragOverListener);
     }
 
     /**
@@ -198,6 +203,25 @@ class Composer extends owl.store.ConnectedComponent {
     // Handlers
     //--------------------------------------------------------------------------
 
+    _onDragLeave(e) {
+        if (e.clientX <= 0
+            || e.clientY <= 0
+            || e.clientX >= window.innerWidth
+            || e.clientY >= window.innerHeight) {
+            this.state.isDropZoneShown = false;
+        }
+    }
+
+    _onDragOver(e) {
+        this.state.isDropZoneShown = true;
+        e.preventDefault();
+    }
+
+    _onOutsideDrop(e) {
+        this.state.isDropZoneShown = false;
+        e.preventDefault();
+    }
+
     /**
      * @private
      * @param {CustomEvent} e
@@ -205,6 +229,7 @@ class Composer extends owl.store.ConnectedComponent {
      * @param {FileList} e.detail.files
      */
     _onFilesDropped(e) {
+        this.state.isDropZoneShown = false;
         this._uploadFiles(e.detail.files);
     }
 

@@ -14,7 +14,9 @@
         t-name="mail.component.Composer">
         <DropZone
             class="o_Thread_dropZone"
-            t-on-o-dropzone-files-dropped.stop="_onFilesDropped"/>
+            t-if="state.isDropZoneShown"
+            t-on-o-dropzone-files-dropped.stop="_onFilesDropped"
+            t-on-o-dropzone-outside-drop.stop="_onOutsideDrop"/>
         <input
             class="o_Composer_fileInput"
             multiple="true"
