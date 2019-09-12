@@ -38,8 +38,8 @@ class DropZone extends owl.store.ConnectedComponent {
     }
 
     /**
-     * @param {Event} e
      * @private
+     * @param {Event} e
      */
     _isInDropZone(e) {
         return this.el === e.target;
@@ -49,12 +49,20 @@ class DropZone extends owl.store.ConnectedComponent {
     // Handlers
     //--------------------------------------------------------------------------
 
+    /**
+     * @private
+     * @param {Event} e
+     */
     _onDragOver(e) {
         e.preventDefault();
-        this.state.draggingInside = this._isInDropZone(e);
         e.dataTransfer.dropEffect = "copy";
+        this.state.draggingInside = this._isInDropZone(e);
     }
 
+    /**
+     * @private
+     * @param {Event} e
+     */
     _onDrop(e) {
         e.preventDefault();
         e.stopPropagation();

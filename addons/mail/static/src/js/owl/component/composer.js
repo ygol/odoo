@@ -203,6 +203,10 @@ class Composer extends owl.store.ConnectedComponent {
     // Handlers
     //--------------------------------------------------------------------------
 
+    /**
+     * @private
+     * @param {Event} e
+     */
     _onDragLeave(e) {
         if (e.clientX <= 0
             || e.clientY <= 0
@@ -212,12 +216,20 @@ class Composer extends owl.store.ConnectedComponent {
         }
     }
 
+    /**
+     * @private
+     * @param {Event} e
+     */
     _onDragOver(e) {
         this.state.isDropZoneShown = true;
         e.preventDefault();
     }
 
-    _onOutsideDrop(e) {
+    /**
+     * @private
+     * @param {Event} e
+     */
+    _onDropOutside(e) {
         this.state.isDropZoneShown = false;
         e.preventDefault();
     }
