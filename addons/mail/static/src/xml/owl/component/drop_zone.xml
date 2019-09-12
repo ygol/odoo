@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <div
+        class="o_DropZone"
+        owl="1"
+        t-name="mail.component.DropZone"
+        t-att-class="{
+            'd-none': state.value === 'hidden',
+            'o-dragging-outside': state.value === 'drag_out',
+            'o-dragging-inside': state.value === 'drag_in',
+        }">
+        <h4>
+            Drag Files Here <i class="fa fa-download"/>
+        </h4>
+    </div>
+</templates>

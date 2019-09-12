@@ -12,6 +12,9 @@
         t-att-data-id="props.id"
         t-att-data-local-id="localId"
         t-name="mail.component.Composer">
+        <DropZone
+            class="o_Thread_dropZone"
+            t-on-o-dropzone-files-dropped.stop="_onFilesDropped"/>
         <input
             class="o_Composer_fileInput"
             multiple="true"

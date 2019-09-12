@@ -2,6 +2,7 @@ odoo.define('mail.component.Composer', function (require) {
 'use strict';
 
 const AttachmentList = require('mail.component.AttachmentList');
+const DropZone = require('mail.component.DropZone');
 const EmojisButton = require('mail.component.EmojisButton');
 const TextInput = require('mail.component.ComposerTextInput');
 
@@ -130,6 +131,47 @@ class Composer extends owl.store.ConnectedComponent {
     // Private
     //--------------------------------------------------------------------------
 
+    async _uploadFiles(files) {
+        for (const file of files) {
+            const attachment = this.storeProps.attachmentLocalIds
+                .map(localId => this.env.store.state.attachments[localId])
+                .find(attachment =>
+                    attachment.name === file.name && attachment.size === file.size);
+            // if the files already exits, delete the file before upload
+            if (attachment) {
+                this.dispatch('unlinkAttachment', attachment.localId);
+            }
+        }
+        for (const file of files) {
+            const attachmentLocalId = this.dispatch('createAttachment', {
+                filename: file.name,
+                isTemporary: true,
+                name: file.name,
+            });
+            this.dispatch('linkAttachmentToComposer', this.props.id, attachmentLocalId);
+        }
+        let formData = new window.FormData();
+        formData.append('callback', this.fileuploadId);
+        formData.append('csrf_token', core.csrf_token);
+        formData.append('id', '0');
+        formData.append('model', 'mail.compose.message');
+        for (const file of files) {
+            // removing existing key with blank data and appending again with file info
+            // In safari, existing key will not be updated when append with new file.
+            formData.delete('ufile');
+            formData.append('ufile', file, file.name);
+            const response = await window.fetch('/web/binary/upload_attachment', {
+                method: 'POST',
+                body: formData,
+            });
+            let html = await response.text();
+            const template = document.createElement('template');
+            template.innerHTML = html.trim();
+            window.eval.call(window, template.content.firstChild.textContent);
+        }
+        this.refs.fileInput.value = '';
+    }
+
     /**
      * @private
      */
@@ -155,6 +197,16 @@ class Composer extends owl.store.ConnectedComponent {
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     * @param {CustomEvent} e
+     * @param {Object} e.detail
+     * @param {FileList} e.detail.files
+     */
+    _onFilesDropped(e) {
+        this._uploadFiles(e.detail.files);
+    }
 
     /**
      * @private
@@ -194,45 +246,7 @@ class Composer extends owl.store.ConnectedComponent {
      * @param {Event} ev
      */
     async _onChangeAttachment(ev) {
-        const files = ev.target.files;
-        for (const file of files) {
-            const attachment = this.storeProps.attachmentLocalIds
-                .map(localId => this.env.store.state.attachments[localId])
-                .find(attachment =>
-                    attachment.name === file.name && attachment.size === file.size);
-            // if the files already exits, delete the file before upload
-            if (attachment) {
-                this.dispatch('unlinkAttachment', attachment.localId);
-            }
-        }
-        for (const file of files) {
-            const attachmentLocalId = this.dispatch('createAttachment', {
-                filename: file.name,
-                isTemporary: true,
-                name: file.name,
-            });
-            this.dispatch('linkAttachmentToComposer', this.props.id, attachmentLocalId);
-        }
-        let formData = new window.FormData();
-        formData.append('callback', this.fileuploadId);
-        formData.append('csrf_token', core.csrf_token);
-        formData.append('id', '0');
-        formData.append('model', 'mail.compose.message');
-        for (const file of files) {
-            // removing existing key with blank data and appending again with file info
-            // In safari, existing key will not be updated when append with new file.
-            formData.delete('ufile');
-            formData.append('ufile', file, file.name);
-            const response = await window.fetch('/web/binary/upload_attachment', {
-                method: 'POST',
-                body: formData,
-            });
-            let html = await response.text();
-            const template = document.createElement('template');
-            template.innerHTML = html.trim();
-            window.eval.call(window, template.content.firstChild.textContent);
-        }
-        this.refs.fileInput.value = '';
+        await this._uploadFiles(ev.target.files);
     }
 
     /**
@@ -372,6 +386,7 @@ class Composer extends owl.store.ConnectedComponent {
 
 Composer.components = {
     AttachmentList,
+    DropZone,
     EmojisButton,
     TextInput,
 };

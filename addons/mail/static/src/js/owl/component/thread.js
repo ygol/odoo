@@ -2,6 +2,7 @@ odoo.define('mail.component.Thread', function (require) {
 'use strict';
 
 const Composer = require('mail.component.Composer');
+const DropZone = require('mail.component.DropZone');
 const MessageList = require('mail.component.MessageList');
 
 class Thread extends owl.store.ConnectedComponent {
@@ -135,9 +136,9 @@ class Thread extends owl.store.ConnectedComponent {
 
     /**
      * @private
-     * @param {CustomEvent} ev
+     * @param {CustomEvent} e
      */
-    _onMessageListMounted(ev) {
+    _onMessageListMounted(e) {
         this._isMessageListJustMounted = true;
     }
 }

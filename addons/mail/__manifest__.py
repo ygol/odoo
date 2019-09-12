@@ -79,6 +79,7 @@
         'static/src/xml/owl/component/discuss_mobile_mailbox_selection.xml',
         'static/src/xml/owl/component/discuss_sidebar.xml',
         'static/src/xml/owl/component/discuss_sidebar_item.xml',
+        'static/src/xml/owl/component/drop_zone.xml',
         'static/src/xml/owl/component/editable_text.xml',
         'static/src/xml/owl/component/emojis_button.xml',
         'static/src/xml/owl/component/emojis_popover.xml',

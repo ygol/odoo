@@ -121,6 +121,7 @@
                 <script type="text/javascript" src="/mail/static/src/js/owl/component/discuss_mobile_mailbox_selection.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/owl/component/discuss_sidebar.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/owl/component/discuss_sidebar_item.js"></script>
+                <script type="text/javascript" src="/mail/static/src/js/owl/component/drop_zone.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/owl/component/editable_text.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/owl/component/emojis_button.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/owl/component/emojis_popover.js"></script>
@@ -166,6 +167,7 @@
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/discuss_mobile_mailbox_selection.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/discuss_sidebar.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/discuss_sidebar_item.scss"/>
+                <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/drop_zone.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/emojis_popover.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/message.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/message_author_prefix.scss"/>
