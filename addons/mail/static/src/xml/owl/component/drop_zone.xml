@@ -3,10 +3,11 @@
     <div
         class="o_DropZone"
         owl="1"
-        t-name="mail.component.DropZone"
         t-att-class="{
             'o-dragging-inside': state.draggingInside
-        }">
+        }"
+        t-att-data-id="id"
+        t-name="mail.component.DropZone">
         <h4>
             Drag Files Here <i class="fa fa-download"/>
         </h4>

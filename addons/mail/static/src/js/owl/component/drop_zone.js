@@ -7,6 +7,7 @@ class DropZone extends owl.store.ConnectedComponent {
      */
     constructor(...args) {
         super(...args);
+        this.id = _.uniqueId('o_dropZone_');
         this.template = 'mail.component.DropZone';
         this.state = { draggingInside: false };
         this._globalDragOverListener = ev => this._onDragOver(ev);
@@ -39,11 +40,10 @@ class DropZone extends owl.store.ConnectedComponent {
 
     /**
      * @private
-     * @param {Event} e
+     * @param {DragEvent} e
      */
     _isInDropZone(e) {
-        // FIXME closest ? (do not work when hovering h4)
-        return this.el === e.target;
+        return this.el === e.target || e.target.closest(`[data-id="${this.id}"]`);
     }
 
     //--------------------------------------------------------------------------
@@ -52,7 +52,7 @@ class DropZone extends owl.store.ConnectedComponent {
 
     /**
      * @private
-     * @param {Event} e
+     * @param {DragEvent} e
      */
     _onDragOver(e) {
         e.preventDefault();
@@ -62,7 +62,7 @@ class DropZone extends owl.store.ConnectedComponent {
 
     /**
      * @private
-     * @param {Event} e
+     * @param {DragEvent} e
      */
     _onDrop(e) {
         e.preventDefault();
