@@ -42,6 +42,7 @@ class DropZone extends owl.store.ConnectedComponent {
      * @param {Event} e
      */
     _isInDropZone(e) {
+        // FIXME closest ? (do not work when hovering h4)
         return this.el === e.target;
     }
 

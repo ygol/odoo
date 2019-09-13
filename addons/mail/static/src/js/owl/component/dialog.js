@@ -17,14 +17,6 @@ class Dialog extends owl.Component {
         document.addEventListener('click', this._globalClickEventListener);
     }
 
-    /**
-     * @param {Object} nextProps
-     * @param {owl.Component} nextProps.Component
-     */
-    willUpdateProps(nextProps) {
-        this.components.Component = nextProps.Component;
-    }
-
     willUnmount() {
         document.removeEventListener('click', this._globalClickEventListener);
     }
@@ -72,7 +64,7 @@ Dialog.components = {
      * Dialog only works with attachment viewer for the time being, this will
      * be fixed later...
      */
-    Components: AttachmentViewer,
+    Component: AttachmentViewer,
 };
 
 Dialog.props = {

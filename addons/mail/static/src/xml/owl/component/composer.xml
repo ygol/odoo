@@ -113,6 +113,7 @@
                 t-on-o-discard.stop="_onDiscardInput"
                 t-on-o-input-composer-text-input="_onInputTextInput"
                 t-on-o-keydown-enter.stop="_onTextInputKeydownEnter"
+                t-on-paste="_onTextInputPaste"
                 t-ref="textInput"/>
             <div
                 class="o_Composer_buttons"

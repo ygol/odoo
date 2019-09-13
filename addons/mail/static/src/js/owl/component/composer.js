@@ -205,48 +205,6 @@ class Composer extends owl.store.ConnectedComponent {
 
     /**
      * @private
-     * @param {Event} e
-     */
-    _onDragLeave(e) {
-        if (e.clientX <= 0
-            || e.clientY <= 0
-            || e.clientX >= window.innerWidth
-            || e.clientY >= window.innerHeight) {
-            this.state.isDropZoneShown = false;
-        }
-    }
-
-    /**
-     * @private
-     * @param {Event} e
-     */
-    _onDragOver(e) {
-        this.state.isDropZoneShown = true;
-        e.preventDefault();
-    }
-
-    /**
-     * @private
-     * @param {Event} e
-     */
-    _onDropOutside(e) {
-        this.state.isDropZoneShown = false;
-        e.preventDefault();
-    }
-
-    /**
-     * @private
-     * @param {CustomEvent} e
-     * @param {Object} e.detail
-     * @param {FileList} e.detail.files
-     */
-    _onFilesDropped(e) {
-        this.state.isDropZoneShown = false;
-        this._uploadFiles(e.detail.files);
-    }
-
-    /**
-     * @private
      * @param {jQuery.Event} ev
      * @param {...Object} fileData
      */
@@ -377,12 +335,54 @@ class Composer extends owl.store.ConnectedComponent {
 
     /**
      * @private
+     * @param {Event} e
+     */
+    _onDragLeave(e) {
+        if (e.clientX <= 0
+            || e.clientY <= 0
+            || e.clientX >= window.innerWidth
+            || e.clientY >= window.innerHeight) {
+            this.state.isDropZoneShown = false;
+        }
+    }
+
+    /**
+     * @private
+     * @param {Event} e
+     */
+    _onDragOver(e) {
+        this.state.isDropZoneShown = true;
+        e.preventDefault();
+    }
+
+    /**
+     * @private
+     * @param {Event} e
+     */
+    _onDropOutside(e) {
+        this.state.isDropZoneShown = false;
+        e.preventDefault();
+    }
+
+    /**
+     * @private
      * @param {CustomEvent} ev
      * @param {Object} ev.detail
      * @param {string} ev.detail.unicode
      */
     _onEmojiSelection(ev) {
         this.refs.textInput.insertTextContent(ev.detail.unicode);
+    }
+
+    /**
+     * @private
+     * @param {CustomEvent} e
+     * @param {Object} e.detail
+     * @param {FileList} e.detail.files
+     */
+    _onFilesDropped(e) {
+        this.state.isDropZoneShown = false;
+        this._uploadFiles(e.detail.files);
     }
 
     /**
@@ -404,6 +404,17 @@ class Composer extends owl.store.ConnectedComponent {
             return;
         }
         this._postMessage();
+    }
+
+    /**
+     * @private
+     * @param {CustomEvent} e
+     */
+    _onTextInputPaste(e){
+        if(e.clipboardData && e.clipboardData.files)
+        {
+            this._uploadFiles(e.clipboardData.files);
+        }
     }
 
     /**

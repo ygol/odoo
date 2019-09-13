@@ -87,7 +87,7 @@ class AttachmentViewer extends owl.store.ConnectedComponent {
      * @private
      */
     _close() {
-        this.dispatch('closeDialog', this.props.id);
+        this.dispatch('closeDialog', this.props.dialogId);
     }
 
     /**
