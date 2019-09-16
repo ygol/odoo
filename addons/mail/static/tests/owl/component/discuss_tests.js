@@ -3784,21 +3784,27 @@ QUnit.test('composer: drop attachments', async function (assert) {
         document.querySelector('.o_Thread_dropZone'),
         "should have a drop zone");
 
+    assert.strictEqual(
+        document
+            .querySelectorAll(`
+            .o_Composer
+            .o_Attachment`)
+            .length,
+        0,
+        "should have no attachment before files are dropped");
+
     await dropFiles(
         document.querySelector('.o_Thread_dropZone'),
         files);
 
-    assert.ok(
-        document.querySelector('.o_Composer_attachmentList'),
-        "should have an attachment list");
     assert.strictEqual(
         document
             .querySelectorAll(`
-            .o_Composer_attachmentList
-            .o_Attachment`)
+                .o_Composer
+                .o_Attachment`)
             .length,
         2,
-        "should have two attachments");
+        "should have 2 attachments in the composer after files dropped");
 });
 
 QUnit.test('composer: paste attachments', async function (assert) {
@@ -3849,7 +3855,7 @@ QUnit.test('composer: paste attachments', async function (assert) {
             .o_Attachment`)
             .length,
         2,
-        "should have two attachments");
+        "should have 2 attachments in the composer after paste");
 });
 
 QUnit.test('composer state: text save and restore', async function (assert) {

@@ -19,7 +19,7 @@ class Composer extends owl.store.ConnectedComponent {
         this.state = {
             hasAllSuggestedRecipients: false,
             hasTextInputContent: false,
-            isDropZoneShown: false
+            hasDropZone: false
         };
         this.template = 'mail.component.Composer';
         /**
@@ -28,8 +28,8 @@ class Composer extends owl.store.ConnectedComponent {
          */
         this._focusCounter = 0;
         this._globalCaptureClickEventListener = ev => this._onClickCaptureGlobal(ev);
-        this._globalDragLeaveListener = ev => this._onDragLeave(ev);
-        this._globalDragOverListener = ev => this._onDragOver(ev);
+        this._globalDragLeaveListener = ev => this._onDragleaveGlobal(ev);
+        this._globalDragOverListener = ev => this._onDragoverGlobal(ev);
     }
 
     mounted() {
@@ -70,6 +70,8 @@ class Composer extends owl.store.ConnectedComponent {
         this.dispatch('deleteComposer', this.props.id);
         $(window).off(this.fileuploadId, this._attachmentUploadedEventListener);
         document.removeEventListener('click', this._globalCaptureClickEventListener, true);
+        document.removeEventListener('dragleave', this._globalDragLeaveListener);
+        document.removeEventListener('dragover', this._globalDragOverListener);
     }
 
     //--------------------------------------------------------------------------
@@ -136,6 +138,33 @@ class Composer extends owl.store.ConnectedComponent {
     // Private
     //--------------------------------------------------------------------------
 
+    /**
+     * @private
+     */
+    async _postMessage() {
+        // TODO: take suggested recipients into account
+        try {
+            await this.dispatch('postMessageOnThread', this.props.threadLocalId, {
+                attachmentLocalIds: this.storeProps.attachmentLocalIds,
+                htmlContent: this.refs.textInput.getHtmlContent(),
+                isLog: this.props.isLog,
+                threadCacheLocalId: this.props.threadCacheLocalId,
+            });
+            this.refs.textInput.reset();
+            this.dispatch('unlinkAttachmentsFromComposer', this.props.id);
+            // TODO: we might need to remove trigger and use the store to wait for
+            // the post rpc to be done
+            this.trigger('o-message-posted');
+        } catch (err) {
+            // ignore error
+        }
+    }
+
+    /**
+     * @private
+     * @param {FileList|Array} files
+     * @return {Promise}
+     */
     async _uploadFiles(files) {
         for (const file of files) {
             const attachment = this.storeProps.attachmentLocalIds
@@ -175,28 +204,6 @@ class Composer extends owl.store.ConnectedComponent {
             window.eval.call(window, template.content.firstChild.textContent);
         }
         this.refs.fileInput.value = '';
-    }
-
-    /**
-     * @private
-     */
-    async _postMessage() {
-        // TODO: take suggested recipients into account
-        try {
-            await this.dispatch('postMessageOnThread', this.props.threadLocalId, {
-                attachmentLocalIds: this.storeProps.attachmentLocalIds,
-                htmlContent: this.refs.textInput.getHtmlContent(),
-                isLog: this.props.isLog,
-                threadCacheLocalId: this.props.threadCacheLocalId,
-            });
-            this.refs.textInput.reset();
-            this.dispatch('unlinkAttachmentsFromComposer', this.props.id);
-            // TODO: we might need to remove trigger and use the store to wait for
-            // the post rpc to be done
-            this.trigger('o-message-posted');
-        } catch (err) {
-            // ignore error
-        }
     }
 
     //--------------------------------------------------------------------------
@@ -335,33 +342,34 @@ class Composer extends owl.store.ConnectedComponent {
 
     /**
      * @private
-     * @param {Event} e
+     * @param {DragEvent} ev
      */
-    _onDragLeave(e) {
-        if (e.clientX <= 0
-            || e.clientY <= 0
-            || e.clientX >= window.innerWidth
-            || e.clientY >= window.innerHeight) {
-            this.state.isDropZoneShown = false;
+    _onDragleaveGlobal(ev) {
+        if (
+            ev.clientX <= 0 ||
+            ev.clientY <= 0 ||
+            ev.clientX >= window.innerWidth ||
+            ev.clientY >= window.innerHeight) {
+            this.state.hasDropZone = false;
         }
     }
 
     /**
      * @private
-     * @param {Event} e
+     * @param {DragEvent} ev
      */
-    _onDragOver(e) {
-        this.state.isDropZoneShown = true;
-        e.preventDefault();
+    _onDragoverGlobal(ev) {
+        ev.preventDefault();
+        this.state.hasDropZone = true;
     }
 
     /**
      * @private
-     * @param {Event} e
+     * @param {DragEvent} ev
      */
-    _onDropOutside(e) {
-        this.state.isDropZoneShown = false;
-        e.preventDefault();
+    _onDropOutside(ev) {
+        ev.preventDefault();
+        this.state.hasDropZone = false;
     }
 
     /**
@@ -380,8 +388,8 @@ class Composer extends owl.store.ConnectedComponent {
      * @param {Object} e.detail
      * @param {FileList} e.detail.files
      */
-    _onFilesDropped(e) {
-        this.state.isDropZoneShown = false;
+    _onDropZoneFilesDropped(e) {
+        this.state.hasDropZone = false;
         this._uploadFiles(e.detail.files);
     }
 
@@ -408,13 +416,13 @@ class Composer extends owl.store.ConnectedComponent {
 
     /**
      * @private
-     * @param {CustomEvent} e
+     * @param {CustomEvent} ev
      */
-    _onTextInputPaste(e){
-        if(e.clipboardData && e.clipboardData.files)
-        {
-            this._uploadFiles(e.clipboardData.files);
+    _onPasteTextInput(ev) {
+        if (!ev.clipboardData || !ev.clipboardData.files) {
+            return;
         }
+        this._uploadFiles(ev.clipboardData.files);
     }
 
     /**

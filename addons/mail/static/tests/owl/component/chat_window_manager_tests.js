@@ -832,11 +832,9 @@ QUnit.test('chat window: state destroyed on close', async function (assert) {
             contentType: 'text/plain',
         })
     ];
-    await testUtils.nextTick();
     await inputFiles(
         document.querySelector('.o_Composer_fileInput'),
         files);
-
     // Hide home menu
     await this.widget.call('chat_window', 'test:will_hide_home_menu');
     await this.widget.call('chat_window', 'test:hide_home_menu');

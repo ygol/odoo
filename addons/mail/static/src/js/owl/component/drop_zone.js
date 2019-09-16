@@ -8,9 +8,9 @@ class DropZone extends owl.store.ConnectedComponent {
     constructor(...args) {
         super(...args);
         this.id = _.uniqueId('o_dropZone_');
+        this.state = { isDraggingInside: false };
         this.template = 'mail.component.DropZone';
-        this.state = { draggingInside: false };
-        this._globalDragOverListener = ev => this._onDragOver(ev);
+        this._globalDragOverListener = ev => this._onDragoverGlobal(ev);
         this._globalDropListener = ev => this._onDrop(ev);
     }
 
@@ -18,6 +18,15 @@ class DropZone extends owl.store.ConnectedComponent {
         document.addEventListener('dragover', this._globalDragOverListener);
         document.addEventListener('drop', this._globalDropListener);
     }
+
+    willUnmount() {
+        document.removeEventListener('dragover', this._globalDragOverListener);
+        document.removeEventListener('drop', this._globalDropListener);
+    }
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
 
     /**
      * Making sure that dragging content is external files.
@@ -28,22 +37,23 @@ class DropZone extends owl.store.ConnectedComponent {
      * @returns {boolean}
      */
     _isDragSourceExternalFile(dataTransfer) {
-        const DragDataType = dataTransfer.types;
-        if (DragDataType.constructor === DOMStringList) {
-            return DragDataType.contains('Files');
+        const dragDataType = dataTransfer.types;
+        if (dragDataType.constructor === DOMStringList) {
+            return dragDataType.contains('Files');
         }
-        if (DragDataType.constructor === Array) {
-            return DragDataType.indexOf('Files') !== -1;
+        if (dragDataType.constructor === Array) {
+            return dragDataType.includes('Files');
         }
         return false;
     }
 
     /**
      * @private
-     * @param {DragEvent} e
+     * @param {DragEvent} ev
+     * @return {boolean}
      */
-    _isInDropZone(e) {
-        return this.el === e.target || e.target.closest(`[data-id="${this.id}"]`);
+    _isInDropZone(ev) {
+        return this.el === ev.target || ev.target.closest(`[data-id="${this.id}"]`);
     }
 
     //--------------------------------------------------------------------------
@@ -52,28 +62,27 @@ class DropZone extends owl.store.ConnectedComponent {
 
     /**
      * @private
-     * @param {DragEvent} e
+     * @param {DragEvent} ev
      */
-    _onDragOver(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "copy";
-        this.state.draggingInside = this._isInDropZone(e);
+    _onDragoverGlobal(ev) {
+        ev.preventDefault();
+        ev.dataTransfer.dropEffect = "copy";
+        this.state.isDraggingInside = this._isInDropZone(ev);
     }
 
     /**
      * @private
-     * @param {DragEvent} e
+     * @param {DragEvent} ev
      */
-    _onDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (this._isInDropZone(e)) {
-            if (this._isDragSourceExternalFile(e.dataTransfer)) {
-                this.trigger('o-dropzone-files-dropped', { files: e.dataTransfer.files });
+    _onDrop(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (this._isInDropZone(ev)) {
+            if (this._isDragSourceExternalFile(ev.dataTransfer)) {
+                this.trigger('o-dropzone-files-dropped', { files: ev.dataTransfer.files });
             }
-        }
-        else {
-            this.trigger('o-dropzone-outside-drop', { originalEvent: e });
+        } else {
+            this.trigger('o-dropzone-outside-drop', { originalEvent: ev });
         }
     }
 }

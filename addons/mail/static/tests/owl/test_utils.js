@@ -8,10 +8,10 @@ const EnvService = require('mail.service.Env');
 const StoreService = require('mail.service.Store');
 const Discuss = require('mail.widget.Discuss');
 const MessagingMenu = require('mail.widget.MessagingMenu');
-const concurrency = require('web.concurrency');
 
 const AbstractStorageService = require('web.AbstractStorageService');
 const Class = require('web.Class');
+const concurrency = require('web.concurrency');
 const NotificationService = require('web.NotificationService');
 const RamStorage = require('web.RamStorage');
 const testUtils = require('web.test_utils');
@@ -222,7 +222,7 @@ function beforeEach(self) {
  * @param {DOM.Element} el
  * @param {Object[]} file must have been created beforehand (@see createFile)
  */
-function dragoverFiles(el, files) {
+async function dragoverFiles(el, files) {
     const ev = new Event('dragover', { bubbles: true });
     Object.defineProperty(ev, 'dataTransfer', {
         value: _createFakeDataTransfer(files),
@@ -237,24 +237,9 @@ function dragoverFiles(el, files) {
  * @param {DOM.Element} el
  * @param {Object[]} files must have been created beforehand (@see createFile)
  */
-function dropFiles(el, files) {
+async function dropFiles(el, files) {
     const ev = new Event('drop', { bubbles: true, });
     Object.defineProperty(ev, 'dataTransfer', {
-        value: _createFakeDataTransfer(files),
-    });
-    el.dispatchEvent(ev);
-    return concurrency.delay(0);
-}
-
-/**
- * Paste some files on a DOM element.
- *
- * @param {DOM.Element} el
- * @param {Object[]} files must have been created beforehand (@see createFile)
- */
-function pasteFiles(el, files) {
-    const ev = new Event('paste', { bubbles: true, });
-    Object.defineProperty(ev, 'clipboardData', {
         value: _createFakeDataTransfer(files),
     });
     el.dispatchEvent(ev);
@@ -280,6 +265,22 @@ async function inputFiles(el, files) {
     el.files = dT.files;
     el.dispatchEvent(new Event('change'));
     return new Promise(resolve => setTimeout(resolve, 100));
+}
+
+
+/**
+ * Paste some files on a DOM element.
+ *
+ * @param {DOM.Element} el
+ * @param {Object[]} files must have been created beforehand (@see createFile)
+ */
+async function pasteFiles(el, files) {
+    const ev = new Event('paste', { bubbles: true, });
+    Object.defineProperty(ev, 'clipboardData', {
+        value: _createFakeDataTransfer(files),
+    });
+    el.dispatchEvent(ev);
+    return concurrency.delay(0);
 }
 
 async function pause() {

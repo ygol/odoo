@@ -2,6 +2,10 @@
 // Layout
 // ------------------------------------------------------------------
 
+.o_Chatter_composer {
+    position: relative;
+}
+
 .o_Chatter_topbar {
     display: flex;
     border-bottom: $nav-tabs-border-width solid transparent;
@@ -18,10 +22,6 @@
     display: flex;
     margin-left: auto;
     justify-content: flex-end;
-}
-
-.o_Chatter_composer {
-    position: relative;
 }
 
 // ------------------------------------------------------------------
