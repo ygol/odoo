@@ -4,6 +4,7 @@ odoo.define('mail.component.ChatWindowManagerTests', function (require) {
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
+    inputFiles,
     pause,
     start: utilsStart,
 } = require('mail.owl.testUtils');
@@ -690,7 +691,7 @@ QUnit.test('chat window: state conservation on toggle home menu', async function
             contentType: 'text/plain',
         })
     ];
-    await testUtils.file.inputFiles(
+    await inputFiles(
         document.querySelector('.o_Composer_fileInput'),
         files);
     // Hide home menu
@@ -831,9 +832,11 @@ QUnit.test('chat window: state destroyed on close', async function (assert) {
             contentType: 'text/plain',
         })
     ];
-    await testUtils.file.inputFiles(
+    await testUtils.nextTick();
+    await inputFiles(
         document.querySelector('.o_Composer_fileInput'),
         files);
+
     // Hide home menu
     await this.widget.call('chat_window', 'test:will_hide_home_menu');
     await this.widget.call('chat_window', 'test:hide_home_menu');

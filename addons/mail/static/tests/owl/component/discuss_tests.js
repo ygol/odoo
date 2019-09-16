@@ -4,7 +4,11 @@ odoo.define('mail.component.DiscussTests', function (require) {
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
+    dragoverFiles,
+    dropFiles,
     getMailServices,
+    inputFiles,
+    pasteFiles,
     pause,
     start: utilsStart,
 } = require('mail.owl.testUtils');
@@ -3672,7 +3676,7 @@ QUnit.test('composer: add an attachment', async function (assert) {
         content: 'hello, world',
         contentType: 'text/plain',
     });
-    await testUtils.file.inputFiles(
+    await inputFiles(
         document.querySelector('.o_Composer_fileInput'),
         [file]);
     assert.ok(
@@ -3737,6 +3741,115 @@ QUnit.test('composer: add an attachment', async function (assert) {
             .o_Attachment_aside
             .o_Attachment_asideItemUnlink`),
         "should have an attachment remove button");
+});
+
+QUnit.test('composer: drop attachments', async function (assert) {
+    assert.expect(3);
+
+    Object.assign(this.data.initMessaging, {
+        channel_slots: {
+            channel_channel: [{
+                channel_type: 'channel',
+                id: 20,
+                name: "General",
+            }],
+        },
+    });
+    await this.start({
+        async mockRPC(route, args) {
+            if (args.method === 'message_fetch') {
+                return [];
+            }
+            return this._super(...arguments);
+        },
+        params: {
+            default_active_id: 'mail.channel_20',
+        },
+    });
+    const files = [
+        await testUtils.file.createFile({
+            name: 'text.txt',
+            content: 'hello, world',
+            contentType: 'text/plain',
+        }),
+        await testUtils.file.createFile({
+            name: 'text2.txt',
+            content: 'hello, worlduh',
+            contentType: 'text/plain',
+        })
+    ];
+
+    await dragoverFiles(document.querySelector('.o_Thread'));
+    assert.ok(
+        document.querySelector('.o_Thread_dropZone'),
+        "should have a drop zone");
+
+    await dropFiles(
+        document.querySelector('.o_Thread_dropZone'),
+        files);
+
+    assert.ok(
+        document.querySelector('.o_Composer_attachmentList'),
+        "should have an attachment list");
+    assert.strictEqual(
+        document
+            .querySelectorAll(`
+            .o_Composer_attachmentList
+            .o_Attachment`)
+            .length,
+        2,
+        "should have two attachments");
+});
+
+QUnit.test('composer: paste attachments', async function (assert) {
+    assert.expect(2);
+
+    Object.assign(this.data.initMessaging, {
+        channel_slots: {
+            channel_channel: [{
+                channel_type: 'channel',
+                id: 20,
+                name: "General",
+            }],
+        },
+    });
+    await this.start({
+        async mockRPC(route, args) {
+            if (args.method === 'message_fetch') {
+                return [];
+            }
+            return this._super(...arguments);
+        },
+        params: {
+            default_active_id: 'mail.channel_20',
+        },
+    });
+    const files = [
+        await testUtils.file.createFile({
+            name: 'text.txt',
+            content: 'hello, world',
+            contentType: 'text/plain',
+        }),
+        await testUtils.file.createFile({
+            name: 'text2.txt',
+            content: 'hello, worlduh',
+            contentType: 'text/plain',
+        })
+    ];
+    await pasteFiles(document.querySelector('.o_ComposerTextInput'), files);
+
+    assert.ok(
+        document.querySelector('.o_Composer_attachmentList'),
+        "should have an attachment list");
+
+    assert.strictEqual(
+        document
+            .querySelectorAll(`
+            .o_Composer_attachmentList
+            .o_Attachment`)
+            .length,
+        2,
+        "should have two attachments");
 });
 
 QUnit.test('composer state: text save and restore', async function (assert) {
@@ -3805,29 +3918,7 @@ QUnit.test('composer state: text save and restore', async function (assert) {
 });
 
 QUnit.test('composer state: attachments save and restore', async function (assert) {
-    assert.expect(2);
-
-    const self = this;
-    let nextAttachmentId = 1;
-
-    /**
-     * @param {string[]} attachmentFilenames list of attachment names
-     * @return {string[]} list of attachment local ids
-     */
-    async function addAttachmentsToActiveComposer(attachmentFilenames) {
-        const composerLocalId = Object.keys(self.store.state.composers)[0];
-        const attachmentLocalIds = [];
-        for (const attachmentFileName of attachmentFilenames) {
-            const attachmentLocalId = self.store.dispatch('createAttachment', {
-                filename: attachmentFileName,
-                id: nextAttachmentId++,
-                name: attachmentFileName,
-            });
-            self.store.dispatch('linkAttachmentToComposer', composerLocalId, attachmentLocalId);
-            attachmentLocalIds.push(attachmentLocalId);
-        }
-        return attachmentLocalIds;
-    }
+    assert.expect(6);
 
     Object.assign(this.data.initMessaging, {
         channel_slots: {
@@ -3860,28 +3951,51 @@ QUnit.test('composer state: attachments save and restore', async function (asser
         > .o_DiscussSidebarItem
     `);
     // Add attachment in a message for #general
-    const generalAttachments = ['BLAH.png'];
-    const generalAttachmentLocalIds = await addAttachmentsToActiveComposer(generalAttachments);
-    await testUtils.nextTick();
+    await inputFiles(
+        document.querySelector('.o_Composer_fileInput'), [
+            await testUtils.file.createFile({
+                name: 'text.txt',
+                content: 'hello, world',
+                contentType: 'text/plain',
+            })
+        ]);
+
     // Switch to #special
     await testUtils.dom.click(channels[1]);
     // Add attachments in a message for #special
-    const specialAttachments = ['Peaky.png', 'Blinders.jpg', 'Tommy.pdf'];
-    const specialAttachmentLocalIds = await addAttachmentsToActiveComposer(specialAttachments);
-    await testUtils.nextTick();
+    await inputFiles(
+        document.querySelector('.o_Composer_fileInput'), [
+            await testUtils.file.createFile({
+                name: 'text2.txt',
+                content: 'hello2, world',
+                contentType: 'text/plain',
+            }),
+            await testUtils.file.createFile({
+                name: 'text3.txt',
+                content: 'hello3, world',
+                contentType: 'text/plain',
+            }),
+            await testUtils.file.createFile({
+                name: 'text4.txt',
+                content: 'hello4, world',
+                contentType: 'text/plain',
+            }),
+        ]);
     // Switch back to #general
     await testUtils.dom.click(channels[0]);
     // Check attachment is reloaded
-    let composerLocalId = Object.keys(this.store.state.composers)[0];
-    let composer = this.store.state.composers[composerLocalId];
-    assert.deepEqual(composer.attachmentLocalIds, generalAttachmentLocalIds, 'attachment(s) should be reloaded');
+    let composer = this.store.state.composers[Object.keys(this.store.state.composers)[0]];
+    assert.strictEqual(composer.attachmentLocalIds.length, 1);
+    assert.ok(composer.attachmentLocalIds.includes('ir.attachment_1'));
 
     // Switch back to #special
     await testUtils.dom.click(channels[1]);
     // Check attachments are reloaded
-    composerLocalId = Object.keys(this.store.state.composers)[0];
-    composer = this.store.state.composers[composerLocalId];
-    assert.deepEqual(composer.attachmentLocalIds, specialAttachmentLocalIds, 'attachment(s) should be reloaded');
+    composer = this.store.state.composers[Object.keys(this.store.state.composers)[0]];
+    assert.strictEqual(composer.attachmentLocalIds.length, 3);
+    assert.ok(composer.attachmentLocalIds.includes('ir.attachment_2'));
+    assert.ok(composer.attachmentLocalIds.includes('ir.attachment_3'));
+    assert.ok(composer.attachmentLocalIds.includes('ir.attachment_4'));
 });
 
 QUnit.test('post a simple message', async function (assert) {

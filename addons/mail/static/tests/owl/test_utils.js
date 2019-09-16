@@ -279,7 +279,7 @@ async function inputFiles(el, files) {
     }
     el.files = dT.files;
     el.dispatchEvent(new Event('change'));
-    return new Promise(resolve => setTimeout(resolve, 600));
+    return new Promise(resolve => setTimeout(resolve, 100));
 }
 
 async function pause() {
