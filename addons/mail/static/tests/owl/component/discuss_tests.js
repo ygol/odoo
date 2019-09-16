@@ -3924,7 +3924,7 @@ QUnit.test('composer state: text save and restore', async function (assert) {
 });
 
 QUnit.test('composer state: attachments save and restore', async function (assert) {
-    assert.expect(7);
+    assert.expect(6);
 
     Object.assign(this.data.initMessaging, {
         channel_slots: {
@@ -3990,9 +3990,6 @@ QUnit.test('composer state: attachments save and restore', async function (asser
     // Switch back to #general
     await testUtils.dom.click(channels[0]);
     // Check attachment is reloaded
-    let composer = this.store.state.composers[Object.keys(this.store.state.composers)[0]];
-    assert.strictEqual(composer.attachmentLocalIds.length, 1);
-
     assert.strictEqual(
         document
             .querySelectorAll(`
