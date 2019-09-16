@@ -3924,7 +3924,7 @@ QUnit.test('composer state: text save and restore', async function (assert) {
 });
 
 QUnit.test('composer state: attachments save and restore', async function (assert) {
-    assert.expect(6);
+    assert.expect(7);
 
     Object.assign(this.data.initMessaging, {
         channel_slots: {
@@ -3992,16 +3992,63 @@ QUnit.test('composer state: attachments save and restore', async function (asser
     // Check attachment is reloaded
     let composer = this.store.state.composers[Object.keys(this.store.state.composers)[0]];
     assert.strictEqual(composer.attachmentLocalIds.length, 1);
-    assert.ok(composer.attachmentLocalIds.includes('ir.attachment_1'));
+
+    assert.strictEqual(
+        document
+            .querySelectorAll(`
+            .o_Composer_attachmentList
+            .o_Attachment`)
+            .length,
+        1,
+        "should have 1 attachment in the composer");
+    assert.strictEqual(
+        document
+            .querySelector(`
+            .o_Composer_attachmentList
+            .o_Attachment`)
+            .dataset
+            .attachmentLocalId,
+        'ir.attachment_1',
+        "should have 1 attachment in the composer");
 
     // Switch back to #special
     await testUtils.dom.click(channels[1]);
     // Check attachments are reloaded
-    composer = this.store.state.composers[Object.keys(this.store.state.composers)[0]];
-    assert.strictEqual(composer.attachmentLocalIds.length, 3);
-    assert.ok(composer.attachmentLocalIds.includes('ir.attachment_2'));
-    assert.ok(composer.attachmentLocalIds.includes('ir.attachment_3'));
-    assert.ok(composer.attachmentLocalIds.includes('ir.attachment_4'));
+    assert.strictEqual(
+        document
+            .querySelectorAll(`
+            .o_Composer_attachmentList
+            .o_Attachment`)
+            .length,
+        3,
+        "should have 1 attachment in the composer");
+    assert.strictEqual(
+        document
+            .querySelectorAll(`
+            .o_Composer_attachmentList
+            .o_Attachment`)[0]
+            .dataset
+            .attachmentLocalId,
+        'ir.attachment_2',
+        "should have ir.attachment_2 attachment");
+    assert.strictEqual(
+        document
+            .querySelectorAll(`
+            .o_Composer_attachmentList
+            .o_Attachment`)[1]
+            .dataset
+            .attachmentLocalId,
+        'ir.attachment_3',
+        "should have ir.attachment_3 attachment");
+    assert.strictEqual(
+        document
+            .querySelectorAll(`
+            .o_Composer_attachmentList
+            .o_Attachment`)[2]
+            .dataset
+            .attachmentLocalId,
+        'ir.attachment_4',
+        "should have ir.attachment_4 attachment");
 });
 
 QUnit.test('post a simple message', async function (assert) {

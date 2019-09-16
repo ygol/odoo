@@ -3,6 +3,7 @@ odoo.define('mail.component.DropZone', function () {
 
 class DropZone extends owl.store.ConnectedComponent {
     /**
+     * @override
      * @param {...any} args
      */
     constructor(...args) {
