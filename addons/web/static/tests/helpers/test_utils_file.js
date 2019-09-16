@@ -11,8 +11,6 @@ odoo.define('web.test_utils_file', function (require) {
  * testUtils file.
  */
 
-const concurrency = require('web.concurrency');
-
 //------------------------------------------------------------------------------
 // Private functions
 //------------------------------------------------------------------------------
@@ -113,22 +111,6 @@ function dropFiles($el, files) {
     $el[0].dispatchEvent(ev);
 }
 
-/**
- * Set files in a file input.
- *
- * @param {DOM.Element} el
- * @param {Object[]} files must have been created beforehand (@see createFile)
- * @return {Promise}
- */
-async function inputFiles(el, files) {
-    const dT = new window.DataTransfer();
-    for (const file of files) {
-        dT.items.add(file);
-    }
-    el.files = dT.files;
-    el.dispatchEvent(new Event('change'));
-    return concurrency.delay(0);
-}
 
 //------------------------------------------------------------------------------
 // Exposed API
@@ -139,7 +121,6 @@ return {
     dragoverFile: dragoverFile,
     dropFile: dropFile,
     dropFiles,
-    inputFiles,
 };
 
 });

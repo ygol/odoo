@@ -8,6 +8,7 @@ const EnvService = require('mail.service.Env');
 const StoreService = require('mail.service.Store');
 const Discuss = require('mail.widget.Discuss');
 const MessagingMenu = require('mail.widget.MessagingMenu');
+const concurrency = require('web.concurrency');
 
 const AbstractStorageService = require('web.AbstractStorageService');
 const Class = require('web.Class');
@@ -57,6 +58,23 @@ const MockMailService = Class.extend({
         };
     },
 });
+
+/**
+ * Create a fake object 'dataTransfer', linked to some files, which is passed to
+ * drag and drop events.
+ *
+ * @param {Object[]} files
+ * @returns {Object}
+ */
+function _createFakeDataTransfer(files) {
+    return {
+        dropEffect: 'all',
+        effectAllowed: 'all',
+        files,
+        items: [],
+        types: ['Files'],
+    };
+}
 
 //------------------------------------------------------------------------------
 // Public
@@ -186,17 +204,82 @@ function beforeEach(self) {
                 }));
                 const callback = formData.get('callback');
                 uploadedAttachmentsCount++;
-                return `<script language="javascript" type="text/javascript">
+                // Needed to wait that attachment has been re-rendered as temporary to avoid conflicting rendering
+                // See https://github.com/odoo/owl/issues/268
+                const wscript = `<script language="javascript" type="text/javascript">
                             var win = window.top.window;
                             win.jQuery(win).trigger('${callback}', ${files.join(', ')});
                         </script>`;
+                return new Promise(resolve => setTimeout(() => resolve(wscript), 0));
             }
         };
     };
 }
 
+/**
+ * Drag a file over a DOM element
+ *
+ * @param {DOM.Element} el
+ * @param {Object[]} file must have been created beforehand (@see createFile)
+ */
+function dragoverFiles(el, files) {
+    const ev = new Event('dragover', { bubbles: true });
+    Object.defineProperty(ev, 'dataTransfer', {
+        value: _createFakeDataTransfer(files),
+    });
+    el.dispatchEvent(ev);
+    return concurrency.delay(0);
+}
+
+/**
+ * Drop some files on a DOM element.
+ *
+ * @param {DOM.Element} el
+ * @param {Object[]} files must have been created beforehand (@see createFile)
+ */
+function dropFiles(el, files) {
+    const ev = new Event('drop', { bubbles: true, });
+    Object.defineProperty(ev, 'dataTransfer', {
+        value: _createFakeDataTransfer(files),
+    });
+    el.dispatchEvent(ev);
+    return concurrency.delay(0);
+}
+
+/**
+ * Paste some files on a DOM element.
+ *
+ * @param {DOM.Element} el
+ * @param {Object[]} files must have been created beforehand (@see createFile)
+ */
+function pasteFiles(el, files) {
+    const ev = new Event('paste', { bubbles: true, });
+    Object.defineProperty(ev, 'clipboardData', {
+        value: _createFakeDataTransfer(files),
+    });
+    el.dispatchEvent(ev);
+    return concurrency.delay(0);
+}
+
 function getMailServices() {
     return new MockMailService().getServices();
+}
+
+/**
+ * Set files in a file input.
+ *
+ * @param {DOM.Element} el
+ * @param {Object[]} files must have been created beforehand (@see createFile)
+ * @return {Promise}
+ */
+async function inputFiles(el, files) {
+    const dT = new window.DataTransfer();
+    for (const file of files) {
+        dT.items.add(file);
+    }
+    el.files = dT.files;
+    el.dispatchEvent(new Event('change'));
+    return new Promise(resolve => setTimeout(resolve, 600));
 }
 
 async function pause() {
@@ -292,6 +375,7 @@ async function start(params) {
     return { discuss, store, widget };
 }
 
+
 //------------------------------------------------------------------------------
 // Export
 //------------------------------------------------------------------------------
@@ -299,7 +383,11 @@ async function start(params) {
 return {
     afterEach,
     beforeEach,
+    dragoverFiles,
+    dropFiles,
     getMailServices,
+    inputFiles,
+    pasteFiles,
     pause,
     start,
 };
