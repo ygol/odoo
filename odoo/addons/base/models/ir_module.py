@@ -552,6 +552,7 @@ class Module(models.Model):
             # during execution, the lock won't be released until timeout.
             self._cr.execute("SELECT * FROM ir_cron FOR UPDATE NOWAIT")
         except psycopg2.OperationalError:
+            odoo.tools.misc.dumpstacks()
             raise UserError(_("The server is busy right now, module operations are not possible at"
                               " this time, please try again later."))
         function(self)
