@@ -296,7 +296,9 @@ QUnit.test('composer: add an attachment', async function (assert) {
     assert.expect(9);
 
     await this.start();
-    await this.createComposer('composer_1', { 'attachmentsLayout': 'card' });
+    await this.createComposer('composer_1', {
+        attachmentsLayout:'card'
+    });
 
     const file = await testUtils.file.createFile({
         name: 'text.txt',
