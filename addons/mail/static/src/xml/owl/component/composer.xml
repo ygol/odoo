@@ -13,7 +13,7 @@
         t-att-data-local-id="localId"
         t-name="mail.component.Composer">
         <DropZone
-            class="o_Thread_dropZone"
+            class="o_Composer_dropZone"
             t-if="state.hasDropZone"
             t-on-o-dropzone-files-dropped.stop="_onDropZoneFilesDropped"
             t-on-o-dropzone-outside-drop.prevent.stop="_onDropZoneOutsideDrop"/>
