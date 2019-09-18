@@ -3778,17 +3778,15 @@ QUnit.test('composer: drop attachments', async function (assert) {
             contentType: 'text/plain',
         })
     ];
-
     await dragoverFiles(document.querySelector('.o_Thread'));
     assert.ok(
         document.querySelector('.o_Thread_dropZone'),
         "should have a drop zone");
-
     assert.strictEqual(
         document
             .querySelectorAll(`
-            .o_Composer
-            .o_Attachment`)
+                .o_Composer
+                .o_Attachment`)
             .length,
         0,
         "should have no attachment before files are dropped");
@@ -3796,7 +3794,6 @@ QUnit.test('composer: drop attachments', async function (assert) {
     await dropFiles(
         document.querySelector('.o_Thread_dropZone'),
         files);
-
     assert.strictEqual(
         document
             .querySelectorAll(`
@@ -3842,17 +3839,14 @@ QUnit.test('composer: paste attachments', async function (assert) {
             contentType: 'text/plain',
         })
     ];
+    assert.strictEqual(document.querySelectorAll('.o_composer_attachmentList').length, 0);
+
     await pasteFiles(document.querySelector('.o_ComposerTextInput'), files);
-
-    assert.ok(
-        document.querySelector('.o_Composer_attachmentList'),
-        "should have an attachment list");
-
     assert.strictEqual(
         document
             .querySelectorAll(`
-            .o_Composer_attachmentList
-            .o_Attachment`)
+                .o_Composer_attachmentList
+                .o_Attachment`)
             .length,
         2,
         "should have 2 attachments in the composer after paste");
@@ -3993,16 +3987,16 @@ QUnit.test('composer state: attachments save and restore', async function (asser
     assert.strictEqual(
         document
             .querySelectorAll(`
-            .o_Composer_attachmentList
-            .o_Attachment`)
+                .o_Composer_attachmentList
+                .o_Attachment`)
             .length,
         1,
         "should have 1 attachment in the composer");
     assert.strictEqual(
         document
             .querySelector(`
-            .o_Composer_attachmentList
-            .o_Attachment`)
+                .o_Composer_attachmentList
+                .o_Attachment`)
             .dataset
             .attachmentLocalId,
         'ir.attachment_1',
@@ -4014,16 +4008,16 @@ QUnit.test('composer state: attachments save and restore', async function (asser
     assert.strictEqual(
         document
             .querySelectorAll(`
-            .o_Composer_attachmentList
-            .o_Attachment`)
+                .o_Composer_attachmentList
+                .o_Attachment`)
             .length,
         3,
         "should have 1 attachment in the composer");
     assert.strictEqual(
         document
             .querySelectorAll(`
-            .o_Composer_attachmentList
-            .o_Attachment`)[0]
+                .o_Composer_attachmentList
+                .o_Attachment`)[0]
             .dataset
             .attachmentLocalId,
         'ir.attachment_2',
@@ -4031,8 +4025,8 @@ QUnit.test('composer state: attachments save and restore', async function (asser
     assert.strictEqual(
         document
             .querySelectorAll(`
-            .o_Composer_attachmentList
-            .o_Attachment`)[1]
+                .o_Composer_attachmentList
+                .o_Attachment`)[1]
             .dataset
             .attachmentLocalId,
         'ir.attachment_3',
@@ -4040,8 +4034,8 @@ QUnit.test('composer state: attachments save and restore', async function (asser
     assert.strictEqual(
         document
             .querySelectorAll(`
-            .o_Composer_attachmentList
-            .o_Attachment`)[2]
+                .o_Composer_attachmentList
+                .o_Attachment`)[2]
             .dataset
             .attachmentLocalId,
         'ir.attachment_4',

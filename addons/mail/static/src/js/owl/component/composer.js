@@ -18,8 +18,8 @@ class Composer extends owl.store.ConnectedComponent {
         this.fileuploadId = _.uniqueId('o_Composer_fileupload');
         this.state = {
             hasAllSuggestedRecipients: false,
+            hasDropZone: false,
             hasTextInputContent: false,
-            hasDropZone: false
         };
         this.template = 'mail.component.Composer';
         /**
@@ -349,7 +349,8 @@ class Composer extends owl.store.ConnectedComponent {
             ev.clientX <= 0 ||
             ev.clientY <= 0 ||
             ev.clientX >= window.innerWidth ||
-            ev.clientY >= window.innerHeight) {
+            ev.clientY >= window.innerHeight
+        ) {
             this.state.hasDropZone = false;
         }
     }
@@ -365,10 +366,20 @@ class Composer extends owl.store.ConnectedComponent {
 
     /**
      * @private
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {FileList} ev.detail.files
+     */
+    _onDropZoneFilesDropped(ev) {
+        this.state.hasDropZone = false;
+        this._uploadFiles(ev.detail.files);
+    }
+
+    /**
+     * @private
      * @param {DragEvent} ev
      */
-    _onDropOutside(ev) {
-        ev.preventDefault();
+    _onDropZoneOutsideDrop(ev) {
         this.state.hasDropZone = false;
     }
 
@@ -380,17 +391,6 @@ class Composer extends owl.store.ConnectedComponent {
      */
     _onEmojiSelection(ev) {
         this.refs.textInput.insertTextContent(ev.detail.unicode);
-    }
-
-    /**
-     * @private
-     * @param {CustomEvent} e
-     * @param {Object} e.detail
-     * @param {FileList} e.detail.files
-     */
-    _onDropZoneFilesDropped(e) {
-        this.state.hasDropZone = false;
-        this._uploadFiles(e.detail.files);
     }
 
     /**

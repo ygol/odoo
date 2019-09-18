@@ -135,9 +135,9 @@ class Thread extends owl.store.ConnectedComponent {
 
     /**
      * @private
-     * @param {CustomEvent} e
+     * @param {CustomEvent} ev
      */
-    _onMessageListMounted(e) {
+    _onMessageListMounted(ev) {
         this._isMessageListJustMounted = true;
     }
 }
