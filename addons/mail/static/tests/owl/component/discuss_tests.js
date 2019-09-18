@@ -4,7 +4,6 @@ odoo.define('mail.component.DiscussTests', function (require) {
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
-    dragoverFiles,
     getMailServices,
     inputFiles,
     pause,
@@ -3310,36 +3309,6 @@ QUnit.test('toggle_star message', async function (assert) {
             .classList
             .contains('o-starred'),
         "message should no longer be starred");
-});
-
-QUnit.test('composer: dragover files on thread', async function (assert) {
-    assert.expect(1);
-
-    Object.assign(this.data.initMessaging, {
-        channel_slots: {
-            channel_channel: [{
-                channel_type: 'channel',
-                id: 20,
-                name: "General",
-            }],
-        },
-    });
-    await this.start({
-        async mockRPC(route, args) {
-            if (args.method === 'message_fetch') {
-                return [];
-            }
-            return this._super(...arguments);
-        },
-        params: {
-            default_active_id: 'mail.channel_20',
-        },
-    });
-
-    await dragoverFiles(document.querySelector('.o_Thread'));
-    assert.ok(
-        document.querySelector('.o_Composer_dropZone'),
-        "drop zone should be shown when dragging over the thread");
 });
 
 QUnit.test('composer state: text save and restore', async function (assert) {
