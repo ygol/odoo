@@ -581,7 +581,7 @@ QUnit.skip('chat window: state conservation on toggle home menu', async function
         })
     ];
     await inputFiles(
-        document.querySelector('.o_Composer_fileInput'),
+        document.querySelector('.o_FileUploader_input'),
         files
     );
     // Hide home menu

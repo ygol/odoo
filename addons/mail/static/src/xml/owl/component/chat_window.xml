@@ -23,14 +23,12 @@
             <t t-if="storeProps.thread">
                 <Thread
                     class="o_ChatWindow_thread"
-                    areComposerAttachmentsEditable="true"
-                    composerAttachmentLayout="'card'"
+                    composerAttachmentsDetailsMode="'card'"
                     domain="[]"
                     hasComposer="storeProps.thread._model !== 'mail.box'"
                     hasComposerCurrentPartnerAvatar="false"
                     hasComposerSendButton="storeProps.isMobile"
                     hasSquashCloseMessages="storeProps.thread._model !== 'mail.box'"
-                    haveComposerAttachmentsLabelForCardLayout="false"
                     haveMessagesAuthorRedirect="storeProps.thread.channel_type !== 'chat'"
                     messageListInitialScrollTop="props.threadInitialScrollTop"
                     threadLocalId="props.chatWindowLocalId"

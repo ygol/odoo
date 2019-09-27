@@ -8,11 +8,11 @@
                     class="o_AttachmentList_attachment"
                     attachmentLocalId="attachmentLocalId"
                     attachmentLocalIds="props.attachmentLocalIds"
-                    hasLabelForCardLayout="props.haveAttachmentsLabelForCardLayout"
-                    imageSizeForBasicLayout="props.attachmentsImageSizeForBasicLayout"
+                    detailsMode="props.attachmentsDetailsMode"
                     isDownloadable="props.areAttachmentsDownloadable"
                     isEditable="props.areAttachmentsEditable"
-                    layout="props.attachmentsLayout"
+                    showExtension="props.showAttachmentsExtensions"
+                    showFilename="props.showAttachmentsFilenames"
                 />
             </t>
         </div>

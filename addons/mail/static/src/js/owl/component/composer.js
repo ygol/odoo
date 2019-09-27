@@ -4,12 +4,12 @@ odoo.define('mail.component.Composer', function (require) {
 const AttachmentList = require('mail.component.AttachmentList');
 const DropZone = require('mail.component.DropZone');
 const EmojisButton = require('mail.component.EmojisButton');
+const FileUploader = require('mail.component.FileUploader');
 const TextInput = require('mail.component.ComposerTextInput');
+const useDragVisibleDropZone = require('mail.hooks.useDragVisibleDropZone');
 
-const core = require('web.core');
-
-const { Component, useState } = owl;
-const { useDispatch, useGetters, useRef, useStore } = owl.hooks;
+const { Component } = owl;
+const { useDispatch, useGetters, useRef, useState, useStore } = owl.hooks;
 
 class Composer extends Component {
 
@@ -19,7 +19,6 @@ class Composer extends Component {
      */
     constructor(...args) {
         super(...args);
-        this.fileuploadId = _.uniqueId('composerComponent_');
         this.state = useState({
             /**
              * Determine whether the "all" suggested recipients should be
@@ -28,18 +27,13 @@ class Composer extends Component {
              */
             hasAllSuggestedRecipients: false,
             /**
-             * Determine whether there is a dropzone for files. This is present
-             * only when dragging files, and dragging files can be dropped in
-             * order to upload them.
-             */
-            hasDropZone: false,
-            /**
              * Determine whether there are some text content. Useful to prevent
              * user to post something when there are no text content and no
              * attachments.
              */
             hasTextInputContent: false,
         });
+        this.isDropZoneVisible = useDragVisibleDropZone();
         this.storeDispatch = useDispatch();
         this.storeGetters = useGetters();
         this.storeProps = useStore((state, props) => {
@@ -61,44 +55,27 @@ class Composer extends Component {
          */
         this._emojisButtonRef = useRef('emojisButton');
         /**
-         * Reference of the file input. Useful to programmatically prompts the
-         * browser file uploader.
+         * Reference of the file uploader.
+         * Useful to programmatically prompts the browser file uploader.
          */
-        this._fileInputRef = useRef('fileInput');
-        /**
-         * Reference of the dropzone.
-         */
-        this._dropzoneRef = useRef('dropzone');
+        this._fileUploaderRef = useRef('fileUploader');
         /**
          * Reference of the text input component.
          */
         this._textInputRef = useRef('textInput');
         /**
-         * Counts how many drag enter/leave happened globally. This is the only
-         * way to know if a file has been dragged out of the browser window.
-         */
-        this._dragCount = 0;
-        /**
          * Tracked focus counter from props. Useful to determine whether it
          * should auto focus this composer when patched.
          */
         this._focusCount = 0;
-        this._onAttachmentUploaded = this._onAttachmentUploaded.bind(this);
         this._onClickCaptureGlobal = this._onClickCaptureGlobal.bind(this);
-        this._onDragenterCaptureGlobal = this._onDragenterCaptureGlobal.bind(this);
-        this._onDragleaveCaptureGlobal = this._onDragleaveCaptureGlobal.bind(this);
-        this._onDropCaptureGlobal = this._onDropCaptureGlobal.bind(this);
     }
 
     mounted() {
-        $(window).on(this.fileuploadId, this._onAttachmentUploaded);
         if (this.props.isFocusOnMount) {
             this.focus();
         }
         document.addEventListener('click', this._onClickCaptureGlobal, true);
-        document.addEventListener('dragenter', this._onDragenterCaptureGlobal, true);
-        document.addEventListener('dragleave', this._onDragleaveCaptureGlobal, true);
-        document.addEventListener('drop', this._onDropCaptureGlobal, true);
     }
 
     patched() {
@@ -109,11 +86,7 @@ class Composer extends Component {
     }
 
     willUnmount() {
-        $(window).off(this.fileuploadId, this._onAttachmentUploaded);
         document.removeEventListener('click', this._onClickCaptureGlobal, true);
-        document.removeEventListener('dragenter', this._onDragenterCaptureGlobal, true);
-        document.removeEventListener('dragleave', this._onDragleaveCaptureGlobal, true);
-        document.removeEventListener('drop', this._onDropCaptureGlobal, true);
     }
 
     //--------------------------------------------------------------------------
@@ -155,6 +128,16 @@ class Composer extends Component {
             (this.props.hasThreadName && this.storeProps.thread) ||
             (this.props.hasFollowers && !this.props.isLog)
         );
+    }
+
+    /**
+     * Get an object which is passed to FileUploader component to be used when
+     * creating attachment.
+     *
+     * @return {Object}
+     */
+    get newAttachmentExtraData() {
+        return { composerId: this.props.id };
     }
 
     //--------------------------------------------------------------------------
@@ -204,104 +187,9 @@ class Composer extends Component {
         }
     }
 
-    /**
-     * Upload files.
-     *
-     * @private
-     * @param {FileList|Array} files
-     * @return {Promise}
-     */
-    async _uploadFiles(files) {
-        for (const file of files) {
-            const attachment = this.storeProps.composer.attachmentLocalIds
-                .map(localId => this.env.store.state.attachments[localId])
-                .find(attachment =>
-                    attachment.name === file.name && attachment.size === file.size);
-            // if the file already exists, delete the file before upload
-            if (attachment) {
-                this.storeDispatch('unlinkAttachment', attachment.localId);
-            }
-        }
-        for (const file of files) {
-            const attachmentLocalId = this.storeDispatch('createAttachment', {
-                filename: file.name,
-                isTemporary: true,
-                name: file.name,
-            });
-            this.storeDispatch('linkAttachmentToComposer', this.props.composerLocalId, attachmentLocalId);
-        }
-        let formData = new window.FormData();
-        formData.append('callback', this.fileuploadId);
-        formData.append('csrf_token', core.csrf_token);
-        formData.append('id', '0');
-        formData.append('model', 'mail.compose.message');
-        for (const file of files) {
-            // removing existing key with blank data and appending again with
-            // file info. In Safari, existing key will not be updated when
-            // appended with new file.
-            formData.delete('ufile');
-            formData.append('ufile', file, file.name);
-            const response = await window.fetch('/web/binary/upload_attachment', {
-                body: formData,
-                method: 'POST',
-            });
-            let html = await response.text();
-            const template = document.createElement('template');
-            template.innerHTML = html.trim();
-            window.eval.call(window, template.content.firstChild.textContent);
-        }
-        this._fileInputRef.el.value = '';
-    }
-
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
-
-    /**
-     * Called when some uploading attachments in the composer have been
-     * uploaded.
-     *
-     * @private
-     * @param {jQuery.Event} ev
-     * @param {...Object} fileData
-     */
-    _onAttachmentUploaded(ev, ...filesData) {
-        for (const fileData of filesData) {
-            const {
-                error,
-                filename,
-                id,
-                mimetype,
-                name,
-                size,
-            } = fileData;
-            if (error || !id) {
-                this.env.do_warn(error);
-                const temporaryAttachmentLocalId = this.env.store.state.temporaryAttachmentLocalIds[filename];
-                if (temporaryAttachmentLocalId) {
-                    this.storeDispatch('deleteAttachment', temporaryAttachmentLocalId);
-                }
-                return;
-            }
-            this.storeDispatch('createAttachment', {
-                filename,
-                id,
-                mimetype,
-                name,
-                size,
-            });
-        }
-    }
-
-    /**
-     * Called when there are changes in the file input.
-     *
-     * @private
-     * @param {Event} ev
-     */
-    async _onChangeAttachment(ev) {
-        await this._uploadFiles(ev.target.files);
-    }
 
     /**
      * Called when clicking on attachment button.
@@ -309,7 +197,7 @@ class Composer extends Component {
      * @private
      */
     _onClickAddAttachment() {
-        this._fileInputRef.el.click();
+        this._fileUploaderRef.comp.openBrowserFileUploader();
         this.focus();
     }
 
@@ -347,7 +235,7 @@ class Composer extends Component {
 
         const context = {
             // default_parent_id: this.id,
-            default_body: this._textInput.comp.getHtmlContent(),
+            default_body: this._textInputRef.comp.getHtmlContent(),
             default_attachment_ids: attachmentIds,
             // default_partner_ids: partnerIds,
             default_is_log: this.props.isLog,
@@ -389,7 +277,7 @@ class Composer extends Component {
      */
     _onClickSend(ev) {
         if (
-            this._textInput.comp.isEmpty() &&
+            this._textInputRef.comp.isEmpty() &&
             this.storeProps.composer.attachmentLocalIds.length === 0
         ) {
             return;
@@ -407,52 +295,6 @@ class Composer extends Component {
     }
 
     /**
-     * Shows the dropzone when entering the browser window, to let the user know
-     * where he can drop its file.
-     * Avoids changing state when entering inner dropzones.
-     *
-     * @private
-     * @param {DragEvent} ev
-     */
-    _onDragenterCaptureGlobal(ev) {
-        if (this._dragCount === 0) {
-            this.state.hasDropZone = true;
-        }
-        this._dragCount++;
-    }
-
-    /**
-     * Hides the dropzone when leaving the browser window.
-     * Avoids changing state when leaving inner dropzones.
-     *
-     * @private
-     * @param {DragEvent} ev
-     */
-    _onDragleaveCaptureGlobal(ev) {
-        this._dragCount--;
-        if (this._dragCount === 0) {
-            this.state.hasDropZone = false;
-        }
-    }
-
-    /**
-     * Hides the dropzone when dropping a file outside the dropzone.
-     * This is necessary because the leave event is not triggered in that case.
-     *
-     * When dropping inside the dropzone, it will be hidden but only after the
-     * file has been processed in `_onDropZoneFilesDropped`.
-     *
-     * @private
-     * @param {DragEvent} ev
-     */
-    _onDropCaptureGlobal(ev) {
-        this._dragCount = 0;
-        if (!this._dropzoneRef.comp.contains(ev.target)) {
-            this.state.hasDropZone = false;
-        }
-    }
-
-    /**
      * Called when some files have been dropped in the dropzone.
      *
      * @private
@@ -460,9 +302,9 @@ class Composer extends Component {
      * @param {Object} ev.detail
      * @param {FileList} ev.detail.files
      */
-    _onDropZoneFilesDropped(ev) {
-        this._uploadFiles(ev.detail.files);
-        this.state.hasDropZone = false;
+    async _onDropZoneFilesDropped(ev) {
+        await this._fileUploaderRef.comp.uploadFiles(ev.detail.files);
+        this.isDropZoneVisible.value = false;
     }
 
     /**
@@ -489,11 +331,11 @@ class Composer extends Component {
      * @private
      * @param {CustomEvent} ev
      */
-    _onPasteTextInput(ev) {
+    async _onPasteTextInput(ev) {
         if (!ev.clipboardData || !ev.clipboardData.files) {
             return;
         }
-        this._uploadFiles(ev.clipboardData.files);
+        await this._fileUploaderRef.comp.uploadFiles(ev.clipboardData.files);
     }
 
     /**
@@ -525,7 +367,7 @@ class Composer extends Component {
     }
 }
 
-Composer.components = { AttachmentList, DropZone, EmojisButton, TextInput };
+Composer.components = { AttachmentList, DropZone, EmojisButton, FileUploader, TextInput };
 
 Composer.defaultProps = {
     areButtonsInline: true,
@@ -552,7 +394,7 @@ Composer.props = {
         element: String,
         optional: true,
     },
-    attachmentsLayout: {
+    attachmentsDetailsMode: {
         type: String,
         optional: true,
     },
@@ -581,7 +423,11 @@ Composer.props = {
         type: Boolean,
         optional: true,
     },
-    haveAttachmentsLabelForCardLayout: {
+    showAttachmentsExtensions: {
+        type: Boolean,
+        optional: true,
+    },
+    showAttachmentsFilenames: {
         type: Boolean,
         optional: true,
     },

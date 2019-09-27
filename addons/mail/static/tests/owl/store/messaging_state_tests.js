@@ -200,6 +200,7 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
             threads: {
                 'mail.box_history': {
                     _model: 'mail.box',
+                    attachmentLocalIds: [],
                     cacheLocalIds: {
                         '[]': 'mail.box_history_[]',
                     },
@@ -232,6 +233,7 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
                 },
                 'mail.box_inbox': {
                     _model: 'mail.box',
+                    attachmentLocalIds: [],
                     cacheLocalIds: {
                         '[]': 'mail.box_inbox_[]',
                     },
@@ -264,6 +266,7 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
                 },
                 'mail.box_starred': {
                     _model: 'mail.box',
+                    attachmentLocalIds: [],
                     cacheLocalIds: {
                         '[]': 'mail.box_starred_[]',
                     },

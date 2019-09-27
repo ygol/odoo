@@ -150,12 +150,36 @@ class Message extends Component {
     }
 
     /**
+     * @return {string[]}
+     */
+    get imageAttachmentLocalIds() {
+        if (!this.storeProps.message.attachmentLocalIds) {
+            return [];
+        }
+        return this.storeProps.message.attachmentLocalIds.filter(attachmentLocalId =>
+            this.storeGetters.attachmentFileType(attachmentLocalId) === 'image'
+        );
+    }
+
+    /**
      * Determine whether the message is starred.
      *
      * @return {boolean}
      */
     get isStarred() {
         return this.storeProps.message.threadLocalIds.includes('mail.box_starred');
+    }
+
+    /**
+     * @return {string[]}
+     */
+    get nonImageAttachmentLocalIds() {
+        if (!this.storeProps.message.attachmentLocalIds) {
+            return [];
+        }
+        return this.storeProps.message.attachmentLocalIds.filter(attachmentLocalId =>
+            this.storeGetters.attachmentFileType(attachmentLocalId) !== 'image'
+        );
     }
 
     /**
@@ -467,6 +491,10 @@ Message.defaultProps = {
 };
 
 Message.props = {
+    attachmentsDetailsMode: {
+        type: String, //['auto', 'card', 'hover', 'none']
+        optional: true
+    },
     hasAuthorRedirect: {
         type: Boolean,
         optional: true,

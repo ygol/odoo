@@ -2979,7 +2979,7 @@ QUnit.skip('composer state: attachments save and restore', async function (asser
     );
     // Add attachment in a message for #general
     await inputFiles(
-        document.querySelector('.o_Composer_fileInput'),
+        document.querySelector('.o_FileUploader_input'),
         [
             await createFile({
                 content: 'hello, world',
@@ -2993,7 +2993,7 @@ QUnit.skip('composer state: attachments save and restore', async function (asser
     await nextRender();
     // Add attachments in a message for #special
     await inputFiles(
-        document.querySelector('.o_Composer_fileInput'),
+        document.querySelector('.o_FileUploader_input'),
         [
             await createFile({
                 content: 'hello2, world',

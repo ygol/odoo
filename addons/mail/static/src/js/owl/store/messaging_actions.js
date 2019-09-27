@@ -110,6 +110,7 @@ const actions = {
      */
     createAttachment({ dispatch, state }, data) {
         let {
+            composerId=null,
             filename,
             id,
             isTemporary=false,
@@ -118,6 +119,7 @@ const actions = {
             res_id,
             res_model,
             size,
+            threadLocalIds=[],
         } = data;
         if (isTemporary) {
             id = state.attachmentNextTemporaryId;
@@ -137,26 +139,45 @@ const actions = {
             res_id,
             res_model,
             size,
+            threadLocalIds,
         };
         state.attachments[attachment.localId] = attachment;
         // compute attachment links (--> attachment)
+        const temporaryAttachmentLocalId = state.temporaryAttachmentLocalIds[filename];
         if (isTemporary) {
             state.temporaryAttachmentLocalIds[attachment.filename] = attachment.localId;
-        } else {
-            // check if there is a temporary attachment linked to this attachment,
-            // and remove + replace it in the composer at the correct position
-            const temporaryAttachmentLocalId = state.temporaryAttachmentLocalIds[filename];
-            if (temporaryAttachmentLocalId) {
-                // change temporary attachment links with non-temporary one
-                const temporaryAttachment = state.attachments[temporaryAttachmentLocalId];
-                const composerLocalId = temporaryAttachment.composerLocalId;
-                if (composerLocalId) {
-                    dispatch('_replaceAttachmentInComposer',
-                        composerLocalId,
+        } else if (temporaryAttachmentLocalId) {
+            // change temporary attachment links with non-temporary one
+            const temporaryAttachment = state.attachments[temporaryAttachmentLocalId];
+            const temporaryComposerLocalId = temporaryAttachment.composerLocalId;
+            if (temporaryComposerLocalId) {
+                dispatch('_replaceAttachmentInComposer',
+                    temporaryComposerLocalId,
+                    temporaryAttachmentLocalId,
+                    attachment.localId
+                );
+            }
+            const temporaryThreadLocalIds = temporaryAttachment.threadLocalIds;
+            if (temporaryThreadLocalIds) {
+                for (const temporaryThreadLocalId of temporaryThreadLocalIds) {
+                    dispatch('_replaceAttachmentInThread',
+                        temporaryThreadLocalId,
                         temporaryAttachmentLocalId,
-                        attachment.localId);
+                        attachment.localId
+                    );
                 }
-                dispatch('deleteAttachment', temporaryAttachmentLocalId);
+            }
+            dispatch('deleteAttachment', temporaryAttachmentLocalId);
+        }
+        // if temporary or no temporary attachment found, need to link the attachment to the thread/composer directly
+        if (isTemporary || !temporaryAttachmentLocalId) {
+            if (composerId) {
+                dispatch('_linkAttachmentToComposer', composerId, attachment.localId);
+            }
+            if (threadLocalIds) {
+                for (const threadLocalId of threadLocalIds) {
+                    dispatch('_linkAttachmentToThread', threadLocalId, attachment.localId);
+                }
             }
         }
         return attachment.localId;
@@ -227,6 +248,17 @@ const actions = {
                     composer.attachmentLocalIds.filter(localId => localId !== attachmentLocalId);
             }
         }
+        // remove attachment from thread
+        for (const threadLocalId of attachment.threadLocalIds) {
+            const thread = state.threads[threadLocalId];
+            if (thread.attachmentLocalIds.includes(attachmentLocalId)) {
+                dispatch('_updateThread', attachment.threadLocalId, {
+                    attachmentLocalIds:
+                        thread.attachmentLocalIds.filter(localId =>
+                            localId !== attachmentLocalId)
+                });
+            }
+        }
         // remove attachment from messages
         for (const messageLocalId of attachment.messageLocalIds) {
             const message = state.messages[messageLocalId];
@@ -253,37 +285,6 @@ const actions = {
                 messageLocalId,
                 threadLocalId,
             });
-        }
-    },
-    /**
-     * Fetch attachments linked to a record. Useful for populating the store
-     * with these attachments, which are used by attachment box in the chatter.
-     *
-     * @param {Object} param0
-     * @param {function} param0.dispatch
-     * @param {Object} param0.env
-     * @param {Object} param1
-     * @param {integer} param1.resId
-     * @param {string} param1.resModel
-     */
-    async fetchDocumentAttachments(
-        { dispatch, env },
-        { resId, resModel }
-    ) {
-        const attachmentsData = await env.rpc({
-            model: 'ir.attachment',
-            method: 'search_read',
-            domain: [
-                ['res_id', '=', resId],
-                ['res_model', '=', resModel],
-            ],
-            fields: ['id', 'name', 'mimetype'],
-        });
-        for (const attachmentData of attachmentsData) {
-            dispatch('_insertAttachment', Object.assign({
-                res_id: resId,
-                res_model: resModel,
-            }, attachmentData));
         }
     },
     /**
@@ -322,6 +323,41 @@ const actions = {
             };
         });
         thread.suggestedRecipients = suggestedRecipients; // aku todo
+    },
+    /**
+     * Fetch attachments linked to a record. Useful for populating the store
+     * with these attachments, which are used by attachment box in the chatter.
+     *
+     * @param {Object} param0
+     * @param {function} param0.dispatch
+     * @param {Object} param0.env
+     * @param {Object} param0.state
+     * @param {string} threadLocalId
+     */
+    async fetchThreadAttachments(
+        { dispatch, env, state },
+        threadLocalId
+    ) {
+        const thread = state.threads[threadLocalId];
+        const attachmentsData = await env.rpc({
+            model: 'ir.attachment',
+            method: 'search_read',
+            domain: [
+                ['res_id', '=', thread.id],
+                ['res_model', '=', thread._model],
+            ],
+            fields: ['id', 'name', 'mimetype'],
+        });
+        const attachmentLocalIds = [];
+        for (const attachmentData of attachmentsData) {
+            attachmentLocalIds.push(await dispatch('_insertAttachment', Object.assign({
+                res_id: thread.id,
+                res_model: thread.model,
+                threadLocalIds: [threadLocalId],
+            }, attachmentData)));
+        }
+        await dispatch('_updateThread', threadLocalId, { attachmentLocalIds });
+        return attachmentLocalIds;
     },
     /**
      * Programmatically auto-focus an existing chat window.
@@ -391,6 +427,29 @@ const actions = {
         }
         // update docked chat windows
         dispatch('_computeChatWindows');
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.dispatch
+     * @param {Object} param0.getters
+     * @param {Object} param1
+     * @param {string} param1.model
+     * @param {string} param1.id
+     * @return {string}
+     */
+    async initChatter({ dispatch, getters }, { model, id }) {
+        let threadLocalId;
+        const thread = getters.thread({ _model: model, id });
+        if (!thread) {
+            // TODO {xdu} maybe here add the name of the thread
+            threadLocalId = await dispatch('_createThread', { _model: model, id });
+        } else {
+            // TODO {xdu} uncomment me when name is supported
+            // dispatch('_updateThread', threadLocalId, { name: name } );
+            threadLocalId = thread.localId;
+        }
+        dispatch('fetchThreadAttachments', threadLocalId);
+        return threadLocalId;
     },
     /**
      * Fetch messaging data initially to populate the store specifically for
@@ -503,30 +562,6 @@ const actions = {
         }
     },
     /**
-     * Link an attachment to a composer.
-     *
-     * @param {Object} param0
-     * @param {function} param0.dispatch
-     * @param {Object} param0.state
-     * @param {string} composerLocalId
-     * @param {string} attachmentLocalId
-     */
-    linkAttachmentToComposer({ dispatch, state }, composerLocalId, attachmentLocalId) {
-        const composer = state.composers[composerLocalId];
-        const composerAttachmentLocalIds = composer.attachmentLocalIds;
-        if (composerAttachmentLocalIds.includes(attachmentLocalId)) {
-            return;
-        }
-        composer.attachmentLocalIds = composerAttachmentLocalIds.concat([attachmentLocalId]);
-        const attachment = state.attachments[attachmentLocalId];
-        if (attachment.composerLocalId === composer.localId) {
-            return;
-        }
-        dispatch('_updateAttachment', attachmentLocalId, { composerLocalId: composer.localId });
-    },
-    /**
-     * Load morre messages on specified thread.
-     *
      * @param {Object} param0
      * @param {function} param0.dispatch
      * @param {Object} param0.env
@@ -1782,6 +1817,7 @@ const actions = {
             throw new Error('thread must always have `model` and `id`');
         }
         const thread = {
+            attachmentLocalIds: [],
             cacheLocalIds: [],
             channel_type,
             composerLocalId: undefined,
@@ -2873,6 +2909,62 @@ const actions = {
         return threadCacheLocalId;
     },
     /**
+     * Link an attachment to a composer.
+     *
+     * @param {Object} param0
+     * @param {function} param0.dispatch
+     * @param {Object} param0.state
+     * @param {string} composerLocalId
+     * @param {string} attachmentLocalId
+     */
+    _linkAttachmentToComposer({ dispatch, state }, composerLocalId, attachmentLocalId) {
+        const composer = state.composers[composerLocalId];
+        const composerAttachmentLocalIds = composer.attachmentLocalIds;
+        if (composerAttachmentLocalIds.includes(attachmentLocalId)) {
+            return;
+        }
+        composer.attachmentLocalIds = composerAttachmentLocalIds.concat([attachmentLocalId]);
+        const attachment = state.attachments[attachmentLocalId];
+        if (attachment.composerLocalId === composer.localId) {
+            return;
+        }
+        dispatch('_updateAttachment', attachmentLocalId, { composerLocalId: composer.localId });
+    },
+    /**
+     * Link attachments to specified thread.
+     *
+     * @param {Object} param0
+     * @param {function} param0.dispatch
+     * @param {Object} param0.state
+     * @param {string} threadLocalId
+     * @param {string} attachmentLocalId
+     */
+    _linkAttachmentToThread({ dispatch, state }, threadLocalId, attachmentLocalId) {
+        // THREAD --> ATTACHMENT link
+        const thread = state.threads[threadLocalId];
+        if (!thread) {
+            return;
+        }
+        const threadAttachmentLocalIds = thread.attachmentLocalIds;
+        if (!threadAttachmentLocalIds || !threadAttachmentLocalIds.includes(attachmentLocalId)) {
+            dispatch('_updateThread', threadLocalId, {
+                attachmentLocalIds: threadAttachmentLocalIds.concat([attachmentLocalId]),
+            });
+        }
+        // ATTACHMENT --> THREAD LINK
+        const attachment = state.attachments[attachmentLocalId];
+        if (!attachment) {
+            return;
+        }
+        const attachmentThreadLocalIds = attachment.threadLocalIds;
+        // If threadLocalId is not yet in attachment's thread local ids, add it
+        if (!attachmentThreadLocalIds || !attachmentThreadLocalIds.includes(threadLocalId)) {
+            dispatch('_updateAttachment', attachmentLocalId, {
+                threadLocalIds: attachmentThreadLocalIds.concat([threadLocalId]),
+            });
+        }
+    },
+    /**
      * @private
      * @param {Object} param0
      * @param {function} param0.dispatch
@@ -3004,58 +3096,6 @@ const actions = {
      * @param {Object} param0.env
      * @param {Object} param0.state
      * @param {string} threadLocalId
-     */
-    async _loadMessagesOnDocumentThread(
-        { dispatch, env, state },
-        threadLocalId
-    ) {
-        const thread = state.threads[threadLocalId];
-        if (!thread.messageIds) {
-            thread.messageIds = [];
-        }
-        const messageIds = thread.messageIds;
-        // TODO: this is for document_thread inside chat window
-        // else {
-        //     const [{ messageIds }] = await env.rpc({
-        //         model: thread._model,
-        //         method: 'read',
-        //         args: [[thread.id], ['message_ids']]
-        //     });
-        // }
-        const threadCacheLocalId = thread.cacheLocalIds['[]'];
-        const threadCache = state.threadCaches[threadCacheLocalId];
-        const loadedMessageIds = threadCache.messageLocalIds
-            .filter(localId => messageIds.includes(state.messages[localId].id))
-            .map(localId => state.messages[localId].id);
-        const shouldFetch = messageIds
-            .slice(0, state.MESSAGE_FETCH_LIMIT)
-            .filter(messageId => !loadedMessageIds.includes(messageId))
-            .length > 0;
-        if (!shouldFetch) {
-            return;
-        }
-        const idsToLoad = messageIds
-            .filter(messageId => !loadedMessageIds.includes(messageId))
-            .slice(0, state.MESSAGE_FETCH_LIMIT);
-        threadCache.isLoading = true;
-        const messagesData = await env.rpc({
-            model: 'mail.message',
-            method: 'message_format',
-            args: [idsToLoad],
-            context: env.session.user_context
-        });
-        dispatch('_handleThreadLoaded', threadLocalId, {
-            messagesData,
-        });
-        // await dispatch('markMessagesAsRead', messageLocalIds);
-    },
-    /**
-     * @private
-     * @param {Object} param0
-     * @param {function} param0.dispatch
-     * @param {Object} param0.env
-     * @param {Object} param0.state
-     * @param {string} threadLocalId
      * @param {Object} [param2]
      * @param {Array} [param2.searchDomain=[]]
      */
@@ -3072,9 +3112,6 @@ const actions = {
                 stringifiedDomain,
                 threadLocalId,
             });
-        }
-        if (!['mail.box', 'mail.channel'].includes(thread._model)) {
-            return dispatch('_loadMessagesOnDocumentThread', threadLocalId);
         }
         const threadCache = state.threadCaches[threadCacheLocalId];
         if (threadCache.isLoaded && threadCache.isLoading) {
@@ -3323,7 +3360,8 @@ const actions = {
         // change link in composer
         const composer = state.composers[composerLocalId];
         const index = composer.attachmentLocalIds.findIndex(localId =>
-            localId === oldAttachmentLocalId);
+            localId === oldAttachmentLocalId
+        );
         composer.attachmentLocalIds.splice(index, 1);
         if (index >= composer.attachmentLocalIds.length) {
             composer.attachmentLocalIds.push(newAttachmentLocalId);
@@ -3333,6 +3371,53 @@ const actions = {
         // change link in attachments
         dispatch('_updateAttachment', oldAttachmentLocalId, { composerLocalId: undefined });
         dispatch('_updateAttachment', newAttachmentLocalId, { composerLocalId });
+    },
+    /**
+     * @private
+     * @param {Object} param0
+     * @param {function} param0.dispatch
+     * @param {Object} param0.state
+     * @param {string} threadLocalId
+     * @param {string} oldAttachmentLocalId
+     * @param {string} newAttachmentLocalId
+     */
+    _replaceAttachmentInThread(
+        { dispatch, state },
+        threadLocalId,
+        oldAttachmentLocalId,
+        newAttachmentLocalId
+    ) {
+        // change link in thread
+        const thread = state.threads[threadLocalId];
+        const index = thread.attachmentLocalIds.findIndex(localId => localId === oldAttachmentLocalId);
+        thread.attachmentLocalIds.splice(index, 1);
+        if (index >= thread.attachmentLocalIds.length) {
+            thread.attachmentLocalIds.push(newAttachmentLocalId);
+        } else {
+            thread.attachmentLocalIds.splice(index, 0, newAttachmentLocalId);
+        }
+
+        // change link in attachments
+        // remove thread local id from old attachment
+        const oldAttachment = state.attachments[oldAttachmentLocalId];
+        if (!oldAttachment) {
+            return;
+        }
+        const oldAttachmentThreadLocalIds = oldAttachment.threadLocalIds || [];
+        dispatch('_updateAttachment', oldAttachmentLocalId, {
+            threadLocalIds: oldAttachmentThreadLocalIds.filter(localId => localId !== threadLocalId),
+        });
+
+        // add thread local id to new attachment
+        let newAttachmentThreadLocalIds;
+        if (oldAttachmentThreadLocalIds && !oldAttachmentThreadLocalIds.includes(threadLocalId)) {
+            newAttachmentThreadLocalIds = oldAttachmentThreadLocalIds.concat([threadLocalId]);
+        } else {
+            newAttachmentThreadLocalIds = [...oldAttachmentThreadLocalIds];
+        }
+        dispatch('_updateAttachment', newAttachmentLocalId, {
+            threadLocalIds: newAttachmentThreadLocalIds,
+        });
     },
     /**
      * @private
@@ -3770,6 +3855,21 @@ const actions = {
         const partner = state.partners[partnerLocalId];
         Object.assign(partner, changes);
         // todo: changes of links, e.g. messageLocalIds
+    },
+    /**
+     * @private
+     * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {string} threadLocalId
+     * @param {Object} changes
+     */
+    _updateThread({ state }, threadLocalId, changes) {
+        const thread = state.threads[threadLocalId];
+        if (!thread) {
+            return;
+        }
+        Object.assign(thread, changes);
+        // todo: changes of links
     },
 };
 

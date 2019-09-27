@@ -41,6 +41,44 @@ class Attachment extends Component {
         });
     }
 
+    /**
+     * Get the details mode after auto mode is computed
+     *
+     * @return {string} 'card', 'hover' or 'none'
+     */
+    get detailsMode() {
+        if (this.props.detailsMode !== 'auto') {
+            return this.props.detailsMode;
+        }
+        const fileType =
+            this.storeGetters.attachmentFileType(this.props.attachmentLocalId);
+        if (fileType !== 'image') {
+            return 'card';
+        }
+        return 'hover';
+    }
+
+    /**
+     * Get the attachment representation style to be applied
+     *
+     * @return {string}
+     */
+    get imageStyle() {
+        const fileType =
+            this.storeGetters.attachmentFileType(this.props.attachmentLocalId);
+        if (fileType !== 'image') {
+            return '';
+        }
+        let size;
+        if (this.detailsMode === 'card') {
+            size = '38x38';
+        } else {
+            size = '160x160';
+        }
+        const attachmentId = this.storeProps.attachment.id;
+        return `background-image:url(/web/image/${attachmentId}/${size}/?crop=true);`;
+    }
+
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
@@ -52,7 +90,8 @@ class Attachment extends Component {
      * @param {MouseEvent} ev
      */
     _onClickDownload(ev) {
-        window.location = `/web/content/ir.attachment/${this.storeProps.attachment.id}/datas?download=true`;
+        const attachmentId = this.storeProps.attachment.id;
+        window.location = `/web/content/ir.attachment/${attachmentId}/datas?download=true`;
     }
 
     /**
@@ -67,8 +106,7 @@ class Attachment extends Component {
         }
         this.storeDispatch('viewAttachments', {
             attachmentLocalId: this.props.attachmentLocalId,
-            attachmentLocalIds: this.props.attachmentLocalIds.filter(localId =>
-                this.storeGetters.isAttachmentViewable(localId)),
+            attachmentLocalIds: this.props.attachmentLocalIds,
         });
     }
 
@@ -83,28 +121,27 @@ class Attachment extends Component {
 
 Attachment.defaultProps = {
     attachmentLocalIds: [],
-    hasLabelForCardLayout: true,
-    imageSizeForBasicLayout: 'medium',
+    detailsMode: 'auto',
     isDownloadable: false,
     isEditable: true,
-    layout: 'basic',
+    showExtension: true,
+    showFilename: true,
 };
 
 Attachment.props = {
-    attachmentLocalId: String,
+    attachmentLocalId: {
+        type: String,
+        optional: true,
+    },
     attachmentLocalIds: {
         type: Array,
         element: String,
         optional: true,
     },
-    hasLabelForCardLayout: {
-        type: Boolean,
+    detailsMode: {
+        type: String,
         optional: true,
-    },
-    imageSizeForBasicLayout: {
-        type: String, // ['small', 'medium', 'large']
-        optional: true,
-    },
+    }, //['auto', 'card', 'hover', 'none']
     isDownloadable: {
         type: Boolean,
         optional: true,
@@ -113,8 +150,12 @@ Attachment.props = {
         type: Boolean,
         optional: true,
     },
-    layout: {
-        type: String, // ['basic', 'card']
+    showExtension: {
+        type: Boolean,
+        optional: true,
+    },
+    showFilename: {
+        type: Boolean,
         optional: true,
     },
 };

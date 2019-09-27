@@ -129,14 +129,25 @@
                 </div>
                 <t t-if="storeProps.attachmentLocalIds and storeProps.attachmentLocalIds.length > 0">
                     <div class="o_Message_footer">
-                        <AttachmentList
-                            class="o_Message_attachmentList"
-                            areAttachmentsDownloadable="true"
-                            areAttachmentsEditable="true"
-                            attachmentLocalIds="storeProps.message.attachmentLocalIds"
-                            attachmentsImageSizeForBasicLayout="'medium'"
-                            attachmentsLayout="'card'"
-                        />
+                        <!-- TODO XDU This does not allow to preview all attachments at once, find somethind else -->
+                        <t t-if="imageAttachmentLocalIds and imageAttachmentLocalIds.length > 0">
+                            <AttachmentList
+                                class="o_Message_attachmentList"
+                                areAttachmentsDownloadable="true"
+                                areAttachmentsEditable="true"
+                                attachmentLocalIds="imageAttachmentLocalIds"
+                                attachmentsDetailsMode="props.attachmentsDetailsMode"
+                            />
+                        </t>
+                        <t t-if="nonImageAttachmentLocalIds and nonImageAttachmentLocalIds.length > 0">
+                            <AttachmentList
+                                class="o_Message_attachmentList"
+                                areAttachmentsDownloadable="true"
+                                areAttachmentsEditable="true"
+                                attachmentLocalIds="nonImageAttachmentLocalIds"
+                                attachmentsDetailsMode="props.attachmentsDetailsMode"
+                            />
+                        </t>
                     </div>
                 </t>
             </div>

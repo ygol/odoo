@@ -26,12 +26,13 @@
             <t t-if="props.hasComposer and storeProps.thread.composerLocalId">
                 <Composer
                     class="o_Thread_composer"
+                    attachmentsDetailsMode="props.composerAttachmentsDetailsMode"
                     composerLocalId="storeProps.thread.composerLocalId"
-                    attachmentsLayout="props.composerAttachmentLayout"
                     hasCurrentPartnerAvatar="props.hasComposerCurrentPartnerAvatar"
                     hasSendButton="props.hasComposerSendButton"
-                    haveAttachmentsLabelForCardLayout="props.haveComposerAttachmentsLabelForCardLayout"
                     isFocusOnMount="!storeProps.isMobile"
+                    showAttachmentsExtensions="props.showComposerAttachmentsExtensions"
+                    showAttachmentsFilenames="props.showComposerAttachmentsFilenames"
                     t-ref="composer"
                 />
             </t>

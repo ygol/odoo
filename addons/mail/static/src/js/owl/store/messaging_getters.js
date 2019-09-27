@@ -213,6 +213,16 @@ const getters = {
     },
     /**
      * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {string} attachmentLocalId
+     * @return {boolean}
+     */
+    isAttachmentLinkedToComposer({ state }, attachmentLocalId) {
+        const attachment = state.attachments[attachmentLocalId];
+        return !!attachment.composerId;
+    },
+    /**
+     * @param {Object} param0
      * @param {Object} param0.getters
      * @param {string} attachmentLocalId
      * @return {boolean}

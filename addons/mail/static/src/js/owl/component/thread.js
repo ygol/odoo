@@ -168,22 +168,21 @@ Thread.components = {
 };
 
 Thread.defaultProps = {
+    composerAttachmentsDetailsMode: 'auto',
     domain: [],
     hasComposer: false,
     hasSquashCloseMessages: false,
     haveMessagesAuthorRedirect: false,
     haveMessagesMarkAsReadIcon: false,
     haveMessagesReplyIcon: false,
+    showComposerAttachmentsExtensions: true,
+    showComposerAttachmentsFilenames: true,
     order: 'asc',
 };
 
 Thread.props = {
-    areComposerAttachmentsEditable: {
-        type: Boolean,
-        optional: true,
-    },
-    composerAttachmentLayout: {
-        type: String,
+    composerAttachmentsDetailsMode: {
+        type: String, //['auto', 'card', 'hover', 'none']
         optional: true,
     },
     domain: {
@@ -203,10 +202,6 @@ Thread.props = {
         optional: true,
     },
     hasSquashCloseMessages: {
-        type: Boolean,
-        optional: true,
-    },
-    haveComposerAttachmentsLabelForCardLayout: {
         type: Boolean,
         optional: true,
     },
@@ -240,6 +235,14 @@ Thread.props = {
     },
     selectedMessageLocalId: {
         type: String,
+        optional: true,
+    },
+    showComposerAttachmentsExtensions: {
+        type: Boolean,
+        optional: true,
+    },
+    showComposerAttachmentsFilenames: {
+        type: Boolean,
         optional: true,
     },
     threadLocalId: String,

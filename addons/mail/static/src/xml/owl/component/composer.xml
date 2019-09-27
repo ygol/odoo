@@ -9,14 +9,18 @@
                 'o-has-header': hasHeader,
             }" t-att-data-local-id="localId"
         >
-            <t t-if="state.hasDropZone">
+            <t t-if="isDropZoneVisible.value">
                 <DropZone
                     class="o_Composer_dropZone"
                     t-on-o-dropzone-files-dropped.stop="_onDropZoneFilesDropped"
                     t-ref="dropzone"
                 />
             </t>
-            <input class="o_Composer_fileInput" t-on-change="_onChangeAttachment" multiple="true" type="file" t-ref="fileInput"/>
+            <FileUploader
+                attachmentLocalIds="storeProps.composer.attachmentLocalIds"
+                newAttachmentExtraData="newAttachmentExtraData"
+                t-ref="fileUploader"
+            />
             <t t-if="hasHeader">
                 <div class="o_Composer_coreHeader">
                     <t t-if="props.hasThreadName and storeProps.thread">
@@ -118,9 +122,10 @@
                         <AttachmentList
                             class="o_Composer_attachmentList"
                             areAttachmentsEditable="true"
+                            attachmentsDetailsMode="props.attachmentsDetailsMode"
                             attachmentLocalIds="storeProps.composer.attachmentLocalIds"
-                            attachmentsLayout="props.attachmentsLayout"
-                            haveAttachmentsLabelForCardLayout="props.haveAttachmentsLabelForCardLayout"
+                            showAttachmentsExtensions="props.showAttachmentsExtensions"
+                            showAttachmentsFilenames="props.showAttachmentsFilenames"
                         />
                     </t>
                 </div>

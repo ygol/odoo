@@ -10,12 +10,7 @@ class AttachmentList extends Component {}
 AttachmentList.components = { Attachment };
 
 AttachmentList.defaultProps = {
-    areAttachmentsDownloadable: false,
-    areAttachmentsEditable: false,
     attachmentLocalIds: [],
-    attachmentsImageSizeForBasicLayout: 'medium',
-    attachmentsLayout: 'basic',
-    haveAttachmentsLabelForCardLayout: true,
 };
 
 AttachmentList.props = {
@@ -31,15 +26,15 @@ AttachmentList.props = {
         type: Array,
         element: String,
     },
-    attachmentsImageSizeForBasicLayout: {
-        type: String, // ['small', 'medium', 'large']
+    attachmentsDetailsMode: {
+        type: String, //['auto', 'card', 'hover', 'none']
         optional: true,
     },
-    attachmentsLayout: {
-        type: String, // ['basic', 'card']
+    showAttachmentsExtensions: {
+        type: Boolean,
         optional: true,
     },
-    haveAttachmentsLabelForCardLayout: {
+    showAttachmentsFilenames: {
         type: Boolean,
         optional: true,
     },

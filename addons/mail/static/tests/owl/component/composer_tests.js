@@ -373,48 +373,23 @@ QUnit.skip('composer: add an attachment', async function (assert) {
 
     await this.start();
     const composerLocalId = this.env.store.dispatch('_createComposer');
-    await this.createComposerComponent(composerLocalId, { attachmentsLayout: 'card' });
+    await this.createComposerComponent(composerLocalId, { attachmentsDetailsMode: 'card' });
     const file = await createFile({
         content: 'hello, world',
         contentType: 'text/plain',
         name: 'text.txt',
     });
     await inputFiles(
-        document.querySelector('.o_Composer_fileInput'),
+        document.querySelector('.o_FileUploader_input'),
         [file]
+    );
+    assert.ok(
+        document.querySelector('.o_Composer_attachmentList'),
+        "should have an attachment list"
     );
     assert.ok(
         document.querySelector(`.o_Composer .o_Attachment`),
         "should have an attachment"
-    );
-    // AKU TODO: these assertions should be in attachment-only tests
-    assert.ok(
-        document.querySelector(`.o_Composer .o_Attachment_image`),
-        "should have an attachment image"
-    );
-    assert.ok(
-        document.querySelector(`.o_Composer .o_Attachment_main`),
-        "should have an attachment main part"
-    );
-    assert.ok(
-        document.querySelector(`.o_Composer .o_Attachment_filename`),
-        "should have an attachment filename"
-    );
-    assert.ok(
-        document.querySelector(`.o_Composer .o_Attachment_extension`),
-        "should have an attachment extension"
-    );
-    assert.ok(
-        document.querySelector(`.o_Composer .o_Attachment_aside`),
-        "should have an attachment aside"
-    );
-    assert.ok(
-        document.querySelector(`.o_Composer .o_Attachment_asideItemUploaded`),
-        "should have an attachment uploaded icon"
-    );
-    assert.ok(
-        document.querySelector(`.o_Composer .o_Attachment_asideItemUnlink`),
-        "should have an attachment remove button"
     );
 });
 
@@ -427,7 +402,7 @@ QUnit.skip('composer: drop attachments', async function (assert) {
      * Apparently may be related to creating/deleting attachments while uploading,
      * so all tests with attachment uploads are skipped until this is solved.
      */
-    assert.expect(3);
+    assert.expect(4);
 
     await this.start();
     const composerLocalId = this.env.store.dispatch('_createComposer');
@@ -459,10 +434,29 @@ QUnit.skip('composer: drop attachments', async function (assert) {
         document.querySelector('.o_Composer_dropZone'),
         files
     );
+    await nextRender();
     assert.strictEqual(
         document.querySelectorAll(`.o_Composer .o_Attachment`).length,
         2,
         "should have 2 attachments in the composer after files dropped"
+    );
+
+    await dragenterFiles(document.querySelector('.o_Composer'));
+    await dropFiles(
+        document.querySelector('.o_Composer_dropZone'),
+        [
+            await createFile({
+                content: 'hello, world',
+                contentType: 'text/plain',
+                name: 'text3.txt',
+            })
+        ]
+    );
+    await nextRender();
+    assert.strictEqual(
+        document.querySelectorAll(`.o_Composer .o_Attachment`).length,
+        3,
+        "should have 3 attachments in the box after files dropped"
     );
 });
 
@@ -485,12 +479,7 @@ QUnit.skip('composer: paste attachments', async function (assert) {
             content: 'hello, world',
             contentType: 'text/plain',
             name: 'text.txt',
-        }),
-        await createFile({
-            content: 'hello, worlduh',
-            contentType: 'text/plain',
-            name: 'text2.txt',
-        }),
+        })
     ];
     assert.strictEqual(
         document.querySelectorAll(`.o_Composer .o_Attachment`).length,
@@ -501,8 +490,8 @@ QUnit.skip('composer: paste attachments', async function (assert) {
     await pasteFiles(document.querySelector('.o_ComposerTextInput'), files);
     assert.strictEqual(
         document.querySelectorAll(`.o_Composer .o_Attachment`).length,
-        2,
-        "should have 2 attachments in the composer after paste"
+        1,
+        "should have 1 attachment in the composer after paste"
     );
 });
 

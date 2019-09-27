@@ -317,7 +317,9 @@ class MessageList extends Component {
             scrollTop: beforeScrollTop,
         } = this._willPatchSnapshot;
         if (isPatchedWithLoadMoreMessages) {
-            this.el.scrollTop = this.el.scrollHeight - beforeScrollHeight + beforeScrollTop;
+            if (this.props.order === 'asc') {
+                this.el.scrollTop = this.el.scrollHeight - beforeScrollHeight + beforeScrollTop;
+            }
         } else if (isPatchedWithNewThreadCache || (isPatchedWithNewMessages && isLastMessageVisible)) {
             this.scrollToLastMessage().then(() => this._onScroll());
         } else if (
@@ -365,11 +367,8 @@ class MessageList extends Component {
         }
         const loadMoreRect = loadMore.getBoundingClientRect();
         const elRect = this.el.getBoundingClientRect();
-        // intersection with 15px offset
-        return (
-            loadMoreRect.top < elRect.bottom + 15 &&
-            elRect.top < loadMoreRect.bottom + 15
-        );
+        const isInvisible = loadMoreRect.top > elRect.bottom || loadMoreRect.bottom < elRect.top;
+        return !isInvisible;
     }
 
     /**
