@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="configure_optional_products_website" inherit_id="sale_product_configurator.configure_optional_products">
+        <xpath expr="//th[hasclass('td-qty')]" position="replace">
+            <th class="text-center td-qty">
+                <t t-set="is_qty_update" t-value="not request.is_frontend or (request.is_frontend and request.website.viewref('website_sale.product_quantity').active)"/>
+                <t t-if="is_qty_update">Quantity</t>
+            </th>
+        </xpath>
+        <xpath expr="//div[hasclass('css_quantity')]" position="replace">
+            <div class="css_quantity input-group">
+                <t t-if="is_qty_update">
+                    <t t-call="website_sale_product_configurator.product_quantity"/>
+                </t>
+                <t t-else="">
+                    <input type="text" class="d-none js_quantity form-control quantity" name="add_qty" t-att-value="add_qty or 1"/>
+                </t>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="optional_product_items_website" inherit_id="sale_product_configurator.optional_product_items">
+        <xpath expr="//div[hasclass('css_quantity')]" position="replace">
+            <div class="css_quantity input-group">
+                <t t-set="is_qty_update" t-value="not request.is_frontend or (request.is_frontend and request.website.viewref('website_sale.product_quantity').active)"/>
+                <t t-if="is_qty_update">
+                    <t t-call="website_sale_product_configurator.product_quantity"/>
+                </t>
+                <t t-else="">
+                    <input type="text" class="d-none js_quantity form-control quantity" name="add_qty" t-att-value="add_qty or 1"/>
+                </t>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="product_quantity">
+        <div class="input-group-prepend">
+            <button t-attf-href="#" class="btn btn-primary js_add_cart_json d-none d-md-inline-block" aria-label="Remove one" title="Remove one">
+                <i class="fa fa-minus"></i>
+            </button>
+        </div>
+        <input type="text" class="js_quantity form-control quantity" data-min="1" name="add_qty" t-att-value="add_qty or 1"/>
+        <div class="input-group-append">
+            <button t-attf-href="#" class="btn btn-primary float_left js_add_cart_json d-none d-md-inline-block" aria-label="Add one" title="Add one">
+                <i class="fa fa-plus"></i>
+            </button>
+        </div>
+    </template>
+</odoo>
