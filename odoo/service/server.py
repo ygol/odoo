@@ -167,7 +167,29 @@ class ThreadedWSGIServerReloadable(LoggingBaseWSGIServerMixIn, werkzeug.serving.
         t.daemon = self.daemon_threads
         t.type = 'http'
         t.start_time = time.time()
-        t.start()
+        def log_threads(level=logging.INFO):
+            import subprocess
+            result = dict()
+            _logger.log(level, """
+----- Thread infos -----
+ps top threads per process:
+   co\tpr
+   {top}
+ps sum threads: {sum}
+----- Memory infos -----
+{free}
+""".format(
+                sum = subprocess.check_output("ps -Ao thcount| awk '{ sum += $1 } END { print sum }'", shell=True).decode("utf-8").strip(),
+                top = subprocess.check_output("ps -Ao thcount,pid,cmd | sort -rn | head", shell=True).decode("utf-8").strip(),
+                free = subprocess.check_output("free -h", shell=True).decode("utf-8").strip(),
+            ))
+
+        try:
+            t.start()
+        except:
+            log_threads(level=logging.ERROR)
+            raise
+
 
     # TODO: Remove this method as soon as either of the revision
     # - python/cpython@8b1f52b5a93403acd7d112cd1c1bc716b31a418a for Python 3.6,
