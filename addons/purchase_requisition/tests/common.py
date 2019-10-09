@@ -35,7 +35,7 @@ class TestPurchaseRequisitionCommon(common.SavepointCase):
 
         cls.product_09 = cls.env['product.product'].create({
             'name': 'Pedal Bin',
-            'categ_id': cls.env.ref('product.product_category_5').id,
+            'categ_id': cls.env.ref('product.product_category_x_5').id,
             'standard_price': 10.0,
             'list_price': 47.0,
             'type': 'consu',
