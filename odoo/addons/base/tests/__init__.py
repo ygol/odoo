@@ -38,3 +38,4 @@ from . import test_res_partner_bank
 from . import test_reports
 from . import test_tests_tags
 from . import test_base_document_layout
+from . import test_save_point_case
