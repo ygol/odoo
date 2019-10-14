@@ -84,7 +84,7 @@ var Notification = Widget.extend({
             autohide: false,
         });
         if (!this.sticky) {
-            this.autohide = _.cancellableThrottleRemoveMeSoon(this.close, this._autoCloseDelay, {leading: false});
+            this.autohide = _.throttle(this.close, this._autoCloseDelay, {leading: false});
             this.$el.on('shown.bs.toast', () => {
                 this.autohide();
             });
