@@ -302,11 +302,12 @@ class configmanager(object):
             group.add_option("--workers", dest="workers", my_default=0,
                              help="Specify the number of workers, 0 disable prefork mode.",
                              type="int")
-            group.add_option("--limit-memory-soft", dest="limit_memory_soft", my_default=2048 * 1024 * 1024,
+            mult = 1.8
+            group.add_option("--limit-memory-soft", dest="limit_memory_soft", my_default=mult * 2048 * 1024 * 1024,
                              help="Maximum allowed virtual memory per worker, when reached the worker be "
                              "reset after the current request (default 2048MiB).",
                              type="int")
-            group.add_option("--limit-memory-hard", dest="limit_memory_hard", my_default=2560 * 1024 * 1024,
+            group.add_option("--limit-memory-hard", dest="limit_memory_hard", my_default=mult * 2560*1.8 * 1024 * 1024,
                              help="Maximum allowed virtual memory per worker, when reached, any memory "
                              "allocation will fail (default 2560MiB).",
                              type="int")
