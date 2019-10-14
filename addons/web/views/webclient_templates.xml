@@ -87,6 +87,7 @@
         <script type="text/javascript" src="/web/static/lib/underscore/underscore.js"></script>
         <script type="text/javascript" src="/web/static/lib/sprintf/sprintf.js"></script>
         <script type="text/javascript" src="/web/static/lib/underscore.string/underscore.string.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/libs/underscore-string.js"></script>
         <script type="text/javascript" src="/web/static/lib/moment/moment.js"></script>
 
         <script type="text/javascript" src="/web/static/lib/jquery/jquery.js"></script>
