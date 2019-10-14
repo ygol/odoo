@@ -73,10 +73,12 @@ var Notification = Widget.extend({
     /**
      * @override
      */
-    start: function () {
+    start: async function () {
+        console.log("start notification");
+        await this._super.apply(this, arguments);
         this.$el.toast({
             animation: this._animation,
-            autohide: !this.sticky,
+            autohide: false,
         });
         void this.$el[0].offsetWidth; // Force a paint refresh before showing the toast
         this.$el.toast('show');
@@ -84,17 +86,17 @@ var Notification = Widget.extend({
             autohide: false,
         });
         if (!this.sticky) {
-            this.autohide = _.throttle(this.close, this._autoCloseDelay, {leading: false});
+            this.autohide = _.throttle(this.close.bind(this), this._autoCloseDelay, {leading: false});
             this.$el.on('shown.bs.toast', () => {
                 this.autohide();
             });
         }
-        return this._super.apply(this, arguments);
     },
     /**
      * @override
      */
     destroy: function () {
+        console.log("destroyed notification");
         this.$el.toast('dispose');
         this._super.apply(this, arguments);
     },
@@ -111,6 +113,7 @@ var Notification = Widget.extend({
      *   _closeCallback method
      */
     close: function (silent) {
+        console.log("closed notification");
         this.silent = silent;
         this.$el.toast('hide');
 
@@ -149,6 +152,7 @@ var Notification = Widget.extend({
      * @param {Event} ev
      */
     _onClose: function (ev) {
+        console.log("onclose notification");
         this.trigger_up('close');
         if (!this.silent && !this._buttonClicked) {
             if (this._closeCallback) {
