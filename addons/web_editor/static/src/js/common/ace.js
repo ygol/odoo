@@ -553,7 +553,7 @@ var ViewEditor = Widget.extend({
      */
     _saveSCSSorJS: function (session) {
         var self = this;
-        var sessionIdEndsWithJS = _.string.endsWith(session.id, '.js');
+        var sessionIdEndsWithJS = _.str.endsWith(session.id, '.js');
         var bundleXmlID = sessionIdEndsWithJS ? this.js[session.id].bundle_xmlid : this.scss[session.id].bundle_xmlid;
         var fileType = sessionIdEndsWithJS ? 'js' : 'scss';
         return self._rpc({

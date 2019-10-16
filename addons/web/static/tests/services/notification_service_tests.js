@@ -30,7 +30,7 @@ QUnit.module('Services', {
             services: {
                 notification: NotificationService,
             },
-            debug:1
+            //debug:1
         };
     },
     afterEach: function () {
@@ -61,7 +61,7 @@ QUnit.module('Services', {
         await concurrency.delay(100);
         assert.strictEqual($notification.is(':hidden'), true, "should hide the notification");
         assert.strictEqual($('body .o_notification_manager .o_notification').length, 0, "should destroy the notification");
-        // view.destroy();
+         view.destroy();
     });
 
     QUnit.test('Display a danger notification', async function (assert) {
