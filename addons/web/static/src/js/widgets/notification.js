@@ -1,6 +1,7 @@
 odoo.define('web.Notification', function (require) {
 'use strict';
 
+var concurrency = require('web.concurrency');
 var Widget = require('web.Widget');
 
 /**
@@ -74,29 +75,28 @@ var Notification = Widget.extend({
      * @override
      */
     start: async function () {
-        console.log("start notification");
         await this._super.apply(this, arguments);
         this.$el.toast({
             animation: this._animation,
+            delay: this._autoCloseDelay,
             autohide: false,
         });
         void this.$el[0].offsetWidth; // Force a paint refresh before showing the toast
-        this.$el.toast('show');
-        this.$el.toast({
-            autohide: false,
-        });
+
         if (!this.sticky) {
-            this.autohide = _.throttle(this.close.bind(this), this._autoCloseDelay, {leading: false});
-            this.$el.on('shown.bs.toast', () => {
-                this.autohide();
+            this.$el.on('shown.bs.toast', async() => {
+                await concurrency.delay(this._autoCloseDelay);
+                if (!this.isDestroyed())
+                    this.close();
             });
         }
+        this.$el.toast('show');
+
     },
     /**
      * @override
      */
     destroy: function () {
-        console.log("destroyed notification");
         this.$el.toast('dispose');
         this._super.apply(this, arguments);
     },
@@ -113,7 +113,6 @@ var Notification = Widget.extend({
      *   _closeCallback method
      */
     close: function (silent) {
-        console.log("closed notification");
         this.silent = silent;
         this.$el.toast('hide');
 
@@ -152,7 +151,6 @@ var Notification = Widget.extend({
      * @param {Event} ev
      */
     _onClose: function (ev) {
-        console.log("onclose notification");
         this.trigger_up('close');
         if (!this.silent && !this._buttonClicked) {
             if (this._closeCallback) {
