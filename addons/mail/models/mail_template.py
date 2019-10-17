@@ -230,6 +230,59 @@ class MailTemplate(models.Model):
 
         return True
 
+    # --------------------------------------------------
+    # RENDERING NEW API
+    # --------------------------------------------------
+
+    def _render_jinja_template(self, jinja_template, render_context, raise_exception=True):
+        try:
+            render_result = jinja_template.render(render_context)
+        except Exception:
+            _logger.info('Failed to render jinja template %r using values %' % (jinja_template, render_context), exc_info=True)
+            if raise_exception:
+                raise UserError(_('Failed to render jinja template %r using values %') % (jinja_template, render_context))
+            else:
+                render_result = u''
+        else:
+            if render_result == u'False':
+                render_result = u''
+        return render_result
+
+    def _render_get_context(self):
+        return {
+            'format_date': lambda date, date_format=False, lang_code=False: format_date(self.env, date, date_format, lang_code),
+            'format_datetime': lambda dt, tz=False, dt_format=False, lang_code=False: format_datetime(self.env, dt, tz, dt_format, lang_code),
+            'format_amount': lambda amount, currency, lang_code=False: tools.format_amount(self.env, amount, currency, lang_code),
+            'format_duration': lambda value: tools.format_duration(value),
+            'user': self.env.user,
+            'ctx': self._context,  # context kw would clash with mako internals
+        }
+
+    def _render_on_records(self, template_src, records, add_render_context=None, post_process_func=None):
+        try:
+            jinja_env = mako_safe_template_env if self.env.context.get('safe') else mako_template_env
+            jinja_template = jinja_env.from_string(tools.ustr(template_src))
+        except Exception:
+            _logger.info("Failed to load template %r", template_src, exc_info=True)
+            return [u''] * len(records)
+
+        render_context = self._render_get_context()
+        if add_render_context:
+            render_context.update(add_render_context)
+
+        rendered = []
+        for record in records:
+            render_context['object'] = record
+            rendered_template = self._render_jinja_template(jinja_template, render_context, raise_exception=True)
+            if post_process_func and callable(post_process_func):
+                rendered_template = post_process_func(record, rendered_template)
+            rendered.append(rendered_template)
+
+        return rendered
+
+    def render_field_on_records(self, field, records, add_render_context=None, post_process_func=None):
+        return self._render_on_records(self[field], records, add_render_context=add_render_context, post_process_func=post_process_func)
+
     # ----------------------------------------
     # RENDERING
     # ----------------------------------------
@@ -260,37 +313,11 @@ class MailTemplate(models.Model):
 
         results = dict.fromkeys(res_ids, u"")
 
-        # try to load the template
-        try:
-            mako_env = mako_safe_template_env if self.env.context.get('safe') else mako_template_env
-            template = mako_env.from_string(tools.ustr(template_txt))
-        except Exception:
-            _logger.info("Failed to load template %r", template_txt, exc_info=True)
-            return multi_mode and results or results[res_ids[0]]
-
-        # prepare template variables
         records = self.env[model].browse(it for it in res_ids if it)  # filter to avoid browsing [None]
-        res_to_rec = dict.fromkeys(res_ids, None)
-        for record in records:
-            res_to_rec[record.id] = record
-        variables = {
-            'format_date': lambda date, date_format=False, lang_code=False: format_date(self.env, date, date_format, lang_code),
-            'format_datetime': lambda dt, tz=False, dt_format=False, lang_code=False: format_datetime(self.env, dt, tz, dt_format, lang_code),
-            'format_amount': lambda amount, currency, lang_code=False: tools.format_amount(self.env, amount, currency, lang_code),
-            'format_duration': lambda value: tools.format_duration(value),
-            'user': self.env.user,
-            'ctx': self._context,  # context kw would clash with mako internals
-        }
-        for res_id, record in res_to_rec.items():
-            variables['object'] = record
-            try:
-                render_result = template.render(variables)
-            except Exception:
-                _logger.info("Failed to render template %r using values %r" % (template, variables), exc_info=True)
-                raise UserError(_("Failed to render template %r using values %r")% (template, variables))
-            if render_result == u"False":
-                render_result = u""
-            results[res_id] = render_result
+        rendered = self._render_on_records(template_txt, records)
+        for render_result, record in zip(rendered, records):
+            if render_result:
+                results[record.id] = render_result
 
         if post_process:
             for res_id, result in results.items():
