@@ -233,7 +233,7 @@ class TestMailAPIPerformance(BaseMailPerformance):
     def test_mail_composer_w_template(self):
         test_record = self.env['mail.test.full'].browse(self.test_record_full.id)
         test_template = self.env['mail.template'].browse(self.test_template_full.id)
-        with self.assertQueryCount(__system__=25, emp=25):
+        with self.assertQueryCount(__system__=25, emp=25):  # test_mail: 21 / 21
             composer = self.env['mail.compose.message'].with_context({
                 'default_composition_mode': 'comment',
                 'default_model': test_record._name,
