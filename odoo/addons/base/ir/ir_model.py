@@ -6,6 +6,8 @@ import logging
 import time
 from collections import defaultdict
 
+import psycopg2
+
 from odoo import api, fields, models, SUPERUSER_ID, tools,  _
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.modules.registry import Registry
@@ -1248,8 +1250,23 @@ class IrModelData(models.Model):
                             values[parent_field] = parent.id
                         else:
                             xid.unlink()
-
-            record = record.create(values)
+            try:
+                with self.env.cr.savepoint():
+                    record = record.create(values)
+            except psycopg2.IntegrityError as e:
+                unique_identifier = record._unique_identifier
+                if e.pgcode == '23505' and unique_identifier:
+                    domain = [(field, '=', values[field]) for field in unique_identifier]
+                    record = record.search(domain, limit=1)
+                    if not record:
+                        raise
+                    else:
+                        desc = ', '.join(('%s: %s' % (field, values[field]) for field in unique_identifier))
+                        _logger.warning('Duplicate %s detected (%s). Fixing xmlid `%s.%s`.' % (record._name, desc, module, xml_id))
+                        record.write(values)
+                        self._cr.execute('DELETE FROM ir_model_data WHERE module=%s AND name=%s', (module, xml_id))
+                else:
+                    raise
             if xml_id:
                 #To add an external identifiers to all inherits model
                 inherit_models = [record]

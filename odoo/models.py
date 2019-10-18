@@ -232,6 +232,7 @@ class BaseModel(object):
     _inherit = None             # Python-inherited models ('model' or ['model'])
     _inherits = {}              # inherited models {'parent_model': 'm2o_field'}
     _constraints = []           # Python constraints (old API)
+    _unique_identifier = None   # Second unique identifier that can be used as an id/xmlid
 
     _table = None               # SQL table name used by model
     _sequence = None            # SQL sequence to use for ID field
