@@ -210,7 +210,7 @@ class TestComposerWTpl(BaseFunctionalTest, MockEmails, TestRecipients):
             'default_model': 'mail.test.simple',
             'default_res_id': self.test_record.id,
             'default_template_id': self.email_template.id,
-        }).create({'subject': 'Forget me subject', 'body': 'Dummy body'})
+        }).create({})
 
         # perform onchange and send emails
         values = composer.onchange_template_id(self.email_template.id, 'comment', self.test_record._name, self.test_record.id)['value']

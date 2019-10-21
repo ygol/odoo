@@ -167,8 +167,6 @@ class TestComposerInternals(BaseFunctionalTest, MockEmails, TestRecipients):
 
         # changing template should update its content
         composer.write({'template_id': self.template.id})
-        # fixme: currently onchange necessary
-        composer.onchange_template_id_wrapper()
         self.assertEqual(composer.subject, 'About %s' % self.test_record.name)
         self.assertEqual(composer.body, '<p>Hello %s</p>' % self.test_record.name)
         self.assertEqual(composer.mail_server_id, self.template.mail_server_id)
@@ -196,17 +194,12 @@ class TestComposerInternals(BaseFunctionalTest, MockEmails, TestRecipients):
 
         # erasing template should erase its content
         composer.write({'template_id': False})
-        # fixme: currently onchange necessary
-        composer.onchange_template_id_wrapper()
         self.assertEqual(composer.subject, 'My amazing subject')
-        # self.assertEqual(composer.body, '<p>Test Body</p>')
-        self.assertEqual(composer.body, '')
+        self.assertEqual(composer.body, '<p>Test Body</p>')
         self.assertEqual(composer.mail_server_id.id, False)
 
         # changing template should update its content
         composer.write({'template_id': self.template.id})
-        # fixme: currently onchange necessary
-        composer.onchange_template_id_wrapper()
         self.assertEqual(composer.subject, self.template.subject)
         self.assertEqual(composer.body, self.template.body_html)
         self.assertEqual(composer.mail_server_id, self.template.mail_server_id)
@@ -227,8 +220,6 @@ class TestComposerInternals(BaseFunctionalTest, MockEmails, TestRecipients):
 
         # creation values from from template
         composer.write({'template_id': self.template.id})
-        # fixme: currently onchange necessary
-        composer.onchange_template_id_wrapper()
         self.assertEqual(composer.subject, 'About %s' % self.test_record.name)
         self.assertEqual(composer.body, '<p>Hello %s</p>' % self.test_record.name)
         self.assertEqual(composer.mail_server_id, self.template.mail_server_id)
@@ -254,5 +245,4 @@ class TestComposerInternals(BaseFunctionalTest, MockEmails, TestRecipients):
 
         # set parent
         composer.write({'parent_id': msg.id})
-        # self.assertEqual(composer.subject, 'Re: %s' % msg.subject)
-        self.assertEqual(composer.subject, False)
+        self.assertEqual(composer.subject, 'Re: %s' % msg.subject)
