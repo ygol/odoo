@@ -63,7 +63,26 @@ addresses belonging to this country.\n\nYou can use the python-style string pate
     def create(self, vals):
         if vals.get('code'):
             vals['code'] = vals['code'].upper()
-        return super(Country, self).create(vals)
+        if self.env.context.get('install_mode'):
+            try:
+                with self.env.cr.savepoint():
+                    record = super(Country, self).create(vals)
+            except IntegrityError as e:
+                if e.pgcode == '23505':
+                    # Duplicate exists
+                    for field in filter(None, ('code', 'name')):
+                        value = vals.get(field)
+                        record = self.search([(field, '=', value)], limit=1) if value else None
+                        if record:
+                            break
+                    if not record:
+                        raise
+                    record.write(vals)
+                else:
+                    raise
+            return record
+        else:
+            return super(Country, self).create(vals)
 
     @api.multi
     def write(self, vals):
@@ -101,3 +120,26 @@ class CountryState(models.Model):
     _sql_constraints = [
         ('name_code_uniq', 'unique(country_id, code)', 'The code of the state must be unique by country !')
     ]
+
+    @api.model
+    def create(self, vals):
+        if self.env.context.get('install_mode'):
+            try:
+                with self.env.cr.savepoint():
+                    record = super(CountryState, self).create(vals)
+            except IntegrityError as e:
+                if e.pgcode == '23505':
+                    # Duplicate exists
+                    country_id, code = vals.get('country_id'), vals.get('code')
+                    record = self.search([
+                        ('country_id', '=', country_id),
+                        ('code', '=', code)
+                    ], limit=1) if country_id and code else None
+                    if not record:
+                        raise
+                    record.write(vals)
+                else:
+                    raise
+            return record
+        else:
+            return super(CountryState, self).create(vals)
