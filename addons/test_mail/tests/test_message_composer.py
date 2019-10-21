@@ -8,9 +8,11 @@ from unittest.mock import patch
 from odoo.addons.test_mail.tests.common import BaseFunctionalTest, MockEmails, TestRecipients
 from odoo.addons.test_mail.tests.common import mail_new_test_user
 from odoo.addons.test_mail.models.test_mail_models import MailTestSimple
+from odoo.tests import tagged
 from odoo.tools import mute_logger
 
 
+@tagged('mail_composer')
 class TestComposer(BaseFunctionalTest, MockEmails, TestRecipients):
 
     @classmethod
@@ -162,6 +164,7 @@ class TestComposer(BaseFunctionalTest, MockEmails, TestRecipients):
             self.assertEqual(self.test_record.message_ids[0].author_id, portal_user.partner_id)
 
 
+@tagged('mail_composer')
 class TestComposerWTpl(BaseFunctionalTest, MockEmails, TestRecipients):
 
     @classmethod
