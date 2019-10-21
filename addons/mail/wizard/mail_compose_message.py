@@ -30,8 +30,10 @@ class MailComposer(models.TransientModel):
     """ Generic message composition wizard. You may inherit from this wizard
         at model and view levels to provide specific features.
 
+        TDE FIXME: get_record_data was adding partner ids
+
         The behavior of the wizard depends on the composition_mode field:
-        - 'comment': post on a record. The wizard is pre-populated via ``get_record_data``
+        - 'comment': post on a record.
         - 'mass_mail': wizard in mass mailing mode where the mail details can
             contain template placeholders that will be merged with actual data
             before being sent to each recipient.
@@ -43,31 +45,10 @@ class MailComposer(models.TransientModel):
 
     @api.model
     def default_get(self, fields):
-        """ Handle composition mode. Some details about context keys:
-            - comment: default mode, model and ID of a record the user comments
-                - default_model or active_model
-                - default_res_id or active_id
-            - mass_mail: model and IDs of records the user mass-mails
-                - active_ids: record IDs
-                - default_model or active_model
-        """
         result = super(MailComposer, self).default_get(fields)
 
-        result['composition_mode'] = result.get('composition_mode', 'comment')
-        result['model'] = result.get('model', self._context.get('active_model'))
-        result['res_id'] = result.get('res_id', self._context.get('active_id'))
-        if 'no_auto_thread' not in result and (result['model'] not in self.env or not hasattr(self.env[result['model']], 'message_post')):
-            result['no_auto_thread'] = True
-
-        vals = {}
         if 'active_domain' in self._context:  # not context.get() because we want to keep global [] domains
-            vals['active_domain'] = '%s' % self._context.get('active_domain')
-        if result['composition_mode'] == 'comment':
-            vals.update(self.get_record_data(result))
-
-        for field in vals:
-            if field in fields:
-                result[field] = vals[field]
+            result['active_domain'] = '%s' % self._context.get('active_domain')
 
         if fields is not None:
             [result.pop(field, None) for field in list(result) if field not in fields]
@@ -76,9 +57,7 @@ class MailComposer(models.TransientModel):
     # content
     subject = fields.Char('Subject', compute='_compute_subject', compute_sudo=False, readonly=False, store=True)
     body = fields.Html('Contents', compute='_compute_body', compute_sudo=False, readonly=False, store=True, sanitize_style=True)
-    parent_id = fields.Many2one(
-        'mail.message', 'Parent Message', index=True, ondelete='set null',
-        help="Initial thread message.")
+    parent_id = fields.Many2one('mail.message', 'Parent Message', ondelete='set null', help="Parent message.")
     template_id = fields.Many2one(
         'mail.template', 'Use template', index=True,
         domain="[('model', '=', model)]")
@@ -99,9 +78,11 @@ class MailComposer(models.TransientModel):
         ('comment', 'Post on a document'),
         ('mass_mail', 'Email Mass Mailing'),
         ('mass_post', 'Post on Multiple Documents')], string='Composition mode', default='comment')
-    model = fields.Char('Related Document Model', index=True)
-    res_id = fields.Integer('Related Document ID', index=True)
-    record_name = fields.Char('Message Record Name', help="Name get of the related document.")
+    model = fields.Char('Related Document Model', compute='_compute_model', readonly=False, store=True)
+    res_id = fields.Integer('Related Document ID', compute='_compute_res_id', readonly=False, store=True)
+    record_name = fields.Char(
+        'Message Record Name', compute='_compute_record_name', readonly=False, store=True,
+        help="Name get of the related document.")
     use_active_domain = fields.Boolean('Use active domain')
     active_domain = fields.Text('Active domain', readonly=True)
     # characteristics
@@ -122,7 +103,7 @@ class MailComposer(models.TransientModel):
         'Reply-To', compute='_compute_reply_to', compute_sudo=False, readonly=False, store=True,
         help='Reply email address. Setting the reply_to bypasses the automatic thread creation.')
     no_auto_thread = fields.Boolean(
-        'No threading for answers',
+        'No threading for answers', compute='_compute_no_auto_thread', readony=False, store=True,
         help='Answers do not go in the original document discussion thread. This has an impact on the generated message-id.')
     is_log = fields.Boolean('Log an Internal Note',
                             help='Whether the message is an internal note (comment mode only)')
@@ -168,10 +149,40 @@ class MailComposer(models.TransientModel):
         if not self.author_id:
             self.author_id = self.env.user.partner_id
 
+    @api.depends('parent_id', 'composition_mode')
+    @api.depends_context('active_model', 'default_model')
+    def _compute_model(self):
+        if self.parent_id and self.composition_mode == 'comment':
+            self.model = self.parent_id.model
+        else:
+            self.model = self.env.context.get('default_model', self.env.context.get('active_model', False))
+
+    @api.depends('parent_id', 'composition_mode')
+    @api.depends_context('active_id', 'default_res_id')
+    def _compute_res_id(self):
+        if self.parent_id and self.composition_mode == 'comment':
+            self.res_id = self.parent_id.res_id
+        elif self.composition_mode == 'comment':
+            self.res_id = self.env.context.get('default_res_id', self.env.context.get('active_id', 0))
+
+    @api.depends('parent_id', 'composition_mode', 'model', 'res_id')
+    def _compute_record_name(self):
+        if self.record_name:
+            return
+        if self.parent_id and self.composition_mode == 'comment' and self.parent_id.record_name:
+            self.record_name = self.parent_id.record_name
+        elif self.composition_mode == 'comment' and self.model and self.res_id:
+            self.record_name = self._get_records().display_name
+
     @api.depends('template_id', 'composition_mode')
     def _compute_reply_to(self):
         if self.template_id.reply_to:
             self._get_compute_value_from_template('reply_to')
+
+    @api.depends('model')
+    def _compute_no_auto_thread(self):
+        if not self.model or not hasattr(self.env[self.model], 'message_post'):
+            self.no_auto_thread = True
 
     @api.depends('template_id')
     def _compute_mail_server_id(self):
@@ -185,28 +196,6 @@ class MailComposer(models.TransientModel):
                 self[cp_field] = self.template_id.render_field_on_records(tpl_field, self._get_records())[0]
             else:
                 self[cp_field] = self.template_id[tpl_field]
-
-    @api.model
-    def get_record_data(self, values):
-        """ Returns a defaults-like dict with initial values for the composition
-        wizard when sending an email related a previous email (parent_id) or
-        a document (model, res_id). This is based on previously computed default
-        values. """
-        result = {}
-        if values.get('parent_id'):
-            parent = self.env['mail.message'].browse(values.get('parent_id'))
-            result['record_name'] = parent.record_name,
-            if not values.get('model'):
-                result['model'] = parent.model
-            if not values.get('res_id'):
-                result['res_id'] = parent.res_id
-            partner_ids = values.get('partner_ids', list()) + parent.partner_ids.ids
-            result['partner_ids'] = partner_ids
-        elif values.get('model') and values.get('res_id'):
-            doc_name_get = self.env[values.get('model')].browse(values.get('res_id')).name_get()
-            result['record_name'] = doc_name_get and doc_name_get[0][1] or ''
-
-        return result
 
     # ------------------------------------------------------------
     # ACTIONS
@@ -427,8 +416,7 @@ class MailComposer(models.TransientModel):
             if values.get('attachment_ids', []) or attachment_ids:
                 values['attachment_ids'] = [(6, 0, values.get('attachment_ids', []) + attachment_ids)]
         else:
-            default_values = self.with_context(default_composition_mode=composition_mode, default_model=model, default_res_id=res_id).default_get(['composition_mode', 'model', 'res_id', 'parent_id', 'partner_ids', 'attachment_ids'])
-            values = dict((key, default_values[key]) for key in ['partner_ids', 'attachment_ids'] if key in default_values)
+            values = {'partner_ids': False, 'attachment_ids': False}
 
         # This onchange should return command instead of ids for x2many field.
         values = self._convert_to_write(values)
