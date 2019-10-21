@@ -108,13 +108,10 @@ class TestComposerInternals(BaseFunctionalTest, MockEmails, TestRecipients):
         # author values reset email
         composer.write({'author_id': self.partner_1})
         self.assertEqual(composer.author_id, self.partner_1)
-        self.assertEqual(composer.email_from, self.env.user.email_formatted)
-        # self.assertEqual(composer.email_from, self.partner_1.email_formatted)
+        self.assertEqual(composer.email_from, self.partner_1.email_formatted)
 
         # changing template should update its email_from
         composer.write({'template_id': self.template.id, 'author_id': self.env.user.partner_id})
-        # fixme: currently onchange necessary
-        composer.onchange_template_id_wrapper()
         self.assertEqual(composer.author_id, self.env.user.partner_id)
         self.assertEqual(composer.email_from, self.test_record.user_id.email_formatted)
 
@@ -140,13 +137,10 @@ class TestComposerInternals(BaseFunctionalTest, MockEmails, TestRecipients):
         # author values reset email
         composer.write({'author_id': self.partner_1})
         self.assertEqual(composer.author_id, self.partner_1)
-        self.assertEqual(composer.email_from, self.env.user.email_formatted)
-        # self.assertEqual(composer.email_from, self.partner_1.email_formatted)
+        self.assertEqual(composer.email_from, self.partner_1.email_formatted)
 
         # changing template should update its email_from
         composer.write({'template_id': self.template.id, 'author_id': self.env.user.partner_id})
-        # fixme: currently onchange necessary
-        composer.onchange_template_id_wrapper()
         self.assertEqual(composer.author_id, self.env.user.partner_id)
         self.assertEqual(composer.email_from, self.template.email_from)
 
