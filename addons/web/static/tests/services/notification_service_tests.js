@@ -57,7 +57,7 @@ QUnit.module('Services', {
             title: 'a',
             message: 'b',
         });
-        await testUtils.nextMicrotaskTick();
+        await testUtils.nextTick();
         var $notification = $('body .o_notification_manager .o_notification');
         assert.strictEqual($notification.html().trim().replace(/\s+/g, ' '),
             "<div class=\"toast-header\"> <span class=\"fa fa-2x mr-3 fa-lightbulb-o o_notification_icon\" role=\"img\" aria-label=\"Notification undefined\" title=\"Notification undefined\"></span> <div class=\"d-flex align-items-center mr-auto font-weight-bold o_notification_title\">a</div> </div> <div class=\"toast-body\"> <div class=\"o_notification_content\">b</div> </div>",
@@ -78,7 +78,7 @@ QUnit.module('Services', {
             message: 'b',
             type: 'danger'
         });
-        await testUtils.nextMicrotaskTick();
+        await testUtils.nextTick();
         var $notification = $('body .o_notification_manager .o_notification');
         assert.strictEqual($notification.html().trim().replace(/\s+/g, ' '),
             "<div class=\"toast-header\"> <span class=\"fa fa-2x mr-3 fa-exclamation o_notification_icon\" role=\"img\" aria-label=\"Notification undefined\" title=\"Notification undefined\"></span> <div class=\"d-flex align-items-center mr-auto font-weight-bold o_notification_title\">a</div> </div> <div class=\"toast-body\"> <div class=\"o_notification_content\">b</div> </div>",
@@ -119,7 +119,7 @@ QUnit.module('Services', {
                 close++;
             }
         });
-        await testUtils.nextMicrotaskTick();
+        await testUtils.nextTick();
         view.destroy();
         assert.strictEqual(close, 0, "should wait to call onClose method once");
         await testUtils.nextTick();
@@ -145,7 +145,7 @@ QUnit.module('Services', {
                 close++;
             }
         });
-        await testUtils.nextMicrotaskTick();
+        await testUtils.nextTick();
         assert.strictEqual(close, 0, "should wait to call onClose method once");
         testUtils.dom.click($('body .o_notification_manager .o_notification .o_notification_close'));
         assert.strictEqual(close, 1, "should call onClose method once");
