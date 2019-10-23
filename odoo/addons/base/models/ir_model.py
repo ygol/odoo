@@ -11,6 +11,8 @@ from operator import itemgetter
 
 from odoo import api, fields, models, SUPERUSER_ID, tools,  _
 from odoo.exceptions import AccessError, UserError, ValidationError
+from odoo.modules.graph import Graph
+from odoo.modules.loading import load_data
 from odoo.modules.registry import Registry
 from odoo.osv import expression
 from odoo.tools import pycompat
@@ -1621,13 +1623,16 @@ class IrModelData(models.Model):
         return res['id'], res['model'], res['res_id']
 
     @api.model
-    def xmlid_to_res_model_res_id(self, xmlid, raise_if_not_found=False):
+    def xmlid_to_res_model_res_id(self, xmlid, raise_if_not_found=False, restore=True):
         """ Return (res_model, res_id)"""
         try:
             return self.xmlid_lookup(xmlid)[1:3]
         except ValueError:
             if raise_if_not_found:
-                raise
+                if restore:
+                    return self._restore(xmlid)
+                else:
+                    raise
             return (False, False)
 
     @api.model
@@ -1636,7 +1641,7 @@ class IrModelData(models.Model):
         return self.xmlid_to_res_model_res_id(xmlid, raise_if_not_found)[1]
 
     @api.model
-    def xmlid_to_object(self, xmlid, raise_if_not_found=False):
+    def xmlid_to_object(self, xmlid, raise_if_not_found=False, restore=True):
         """ Return a Model object, or ``None`` if ``raise_if_not_found`` is 
         set
         """
@@ -1647,9 +1652,23 @@ class IrModelData(models.Model):
             record = self.env[res_model].browse(res_id)
             if record.exists():
                 return record
+            if restore:
+                res_model, res_id = self._restore(xmlid)
+                return self.env[res_model].browse(res_id)
             if raise_if_not_found:
                 raise ValueError('No record found for unique ID %s. It may have been deleted.' % (xmlid))
         return None
+
+    @api.model
+    def _restore(self, xmlid):
+        _logger.warning("Attempt to restore data %s", xmlid)
+        module, name = xmlid.split('.', 1)
+        graph = Graph()
+        graph.add_module(self.env.cr, module)
+        for package in graph:
+            if package.name == module:
+                load_data(self.env.cr, {}, 'init', 'data', package, None, rec_ids=[xmlid])
+        return self.xmlid_lookup(xmlid)[1:3]
 
     @api.model
     def _get_id(self, module, xml_id):

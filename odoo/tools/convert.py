@@ -668,6 +668,12 @@ form: module.record_id""" % (xml_id,)
             f = self._tags.get(rec.tag)
             if f is None:
                 continue
+            if rec.tag not in self.DATA_ROOTS and self.rec_ids:
+                rec_id = rec.get('id')
+                if rec_id and '.' not in rec_id:
+                    rec_id = '%s.%s' % (self.module, rec_id)
+                if not rec_id or rec_id not in self.rec_ids:
+                    continue
 
             self.envs.append(self.get_env(el))
             self._noupdate.append(nodeattr2bool(el, 'noupdate', self.noupdate))
@@ -685,7 +691,7 @@ form: module.record_id""" % (xml_id,)
     def noupdate(self):
         return self._noupdate[-1]
 
-    def __init__(self, cr, module, idref, mode, report=None, noupdate=False, xml_filename=None):
+    def __init__(self, cr, module, idref, mode, report=None, noupdate=False, xml_filename=None, rec_ids=None):
         self.mode = mode
         self.module = module
         self.envs = [odoo.api.Environment(cr, SUPERUSER_ID, {})]
@@ -706,6 +712,7 @@ form: module.record_id""" % (xml_id,)
 
             **dict.fromkeys(self.DATA_ROOTS, self._tag_root)
         }
+        self.rec_ids = rec_ids
 
     def parse(self, de):
         assert de.tag in self.DATA_ROOTS, "Root xml tag must be <openerp>, <odoo> or <data>."
@@ -723,18 +730,18 @@ form: module.record_id""" % (xml_id,)
             )
     DATA_ROOTS = ['odoo', 'data', 'openerp']
 
-def convert_file(cr, module, filename, idref, mode='update', noupdate=False, kind=None, report=None, pathname=None):
+def convert_file(cr, module, filename, idref, mode='update', noupdate=False, kind=None, report=None, pathname=None, rec_ids=None):
     if pathname is None:
         pathname = os.path.join(module, filename)
     ext = os.path.splitext(filename)[1].lower()
 
     with file_open(pathname, 'rb') as fp:
         if ext == '.csv':
-            convert_csv_import(cr, module, pathname, fp.read(), idref, mode, noupdate)
+            convert_csv_import(cr, module, pathname, fp.read(), idref, mode, noupdate, rec_ids)
         elif ext == '.sql':
             convert_sql_import(cr, fp)
         elif ext == '.xml':
-            convert_xml_import(cr, module, fp, idref, mode, noupdate, report)
+            convert_xml_import(cr, module, fp, idref, mode, noupdate, report, rec_ids)
         elif ext == '.js':
             pass # .js files are valid but ignored here.
         else:
@@ -744,7 +751,7 @@ def convert_sql_import(cr, fp):
     cr.execute(fp.read())
 
 def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
-        noupdate=False):
+        noupdate=False, rec_ids=None):
     '''Import csv file :
         quote: "
         delimiter: ,
@@ -764,6 +771,12 @@ def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
         line for line in reader
         if any(line)
     ]
+    if rec_ids:
+        if 'id' in fields:
+            index_id = fields.index('id')
+            datas = [data for data in datas if (data[index_id] if '.' in data[index_id] else '%s.%s' % (module, data[index_id])) in rec_ids]
+        else:
+            datas = []
 
     context = {
         'mode': mode,
@@ -779,7 +792,7 @@ def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
         warning_msg = "\n".join(msg['message'] for msg in result['messages'])
         raise Exception(_('Module loading %s failed: file %s could not be processed:\n %s') % (module, fname, warning_msg))
 
-def convert_xml_import(cr, module, xmlfile, idref=None, mode='init', noupdate=False, report=None):
+def convert_xml_import(cr, module, xmlfile, idref=None, mode='init', noupdate=False, report=None, rec_ids=None):
     doc = etree.parse(xmlfile)
     schema = os.path.join(config['root_path'], 'import_xml.rng')
     relaxng = etree.RelaxNG(etree.parse(schema))
@@ -800,5 +813,5 @@ def convert_xml_import(cr, module, xmlfile, idref=None, mode='init', noupdate=Fa
         xml_filename = xmlfile
     else:
         xml_filename = xmlfile.name
-    obj = xml_import(cr, module, idref, mode, report=report, noupdate=noupdate, xml_filename=xml_filename)
+    obj = xml_import(cr, module, idref, mode, report=report, noupdate=noupdate, xml_filename=xml_filename, rec_ids=rec_ids)
     obj.parse(doc.getroot())

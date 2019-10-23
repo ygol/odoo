@@ -25,7 +25,7 @@ _logger = logging.getLogger(__name__)
 _test_logger = logging.getLogger('odoo.tests')
 
 
-def load_data(cr, idref, mode, kind, package, report):
+def load_data(cr, idref, mode, kind, package, report, rec_ids=None):
     """
 
     kind: data, demo, test, init_xml, update_xml, demo_xml.
@@ -65,7 +65,7 @@ def load_data(cr, idref, mode, kind, package, report):
             noupdate = False
             if kind in ('demo', 'demo_xml') or (filename.endswith('.csv') and kind in ('init', 'init_xml')):
                 noupdate = True
-            tools.convert_file(cr, package.name, filename, idref, mode, noupdate, kind, report)
+            tools.convert_file(cr, package.name, filename, idref, mode, noupdate, kind, report, rec_ids=rec_ids)
     finally:
         if kind in ('demo', 'test'):
             threading.currentThread().testing = False

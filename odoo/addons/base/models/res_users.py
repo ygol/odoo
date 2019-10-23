@@ -1067,8 +1067,8 @@ class GroupsView(models.Model):
         # exist but we are already creating some basic groups.
         view = self.env.ref('base.user_groups_view', raise_if_not_found=False)
         if view and view.exists() and view._name == 'ir.ui.view':
-            group_no_one = view.env.ref('base.group_no_one')
-            group_employee = view.env.ref('base.group_user')
+            group_no_one = view.env.ref('base.group_no_one', False) or self.browse()
+            group_employee = view.env.ref('base.group_user', False) or self.browse()
             xml1, xml2, xml3 = [], [], []
             xml_by_category = {}
             xml1.append(E.separator(string='User Type', colspan="2", groups='base.group_no_one'))
