@@ -16,17 +16,13 @@ class AccountChartTemplate(models.Model):
                 if journal['code'] == 'INV':
                     journal['name'] = _('Tax Invoices')
 
-            res += [
-                {'type': 'sale', 'name': _('Retail Invoices'), 'code': 'RETINV', 'company_id': company.id, 'show_on_dashboard': True, 'l10n_in_gstin_partner_id': company.partner_id.id},
-                {'type': 'sale', 'name': _('Export Invoices'), 'code': 'EXPINV', 'company_id': company.id, 'show_on_dashboard': True, 'l10n_in_import_export': True, 'l10n_in_gstin_partner_id': company.partner_id.id}
-            ]
         return res
 
 class AccountTaxTemplate(models.Model):
     _inherit = 'account.tax.template'
 
     l10n_in_reverse_charge = fields.Boolean("Reverse charge", help="Tick this if this tax is reverse charge. Only for Indian accounting")
-    
+
     def _get_tax_vals(self, company, tax_template_to_tax):
         val = super(AccountTaxTemplate, self)._get_tax_vals(company, tax_template_to_tax)
         if self.tax_group_id:
