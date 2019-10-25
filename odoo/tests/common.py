@@ -1000,6 +1000,9 @@ class HttpCase(TransactionCase):
     def authenticate(self, user, password):
         # stay non-authenticated
         if user is None:
+            if self.session:
+                odoo.http.root.session_store.delete(self.session)
+            self.browser.delete_cookie('session_id', domain=HOST)
             return
 
         db = get_db_name()
