@@ -35,6 +35,7 @@ class IrActions(models.Model):
     _description = 'Actions'
     _table = 'ir_actions'
     _order = 'name'
+    _master_data_delete = False
 
     name = fields.Char(required=True)
     type = fields.Char(string='Action Type', required=True)

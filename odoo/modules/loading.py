@@ -63,9 +63,11 @@ def load_data(cr, idref, mode, kind, package, report):
         for filename in _get_files_of_kind(kind):
             _logger.info("loading %s/%s", package.name, filename)
             noupdate = False
+            nodelete = None  # If nodelete is None, then it lets either the xml file or the model _master_data_delete choose
             if kind in ('demo', 'demo_xml') or (filename.endswith('.csv') and kind in ('init', 'init_xml')):
                 noupdate = True
-            tools.convert_file(cr, package.name, filename, idref, mode, noupdate, kind, report)
+                nodelete = False  # If no delete is False, then it forces external ids to be not nodelete
+            tools.convert_file(cr, package.name, filename, idref, mode, noupdate, nodelete, kind, report)
     finally:
         if kind in ('demo', 'test'):
             threading.currentThread().testing = False

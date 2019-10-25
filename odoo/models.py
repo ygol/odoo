@@ -290,6 +290,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
     _needaction = False         # whether the model supports "need actions" (see mail)
     _translate = True           # False disables translations export for this model
     _check_company_auto = False
+    _master_data_delete = True  # wether records created with data files can be deleted
 
     # default values for _transient_vacuum()
     _transient_check_count = 0
@@ -863,6 +864,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         mode = self._context.get('mode', 'init')
         current_module = self._context.get('module', '__import__')
         noupdate = self._context.get('noupdate', False)
+        nodelete = self._context.get('nodelete', False)
         # add current module in context for the conversion of xml ids
         self = self.with_context(_import_current_module=current_module)
 
@@ -887,7 +889,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                 return
 
             data_list = [
-                dict(xml_id=xid, values=vals, info=info, noupdate=noupdate)
+                dict(xml_id=xid, values=vals, info=info, noupdate=noupdate, nodelete=nodelete)
                 for xid, vals, info in batch
             ]
             batch.clear()

@@ -24,6 +24,7 @@ class MailActivityType(models.Model):
     _description = 'Activity Type'
     _rec_name = 'name'
     _order = 'sequence, id'
+    _master_data_delete = False
 
     @api.model
     def default_get(self, fields):

@@ -11,6 +11,7 @@ class MailMessageSubtype(models.Model):
     _name = 'mail.message.subtype'
     _description = 'Message subtypes'
     _order = 'sequence, id'
+    _master_data_delete = False
 
     name = fields.Char(
         'Message Type', required=True, translate=True,

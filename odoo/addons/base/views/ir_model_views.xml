@@ -461,6 +461,7 @@
                                 <field name="module"/>
                                 <field name="name"/>
                                 <field name="noupdate"/>
+                                <field name="nodelete"/>
                                 <field name="date_update" />
                                 <field name="date_init" />
                             </group>

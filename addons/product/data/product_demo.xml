@@ -206,19 +206,19 @@
         <function model="ir.model.data" name="_update_xmlids">
             <value model="base" eval="[{
                 'xml_id': 'product.product_4_attribute_1_value_1',
-                'record': obj().env.ref('product.product_4_attribute_1_product_template_attribute_line').product_template_value_ids[0],
+                'record': obj().env.ref('product.product_4_attribute_1_product_template_attribute_line', warning=False).product_template_value_ids[0],
                 'noupdate': True,
             }, {
                 'xml_id': 'product.product_4_attribute_1_value_2',
-                'record': obj().env.ref('product.product_4_attribute_1_product_template_attribute_line').product_template_value_ids[1],
+                'record': obj().env.ref('product.product_4_attribute_1_product_template_attribute_line', warning=False).product_template_value_ids[1],
                 'noupdate': True,
             }, {
                 'xml_id': 'product.product_4_attribute_2_value_1',
-                'record': obj().env.ref('product.product_4_attribute_2_product_template_attribute_line').product_template_value_ids[0],
+                'record': obj().env.ref('product.product_4_attribute_2_product_template_attribute_line', warning=False).product_template_value_ids[0],
                 'noupdate': True,
             }, {
                 'xml_id': 'product.product_4_attribute_2_value_2',
-                'record': obj().env.ref('product.product_4_attribute_2_product_template_attribute_line').product_template_value_ids[1],
+                'record': obj().env.ref('product.product_4_attribute_2_product_template_attribute_line', warning=False).product_template_value_ids[1],
                 'noupdate': True,
             },]"/>
         </function>
@@ -226,19 +226,19 @@
         <function model="ir.model.data" name="_update_xmlids">
             <value model="base" eval="[{
                 'xml_id': 'product.product_product_4',
-                'record': obj().env.ref('product.product_product_4_product_template')._get_variant_for_combination(obj().env.ref('product.product_4_attribute_1_value_1') + obj().env.ref('product.product_4_attribute_2_value_1')),
+                'record': obj().env.ref('product.product_product_4_product_template', warning=False)._get_variant_for_combination(obj().env.ref('product.product_4_attribute_1_value_1', warning=False) + obj().env.ref('product.product_4_attribute_2_value_1', warning=False)),
                 'noupdate': True,
             }, {
                 'xml_id': 'product.product_product_4b',
-                'record': obj().env.ref('product.product_product_4_product_template')._get_variant_for_combination(obj().env.ref('product.product_4_attribute_1_value_1') + obj().env.ref('product.product_4_attribute_2_value_2')),
+                'record': obj().env.ref('product.product_product_4_product_template', warning=False)._get_variant_for_combination(obj().env.ref('product.product_4_attribute_1_value_1', warning=False) + obj().env.ref('product.product_4_attribute_2_value_2', warning=False)),
                 'noupdate': True,
             }, {
                 'xml_id': 'product.product_product_4c',
-                'record': obj().env.ref('product.product_product_4_product_template')._get_variant_for_combination(obj().env.ref('product.product_4_attribute_1_value_2') + obj().env.ref('product.product_4_attribute_2_value_1')),
+                'record': obj().env.ref('product.product_product_4_product_template', warning=False)._get_variant_for_combination(obj().env.ref('product.product_4_attribute_1_value_2', warning=False) + obj().env.ref('product.product_4_attribute_2_value_1', warning=False)),
                 'noupdate': True,
             }, {
                 'xml_id': 'product.product_product_4d',
-                'record': obj().env.ref('product.product_product_4_product_template')._get_variant_for_combination(obj().env.ref('product.product_4_attribute_1_value_2') + obj().env.ref('product.product_4_attribute_2_value_2')),
+                'record': obj().env.ref('product.product_product_4_product_template', warning=False)._get_variant_for_combination(obj().env.ref('product.product_4_attribute_1_value_2', warning=False) + obj().env.ref('product.product_4_attribute_2_value_2', warning=False)),
                 'noupdate': True,
             },]"/>
         </function>
@@ -369,11 +369,11 @@
         <function model="ir.model.data" name="_update_xmlids">
             <value model="base" eval="[{
                 'xml_id': 'product.product_11_attribute_1_value_1',
-                'record': obj().env.ref('product.product_11_attribute_1_product_template_attribute_line').product_template_value_ids[0],
+                'record': obj().env.ref('product.product_11_attribute_1_product_template_attribute_line', warning=False).product_template_value_ids[0],
                 'noupdate': True,
             }, {
                 'xml_id': 'product.product_11_attribute_1_value_2',
-                'record': obj().env.ref('product.product_11_attribute_1_product_template_attribute_line').product_template_value_ids[1],
+                'record': obj().env.ref('product.product_11_attribute_1_product_template_attribute_line', warning=False).product_template_value_ids[1],
                 'noupdate': True,
             }]"/>
         </function>
@@ -381,11 +381,11 @@
         <function model="ir.model.data" name="_update_xmlids">
             <value model="base" eval="[{
                 'xml_id': 'product.product_product_11',
-                'record': obj().env.ref('product.product_product_11_product_template')._get_variant_for_combination(obj().env.ref('product.product_11_attribute_1_value_1')),
+                'record': obj().env.ref('product.product_product_11_product_template', warning=False)._get_variant_for_combination(obj().env.ref('product.product_11_attribute_1_value_1', warning=False)),
                 'noupdate': True,
             }, {
                 'xml_id': 'product.product_product_11b',
-                'record': obj().env.ref('product.product_product_11_product_template')._get_variant_for_combination(obj().env.ref('product.product_11_attribute_1_value_2')),
+                'record': obj().env.ref('product.product_product_11_product_template', warning=False)._get_variant_for_combination(obj().env.ref('product.product_11_attribute_1_value_2', warning=False)),
                 'noupdate': True,
             },]"/>
         </function>

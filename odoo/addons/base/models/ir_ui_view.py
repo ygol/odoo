@@ -202,6 +202,7 @@ class View(models.Model):
     _name = 'ir.ui.view'
     _description = 'View'
     _order = "priority,name,id"
+    _master_data_delete = False
 
     name = fields.Char(string='View Name', required=True)
     model = fields.Char(index=True)

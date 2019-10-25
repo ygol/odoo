@@ -76,6 +76,7 @@ class ModuleCategory(models.Model):
     _name = "ir.module.category"
     _description = "Application"
     _order = 'name'
+    _master_data_delete = False
 
     @api.depends('module_ids')
     def _compute_module_nr(self):
@@ -152,6 +153,7 @@ class Module(models.Model):
     _rec_name = "shortdesc"
     _description = "Module"
     _order = 'sequence,name'
+    _master_data_delete = False
 
     @api.model
     def fields_view_get(self, view_id=None, view_type='form', toolbar=False, submenu=False):

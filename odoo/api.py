@@ -517,9 +517,9 @@ class Environment(Mapping):
         su = (user is None and self.su) if su is None else su
         return Environment(cr, uid, context, su)
 
-    def ref(self, xml_id, raise_if_not_found=True):
+    def ref(self, xml_id, raise_if_not_found=True, warning=True):
         """ return the record corresponding to the given ``xml_id`` """
-        return self['ir.model.data'].xmlid_to_object(xml_id, raise_if_not_found=raise_if_not_found)
+        return self['ir.model.data'].xmlid_to_object(xml_id, raise_if_not_found=raise_if_not_found, warning=warning)
 
     def is_superuser(self):
         """ Return whether the environment is in superuser mode. """

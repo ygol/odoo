@@ -32,6 +32,7 @@ class UoM(models.Model):
     _name = 'uom.uom'
     _description = 'Product Unit of Measure'
     _order = "name"
+    _master_data_delete = False
 
     name = fields.Char('Unit of Measure', required=True, translate=True)
     category_id = fields.Many2one(

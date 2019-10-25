@@ -287,7 +287,7 @@ class IrModel(models.Model):
         if model._module == self._context.get('module'):
             # self._module is the name of the module that last extended self
             xmlid = '%s.model_%s' % (model._module, model._name.replace('.', '_'))
-            self.env['ir.model.data']._update_xmlids([{'xml_id': xmlid, 'record': record}])
+            self.env['ir.model.data']._update_xmlids([{'xml_id': xmlid, 'record': record, 'nodelete': True}])
         return record
 
     @api.model
@@ -874,7 +874,7 @@ class IrModelFields(models.Model):
             fields_data = self._existing_field_data(model._name)
             prefix = '%s.field_%s__' % (module, model._name.replace('.', '_'))
             self.env['ir.model.data']._update_xmlids([
-                dict(xml_id=prefix + name, record=self.browse(fields_data[name]['id']))
+                dict(xml_id=prefix + name, record=self.browse(fields_data[name]['id']), nodelete=True)
                 for name in to_xmlids
             ])
 
@@ -1029,6 +1029,7 @@ class IrModelSelection(models.Model):
                         to_xmlids.append(dict(
                             xml_id=make_xml_id(field.name, value),
                             record=self.browse(rows[value]['id']),
+                            nodelete=True,
                         ))
 
         # create/update XML ids
@@ -1296,7 +1297,7 @@ class IrModelConstraint(models.Model):
             record = self._reflect_constraint(model, conname, 'u', cons_text(definition), module, message)
             if record:
                 xml_id = '%s.constraint_%s' % (module, conname)
-                data_list.append(dict(xml_id=xml_id, record=record))
+                data_list.append(dict(xml_id=xml_id, record=record, nodelete=True))
 
         self.env['ir.model.data']._update_xmlids(data_list)
 
@@ -1559,6 +1560,7 @@ class IrModelData(models.Model):
     module = fields.Char(default='', required=True)
     res_id = fields.Many2oneReference(string='Record ID', help="ID of the target record in the database", model_field='model')
     noupdate = fields.Boolean(string='Non Updatable', default=False)
+    nodelete = fields.Boolean(string='Non Deletable', default=False)
     date_update = fields.Datetime(string='Update Date', default=fields.Datetime.now)
     date_init = fields.Datetime(string='Init Date', default=fields.Datetime.now)
     reference = fields.Char(string='Reference', compute='_compute_reference', readonly=True, store=False)
@@ -1615,32 +1617,36 @@ class IrModelData(models.Model):
         if not xid:
             raise ValueError('External ID not found in the system: %s' % xmlid)
         # the sql constraints ensure us we have only one result
-        res = xid.read(['model', 'res_id'])[0]
+        res = xid.read(['model', 'res_id', 'nodelete'])[0]
         if not res['res_id']:
             raise ValueError('External ID not found in the system: %s' % xmlid)
-        return res['id'], res['model'], res['res_id']
+        return res['id'], res['model'], res['res_id'], res['nodelete']
 
     @api.model
-    def xmlid_to_res_model_res_id(self, xmlid, raise_if_not_found=False):
+    def xmlid_to_res_model_res_id(self, xmlid, raise_if_not_found=False, warning=False):
         """ Return (res_model, res_id)"""
         try:
-            return self.xmlid_lookup(xmlid)[1:3]
+            res = self.xmlid_lookup(xmlid)
+            nodelete = res[3]
+            if raise_if_not_found and not nodelete and warning:
+                _logger.warning('External identifier %s seems mandatory, but is not configured with nodelete="1"', xmlid)
+            return res[1:3]
         except ValueError:
             if raise_if_not_found:
                 raise
             return (False, False)
 
     @api.model
-    def xmlid_to_res_id(self, xmlid, raise_if_not_found=False):
+    def xmlid_to_res_id(self, xmlid, raise_if_not_found=False, warning=False):
         """ Returns res_id """
-        return self.xmlid_to_res_model_res_id(xmlid, raise_if_not_found)[1]
+        return self.xmlid_to_res_model_res_id(xmlid, raise_if_not_found, warning)[1]
 
     @api.model
-    def xmlid_to_object(self, xmlid, raise_if_not_found=False):
+    def xmlid_to_object(self, xmlid, raise_if_not_found=False, warning=False):
         """ Return a Model object, or ``None`` if ``raise_if_not_found`` is 
         set
         """
-        t = self.xmlid_to_res_model_res_id(xmlid, raise_if_not_found)
+        t = self.xmlid_to_res_model_res_id(xmlid, raise_if_not_found, warning)
         res_model, res_id = t
 
         if res_model and res_id:
@@ -1679,10 +1685,16 @@ class IrModelData(models.Model):
             If not found, raise a ValueError or return None, depending
             on the value of `raise_exception`.
         """
-        return self.xmlid_to_object("%s.%s" % (module, xml_id), raise_if_not_found=True)
+        return self.xmlid_to_object("%s.%s" % (module, xml_id), raise_if_not_found=True, warning=True)
 
     def unlink(self):
         """ Regular unlink method, but make sure to clear the caches. """
+        for record in self:
+            if record.nodelete:
+                error = _('This record cannot be deleted.')
+                if 'active' in self.env[record.model]._fields:
+                    error = _('%s You can archive it if you do not want to use it anymore.') % error
+                raise ValidationError(error)
         self.clear_caches()
         return super(IrModelData, self).unlink()
 
@@ -1730,12 +1742,13 @@ class IrModelData(models.Model):
             return
 
         # rows to insert
-        rowf = "(%s, %s, %s, %s, %s, now() at time zone 'UTC', now() at time zone 'UTC')"
+        rowf = "(%s, %s, %s, %s, %s, %s, now() at time zone 'UTC', now() at time zone 'UTC')"
         rows = tools.OrderedSet()
         for data in data_list:
             prefix, suffix = data['xml_id'].split('.', 1)
             record = data['record']
             noupdate = bool(data.get('noupdate'))
+            nodelete = bool(data.get('nodelete'))
             # First create XML ids for parent records, then create XML id for
             # record. The order reflects their actual creation order. This order
             # is relevant for the uninstallation process: the record must be
@@ -1743,13 +1756,13 @@ class IrModelData(models.Model):
             for parent_model, parent_field in record._inherits.items():
                 parent = record[parent_field]
                 puffix = suffix + '_' + parent_model.replace('.', '_')
-                rows.add((prefix, puffix, parent._name, parent.id, noupdate))
-            rows.add((prefix, suffix, record._name, record.id, noupdate))
+                rows.add((prefix, puffix, parent._name, parent.id, noupdate, nodelete))
+            rows.add((prefix, suffix, record._name, record.id, noupdate, nodelete))
 
         for sub_rows in self.env.cr.split_for_in_conditions(rows):
             # insert rows or update them
             query = """
-                INSERT INTO ir_model_data (module, name, model, res_id, noupdate, date_init, date_update)
+                INSERT INTO ir_model_data (module, name, model, res_id, noupdate, nodelete, date_init, date_update)
                 VALUES {rows}
                 ON CONFLICT (module, name)
                 DO UPDATE SET date_update=(now() at time zone 'UTC') {where}

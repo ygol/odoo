@@ -20,6 +20,7 @@ class IrUiMenu(models.Model):
     _description = 'Menu'
     _order = "sequence,id"
     _parent_store = True
+    _master_data_delete = False
 
     def __init__(self, *args, **kwargs):
         super(IrUiMenu, self).__init__(*args, **kwargs)

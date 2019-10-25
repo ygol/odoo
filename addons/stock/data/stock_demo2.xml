@@ -4,15 +4,15 @@
         <function model="ir.model.data" name="_update_xmlids">
             <value model="base" eval="[{
                 'xml_id': 'stock.chi_picking_type_in',
-                'record': obj().env.ref('stock.stock_warehouse_shop0').in_type_id,
+                'record': obj().env.ref('stock.stock_warehouse_shop0', warning=False).in_type_id,
                 'noupdate': True,
             }, {
                 'xml_id': 'stock.chi_picking_type_out',
-                'record': obj().env.ref('stock.stock_warehouse_shop0').out_type_id,
+                'record': obj().env.ref('stock.stock_warehouse_shop0', warning=False).out_type_id,
                 'noupdate': True,
             }, {
                 'xml_id': 'stock.stock_location_shop0',
-                'record': obj().env.ref('stock.stock_warehouse_shop0').lot_stock_id,
+                'record': obj().env.ref('stock.stock_warehouse_shop0', warning=False).lot_stock_id,
                 'noupdate': True,
             }]"/>
         </function>
@@ -89,7 +89,7 @@
             <field name="location_id" ref="stock.stock_location_stock"/>
             <field name="location_dest_id" ref="stock.stock_location_customers"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_27').name,
+                'name': obj().env.ref('product.product_product_27', warning=False).name,
                 'product_id': ref('product.product_product_27'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 15.0,
@@ -108,7 +108,7 @@
             <field name="location_id" ref="stock.stock_location_stock"/>
             <field name="location_dest_id" ref="stock.stock_location_customers"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_6').name,
+                'name': obj().env.ref('product.product_product_6', warning=False).name,
                 'product_id': ref('product.product_product_6'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 180.0,
@@ -134,7 +134,7 @@
             <field name="location_id" ref="stock.stock_location_stock"/>
             <field name="location_dest_id" ref="stock.stock_location_customers"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_delivery_02').name,
+                'name': obj().env.ref('product.product_delivery_02', warning=False).name,
                 'product_id': ref('product.product_delivery_02'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 45.0,
@@ -153,7 +153,7 @@
             <field name="location_id" ref="stock.stock_location_stock"/>
             <field name="location_dest_id" ref="stock.stock_location_customers"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_5').name,
+                'name': obj().env.ref('product.product_product_5', warning=False).name,
                 'product_id': ref('product.product_product_5'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 75.0,
@@ -172,7 +172,7 @@
             <field name="location_id" ref="stock.stock_location_stock"/>
             <field name="location_dest_id" ref="stock.stock_location_customers"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_3').name,
+                'name': obj().env.ref('product.product_product_3', warning=False).name,
                 'product_id': ref('product.product_product_3'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 16.0,
@@ -198,7 +198,7 @@
             <field name="location_id" ref="stock.stock_location_stock"/>
             <field name="location_dest_id" ref="stock.stock_location_customers"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_3').name,
+                'name': obj().env.ref('product.product_product_3', warning=False).name,
                 'product_id': ref('product.product_product_3'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 40.0,
@@ -224,7 +224,7 @@
             <field name="location_id" ref="stock.stock_location_stock"/>
             <field name="location_dest_id" ref="stock.stock_location_customers"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_6').name,
+                'name': obj().env.ref('product.product_product_6', warning=False).name,
                 'product_id': ref('product.product_product_6'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 50.0,
@@ -248,7 +248,7 @@
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="location_dest_id" ref="stock.stock_location_stock"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('stock.product_cable_management_box').name,
+                'name': obj().env.ref('stock.product_cable_management_box', warning=False).name,
                 'product_id': ref('stock.product_cable_management_box'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 50.0,
@@ -266,7 +266,7 @@
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="location_dest_id" ref="stock.stock_location_stock"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_delivery_01').name,
+                'name': obj().env.ref('product.product_delivery_01', warning=False).name,
                 'product_id': ref('product.product_delivery_01'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 35.0,
@@ -283,7 +283,7 @@
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="location_dest_id" ref="stock.stock_location_stock"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_22').name,
+                'name': obj().env.ref('product.product_product_22', warning=False).name,
                 'product_id': ref('product.product_product_22'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 125.0,
@@ -300,7 +300,7 @@
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="location_dest_id" ref="stock.stock_location_stock"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_10').name,
+                'name': obj().env.ref('product.product_product_10', warning=False).name,
                 'product_id': ref('product.product_product_10'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 120.0,
@@ -317,7 +317,7 @@
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="location_dest_id" ref="stock.stock_location_stock"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_delivery_02').name,
+                'name': obj().env.ref('product.product_delivery_02', warning=False).name,
                 'product_id': ref('product.product_delivery_02'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 50.0,
@@ -337,7 +337,7 @@
             <field name="location_dest_id" ref="stock.stock_location_shop0"/>
             <field name="company_id" ref="stock.res_company_1"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_9').name,
+                'name': obj().env.ref('product.product_product_9', warning=False).name,
                 'product_id': ref('product.product_product_9'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 25.0,
@@ -356,7 +356,7 @@
             <field name="location_dest_id" ref="stock.stock_location_shop0"/>
             <field name="company_id" ref="stock.res_company_1"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_delivery_01').name,
+                'name': obj().env.ref('product.product_delivery_01', warning=False).name,
                 'product_id': ref('product.product_delivery_01'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 180.0,
@@ -381,7 +381,7 @@
             <field name="location_dest_id" ref="stock.stock_location_shop0"/>
             <field name="company_id" ref="stock.res_company_1"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_delivery_01').name,
+                'name': obj().env.ref('product.product_delivery_01', warning=False).name,
                 'product_id': ref('product.product_delivery_01'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 45.0,
@@ -401,7 +401,7 @@
             <field name="location_dest_id" ref="stock.stock_location_shop0"/>
             <field name="company_id" ref="stock.res_company_1"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_22').name,
+                'name': obj().env.ref('product.product_product_22', warning=False).name,
                 'product_id': ref('product.product_product_22'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 75.0,
@@ -422,7 +422,7 @@
             <field name="location_dest_id" ref="stock.stock_location_customers"/>
             <field name="company_id" ref="stock.res_company_1"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_27').name,
+                'name': obj().env.ref('product.product_product_27', warning=False).name,
                 'product_id': ref('product.product_product_27'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 15.0,
@@ -442,7 +442,7 @@
             <field name="location_dest_id" ref="stock.stock_location_customers"/>
             <field name="company_id" ref="stock.res_company_1"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_6').name,
+                'name': obj().env.ref('product.product_product_6', warning=False).name,
                 'product_id': ref('product.product_product_6'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 180.0,
@@ -469,7 +469,7 @@
             <field name="location_dest_id" ref="stock.stock_location_customers"/>
             <field name="company_id" ref="stock.res_company_1"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_delivery_02').name,
+                'name': obj().env.ref('product.product_delivery_02', warning=False).name,
                 'product_id': ref('product.product_delivery_02'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 45.0,
@@ -489,7 +489,7 @@
             <field name="location_dest_id" ref="stock.stock_location_customers"/>
             <field name="company_id" ref="stock.res_company_1"/>
             <field name="move_lines" model="stock.move" eval="[(0, 0, {
-                'name': obj().env.ref('product.product_product_5').name,
+                'name': obj().env.ref('product.product_product_5', warning=False).name,
                 'product_id': ref('product.product_product_5'),
                 'product_uom': ref('uom.product_uom_unit'),
                 'product_uom_qty': 75.0,
@@ -502,31 +502,31 @@
 
         <function model="stock.picking" name="action_confirm">
             <value model="stock.picking" eval="[
-                obj().env.ref('stock.outgoing_shipment_main_warehouse').id,
-                obj().env.ref('stock.outgoing_shipment_main_warehouse1').id,
-                obj().env.ref('stock.outgoing_shipment_main_warehouse4').id,
-                obj().env.ref('stock.outgoing_shipment_main_warehouse5').id,
-                obj().env.ref('stock.outgoing_shipment_main_warehouse6').id,
-                obj().env.ref('stock.incomming_shipment1').id,
-                obj().env.ref('stock.incomming_shipment2').id,
-                obj().env.ref('stock.incomming_shipment3').id,
-                obj().env.ref('stock.outgoing_chicago_warehouse1').id,
-                obj().env.ref('stock.outgoing_chicago_warehouse2').id,
-                obj().env.ref('stock.outgoing_chicago_warehouse3').id,
-                obj().env.ref('stock.incomming_chicago_warehouse1').id,
-                obj().env.ref('stock.incomming_chicago_warehouse2').id,
-                obj().env.ref('stock.incomming_chicago_warehouse3').id]"/>
+                obj().env.ref('stock.outgoing_shipment_main_warehouse', warning=False).id,
+                obj().env.ref('stock.outgoing_shipment_main_warehouse1', warning=False).id,
+                obj().env.ref('stock.outgoing_shipment_main_warehouse4', warning=False).id,
+                obj().env.ref('stock.outgoing_shipment_main_warehouse5', warning=False).id,
+                obj().env.ref('stock.outgoing_shipment_main_warehouse6', warning=False).id,
+                obj().env.ref('stock.incomming_shipment1', warning=False).id,
+                obj().env.ref('stock.incomming_shipment2', warning=False).id,
+                obj().env.ref('stock.incomming_shipment3', warning=False).id,
+                obj().env.ref('stock.outgoing_chicago_warehouse1', warning=False).id,
+                obj().env.ref('stock.outgoing_chicago_warehouse2', warning=False).id,
+                obj().env.ref('stock.outgoing_chicago_warehouse3', warning=False).id,
+                obj().env.ref('stock.incomming_chicago_warehouse1', warning=False).id,
+                obj().env.ref('stock.incomming_chicago_warehouse2', warning=False).id,
+                obj().env.ref('stock.incomming_chicago_warehouse3', warning=False).id]"/>
         </function>
 
         <function model="stock.picking" name="_action_done">
             <value model="stock.picking" eval="[
-                obj().env.ref('stock.outgoing_shipment_main_warehouse1').id,
-                obj().env.ref('stock.outgoing_shipment_main_warehouse4').id,
-                obj().env.ref('stock.outgoing_shipment_main_warehouse5').id,
-                obj().env.ref('stock.outgoing_shipment_main_warehouse6').id,
-                obj().env.ref('stock.incomming_chicago_warehouse1').id,
-                obj().env.ref('stock.outgoing_chicago_warehouse1').id,
-                obj().env.ref('stock.outgoing_chicago_warehouse2').id]"/>
+                obj().env.ref('stock.outgoing_shipment_main_warehouse1', warning=False).id,
+                obj().env.ref('stock.outgoing_shipment_main_warehouse4', warning=False).id,
+                obj().env.ref('stock.outgoing_shipment_main_warehouse5', warning=False).id,
+                obj().env.ref('stock.outgoing_shipment_main_warehouse6', warning=False).id,
+                obj().env.ref('stock.incomming_chicago_warehouse1', warning=False).id,
+                obj().env.ref('stock.outgoing_chicago_warehouse1', warning=False).id,
+                obj().env.ref('stock.outgoing_chicago_warehouse2', warning=False).id]"/>
         </function>
 
         <record id="stock.outgoing_chicago_warehouse1" model="stock.picking">
