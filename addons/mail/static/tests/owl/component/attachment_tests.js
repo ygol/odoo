@@ -5,6 +5,7 @@ const Attachment = require('mail.component.Attachment');
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
+    nextRender,
     pause,
     start: utilsStart,
 } = require('mail.owl.testUtils');
@@ -15,21 +16,20 @@ QUnit.module('Attachment', {
     beforeEach() {
         utilsBeforeEach(this);
         this.createAttachment = async attachmentLocalId => {
-            const env = await this.widget.call('env', 'get');
-            this.attachment = new Attachment(env, {
-                attachmentLocalId,
-            });
+            Attachment.env = this.env;
+            this.attachment = new Attachment(null, { attachmentLocalId });
             await this.attachment.mount(this.widget.$el[0]);
+            await nextRender();
         };
         this.start = async params => {
             if (this.widget) {
                 this.widget.destroy();
             }
-            let { store, widget } = await utilsStart({
+            let { env, widget } = await utilsStart({
                 ...params,
                 data: this.data,
             });
-            this.store = store;
+            this.env = env;
             this.widget = widget;
         };
     },
@@ -41,7 +41,8 @@ QUnit.module('Attachment', {
         if (this.widget) {
             this.widget.destroy();
         }
-        this.store = undefined;
+        this.env = undefined;
+        delete Attachment.env;
     }
 });
 
@@ -49,7 +50,7 @@ QUnit.test('default: TXT', async function (assert) {
     assert.expect(8);
 
     await this.start();
-    const attachmentLocalId = this.store.dispatch('createAttachment', {
+    const attachmentLocalId = this.env.store.dispatch('createAttachment', {
         filename: "test.txt",
         id: 750,
         mimetype: 'text/plain',
@@ -112,7 +113,7 @@ QUnit.test('default: PNG', async function (assert) {
             return this._super(...arguments);
         },
     });
-    const attachmentLocalId = this.store.dispatch('createAttachment', {
+    const attachmentLocalId = this.env.store.dispatch('createAttachment', {
         filename: "test.png",
         id: 750,
         mimetype: 'image/png',
@@ -160,7 +161,7 @@ QUnit.test('default: PDF', async function (assert) {
     assert.expect(7);
 
     await this.start();
-    const attachmentLocalId = this.store.dispatch('createAttachment', {
+    const attachmentLocalId = this.env.store.dispatch('createAttachment', {
         filename: "test.pdf",
         id: 750,
         mimetype: 'application/pdf',
@@ -207,7 +208,7 @@ QUnit.test('default: video', async function (assert) {
     assert.expect(7);
 
     await this.start();
-    const attachmentLocalId = this.store.dispatch('createAttachment', {
+    const attachmentLocalId = this.env.store.dispatch('createAttachment', {
         filename: "test.mp4",
         id: 750,
         mimetype: 'video/mp4',

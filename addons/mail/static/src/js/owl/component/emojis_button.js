@@ -36,7 +36,8 @@ class EmojisButton extends Component {
     }
 
     async mounted() {
-        this._popover = new Popover(this.env);
+        Popover.env = this.env;
+        this._popover = new Popover(null);
         await this._popover.mount(document.createElement('div')).then(() => {
             const self = this;
             this._popover.el.outerHTML = this._popover.el;
@@ -51,7 +52,7 @@ class EmojisButton extends Component {
                 offset: '0, 1',
                 placement: 'top',
                 trigger: 'click',
-                animation: !this.env.isTestEnv,
+                animation: !this.env.isTest,
             });
         });
         this._popover.el.addEventListener('o-emoji-selection', ev => this._onEmojiSelection(ev));

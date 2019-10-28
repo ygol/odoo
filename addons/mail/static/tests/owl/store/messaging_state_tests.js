@@ -16,16 +16,16 @@ QUnit.module('State', {
             if (this.widget) {
                 this.widget.destroy();
             }
-            const { store, widget } = await utilsStart(Object.assign({}, params, {
+            const { env, widget } = await utilsStart(Object.assign({}, params, {
                 data: this.data,
             }));
-            this.store = store;
+            this.env = env;
             this.widget = widget;
         };
     },
     afterEach() {
         utilsAfterEach(this);
-        this.store = undefined;
+        this.env = undefined;
         if (this.widget) {
             this.widget.destroy();
             this.widget = undefined;
@@ -44,8 +44,8 @@ QUnit.test("current partner", async function (assert) {
             uid: 2,
         },
     });
-    assert.strictEqual(this.store.state.currentPartnerLocalId, 'res.partner_3');
-    const currentPartner = this.store.state.partners[this.store.state.currentPartnerLocalId];
+    assert.strictEqual(this.env.store.state.currentPartnerLocalId, 'res.partner_3');
+    const currentPartner = this.env.store.state.partners[this.env.store.state.currentPartnerLocalId];
     assert.strictEqual(currentPartner.display_name, "Your Company, Admin");
     assert.strictEqual(currentPartner.id, 3);
     assert.strictEqual(currentPartner.localId, 'res.partner_3');
@@ -57,8 +57,8 @@ QUnit.test("inbox & starred mailboxes", async function (assert) {
     assert.expect(12);
 
     await this.start();
-    const mailboxInbox = this.store.state.threads['mail.box_inbox'];
-    const mailboxStarred = this.store.state.threads['mail.box_starred'];
+    const mailboxInbox = this.env.store.state.threads['mail.box_inbox'];
+    const mailboxStarred = this.env.store.state.threads['mail.box_starred'];
     assert.ok(mailboxInbox, "should have mailbox inbox");
     assert.strictEqual(mailboxInbox._model, 'mail.box');
     assert.strictEqual(mailboxInbox.counter, 0);
@@ -82,8 +82,9 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
         },
     });
     assert.deepEqual(
-        this.store.state,
+        this.env.store.state,
         {
+            isMessagingReady: true,
             MESSAGE_FETCH_LIMIT: 30,
             PREVIEW_MSG_MAX_SIZE: 350,
             attachmentNextTemporaryId: -1,
@@ -92,6 +93,7 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
             chatWindowManager: {
                 autofocusChatWindowLocalId: undefined,
                 autofocusCounter: 0,
+                chatWindowInitialScrollTops: {},
                 chatWindowLocalIds: [],
                 computed: {
                     availableVisibleSlots: 0,
@@ -103,7 +105,6 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
                     visible: [],
                 },
                 notifiedAutofocusCounter: 0,
-                storedChatWindowStates: {}
             },
             commands: {},
             composers: {},
@@ -118,8 +119,8 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
                 inboxMarkAsReadCounter: 0,
                 isOpen: false,
                 menu_id: false,
-                storedThreadComposers: {},
                 stringifiedDomain: '[]',
+                threadInitialScrollTops: {},
             },
             globalWindow: {
                 innerHeight: 1080,
@@ -203,6 +204,7 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
                         '[]': 'mail.box_history_[]',
                     },
                     channel_type: undefined,
+                    composerLocalId: undefined,
                     counter: undefined,
                     create_uid: undefined,
                     custom_channel_name: undefined,
@@ -234,6 +236,7 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
                         '[]': 'mail.box_inbox_[]',
                     },
                     channel_type: undefined,
+                    composerLocalId: undefined,
                     counter: 0,
                     create_uid: undefined,
                     custom_channel_name: undefined,
@@ -265,6 +268,7 @@ QUnit.test("global state after default '/mail/init_messaging' RPC data", async f
                         '[]': 'mail.box_starred_[]',
                     },
                     channel_type: undefined,
+                    composerLocalId: undefined,
                     counter: 0,
                     create_uid: undefined,
                     custom_channel_name: undefined,

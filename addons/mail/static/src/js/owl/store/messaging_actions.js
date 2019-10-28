@@ -43,7 +43,7 @@ const actions = {
     closeChatWindow({ dispatch, state }, chatWindowLocalId) {
         const cwm = state.chatWindowManager;
         cwm.chatWindowLocalIds = cwm.chatWindowLocalIds.filter(id => id !== chatWindowLocalId);
-        delete cwm.storedChatWindowStates[chatWindowLocalId];
+        delete cwm.chatWindowInitialScrollTops[chatWindowLocalId];
         if (chatWindowLocalId !== 'new_message') {
             const thread = state.threads[chatWindowLocalId];
             Object.assign(thread, {
@@ -126,7 +126,7 @@ const actions = {
         }
         const attachment = {
             _model: 'ir.attachment',
-            composerId: null,
+            composerLocalId: undefined,
             filename,
             id,
             isTemporary,
@@ -149,10 +149,10 @@ const actions = {
             if (temporaryAttachmentLocalId) {
                 // change temporary attachment links with non-temporary one
                 const temporaryAttachment = state.attachments[temporaryAttachmentLocalId];
-                const composerId = temporaryAttachment.composerId;
-                if (composerId) {
+                const composerLocalId = temporaryAttachment.composerLocalId;
+                if (composerLocalId) {
                     dispatch('_replaceAttachmentInComposer',
-                        composerId,
+                        composerLocalId,
                         temporaryAttachmentLocalId,
                         attachment.localId);
                 }
@@ -207,21 +207,6 @@ const actions = {
         }
     },
     /**
-     * Create some composer state in the store from a composer component.
-     * This is useful in order to receive changes on attachments. For example,
-     * when unlinking an attachment, if it was linked to composer, the composer
-     * should no longer have it.
-     *
-     * @param {Object} param0
-     * @param {Object} param0.state
-     * @param {string} composerId id of proclaimed composer. The composer
-     *   component ensures it is unique among any other potential composers.
-     * @param {Object} [initialState={}]
-     */
-    createComposer({ state }, composerId, initialState={}) {
-        state.composers[composerId] = initialState;
-    },
-    /**
      * Delete an attachment from the store.
      *
      * @param {Object} param0
@@ -235,14 +220,11 @@ const actions = {
             delete state.temporaryAttachmentLocalIds[attachment.filename];
         }
         // remove attachment from composers
-        for (const composerId in state.composers) {
-            const composer = state.composers[composerId];
+        for (const composerLocalId in state.composers) {
+            const composer = state.composers[composerLocalId];
             if (composer.attachmentLocalIds.includes(attachmentLocalId)) {
-                dispatch('_updateComposer', composerId, {
-                    attachmentLocalIds:
-                        composer.attachmentLocalIds.filter(localId =>
-                            localId !== attachmentLocalId)
-                });
+                composer.attachmentLocalIds =
+                    composer.attachmentLocalIds.filter(localId => localId !== attachmentLocalId);
             }
         }
         // remove attachment from messages
@@ -254,16 +236,6 @@ const actions = {
             dispatch('_unlinkAttachmentFromMessage', messageLocalId, attachmentLocalId);
         }
         delete state.attachments[attachmentLocalId];
-    },
-    /**
-     * Delete the store state of the composer component with given id.
-     *
-     * @param {Object} param0
-     * @param {Object} param0.state
-     * @param {string} composerId
-     */
-    deleteComposer({ state }, composerId) {
-        delete state.composers[composerId];
     },
     /**
      * Delete a message from the store.
@@ -427,17 +399,28 @@ const actions = {
      * @param {Object} param0
      * @param {function} param0.dispatch
      * @param {Object} param0.env
-     * @param {Object} param1
-     * @param {function} param1.ready
+     * @param {Object} param0.state
      */
-    async initMessaging(
-        { dispatch, env },
-        { ready }
-    ) {
+    async initMessaging({ dispatch, env, state }) {
         await env.session.is_bound;
         const context = Object.assign({
             isMobile: config.device.isMobile,
         }, env.session.user_context);
+        dispatch('_createThread', {
+            _model: 'mail.box',
+            id: 'inbox',
+            name: _t("Inbox"),
+        });
+        dispatch('_createThread', {
+            _model: 'mail.box',
+            id: 'starred',
+            name: _t("Starred"),
+        });
+        dispatch('_createThread', {
+            _model: 'mail.box',
+            id: 'history',
+            name: _t("History"),
+        });
         const data = await env.rpc({
             route: '/mail/init_messaging',
             params: { context: context }
@@ -449,8 +432,7 @@ const actions = {
         env.call('bus_service', 'on', 'window_focus', null, () =>
             dispatch('_handleGlobalWindowFocus')
         );
-
-        ready();
+        state.isMessagingReady = true;
         env.call('bus_service', 'startPolling');
         dispatch('_startLoopFetchPartnerImStatus');
     },
@@ -526,22 +508,21 @@ const actions = {
      * @param {Object} param0
      * @param {function} param0.dispatch
      * @param {Object} param0.state
-     * @param {string} composerId
+     * @param {string} composerLocalId
      * @param {string} attachmentLocalId
      */
-    linkAttachmentToComposer({ dispatch, state }, composerId, attachmentLocalId) {
-        const composerAttachmentLocalIds = state.composers[composerId].attachmentLocalIds;
+    linkAttachmentToComposer({ dispatch, state }, composerLocalId, attachmentLocalId) {
+        const composer = state.composers[composerLocalId];
+        const composerAttachmentLocalIds = composer.attachmentLocalIds;
         if (composerAttachmentLocalIds.includes(attachmentLocalId)) {
             return;
         }
-        dispatch('_updateComposer', composerId, {
-            attachmentLocalIds: composerAttachmentLocalIds.concat([attachmentLocalId]),
-        });
+        composer.attachmentLocalIds = composerAttachmentLocalIds.concat([attachmentLocalId]);
         const attachment = state.attachments[attachmentLocalId];
-        if (attachment.composerId === composerId) {
+        if (attachment.composerLocalId === composer.localId) {
             return;
         }
-        dispatch('_updateAttachment', attachmentLocalId, { composerId });
+        dispatch('_updateAttachment', attachmentLocalId, { composerLocalId: composer.localId });
     },
     /**
      * Load morre messages on specified thread.
@@ -774,14 +755,14 @@ const actions = {
         }
     },
     /**
-     * Post a message in provided thread with given data.
+     * Post a message in provided composer's thread with given data.
      *
      * @param {Object} param0
      * @param {function} param0.dispatch
      * @param {Object} param0.env
      * @param {Object} param0.getters
      * @param {Object} param0.state
-     * @param {string} threadLocalId
+     * @param {string} composerLocalId
      * @param {Object} data
      * @param {string[]} data.attachmentLocalIds
      * @param {*[]} data.canned_response_ids
@@ -791,33 +772,24 @@ const actions = {
      * @param {string} data.subject
      * @param {string} [data.subtype='mail.mt_comment']
      * @param {integer} [data.subtype_id]
-     * @param {String} [data.threadCacheLocalId]
      * @param {Object} [options]
      * @param {integer} options.res_id
      * @param {string} options.res_model
      */
-    async postMessageOnThread(
+    async postMessage(
         { dispatch, env, getters, state },
-        threadLocalId,
+        composerLocalId,
         data,
         options
     ) {
-        const thread = state.threads[threadLocalId];
+        const composer = state.composers[composerLocalId];
+        const thread = state.threads[composer.threadLocalId];
         if (thread._model === 'mail.box') {
-            const {
-                res_id,
-                res_model,
-            } = options;
-            const otherThread = getters.thread({
-                _model: res_model,
-                id: res_id,
-            });
-            return dispatch('postMessageOnThread', otherThread.localId, Object.assign({}, data, {
-                threadLocalId,
-            }));
+            const { res_id, res_model } = options;
+            const otherThread = getters.thread({ _model: res_model, id: res_id });
+            return dispatch('postMessage', otherThread.composerLocalId, Object.assign({}, data));
         }
         const {
-            attachmentLocalIds,
             canned_response_ids,
             channel_ids=[],
             context,
@@ -826,7 +798,6 @@ const actions = {
             subject,
             // subtype='mail.mt_comment',
             subtype_id,
-            threadCacheLocalId,
         } = data;
         let body = htmlContent.replace(/&nbsp;/g, ' ').trim();
         // This message will be received from the mail composer as html content
@@ -838,7 +809,7 @@ const actions = {
         body = mailUtils.parseAndTransform(body, mailUtils.addLink);
         body = dispatch('_generateEmojisOnHtml', body);
         let postData = {
-            attachment_ids: attachmentLocalIds.map(localId =>
+            attachment_ids: composer.attachmentLocalIds.map(localId =>
                     state.attachments[localId].id),
             body,
             partner_ids: dispatch('_getMentionedPartnerIdsFromHtml', body),
@@ -884,10 +855,6 @@ const actions = {
                 model: thread._model,
                 res_id: thread.id
             }));
-        }
-        if (threadCacheLocalId) {
-            const threadCache = state.threadCaches[threadCacheLocalId];
-            threadCache.currentPartnerMessagePostCounter++;
         }
     },
     /**
@@ -1010,18 +977,17 @@ const actions = {
     /**
      * @param {Object} param0
      * @param {function} param0.dispatch
-     * @param {Object} chatWindowStates format:
-     *
-     *   {
-     *      [chatWindowLocalId]: {
-     *         composerAttachmentLocalIds: {Array},
-     *         composerTextInputHtmlContent: {String},
-     *         scrollTop: {integer}
-     *      },
-     *   }
+     * @param {Object} param0.state
+     * @param {string} chatWindowLocalId
+     * @param {integer} scrollTop
      */
-    saveChatWindowsStates({ dispatch }, chatWindowStates) {
-        dispatch('_updateChatWindowManager', { storedChatWindowStates: chatWindowStates });
+    saveChatWindowScrollTop({ dispatch, state }, chatWindowLocalId, scrollTop) {
+        const cwm = state.chatWindowManager;
+        const newChatWindowInitialScrollTops = Object.assign({}, cwm.chatWindowInitialScrollTops);
+        newChatWindowInitialScrollTops[chatWindowLocalId] = scrollTop;
+        dispatch('_updateChatWindowManager', {
+            chatWindowInitialScrollTops: newChatWindowInitialScrollTops,
+        });
     },
     /**
      * Search for partners matching `keyword`.
@@ -1208,21 +1174,18 @@ const actions = {
      * @param {Object} param0
      * @param {function} param0.dispatch
      * @param {Object} param0.state
-     * @param {string} composerId
+     * @param {string} composerLocalId
      */
-    unlinkAttachmentsFromComposer({ dispatch, state }, composerId) {
-        const attachmentLocalIds = state.composers[composerId].attachmentLocalIds;
-        dispatch('_updateComposer', composerId, {
-            attachmentLocalIds: [],
-        });
+    unlinkAttachmentsFromComposer({ dispatch, state }, composerLocalId) {
+        const composer = state.composers[composerLocalId];
+        const attachmentLocalIds = composer.attachmentLocalIds;
+        composer.attachmentLocalIds = [];
         for (const attachmentLocalId of attachmentLocalIds) {
             const attachment = state.attachments[attachmentLocalId];
-            if (!attachment.composerId === composerId) {
+            if (!attachment.composerLocalId === composer.localId) {
                 return;
             }
-            dispatch('_updateAttachment', attachmentLocalId, {
-                composerId: null,
-            });
+            dispatch('_updateAttachment', attachmentLocalId, { composerLocalId: undefined });
         }
     },
     /**
@@ -1470,6 +1433,27 @@ const actions = {
             computed.availableVisibleSlots = 0;
         }
         cwm.computed = computed;
+    },
+    /**
+     * @private
+     * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {Object} [param1={}]
+     * @param {string} [param1.threadLocalId]
+     * @return {string} composer local id
+     */
+    _createComposer({ state }, { threadLocalId }={}) {
+        const composerLocalId = _.uniqueId('mail.composer_');
+        state.composers[composerLocalId] = {
+            localId: composerLocalId,
+            attachmentLocalIds: [],
+            threadLocalId,
+        };
+        if (threadLocalId) {
+            const thread = state.threads[threadLocalId];
+            thread.composerLocalId = composerLocalId;
+        }
+        return composerLocalId;
     },
     /**
      * @private
@@ -1800,6 +1784,7 @@ const actions = {
         const thread = {
             cacheLocalIds: [],
             channel_type,
+            composerLocalId: undefined,
             counter,
             create_uid,
             custom_channel_name,
@@ -1832,10 +1817,11 @@ const actions = {
             memberLocalIds: members.map(member => `res.partner_${member.id}`),
         });
         state.threads[thread.localId] = thread;
+        if (thread._model !== 'mail.box') {
+            dispatch('_createComposer', { threadLocalId: thread.localId });
+        }
         // compute thread links (--> thread)
-        dispatch('_createThreadCache', {
-            threadLocalId: thread.localId,
-        });
+        dispatch('_createThreadCache', { threadLocalId: thread.localId });
         /* Update thread relationships */
         if (members) {
             for (const member of members) {
@@ -2688,6 +2674,7 @@ const actions = {
      * @private
      * @param {Object} param0
      * @param {function} param0.dispatch
+     * @param {Object} param0.state
      * @param {Object} param1
      * @param {boolean} param1.is_moderator
      * @param {integer} param1.moderation_counter
@@ -2695,7 +2682,7 @@ const actions = {
      * @param {integer} param1.starred_counter
      */
     _initMessagingMailboxes(
-        { dispatch },
+        { dispatch, state },
         {
             is_moderator,
             moderation_counter,
@@ -2703,23 +2690,8 @@ const actions = {
             starred_counter
         }
     ) {
-        dispatch('_createThread', {
-            _model: 'mail.box',
-            counter: needaction_inbox_counter,
-            id: 'inbox',
-            name: _t("Inbox"),
-        });
-        dispatch('_createThread', {
-            _model: 'mail.box',
-            counter: starred_counter,
-            id: 'starred',
-            name: _t("Starred"),
-        });
-        dispatch('_createThread', {
-            _model: 'mail.box',
-            id: 'history',
-            name: _t("History"),
-        });
+        state.threads['mail.box_inbox'].counter = needaction_inbox_counter;
+        state.threads['mail.box_starred'].counter = starred_counter;
         if (is_moderator) {
             dispatch('_createThread', {
                 _model: 'mail.box',
@@ -3338,18 +3310,18 @@ const actions = {
      * @param {Object} param0
      * @param {function} param0.dispatch
      * @param {Object} param0.state
-     * @param {string} composerId
+     * @param {string} composerLocalId
      * @param {string} oldAttachmentLocalId
      * @param {string} newAttachmentLocalId
      */
     _replaceAttachmentInComposer(
         { dispatch, state },
-        composerId,
+        composerLocalId,
         oldAttachmentLocalId,
         newAttachmentLocalId
     ) {
         // change link in composer
-        const composer = state.composers[composerId];
+        const composer = state.composers[composerLocalId];
         const index = composer.attachmentLocalIds.findIndex(localId =>
             localId === oldAttachmentLocalId);
         composer.attachmentLocalIds.splice(index, 1);
@@ -3359,12 +3331,8 @@ const actions = {
             composer.attachmentLocalIds.splice(index, 0, newAttachmentLocalId);
         }
         // change link in attachments
-        dispatch('_updateAttachment', oldAttachmentLocalId, {
-            composerId: null,
-        });
-        dispatch('_updateAttachment', newAttachmentLocalId, {
-            composerId,
-        });
+        dispatch('_updateAttachment', oldAttachmentLocalId, { composerLocalId: undefined });
+        dispatch('_updateAttachment', newAttachmentLocalId, { composerLocalId });
     },
     /**
      * @private
@@ -3565,22 +3533,6 @@ const actions = {
      */
     _updateChatWindowManager({ state }, changes) {
         Object.assign(state.chatWindowManager, changes);
-    },
-    /**
-     * @private
-     * @param {Object} param0
-     * @param {Object} param0.state
-     * @param {string} composerId
-     * @param {Object} changes
-     */
-    _updateComposer({ state }, composerId, changes) {
-        const composer = state.composers[composerId];
-        if (!composer) {
-            throw new Error(`Cannot update non-existing composer store data for ID ${composerId}`);
-        }
-        for (const changeKey in changes) {
-            composer[changeKey] = changes[changeKey];
-        }
     },
     /**
      * AKU TODO: REDESIGN

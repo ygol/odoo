@@ -3,16 +3,13 @@ odoo.define('mail.widget.Discuss', function (require) {
 
 const DiscussOwl = require('mail.component.Discuss');
 const InvitePartnerDialog = require('mail.widget.DiscussInvitePartnerDialog');
-const EnvMixin = require('mail.widget.EnvMixin');
+const OwlMixin = require('mail.widget.OwlMixin');
 
 const AbstractAction = require('web.AbstractAction');
-const core = require('web.core');
+const { _t, action_registry, qweb } = require('web.core');
 
-const _t = core._t;
-const qweb = core.qweb;
-
-const Discuss = AbstractAction.extend(EnvMixin, {
-    DEBUG: true,
+const Discuss = AbstractAction.extend(OwlMixin, {
+    IS_DEV: true,
     template: 'mail.widget.Discuss',
     hasControlPanel: true,
     loadControlPanel: true,
@@ -37,26 +34,11 @@ const Discuss = AbstractAction.extend(EnvMixin, {
         // render buttons in control panel
         this.$buttons = $(qweb.render('mail.widget.DiscussControlButtons'));
         this.$buttons.find('button').css({ display:'inline-block' });
-        this.$buttons.on(
-            'click',
-            '.o_invite',
-            ev => this._onClickInvite(ev));
-        this.$buttons.on(
-            'click',
-            '.o_mark_all_read',
-            ev => this._onClickMarkAllAsRead(ev));
-        this.$buttons.on(
-            'click',
-            '.o_mobile_new_channel',
-            ev => this._onClickMobileNewChannel(ev));
-        this.$buttons.on(
-            'click',
-            '.o_mobile_new_message',
-            ev => this._onClickMobileNewMessage(ev));
-        this.$buttons.on(
-            'click',
-            '.o_unstar_all',
-            ev => this._onClickUnstarAll(ev));
+        this.$buttons.on('click', '.o_invite', ev => this._onClickInvite(ev));
+        this.$buttons.on('click', '.o_mark_all_read', ev => this._onClickMarkAllAsRead(ev));
+        this.$buttons.on('click', '.o_mobile_new_channel', ev => this._onClickMobileNewChannel(ev));
+        this.$buttons.on('click', '.o_mobile_new_message', ev => this._onClickMobileNewMessage(ev));
+        this.$buttons.on('click', '.o_unstar_all', ev => this._onClickUnstarAll(ev));
 
         // control panel attributes
         this.action = action;
@@ -73,30 +55,12 @@ const Discuss = AbstractAction.extend(EnvMixin, {
             'mail.box_inbox';
         this._lastPushStateActiveThreadLocalId = null;
 
-        if (this.DEBUG) {
-            window.old_discuss = this;
+        this.env = OwlMixin.getEnv.call(this);
+        DiscussOwl.env = this.env;
+
+        if (this.IS_DEV) {
+            window.discuss_widget = this;
         }
-    },
-    /**
-     * @override {web.AbstractAction}
-     * @return {Promise}
-     */
-    willStart() {
-        return Promise.all([
-            this._super(...arguments),
-            this.getEnv()
-        ]);
-    },
-    /**
-     * @override {web.AbstractAction}
-     * @return {Promise}
-     */
-    start() {
-        const thread = this.env.store.state.threads[this._initActiveThreadLocalId];
-        if (!thread) {
-            this._initActiveThreadLocalId = 'mail.box_inbox';
-        }
-        return this._super(...arguments);
     },
     /**
      * @override {web.AbstractAction}
@@ -120,7 +84,7 @@ const Discuss = AbstractAction.extend(EnvMixin, {
             // prevent twice call to on_attach_callback (FIXME)
             return;
         }
-        this.component = new DiscussOwl(this.env, {
+        this.component = new DiscussOwl(null, {
             initActiveThreadLocalId: this._initActiveThreadLocalId,
         });
         this.component.mount(this.$el[0]);
@@ -141,9 +105,18 @@ const Discuss = AbstractAction.extend(EnvMixin, {
             this._updateControlPanel();
         };
 
-        this.el.addEventListener('o-push-state-action-manager', this._pushStateActionManagerEventListener);
-        this.el.addEventListener('o-show-rainbow-man', this._showRainbowManEventListener);
-        this.el.addEventListener('o-update-control-panel', this._updateControlPanelEventListener);
+        this.el.addEventListener(
+            'o-push-state-action-manager',
+            this._pushStateActionManagerEventListener
+        );
+        this.el.addEventListener(
+            'o-show-rainbow-man',
+            this._showRainbowManEventListener
+        );
+        this.el.addEventListener(
+            'o-update-control-panel',
+            this._updateControlPanelEventListener
+        );
     },
     /**
      * @override {web.AbstractAction}
@@ -154,9 +127,18 @@ const Discuss = AbstractAction.extend(EnvMixin, {
             this.component.destroy();
         }
         this.component = undefined;
-        this.el.removeEventListener('o-push-state-action-manager', this._pushStateActionManagerEventListener);
-        this.el.removeEventListener('o-show-rainbow-man', this._showRainbowManEventListener);
-        this.el.removeEventListener('o-update-control-panel', this._updateControlPanelEventListener);
+        this.el.removeEventListener(
+            'o-push-state-action-manager',
+            this._pushStateActionManagerEventListener
+        );
+        this.el.removeEventListener(
+            'o-show-rainbow-man',
+            this._showRainbowManEventListener
+        );
+        this.el.removeEventListener(
+            'o-update-control-panel',
+            this._updateControlPanelEventListener
+        );
     },
 
     //--------------------------------------------------------------------------
@@ -192,73 +174,56 @@ const Discuss = AbstractAction.extend(EnvMixin, {
         const activeThread = this.component.storeProps.activeThread;
         const activeMobileNavbarTabId = this.component.storeProps.activeMobileNavbarTabId;
         // Invite
-        if (activeThreadLocalId && activeThread.channel_type === 'channel') {
-            this.$buttons
-                .find('.o_invite')
-                .removeClass('o_hidden');
+        if (activeThread && activeThread.channel_type === 'channel') {
+            this.$buttons.find('.o_invite').removeClass('o_hidden');
         } else {
-            this.$buttons
-                .find('.o_invite')
-                .addClass('o_hidden');
+            this.$buttons.find('.o_invite').addClass('o_hidden');
         }
         // Mark All Read
         if (activeThreadLocalId === 'mail.box_inbox') {
-            this.$buttons
-                .find('.o_mark_all_read')
-                .removeClass('o_hidden')
+            this.$buttons.find('.o_mark_all_read').removeClass('o_hidden')
                 .prop('disabled', !hasMessages);
         }
         if (
             activeThreadLocalId !== 'mail.box_inbox' ||
             activeMobileNavbarTabId !== 'mailbox'
         ) {
-            this.$buttons
-                .find('.o_mark_all_read')
-                .addClass('o_hidden');
+            this.$buttons.find('.o_mark_all_read').addClass('o_hidden');
         }
         // Unstar All
         if (activeThreadLocalId === 'mail.box_starred') {
-            this.$buttons
-                .find('.o_unstar_all')
-                .removeClass('o_hidden')
+            this.$buttons.find('.o_unstar_all').removeClass('o_hidden')
                 .prop('disabled', !hasMessages);
         }
         if (
             activeThreadLocalId !== 'mail.box_starred' ||
             activeMobileNavbarTabId !== 'mailbox'
         ) {
-            this.$buttons
-                .find('.o_unstar_all')
-                .addClass('o_hidden');
+            this.$buttons.find('.o_unstar_all').addClass('o_hidden');
         }
         // Mobile: Add channel
         if (isMobile && activeMobileNavbarTabId === 'channel') {
-            this.$buttons
-                .find('.o_mobile_new_channel')
-                .removeClass('o_hidden');
+            this.$buttons.find('.o_mobile_new_channel').removeClass('o_hidden');
         } else {
-            this.$buttons
-                .find('.o_mobile_new_channel')
-                .addClass('o_hidden');
+            this.$buttons.find('.o_mobile_new_channel').addClass('o_hidden');
         }
         // Mobile: Add message
         if (isMobile && activeMobileNavbarTabId === 'chat') {
-            this.$buttons
-                .find('.o_mobile_new_message')
-                .removeClass('o_hidden');
+            this.$buttons.find('.o_mobile_new_message').removeClass('o_hidden');
         } else {
-            this.$buttons
-                .find('.o_mobile_new_message')
-                .addClass('o_hidden');
+            this.$buttons.find('.o_mobile_new_message').addClass('o_hidden');
         }
         if (isMobile) {
             this._setTitle(_t("Discuss"));
         } else {
             let title;
-            if (activeThreadLocalId) {
+            if (activeThread) {
                 const activeThreadName = this.env.store.getters.threadName(activeThreadLocalId);
                 const prefix =
-                    activeThread.channel_type === 'channel' && activeThread.public !== 'private' ? '#' : '';
+                    activeThread.channel_type === 'channel' &&
+                    activeThread.public !== 'private'
+                    ? '#'
+                    : '';
                 title = `${prefix}${activeThreadName}`;
             } else {
                 title = _t("Discuss");
@@ -289,9 +254,7 @@ const Discuss = AbstractAction.extend(EnvMixin, {
      * @private
      */
     _onClickMarkAllAsRead() {
-        this.env.store.dispatch('markAllMessagesAsRead', {
-            domain: this.domain,
-        });
+        this.env.store.dispatch('markAllMessagesAsRead', { domain: this.domain });
     },
     /**
      * @private
@@ -322,7 +285,7 @@ const Discuss = AbstractAction.extend(EnvMixin, {
     },
 });
 
-core.action_registry.add('mail.widget.discuss', Discuss);
+action_registry.add('mail.widget.discuss', Discuss);
 
 return Discuss;
 

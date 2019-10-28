@@ -67,14 +67,12 @@ class MessageList extends Component {
         /**
          * Snapshot computed during willPatch, which is used by patched.
          */
-        this._willPatchSnapshot = {};
+        this._willPatchSnapshot = undefined;
         this._onScroll = _.throttle(this._onScroll.bind(this), 100);
     }
 
     mounted() {
-        this._checkThreadMarkAsRead();
-        this._updateTrackedPatchInfo();
-        this.trigger('o-message-list-mounted');
+        this._update();
     }
 
     willPatch() {
@@ -124,38 +122,7 @@ class MessageList extends Component {
     }
 
     patched() {
-        if (this.storeProps.messages.length === 0) {
-            return;
-        }
-        if (this._willPatchSnapshot.isPatchedWithLoadMoreMessages) {
-            this.el.scrollTop =
-                this.el.scrollHeight -
-                this._willPatchSnapshot.scrollHeight +
-                this._willPatchSnapshot.scrollTop;
-        } else if (
-            this._willPatchSnapshot.isPatchedWithNewThreadCache ||
-            (
-                this._willPatchSnapshot.isPatchedWithNewMessages &&
-                this._willPatchSnapshot.isLastMessageVisible
-            )
-        ) {
-            this.scrollToLastMessage().then(() => this._onScroll());
-        } else if (
-            this._willPatchSnapshot.isPatchedWithNewMessages &&
-            this.storeProps.threadCacheCurrentPartnerMessagePostCounter !==
-            this._threadCacheCurrentPartnerMessagePostCounter
-        ) {
-            this._scrollToLastCurrentPartnerMessage().then(() => this._onScroll());
-        } else if (
-            !this._selectedMessageLocalId &&
-            this._selectedMessageLocalId !== this.props.selectedMessageLocalId &&
-            !this.storeProps.isMobile
-        ) {
-            this._scrollToMessage(this.props.selectedMessageLocalId).then(() => this._onScroll());
-        }
-        this._checkThreadMarkAsRead();
-        this._updateTrackedPatchInfo();
-        this._willPatchSnapshot = {};
+        this._update();
     }
 
     //--------------------------------------------------------------------------
@@ -306,6 +273,68 @@ class MessageList extends Component {
         return true;
     }
 
+    /**
+     * Update the scroll position of the message list.
+     * This is not done in patched/mounted hooks because scroll position is
+     * dependent on UI globally. To illustrate, imagine following UI:
+     *
+     * +----------+ < viewport top = scrollable top
+     * | message  |
+     * |   list   |
+     * |          |
+     * +----------+ < scrolltop = viewport bottom = scrollable bottom
+     *
+     * Now if a composer is mounted just below the message list, it is shrinked
+     * and scrolltop is altered as a result:
+     *
+     * +----------+ < viewport top = scrollable top
+     * | message  |
+     * |   list   | < scrolltop = viewport bottom  <-+
+     * |          |                                  |-- dist = composer height
+     * +----------+ < scrollable bottom            <-+
+     * +----------+
+     * | composer |
+     * +----------+
+     *
+     * Because of this, the scroll position must be changed when whole UI
+     * is rendered. To make this simpler, this is done when <Thread/> component
+     * is patched. This is acceptable when <Thread/> has a fixed height,
+     * which is the case for the moment. Also changes to message list that
+     */
+    updateScroll() {
+        if (this.storeProps.messages.length === 0) {
+            return;
+        }
+        if (!this._willPatchSnapshot) {
+            return;
+        }
+        const {
+            isLastMessageVisible,
+            isPatchedWithLoadMoreMessages,
+            isPatchedWithNewMessages,
+            isPatchedWithNewThreadCache,
+            scrollHeight: beforeScrollHeight,
+            scrollTop: beforeScrollTop,
+        } = this._willPatchSnapshot;
+        if (isPatchedWithLoadMoreMessages) {
+            this.el.scrollTop = this.el.scrollHeight - beforeScrollHeight + beforeScrollTop;
+        } else if (isPatchedWithNewThreadCache || (isPatchedWithNewMessages && isLastMessageVisible)) {
+            this.scrollToLastMessage().then(() => this._onScroll());
+        } else if (
+            isPatchedWithNewMessages &&
+            this.storeProps.threadCacheCurrentPartnerMessagePostCounter !== this._threadCacheCurrentPartnerMessagePostCounter
+        ) {
+            this._scrollToLastCurrentPartnerMessage().then(() => this._onScroll());
+        } else if (
+            !this._selectedMessageLocalId &&
+            this._selectedMessageLocalId !== this.props.selectedMessageLocalId &&
+            !this.storeProps.isMobile
+        ) {
+            this._scrollToMessage(this.props.selectedMessageLocalId).then(() => this._onScroll());
+        }
+        this._willPatchSnapshot = undefined;
+    }
+
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
@@ -379,6 +408,14 @@ class MessageList extends Component {
         }
         this.el.scrollTop += 15;
         this._isAutoLoadOnScrollActive = true;
+    }
+
+    /**
+     * @private
+     */
+    _update() {
+        this._checkThreadMarkAsRead();
+        this._updateTrackedPatchInfo();
     }
 
     /**

@@ -3,9 +3,8 @@ odoo.define('mail.owl.testUtils', function (require) {
 
 const BusService = require('bus.BusService');
 
-const ChatWindowService = require('mail.service.ChatWindowService');
-const EnvService = require('mail.service.Env');
-const StoreService = require('mail.service.Store');
+const ChatWindowService = require('mail.service.ChatWindow');
+const OwlService = require('mail.service.Owl');
 const Discuss = require('mail.widget.Discuss');
 const MessagingMenu = require('mail.widget.MessagingMenu');
 
@@ -13,7 +12,7 @@ const AbstractStorageService = require('web.AbstractStorageService');
 const Class = require('web.Class');
 const NotificationService = require('web.NotificationService');
 const RamStorage = require('web.RamStorage');
-const testUtils = require('web.test_utils');
+const { mock: { addMockEnvironment } } = require('web.test_utils');
 const Widget = require('web.Widget');
 
 //------------------------------------------------------------------------------
@@ -32,28 +31,22 @@ const MockMailService = Class.extend({
     chat_window() {
         return ChatWindowService;
     },
-    env() {
-        return EnvService;
-    },
     local_storage() {
-        return AbstractStorageService.extend({
-            storage: new RamStorage(),
-        });
+        return AbstractStorageService.extend({ storage: new RamStorage() });
     },
     notification() {
         return NotificationService;
     },
-    store_service() {
-        return StoreService;
+    owl() {
+        return OwlService;
     },
     getServices() {
         return {
             bus_service: this.bus_service(),
             chat_window: this.chat_window(),
-            env: this.env(),
             local_storage: this.local_storage(),
             notification: this.notification(),
-            store: this.store_service(),
+            owl: this.owl(),
         };
     },
 });
@@ -226,7 +219,7 @@ async function dragenterFiles(el, files) {
         value: _createFakeDataTransfer(files),
     });
     el.dispatchEvent(ev);
-    await testUtils.nextTick();
+    await nextRender();
 }
 
 /**
@@ -242,7 +235,7 @@ async function dropFiles(el, files) {
         value: _createFakeDataTransfer(files),
     });
     el.dispatchEvent(ev);
-    await testUtils.nextTick();
+    await nextRender();
 }
 
 function getMailServices() {
@@ -263,7 +256,27 @@ async function inputFiles(el, files) {
     }
     el.files = dataTransfer.files;
     el.dispatchEvent(new Event('change'));
-    await testUtils.nextTick();
+    await nextRender();
+}
+
+/**
+ * Wait for when OWL completely rendered UI.
+ *
+ * It uses request next animation frame internally.
+ *
+ * Note that there may be multiple rendering at the same time (e.g. thread
+ * mounted loads messages, which also triggers a re-render for spinner/loaded
+ * messages). Each re-render also takes a new request animation frame, so
+ * waiting for next animation frame is not enough.
+ *
+ * In our case, 3 successive request animation frames is enough, but it may
+ * be necessary to increase that amount in the future, until OWL provides
+ * necessary means to detect end of rendering.
+ */
+async function nextRender() {
+    await new Promise(resolve => setTimeout(() => window.requestAnimationFrame(() => resolve())));
+    await new Promise(resolve => setTimeout(() => window.requestAnimationFrame(() => resolve())));
+    await new Promise(resolve => setTimeout(() => window.requestAnimationFrame(() => resolve())));
 }
 
 /**
@@ -279,7 +292,7 @@ async function pasteFiles(el, files) {
         value: _createFakeDataTransfer(files),
     });
     el.dispatchEvent(ev);
-    await testUtils.nextTick();
+    await nextRender();
 }
 
 async function pause() {
@@ -290,55 +303,65 @@ async function pause() {
  * Create chat window manager, discuss, and messaging menu with
  * messaging store
  *
- * @param {Object} params
- * @param {boolean} [params.autoOpenDiscuss=false]
- * @param {boolean} [params.debug=false]
- * @param {Object} [params.initStoreStateAlteration]
- * @param {Object} [params.intercepts]
- * @param {Object} [params.session={}]
- * @param {string} [params.session.name="Admin"]
- * @param {integer} [params.session.partner_id=3]
- * @param {string} [params.session.partner_display_name="Your Company, Admin"]
- * @param {integer} [params.session.uid=2]
+ * @param {Object} param0
+ * @param {Object} [param0.archs]
+ * @param {boolean} [param0.autoOpenDiscuss=false]
+ * @param {boolean} [param0.debug=false]
+ * @param {Object} [param0.discuss={}]
+ * @param {Object} [param0.initStoreState]
+ * @param {function} [param0.mockRPC]
+ * @param {Object} [param0.services]
+ * @param {Object} [param0.session={}]
+ * @param {string} [param0.session.name="Admin"]
+ * @param {integer} [param0.session.partner_id=3]
+ * @param {string} [param0.session.partner_display_name="Your Company, Admin"]
+ * @param {integer} [param0.session.uid=2]
+ * @param {...Object} [param0.kwargs]
  * @return {Promise}
  */
-async function start(params) {
-    const Parent = Widget.extend({
-        do_push_state: function () {},
-    });
+async function start({
+    archs={ 'mail.message,false,search': '<search/>' },
+    autoOpenDiscuss=false,
+    debug=false,
+    discuss:discussData={},
+    initStoreState,
+    mockRPC,
+    services=getMailServices(),
+    session={},
+    ...kwargs
+}) {
+    const Parent = Widget.extend({ do_push_state() {} });
     const parent = new Parent();
-    params.archs = params.archs || {
-        'mail.message,false,search': '<search/>',
-    };
-    params.services = params.services || getMailServices();
-    params.session = params.session || {};
-    _.defaults(params.session, {
+    _.defaults(session, {
         name: "Admin",
         partner_id: 3,
         partner_display_name: "Your Company, Admin",
         uid: 2,
     });
-    const selector = params.debug ? 'body' : '#qunit-fixture';
-    params.services.env.prototype.TEST_ENV.active = true;
-    let ORIGINAL_STORE_SERVICE_TEST_ENV = params.services.store.prototype.TEST_ENV;
-    Object.assign(params.services.store.prototype.TEST_ENV, {
-        active: true,
-        initStateAlteration: params.initStoreStateAlteration || {
-            globalWindow: {
-                innerHeight: 1080,
-                innerWidth: 1920,
-            },
-            isMobile: false,
-        }
-    });
-    let ORIGINAL_CHAT_WINDOW_SERVICE_TEST_ENV = params.services.chat_window.prototype.TEST_ENV;
-    Object.assign(params.services.chat_window.prototype.TEST_ENV, {
-        active: true,
-        container: selector,
-    });
-    testUtils.mock.addMockEnvironment(parent, params);
-    const discuss = new Discuss(parent, params);
-    const menu = new MessagingMenu(parent, params);
+    const selector = debug ? 'body' : '#qunit-fixture';
+    const ORIGINAL_OWL_SERVICE_IS_TEST = services.owl.prototype.IS_TEST;
+    const ORIGINAL_OWL_SERVICE_TEST_STORE_INIT_STATE = services.owl.prototype.TEST_STORE_INIT_STATE;
+
+    const ORIGINAL_CHAT_WINDOW_SERVICE_IS_TEST = services.chat_window.prototype.IS_TEST;
+    const ORIGINAL_CHAT_WINDOW_SERVICE_TEST_TARGET = services.chat_window.prototype.TEST_TARGET;
+
+    // Enable test mode for owl service
+    services.owl.prototype.IS_TEST = true;
+    services.owl.prototype.TEST_STORE_INIT_STATE = initStoreState || {
+        globalWindow: {
+            innerHeight: 1080,
+            innerWidth: 1920,
+        },
+        isMobile: false,
+    };
+
+    // Enable test mode for chat window service
+    services.chat_window.prototype.IS_TEST = true;
+    services.chat_window.prototype.TEST_TARGET = selector;
+
+    addMockEnvironment(parent, { archs, debug, services, session, mockRPC, ...kwargs });
+    const discuss = new Discuss(parent, discussData);
+    const menu = new MessagingMenu(parent, {});
     const widget = new Widget(parent);
 
     Object.assign(widget, {
@@ -346,11 +369,16 @@ async function start(params) {
             discuss.on_detach_callback();
         },
         destroy() {
-            params.services.chat_window.prototype.TEST_ENV = ORIGINAL_CHAT_WINDOW_SERVICE_TEST_ENV;
-            params.services.env.prototype.TEST_ENV.active = false;
-            params.services.store.prototype.TEST_ENV = ORIGINAL_STORE_SERVICE_TEST_ENV;
+            // restore store service
+            services.owl.prototype.IS_TEST = ORIGINAL_OWL_SERVICE_IS_TEST;
+            services.owl.prototype.TEST_STORE_INIT_STATE = ORIGINAL_OWL_SERVICE_TEST_STORE_INIT_STATE;
+
+            // restore chat window service
+            services.chat_window.prototype.IS_TEST = ORIGINAL_CHAT_WINDOW_SERVICE_IS_TEST;
+            services.chat_window.prototype.TEST_TARGET = ORIGINAL_CHAT_WINDOW_SERVICE_TEST_TARGET;
+
             delete widget.destroy;
-            delete window.o_test_store;
+            delete window.o_test_env;
             widget.call('chat_window', 'destroy');
             parent.destroy();
         },
@@ -360,19 +388,19 @@ async function start(params) {
     });
 
     await widget.appendTo($(selector));
+    const env = widget.call('owl', 'getEnv');
+    if (debug) {
+        window.o_test_env = env;
+    }
     widget.call('chat_window', 'test:web_client_ready'); // trigger mounting of chat window manager
     await menu.appendTo($(selector));
     menu.on_attach_callback(); // trigger mounting of menu component
     await discuss.appendTo($(selector));
-    if (params.autoOpenDiscuss) {
+    if (autoOpenDiscuss) {
         widget.openDiscuss();
     }
-    await testUtils.nextTick(); // mounting of chat window manager, discuss, and messaging menu
-    const store = await widget.call('store', 'get');
-    if (params.debug) {
-        window.o_test_store = store;
-    }
-    return { discuss, store, widget };
+    await nextRender();
+    return { discuss, env, widget };
 }
 
 //------------------------------------------------------------------------------
@@ -386,6 +414,7 @@ return {
     dropFiles,
     getMailServices,
     inputFiles,
+    nextRender,
     pasteFiles,
     pause,
     start,

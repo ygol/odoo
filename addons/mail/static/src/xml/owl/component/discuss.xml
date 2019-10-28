@@ -8,28 +8,33 @@
                 'o-mobile': storeProps.isMobile,
             }"
         >
-            <t t-if="!storeProps.isMobile">
-                <Sidebar
-                    class="o_Discuss_sidebar"
-                    activeThreadLocalId="storeProps.activeThreadLocalId"
-                    isAddingChannel="state.isAddingChannel"
-                    isAddingChat="state.isAddingChat"
-                    onAddChannelAutocompleteSelect="_onAddChannelAutocompleteSelect"
-                    onAddChannelAutocompleteSource="_onAddChannelAutocompleteSource"
-                    onAddChatAutocompleteSelect="_onAddChatAutocompleteSelect"
-                    onAddChatAutocompleteSource="_onAddChatAutocompleteSource"
-                    t-on-o-discuss-adding-channel.stop="_onSidebarAddingChannel"
-                    t-on-o-discuss-adding-chat.stop="_onSidebarAddingChat"
-                    t-on-o-discuss-cancel-adding-item.stop="_onSidebarCancelAddingItem"
-                    t-on-o-select-thread="_onSelectThread"
-                    t-ref="sidebar"
-                />
+            <t t-if="!storeProps.isMessagingReady">
+                <div class="o_Discuss_messagingNotReady"><i class="o_Discuss_messagingNotReadyIcon fa fa-spinner fa-spin"/>Please wait...</div>
             </t>
-            <t t-if="storeProps.isMobile" t-call="mail.component.DiscussContent"/>
             <t t-else="">
-                <div class="o_Discuss_content">
-                    <t t-call="mail.component.DiscussContent"/>
-                </div>
+                <t t-if="!storeProps.isMobile">
+                    <Sidebar
+                        class="o_Discuss_sidebar"
+                        activeThreadLocalId="storeProps.activeThreadLocalId"
+                        isAddingChannel="state.isAddingChannel"
+                        isAddingChat="state.isAddingChat"
+                        onAddChannelAutocompleteSelect="_onAddChannelAutocompleteSelect"
+                        onAddChannelAutocompleteSource="_onAddChannelAutocompleteSource"
+                        onAddChatAutocompleteSelect="_onAddChatAutocompleteSelect"
+                        onAddChatAutocompleteSource="_onAddChatAutocompleteSource"
+                        t-on-o-discuss-adding-channel.stop="_onSidebarAddingChannel"
+                        t-on-o-discuss-adding-chat.stop="_onSidebarAddingChat"
+                        t-on-o-discuss-cancel-adding-item.stop="_onSidebarCancelAddingItem"
+                        t-on-o-select-thread="_onSelectThread"
+                        t-ref="sidebar"
+                    />
+                </t>
+                <t t-if="storeProps.isMobile" t-call="mail.component.DiscussContent"/>
+                <t t-else="">
+                    <div class="o_Discuss_content">
+                        <t t-call="mail.component.DiscussContent"/>
+                    </div>
+                </t>
             </t>
         </div>
     </t>
@@ -60,12 +65,6 @@
                 t-att-class="{ 'o-mobile': storeProps.isMobile }"
                 areComposerAttachmentsEditable="true"
                 composerAttachmentLayout="'card'"
-                composerInitialAttachmentLocalIds="
-                    storeProps.storedThreadComposers[storeProps.activeThreadLocalId] and
-                    storeProps.storedThreadComposers[storeProps.activeThreadLocalId].attachmentLocalIds"
-                composerInitialTextInputHtmlContent="
-                    storeProps.storedThreadComposers[storeProps.activeThreadLocalId] and
-                    storeProps.storedThreadComposers[storeProps.activeThreadLocalId].textInputHtmlContent"
                 domain="storeProps.domain"
                 hasComposer="storeProps.activeThread._model !== 'mail.box'"
                 hasComposerCurrentPartnerAvatar="!storeProps.isMobile"
@@ -79,7 +78,6 @@
                     state.threadCachesStoredScrollTop[storeProps.activeThreadCacheLocalId].value"
                 selectedMessageLocalId="state.replyingToMessageMessageLocalId"
                 threadLocalId="storeProps.activeThreadLocalId"
-                t-key="storeProps.activeThreadLocalId + (storeProps.isMobile ? '_mobile' : '')"
                 t-on-o-redirect="_onRedirect"
                 t-on-o-rendered="_onThreadRendered"
                 t-on-o-reply-message.stop="_onReplyMessage"
@@ -97,7 +95,6 @@
                 filter="storeProps.activeMobileNavbarTabId"
                 t-on-o-select-thread="_onSelectThread"
                 t-ref="threadPreviewList"
-                t-key="storeProps.activeMobileNavbarTabId"
             />
         </t>
         <t t-if="storeProps.isMobile and !state.isReplyingToMessage">
@@ -111,18 +108,16 @@
         <t t-if="state.isReplyingToMessage">
             <Composer
                 class="o_Discuss_replyingToMessageComposer"
+                composerLocalId="env.store.state.threads[state.replyingToMessageThreadLocalId].composerLocalId"
                 focusCounter="state.replyingToMessageCounter"
                 hasCurrentPartnerAvatar="!storeProps.isMobile"
                 hasDiscardButton="true"
                 hasThreadName="true"
-                id="id + '_replyingToMessageComposer'"
                 isDiscardOnClickAway="true"
                 isFocusOnMount="true"
-                threadLocalId="state.replyingToMessageThreadLocalId"
                 t-on-o-discarded.stop="_onReplyingToMessageComposerDiscarded"
                 t-on-o-message-posted="_onReplyingToMessageMessagePosted"
                 t-ref="replyingToMessageComposer"
-                t-key="'replyingToMessageComposer' + (storeProps.isMobile ? '_mobile' : '')"
             />
         </t>
     </t>

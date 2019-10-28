@@ -20,7 +20,7 @@ class Discuss extends Component {
      */
     constructor(...args) {
         super(...args);
-        this.DEBUG = true;
+        this.IS_DEV = true;
         this.state = useState({
             /**
              * Determine whether current user is currently adding a channel from
@@ -74,6 +74,7 @@ class Discuss extends Component {
                 // intentionally keep unsynchronize value of old thread counter
                 // useful in willUpdateProps to detect change of counter
                 activeThreadCounter: activeThread && activeThread.counter,
+                isMessagingReady: state.isMessagingReady,
                 isMobile: state.isMobile,
             });
         });
@@ -114,6 +115,13 @@ class Discuss extends Component {
             isReplyingToMessage: false,
             replyingToMessageCounter: 0,
         };
+        /**
+         * Determine whether messaging was ready before previous mounted/patched
+         * of discuss. Useful to delay opening thread when messaging is not yet
+         * ready. This is important because data on thread may require messaging
+         * to be ready.
+         */
+        this._wasMessagingReady = false;
 
         // bind since passed as props
         this._onAddChannelAutocompleteSelect = this._onAddChannelAutocompleteSelect.bind(this);
@@ -123,23 +131,27 @@ class Discuss extends Component {
         this._onMobileAddItemHeaderInputSelect = this._onMobileAddItemHeaderInputSelect.bind(this);
         this._onMobileAddItemHeaderInputSource = this._onMobileAddItemHeaderInputSource.bind(this);
 
-        if (this.DEBUG) {
+        if (this.IS_DEV) {
             window.discuss = this;
         }
     }
 
     mounted() {
-        this.storeDispatch('updateDiscuss', { isOpen: true });
-        if (this.storeProps.activeThreadLocalId) {
+        this.storeDispatch('updateDiscuss', {
+            activeThreadLocalId: this.props.initActiveThreadLocalId,
+            isOpen: true,
+        });
+        if (this.storeProps.activeThread) {
             this.trigger('o-push-state-action-manager', {
                 activeThreadLocalId: this.props.initActiveThreadLocalId,
             });
-        } else {
+        } else if (this.storeProps.isMessagingReady) {
             this.storeDispatch('openThread', this.props.initActiveThreadLocalId, {
                 resetDiscussDomain: true,
             });
         }
         this._activeThreadCacheLocalId = this.storeProps.activeThreadCacheLocalId;
+        this._wasMessagingReady = this.storeProps.isMessagingReady;
     }
 
     /**
@@ -187,9 +199,15 @@ class Discuss extends Component {
         if (this._inboxMarkAsReadCounter < this.storeProps.inboxMarkAsReadCounter) {
             this.trigger('o-show-rainbow-man');
         }
+        if (!this._wasMessagingReady && this.storeProps.isMessagingReady) {
+            this.storeDispatch('openThread', this.props.initActiveThreadLocalId, {
+                resetDiscussDomain: true,
+            });
+        }
         this._activeThreadCacheLocalId = this.storeProps.activeThreadCacheLocalId;
         this._inboxMarkAsReadCounter = this.storeProps.inboxMarkAsReadCounter;
         this._willPatchSnapshot = {};
+        this._wasMessagingReady = this.storeProps.isMessagingReady;
     }
 
     willUnmount() {
@@ -302,17 +320,6 @@ class Discuss extends Component {
                     value: scrollTop,
                 };
             }
-        }
-        if (
-            !this.storeProps.isMobile &&
-            this.storeProps.activeThreadCache &&
-            this._threadRef.comp.props.hasComposer
-        ) {
-            this.storeDispatch('updateDiscuss', {
-                storedThreadComposers: Object.assign({}, this.storeProps.storedThreadComposers, {
-                    [this.storeProps.activeThreadLocalId]: this._threadRef.comp.getComposerState(),
-                }),
-            });
         }
         if (this.state.isReplyingToMessage) {
             this._cancelReplyingToMessage();

@@ -20,23 +20,18 @@
                     selectedMessageLocalId="props.selectedMessageLocalId"
                     threadCacheLocalId="storeProps.threadCacheLocalId"
                     threadLocalId="props.threadLocalId"
-                    t-on-o-message-list-mounted.stop="_onMessageListMounted"
                     t-ref="messageList"
                 />
             </t>
-            <t t-if="props.hasComposer">
+            <t t-if="props.hasComposer and storeProps.thread.composerLocalId">
                 <Composer
                     class="o_Thread_composer"
+                    composerLocalId="storeProps.thread.composerLocalId"
                     attachmentsLayout="props.composerAttachmentLayout"
                     hasCurrentPartnerAvatar="props.hasComposerCurrentPartnerAvatar"
                     hasSendButton="props.hasComposerSendButton"
                     haveAttachmentsLabelForCardLayout="props.haveComposerAttachmentsLabelForCardLayout"
-                    id="id + '_composer'"
-                    initialAttachmentLocalIds="props.composerInitialAttachmentLocalIds"
-                    initialTextInputHtmlContent="props.composerInitialTextInputHtmlContent"
                     isFocusOnMount="!storeProps.isMobile"
-                    threadCacheLocalId="storeProps.threadCacheLocalId"
-                    threadLocalId="props.threadLocalId"
                     t-ref="composer"
                 />
             </t>

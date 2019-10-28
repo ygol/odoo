@@ -8,12 +8,13 @@ const {
     dragenterFiles,
     dropFiles,
     inputFiles,
+    nextRender,
     pasteFiles,
     pause,
     start: utilsStart,
 } = require('mail.owl.testUtils');
 
-const testUtils = require('web.test_utils');
+const { nextTick, file: { createFile } } = require('web.test_utils');
 
 QUnit.module('mail.owl', {}, function () {
 QUnit.module('component', {}, function () {
@@ -21,29 +22,25 @@ QUnit.module('Composer', {
     beforeEach() {
         utilsBeforeEach(this);
 
-        /**
-         * @param {integer} composerId
-         * @param {Object} [otherProps]
-         */
-        this.createComposer = async (composerId, otherProps) => {
-            const env = await this.widget.call('env', 'get');
-            this.composer = new Composer(env, {
-                id: composerId,
+        this.createComposerComponent = async (composerLocalId, otherProps) => {
+            Composer.env = this.env;
+            this.composer = new Composer(null, {
+                composerLocalId,
                 ...otherProps,
             });
             await this.composer.mount(this.widget.$el[0]);
-            await testUtils.nextTick();
+            await nextRender();
         };
 
         this.start = async params => {
             if (this.widget) {
                 this.widget.destroy();
             }
-            let { store, widget } = await utilsStart({
+            let { env, widget } = await utilsStart({
                 ...params,
                 data: this.data,
             });
-            this.store = store;
+            this.env = env;
             this.widget = widget;
         };
     },
@@ -55,8 +52,9 @@ QUnit.module('Composer', {
         if (this.widget) {
             this.widget.destroy();
         }
-        this.store = undefined;
-        await testUtils.nextTick(); // tribute detach is asynchronous
+        this.env = undefined;
+        delete Composer.env;
+        await nextTick(); // ensures tribute is detached on next tick
     }
 });
 
@@ -64,7 +62,8 @@ QUnit.test('composer text input: basic rendering', async function (assert) {
     assert.expect(6);
 
     await this.start();
-    await this.createComposer('composer_1');
+    const composerLocalId = this.env.store.dispatch('_createComposer');
+    await this.createComposerComponent(composerLocalId);
     assert.strictEqual(
         document.querySelectorAll('.o_Composer').length,
         1,
@@ -99,11 +98,12 @@ QUnit.test('add an emoji', async function (assert) {
     assert.expect(1);
 
     await this.start();
-    await this.createComposer('composer_1');
+    const composerLocalId = this.env.store.dispatch('_createComposer');
+    await this.createComposerComponent(composerLocalId);
     document.querySelector('.o_Composer_buttonEmojis').click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector('.o_EmojisPopover_emoji[data-unicode="😊"]').click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelector(`.o_ComposerTextInput_editable`).textContent,
         "😊",
@@ -115,10 +115,11 @@ QUnit.test('add an emoji after some text', async function (assert) {
     assert.expect(2);
 
     await this.start();
-    await this.createComposer('composer_1');
+    const composerLocalId = this.env.store.dispatch('_createComposer');
+    await this.createComposerComponent(composerLocalId);
     document.querySelector(`.o_ComposerTextInput_editable`).focus();
     document.execCommand('insertText', false, "Blabla");
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelector(`.o_ComposerTextInput_editable`).textContent,
         "Blabla",
@@ -126,9 +127,9 @@ QUnit.test('add an emoji after some text', async function (assert) {
     );
 
     document.querySelector('.o_Composer_buttonEmojis').click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector('.o_EmojisPopover_emoji[data-unicode="😊"]').click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelector(`.o_ComposerTextInput_editable`).textContent,
         "Blabla😊",
@@ -140,10 +141,11 @@ QUnit.test('add emoji replaces (keyboard) text selection', async function (asser
     assert.expect(2);
 
     await this.start();
-    await this.createComposer('composer_1');
+    const composerLocalId = this.env.store.dispatch('_createComposer');
+    await this.createComposerComponent(composerLocalId);
     document.querySelector(`.o_ComposerTextInput_editable`).focus();
     document.execCommand('insertText', false, "Blabla");
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelector(`.o_ComposerTextInput_editable`).textContent,
         "Blabla",
@@ -164,9 +166,9 @@ QUnit.test('add emoji replaces (keyboard) text selection', async function (asser
     );
     // select emoji
     document.querySelector('.o_Composer_buttonEmojis').click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector('.o_EmojisPopover_emoji[data-unicode="😊"]').click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelector(`.o_ComposerTextInput_editable`).textContent.replace(/\s/, " "),
         "😊 ", // AKU: for some reasons, it adds &nbsp; after emoji
@@ -178,10 +180,11 @@ QUnit.test('add emoji replaces (mouse) text selection', async function (assert) 
     assert.expect(2);
 
     await this.start();
-    await this.createComposer('composer_1');
+    const composerLocalId = this.env.store.dispatch('_createComposer');
+    await this.createComposerComponent(composerLocalId);
     document.querySelector(`.o_ComposerTextInput_editable`).focus();
     document.execCommand('insertText', false, "Blabla");
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelector(`.o_ComposerTextInput_editable`).textContent,
         "Blabla",
@@ -199,9 +202,9 @@ QUnit.test('add emoji replaces (mouse) text selection', async function (assert) 
         .dispatchEvent(new window.MouseEvent('mouseup'));
     // select emoji
     document.querySelector('.o_Composer_buttonEmojis').click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector('.o_EmojisPopover_emoji[data-unicode="😊"]').click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelector(`.o_ComposerTextInput_editable`).textContent.replace(/\s/, " "),
         "😊 ", // AKU: for some reasons, it adds &nbsp; after emoji
@@ -213,7 +216,8 @@ QUnit.test('display partner mention suggestions on typing "@"', async function (
     assert.expect(2);
 
     await this.start();
-    await this.createComposer('composer_1');
+    const composerLocalId = this.env.store.dispatch('_createComposer');
+    await this.createComposerComponent(composerLocalId);
     assert.strictEqual(
         document.querySelectorAll(`.tribute-container`).length,
         0,
@@ -226,7 +230,7 @@ QUnit.test('display partner mention suggestions on typing "@"', async function (
         .dispatchEvent(new window.KeyboardEvent('keydown'));
     document.querySelector(`.o_ComposerTextInput_editable`)
         .dispatchEvent(new window.KeyboardEvent('keyup'));
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelectorAll(`.tribute-container`).length,
         1,
@@ -238,7 +242,8 @@ QUnit.test('mention a partner', async function (assert) {
     assert.expect(4);
 
     await this.start();
-    await this.createComposer('composer_1');
+    const composerLocalId = this.env.store.dispatch('_createComposer');
+    await this.createComposerComponent(composerLocalId);
     assert.strictEqual(
         document.querySelector(`.o_ComposerTextInput_editable`).textContent,
         "",
@@ -251,10 +256,10 @@ QUnit.test('mention a partner', async function (assert) {
         .dispatchEvent(new window.KeyboardEvent('keydown'));
     document.querySelector(`.o_ComposerTextInput_editable`)
         .dispatchEvent(new window.KeyboardEvent('keyup'));
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelectorAll('.o_ComposerTextInput_mentionMenuItem')[0]
         .dispatchEvent(new window.MouseEvent('mousedown', { bubbles: true }));
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelector(`.o_ComposerTextInput_editable`).textContent.replace(/\s/, " "),
         "@OdooBot ",
@@ -276,7 +281,8 @@ QUnit.test('mention a partner after some text', async function (assert) {
     assert.expect(4);
 
     await this.start();
-    await this.createComposer('composer_1');
+    const composerLocalId = this.env.store.dispatch('_createComposer');
+    await this.createComposerComponent(composerLocalId);
     document.querySelector(`.o_ComposerTextInput_editable`).focus();
     document.execCommand('insertText', false, "bluhbluh");
     assert.strictEqual(
@@ -289,10 +295,10 @@ QUnit.test('mention a partner after some text', async function (assert) {
         .dispatchEvent(new window.KeyboardEvent('keydown'));
     document.querySelector(`.o_ComposerTextInput_editable`)
         .dispatchEvent(new window.KeyboardEvent('keyup'));
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelectorAll('.o_ComposerTextInput_mentionMenuItem')[0]
         .dispatchEvent(new window.MouseEvent('mousedown', { bubbles: true }));
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelector(`.o_ComposerTextInput_editable`).textContent.replace(/\s/, " "),
         "bluhbluh@OdooBot ",
@@ -314,17 +320,18 @@ QUnit.test('add an emoji after a partner mention', async function (assert) {
     assert.expect(4);
 
     await this.start();
-    await this.createComposer('composer_1');
+    const composerLocalId = this.env.store.dispatch('_createComposer');
+    await this.createComposerComponent(composerLocalId);
     document.querySelector(`.o_ComposerTextInput_editable`).focus();
     document.execCommand('insertText', false, "@");
     document.querySelector(`.o_ComposerTextInput_editable`)
         .dispatchEvent(new window.KeyboardEvent('keydown'));
     document.querySelector(`.o_ComposerTextInput_editable`)
         .dispatchEvent(new window.KeyboardEvent('keyup'));
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelectorAll('.o_ComposerTextInput_mentionMenuItem')[0]
         .dispatchEvent(new window.MouseEvent('mousedown', { bubbles: true }));
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelector(`.o_ComposerTextInput_editable`).textContent.replace(/\s/, " "),
         "@OdooBot ",
@@ -333,9 +340,9 @@ QUnit.test('add an emoji after a partner mention', async function (assert) {
 
     // select emoji
     document.querySelector('.o_Composer_buttonEmojis').click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector('.o_EmojisPopover_emoji[data-unicode="😊"]').click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelector(`.o_ComposerTextInput_editable`).textContent.replace(/\s/, " "),
         "@OdooBot 😊",
@@ -357,10 +364,9 @@ QUnit.test('composer: add an attachment', async function (assert) {
     assert.expect(8);
 
     await this.start();
-    await this.createComposer('composer_1', {
-        attachmentsLayout: 'card',
-    });
-    const file = await testUtils.file.createFile({
+    const composerLocalId = this.env.store.dispatch('_createComposer');
+    await this.createComposerComponent(composerLocalId, { attachmentsLayout: 'card' });
+    const file = await createFile({
         content: 'hello, world',
         contentType: 'text/plain',
         name: 'text.txt',
@@ -408,14 +414,15 @@ QUnit.test('composer: drop attachments', async function (assert) {
     assert.expect(3);
 
     await this.start();
-    await this.createComposer('composer_1');
+    const composerLocalId = this.env.store.dispatch('_createComposer');
+    await this.createComposerComponent(composerLocalId);
     const files = [
-        await testUtils.file.createFile({
+        await createFile({
             content: 'hello, world',
             contentType: 'text/plain',
             name: 'text.txt',
         }),
-        await testUtils.file.createFile({
+        await createFile({
             content: 'hello, worlduh',
             contentType: 'text/plain',
             name: 'text2.txt',
@@ -447,15 +454,15 @@ QUnit.test('composer: paste attachments', async function (assert) {
     assert.expect(2);
 
     await this.start();
-    await this.createComposer('composer_1');
-
+    const composerLocalId = this.env.store.dispatch('_createComposer');
+    await this.createComposerComponent(composerLocalId);
     const files = [
-        await testUtils.file.createFile({
+        await createFile({
             content: 'hello, world',
             contentType: 'text/plain',
             name: 'text.txt',
         }),
-        await testUtils.file.createFile({
+        await createFile({
             content: 'hello, worlduh',
             contentType: 'text/plain',
             name: 'text2.txt',

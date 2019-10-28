@@ -17,17 +17,19 @@ QUnit.module('Actions', {
             if (this.widget) {
                 this.widget.destroy();
             }
-            let { store, widget } = await utilsStart({
+            let { env, widget } = await utilsStart({
                 ...params,
                 data: this.data,
             });
-            this.store = store;
+            this.env = env;
             this.widget = widget;
+            this.store = env.store;
+            this.state = this.store.state;
         };
     },
     afterEach() {
         utilsAfterEach(this);
-        this.store = undefined;
+        this.env = undefined;
         if (this.widget) {
             this.widget.destroy();
             this.widget = undefined;
@@ -39,7 +41,7 @@ QUnit.test('createAttachment: txt', async function (assert) {
     assert.expect(10);
 
     await this.start();
-    assert.notOk(this.store.state.attachments['ir.attachment_750']);
+    assert.notOk(this.state.attachments['ir.attachment_750']);
 
     const attachmentLocalId = this.store.dispatch('createAttachment', {
         filename: "test.txt",
@@ -47,7 +49,7 @@ QUnit.test('createAttachment: txt', async function (assert) {
         mimetype: 'text/plain',
         name: "test.txt",
     });
-    const attachment = this.store.state.attachments[attachmentLocalId];
+    const attachment = this.state.attachments[attachmentLocalId];
     assert.strictEqual(attachmentLocalId, 'ir.attachment_750');
     assert.ok(attachment);
     assert.strictEqual(attachment._model, 'ir.attachment');
@@ -67,10 +69,10 @@ QUnit.test('createMessage', async function (assert) {
             partner_id: 3,
         }
     });
-    assert.notOk(this.store.state.partners['res.partner_5']);
-    assert.notOk(this.store.state.threads['mail.channel_100']);
-    assert.notOk(this.store.state.attachments['ir.attachment_750']);
-    assert.notOk(this.store.state.messages['mail.message_4000']);
+    assert.notOk(this.state.partners['res.partner_5']);
+    assert.notOk(this.state.threads['mail.channel_100']);
+    assert.notOk(this.state.attachments['ir.attachment_750']);
+    assert.notOk(this.state.messages['mail.message_4000']);
 
     const messageLocalId = this.store.dispatch('_createMessage', {
         attachment_ids: [{
@@ -90,7 +92,7 @@ QUnit.test('createMessage', async function (assert) {
         starred_partner_ids: [3, 4],
         res_id: 100,
     });
-    const message = this.store.state.messages[messageLocalId];
+    const message = this.state.messages[messageLocalId];
     assert.strictEqual(messageLocalId, 'mail.message_4000');
     assert.ok(message);
     assert.strictEqual(message._model, 'mail.message');
@@ -105,7 +107,7 @@ QUnit.test('createMessage', async function (assert) {
     assert.ok(message.threadLocalIds.includes('mail.channel_100'));
     assert.ok(message.threadLocalIds.includes('mail.box_inbox')); // from partnerId being in needaction_partner_ids
     assert.ok(message.threadLocalIds.includes('mail.box_starred')); // from partnerId being in starred_partner_ids
-    const attachment = this.store.state.attachments['ir.attachment_750'];
+    const attachment = this.state.attachments['ir.attachment_750'];
     assert.ok(attachment);
     assert.strictEqual(attachment._model, 'ir.attachment');
     assert.strictEqual(attachment.filename, "test.txt");
@@ -114,13 +116,13 @@ QUnit.test('createMessage', async function (assert) {
     assert.strictEqual(attachment.localId, 'ir.attachment_750');
     assert.strictEqual(attachment.mimetype, 'text/plain');
     assert.strictEqual(attachment.name, "test.txt");
-    const thread = this.store.state.threads['mail.channel_100'];
+    const thread = this.state.threads['mail.channel_100'];
     assert.ok(thread);
     assert.strictEqual(thread._model, 'mail.channel');
     assert.strictEqual(thread.id, 100);
     assert.strictEqual(thread.localId, 'mail.channel_100');
     assert.strictEqual(thread.name, "General");
-    const partner = this.store.state.partners['res.partner_5'];
+    const partner = this.state.partners['res.partner_5'];
     assert.ok(partner);
     assert.strictEqual(partner._model, 'res.partner');
     assert.strictEqual(partner.display_name, "Demo");
@@ -132,9 +134,9 @@ QUnit.test('createThread: channel', async function (assert) {
     assert.expect(26);
 
     await this.start();
-    assert.notOk(this.store.state.partners['res.partner_9']);
-    assert.notOk(this.store.state.partners['res.partner_10']);
-    assert.notOk(this.store.state.threads['mail.channel_100']);
+    assert.notOk(this.state.partners['res.partner_9']);
+    assert.notOk(this.state.partners['res.partner_10']);
+    assert.notOk(this.state.threads['mail.channel_100']);
 
     const threadLocalId = this.store.dispatch('_createThread', {
         channel_type: 'channel',
@@ -153,7 +155,7 @@ QUnit.test('createThread: channel', async function (assert) {
         name: "General",
         public: 'public',
     });
-    const thread = this.store.state.threads[threadLocalId];
+    const thread = this.state.threads[threadLocalId];
     assert.strictEqual(threadLocalId, 'mail.channel_100');
     assert.ok(thread);
     assert.strictEqual(thread._model, 'mail.channel');
@@ -173,8 +175,8 @@ QUnit.test('createThread: channel', async function (assert) {
     assert.strictEqual(thread.message_unread_counter, 5);
     assert.strictEqual(thread.name, "General");
     assert.strictEqual(thread.public, 'public');
-    const partner9 = this.store.state.partners['res.partner_9'];
-    const partner10 = this.store.state.partners['res.partner_10'];
+    const partner9 = this.state.partners['res.partner_9'];
+    const partner10 = this.state.partners['res.partner_10'];
     assert.ok(partner9);
     assert.strictEqual(partner9._model, 'res.partner');
     assert.strictEqual(partner9.email, "john@example.com");
@@ -193,8 +195,8 @@ QUnit.test('createThread: chat', async function (assert) {
     assert.expect(16);
 
     await this.start();
-    assert.notOk(this.store.state.partners['res.partner_5']);
-    assert.notOk(this.store.state.threads['mail.channel_200']);
+    assert.notOk(this.state.partners['res.partner_5']);
+    assert.notOk(this.state.threads['mail.channel_200']);
 
     const threadLocalId = this.store.dispatch('_createThread', {
         channel_type: 'chat',
@@ -206,7 +208,7 @@ QUnit.test('createThread: chat', async function (assert) {
         }],
         id: 200,
     });
-    const thread = this.store.state.threads[threadLocalId];
+    const thread = this.state.threads[threadLocalId];
     assert.strictEqual(threadLocalId, 'mail.channel_200');
     assert.ok(thread);
     assert.strictEqual(thread._model, 'mail.channel');
@@ -214,7 +216,7 @@ QUnit.test('createThread: chat', async function (assert) {
     assert.strictEqual(thread.id, 200);
     assert.strictEqual(thread.localId, 'mail.channel_200');
     assert.ok(thread.directPartnerLocalId);
-    const directPartner = this.store.state.partners['res.partner_5'];
+    const directPartner = this.state.partners['res.partner_5'];
     assert.ok(directPartner);
     assert.strictEqual(directPartner._model, 'res.partner');
     assert.strictEqual(directPartner.email, "demo@example.com");
@@ -224,46 +226,24 @@ QUnit.test('createThread: chat', async function (assert) {
     assert.strictEqual(directPartner.name, "Demo");
 });
 
-QUnit.test('saveChatWindowsStates', async function (assert) {
-    assert.expect(6);
+QUnit.test('saveChatWindowScrollTop', async function (assert) {
+    assert.expect(3);
     await this.start();
     assert.strictEqual(
-        Object.keys(this.store.state.chatWindowManager.storedChatWindowStates).length,
+        Object.keys(this.state.chatWindowManager.chatWindowInitialScrollTops).length,
         0,
-        "Initial value of storedChatWindowStates is {}"
+        "should not have initial scroll positions for any chat window initially"
     );
-    this.store.dispatch('saveChatWindowsStates', {
-        'mail.channel_1': {
-            composerAttachmentLocalIds: [
-                'ir.attachment_1',
-                'ir.attachment_2'
-            ],
-            composerTextInputHtmlContent: "<p><strong>XDU</strong></p>",
-            scrollTop: 42,
-        }
-    });
-    const storedChatWindowStates = this.store.state.chatWindowManager.storedChatWindowStates;
+    this.store.dispatch('saveChatWindowScrollTop', 'mail.channel_1', 42);
+    const chatWindowInitialScrollTops = this.state.chatWindowManager.chatWindowInitialScrollTops;
     assert.ok(
-        storedChatWindowStates['mail.channel_1'],
-        "A state has been stored for 'mail.channel_1'"
+        chatWindowInitialScrollTops['mail.channel_1'] !== undefined,
+        "Should have saved scroll positions for 'mail.channel_1'"
     );
     assert.strictEqual(
-        storedChatWindowStates['mail.channel_1'].composerTextInputHtmlContent,
-        "<p><strong>XDU</strong></p>",
-        "Composer input html content should be stored in composerTextInputHtmlContent key"
-    );
-    assert.strictEqual(
-        storedChatWindowStates['mail.channel_1'].scrollTop,
+        chatWindowInitialScrollTops['mail.channel_1'],
         42,
-        "Thread scrollTop value should be stored in scrollTop key"
-    );
-    assert.ok(
-        storedChatWindowStates['mail.channel_1'].composerAttachmentLocalIds.includes('ir.attachment_1'),
-        "Attachment 'ir.attachment_1' is stored in chat window state"
-    );
-    assert.ok(
-        storedChatWindowStates['mail.channel_1'].composerAttachmentLocalIds.includes('ir.attachment_2'),
-        "Attachment 'ir.attachment_2' is stored in chat window state"
+        "Should have saved correct scroll positions for 'mail.channel_1'"
     );
 });
 
@@ -271,13 +251,13 @@ QUnit.test('setChatWindowManagerNotifiedAutofocusCounter', async function (asser
     assert.expect(2);
     await this.start();
     assert.strictEqual(
-        this.store.state.chatWindowManager.notifiedAutofocusCounter,
+        this.state.chatWindowManager.notifiedAutofocusCounter,
         0,
         "Initial value of notifiedAutofocusCounter is 0"
     );
     this.store.dispatch('setChatWindowManagerNotifiedAutofocusCounter', 42);
     assert.strictEqual(
-        this.store.state.chatWindowManager.notifiedAutofocusCounter,
+        this.state.chatWindowManager.notifiedAutofocusCounter,
         42,
         "notifiedAutofocusCounter has been updated to 42"
     );

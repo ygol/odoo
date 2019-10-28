@@ -2,45 +2,41 @@ odoo.define('mail.widget.MessagingMenu', function (require) {
 'use strict';
 
 const MessagingMenuComponent = require('mail.component.MessagingMenu');
-const EnvMixin = require('mail.widget.EnvMixin');
+const OwlMixin = require('mail.widget.OwlMixin');
 
 const SystrayMenu = require('web.SystrayMenu');
 const Widget = require('web.Widget');
 
 /**
- * Odoo Widget, necessary to instanciate a root OWL widget.
+ * Odoo Widget, necessary to instantiate a root OWL widget.
  */
-const MessagingMenu = Widget.extend(EnvMixin, {
-    DEBUG: true,
+const MessagingMenu = Widget.extend(OwlMixin, {
+    IS_DEV: true,
     template: 'mail.widget.MessagingMenu',
+    /**
+     * @override
+     */
     init() {
-        this._super.apply(this, arguments);
+        this._super(...arguments);
         this.component = undefined;
 
-        if (this.DEBUG) {
+        MessagingMenuComponent.env = OwlMixin.getEnv.call(this);
+
+        if (this.IS_DEV) {
             window.systray_messaging_menu = this;
         }
     },
     /**
-     * @override {web.Widget}
-     */
-    willStart() {
-        return Promise.all([
-            this._super.apply(this, arguments),
-            this.getEnv()
-        ]);
-    },
-    /**
-     * @override {web.Widget}
+     * @override
      */
     destroy() {
         if (this.component) {
             this.component.destroy();
         }
-        this._super.apply(this, arguments);
+        this._super(...arguments);
     },
     async on_attach_callback() {
-        this.component = new MessagingMenuComponent(this.env);
+        this.component = new MessagingMenuComponent(null);
         await this.component.mount(this.$el[0]);
         // unwrap
         this.el.parentNode.insertBefore(this.component.el, this.el);

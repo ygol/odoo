@@ -5,11 +5,12 @@ const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
     inputFiles,
+    nextRender,
     pause,
     start: utilsStart,
 } = require('mail.owl.testUtils');
 
-const testUtils = require('web.test_utils');
+const { file: { createFile } } = require('web.test_utils');
 
 QUnit.module('mail.owl', {}, function () {
 QUnit.module('component', {}, function () {
@@ -20,14 +21,11 @@ QUnit.module('ChatWindowManager', {
             if (this.widget) {
                 this.widget.destroy();
             }
-            let {
-                store,
-                widget,
-            } = await utilsStart({
+            let { env, widget } = await utilsStart({
                 ...params,
                 data: this.data,
             });
-            this.store = store;
+            this.env = env;
             this.widget = widget;
         };
     },
@@ -60,9 +58,9 @@ QUnit.test('chat window new message: basic rendering', async function (assert) {
         },
     });
     document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`.o_MessagingMenu_newMessageButton`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelectorAll(`.o_ChatWindow`).length,
         1,
@@ -127,9 +125,9 @@ QUnit.test('chat window new message: focused on open', async function (assert) {
         },
     });
     document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`.o_MessagingMenu_newMessageButton`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.ok(
         document.querySelector(`.o_ChatWindow`).classList.contains('o-focused'),
         "chat window should be focused"
@@ -153,11 +151,11 @@ QUnit.test('chat window new message: close', async function (assert) {
         },
     });
     document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`.o_MessagingMenu_newMessageButton`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`.o_ChatWindow_header .o_ChatWindowHeader_commandClose`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelectorAll(`.o_ChatWindow`).length,
         0,
@@ -177,23 +175,23 @@ QUnit.test('chat window new message: fold', async function (assert) {
         },
     });
     document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`.o_MessagingMenu_newMessageButton`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.notOk(
         document.querySelector(`.o_ChatWindow`).classList.contains('o-folded'),
         "chat window should not be folded by default"
     );
 
     document.querySelector(`.o_ChatWindow_header`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.ok(
         document.querySelector(`.o_ChatWindow`).classList.contains('o-folded'),
         "chat window should become folded"
     );
 
     document.querySelector(`.o_ChatWindow_header`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.notOk(
         document.querySelector(`.o_ChatWindow`).classList.contains('o-folded'),
         "chat window should become unfolded"
@@ -232,9 +230,9 @@ QUnit.test('chat window: basic rendering', async function (assert) {
         },
     });
     document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`.o_MessagingMenu_dropdownMenu .o_ThreadPreviewList_preview`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelectorAll(`.o_ChatWindow`).length,
         1,
@@ -371,15 +369,15 @@ QUnit.test('chat window: fold', async function (assert) {
     });
     // Open Thread
     document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`.o_MessagingMenu_dropdownMenu .o_ThreadPreviewList_preview`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     // Fold chat window
     document.querySelector(`.o_ChatWindow_header`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     // Unfold chat window
     document.querySelector(`.o_ChatWindow_header`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.verifySteps(
         [
             'rpc:channel_fold/folded',
@@ -394,9 +392,9 @@ QUnit.test('chat window: open / close', async function (assert) {
 
     async function openThread() {
         document.querySelector(`.o_MessagingMenu_toggler`).click();
-        await testUtils.nextTick(); // re-render
+        await nextRender();
         document.querySelector(`.o_MessagingMenu_dropdownMenu .o_ThreadPreviewList_preview`).click();
-        await testUtils.nextTick(); // re-render
+        await nextRender();
     }
 
     Object.assign(this.data.initMessaging, {
@@ -489,7 +487,7 @@ QUnit.test('chat window: open / close', async function (assert) {
 
     // Close chat window
     document.querySelector(`.o_ChatWindowHeader_commandClose`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.verifySteps(['rpc:channel_fold/closed']);
 
     // Reopen chat window
@@ -552,9 +550,9 @@ QUnit.skip('chat window: state conservation on toggle home menu', async function
         },
     });
     document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`.o_MessagingMenu_dropdownMenu .o_ThreadPreviewList_preview`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     // Set a scroll position to chat window
     document.querySelector(`.o_Thread_messageList`).scrollTop = 142;
     // Set html content of the composer of the chat window
@@ -563,12 +561,12 @@ QUnit.skip('chat window: state conservation on toggle home menu', async function
     document.execCommand('insertText', false, 'XDU for the win !');
     // Set attachments of the composer
     const files = [
-        await testUtils.file.createFile({
+        await createFile({
             name: 'text.txt',
             content: 'hello, world',
             contentType: 'text/plain',
         }),
-        await testUtils.file.createFile({
+        await createFile({
             name: 'text2.txt',
             content: 'hello, xdu is da best man',
             contentType: 'text/plain',
@@ -616,113 +614,6 @@ QUnit.skip('chat window: state conservation on toggle home menu', async function
         document.querySelectorAll(`.o_Composer .o_Attachment`).length,
         2,
         "Chat window composer should have 2 attachments"
-    );
-});
-
-QUnit.test('chat window: state destroyed on close', async function (assert) {
-    assert.expect(3);
-
-    Object.assign(this.data.initMessaging, {
-        channel_slots: {
-            channel_channel: [{
-                channel_type: 'channel',
-                id: 20,
-                is_minimized: false,
-                name: "General",
-                state: 'open',
-                uuid: 'channel-20-uuid',
-            }],
-        },
-    });
-    await this.start({
-        async mockRPC(route, args) {
-            if (args.method === 'channel_fetch_preview') {
-                return [{
-                    id: 20,
-                    last_message: {
-                        author_id: [7, "Demo"],
-                        body: "<p>test</p>",
-                        channel_ids: [20],
-                        id: 100,
-                        message_type: 'comment',
-                        model: 'mail.channel',
-                        res_id: 20,
-                    },
-                }];
-            } else if (args.method === 'channel_fold') {
-                return;
-            } else if (args.method === 'message_fetch') {
-                return [...Array(20).keys()].map(i => {
-                    return {
-                        author_id: [11, "Demo"],
-                        body: "<p>body</p>",
-                        channel_ids: [20],
-                        date: "2019-04-20 10:00:00",
-                        id: i + 10,
-                        message_type: 'comment',
-                        model: 'mail.channel',
-                        record_name: 'General',
-                        res_id: i + 1,
-                    };
-                });
-            }
-            return this._super(...arguments);
-        },
-    });
-    document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
-    document.querySelector(`.o_MessagingMenu_dropdownMenu .o_ThreadPreviewList_preview`).click();
-    await testUtils.nextTick(); // re-render
-    // Set a scroll position to chat window
-    document.querySelector(`.o_Thread_messageList`).scrollTop = 142;
-    // Set html content of the composer of the chat window
-    let composerTextInputEditable = document.querySelector(`.o_ComposerTextInput_editable`);
-    composerTextInputEditable.focus();
-    document.execCommand('insertText', false, "XDU for the win !");
-    // Set attachments of the composer
-    const files = [
-        await testUtils.file.createFile({
-            name: 'text.txt',
-            content: 'hello, world',
-            contentType: 'text/plain',
-        }),
-        await testUtils.file.createFile({
-            name: 'text2.txt',
-            content: 'hello, xdu is da best man',
-            contentType: 'text/plain',
-        })
-    ];
-    await inputFiles(
-        document.querySelector('.o_Composer_fileInput'),
-        files
-    );
-    // Hide home menu
-    await this.widget.call('chat_window', 'test:will_hide_home_menu');
-    await this.widget.call('chat_window', 'test:hide_home_menu');
-    // Close chat window
-    document.querySelector(`.o_ChatWindowHeader_commandClose`).click();
-    await testUtils.nextTick(); // re-render
-    // Reopen chat window
-    document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
-    document.querySelector(`.o_MessagingMenu_dropdownMenu .o_ThreadPreviewList_preview`).click();
-    await testUtils.nextTick(); // re-render
-    const messageList = document.querySelector('.o_Thread_messageList');
-    assert.strictEqual(
-        messageList.scrollTop + messageList.clientHeight,
-        messageList.scrollHeight,
-        "chat window should have been scrolled to last message on opening"
-    );
-    composerTextInputEditable = document.querySelector(`.o_ComposerTextInput_editable`);
-    assert.strictEqual(
-        composerTextInputEditable.textContent,
-        "",
-        "chat window composer html input should be empty"
-    );
-    assert.strictEqual(
-        document.querySelectorAll(`.o_Composer .o_Attachment`).length,
-        0,
-        "chat window composer should have no attachments"
     );
 });
 
@@ -790,11 +681,11 @@ QUnit.test('open 2 different chat windows: enough screen width', async function 
         },
     });
     document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`
         .o_MessagingMenu_dropdownMenu
         .o_ThreadPreviewList_preview[data-thread-local-id="mail.channel_10"]`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelectorAll(`.o_ChatWindow`).length,
         1,
@@ -812,12 +703,12 @@ QUnit.test('open 2 different chat windows: enough screen width', async function 
     );
 
     document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`
         .o_MessagingMenu_dropdownMenu
         .o_ThreadPreviewList_preview[data-thread-local-id="mail.channel_20"]`
     ).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelectorAll(`.o_ChatWindow`).length,
         2,
@@ -848,7 +739,7 @@ QUnit.test('open 2 different chat windows: enough screen width', async function 
 QUnit.test('open 3 different chat windows: not enough screen width', async function (assert) {
     /**
      * computation uses following info:
-     * ([mocked] global window width: 900px @see initStoreStateAlteration param passed
+     * ([mocked] global window width: 900px @see initStoreState param passed
      *   to `mail.component.test_utils:create()` method)
      * (others: @see store action `_computeChatWindows`)
      *
@@ -883,7 +774,7 @@ QUnit.test('open 3 different chat windows: not enough screen width', async funct
         },
     });
     await this.start({
-        initStoreStateAlteration: {
+        initStoreState: {
             globalWindow: {
                 innerHeight: 900,
                 innerWidth: 900,
@@ -900,12 +791,12 @@ QUnit.test('open 3 different chat windows: not enough screen width', async funct
 
     // open, from systray menu, chat windows of channels with Id 1, 2, then 3
     document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`
         .o_MessagingMenu_dropdownMenu
         .o_ThreadPreviewList_preview[data-thread-local-id="mail.channel_1"]`
     ).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelectorAll(`.o_ChatWindow`).length,
         1,
@@ -918,12 +809,12 @@ QUnit.test('open 3 different chat windows: not enough screen width', async funct
     );
 
     document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`
         .o_MessagingMenu_dropdownMenu
         .o_ThreadPreviewList_preview[data-thread-local-id="mail.channel_2"]`
     ).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelectorAll(`.o_ChatWindow`).length,
         2,
@@ -936,12 +827,12 @@ QUnit.test('open 3 different chat windows: not enough screen width', async funct
     );
 
     document.querySelector(`.o_MessagingMenu_toggler`).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     document.querySelector(`
         .o_MessagingMenu_dropdownMenu
         .o_ThreadPreviewList_preview[data-thread-local-id="mail.channel_3"]`
     ).click();
-    await testUtils.nextTick(); // re-render
+    await nextRender();
     assert.strictEqual(
         document.querySelectorAll(`.o_ChatWindow`).length,
         2,

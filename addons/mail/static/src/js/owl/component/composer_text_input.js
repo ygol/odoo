@@ -80,7 +80,7 @@ class ComposerTextInput extends Component {
      * Load summernote, since this is not in the assets bundle.
      */
     willStart() {
-        if (this.env.isTestEnv) {
+        if (this.env.isTest) {
             return;
         }
         return ajax.loadLibs({

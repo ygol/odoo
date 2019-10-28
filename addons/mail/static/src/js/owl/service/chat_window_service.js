@@ -1,36 +1,32 @@
-odoo.define('mail.service.ChatWindowService', function (require) {
+odoo.define('mail.service.ChatWindow', function (require) {
 'use strict';
 
 const ChatWindowManager = require('mail.component.ChatWindowManager');
-const EnvMixin = require('mail.widget.EnvMixin');
+const OwlMixin = require('mail.widget.OwlMixin');
 
 const AbstractService = require('web.AbstractService');
-const core = require('web.core');
+const { bus, serviceRegistry } = require('web.core');
 
-const ChatWindowService = AbstractService.extend(EnvMixin, {
+const ChatWindowService = AbstractService.extend(OwlMixin, {
     /**
      * If set, chat window service instance is avaible from dev tools with
      * `chat_window_service`.
      */
-    DEBUG: true,
+    IS_DEV: true,
     /**
-     * Data related to chat window service when used in a test environment.
+     * This value is set when chat window service is used in a test
+     * environment. Useful to prevent sending and/or receiving events from
+     * core.bus.
      */
-    TEST_ENV: {
-        /**
-         * This value is set when chat window service is used in a test
-         * environment. Useful to prevent sending and/or receiving events from
-         * core.bus.
-         */
-        active: false,
-        container: 'body',
-    },
-    dependencies: ['env', 'store'],
+    IS_TEST: false,
+    TEST_TARGET: 'body',
+    dependencies: ['owl'],
     init() {
         this._super(...arguments);
         this._webClientReady = false;
-        if (this.DEBUG) {
-            window.chat_window_service = this;
+        ChatWindowManager.env = OwlMixin.getEnv.call(this);
+        if (this.IS_DEV) {
+            window.chat_windows_service = this;
         }
     },
     /**
@@ -38,12 +34,12 @@ const ChatWindowService = AbstractService.extend(EnvMixin, {
      */
     start() {
         this._super(...arguments);
-        if (!this.TEST_ENV.active) {
-            core.bus.on('hide_home_menu', this, this._onHideHomeMenu.bind(this));
-            core.bus.on('show_home_menu', this, this._onShowHomeMenu.bind(this));
-            core.bus.on('web_client_ready', this, this._onWebClientReady.bind(this));
-            core.bus.on('will_hide_home_menu', this, this._onWillHideHomeMenu.bind(this));
-            core.bus.on('will_show_home_menu', this, this._onWillShowHomeMenu.bind(this));
+        if (!this.IS_TEST) {
+            bus.on('hide_home_menu', this, this._onHideHomeMenu.bind(this));
+            bus.on('show_home_menu', this, this._onShowHomeMenu.bind(this));
+            bus.on('web_client_ready', this, this._onWebClientReady.bind(this));
+            bus.on('will_hide_home_menu', this, this._onWillHideHomeMenu.bind(this));
+            bus.on('will_show_home_menu', this, this._onWillShowHomeMenu.bind(this));
         } else {
             this['test:hide_home_menu'] = this._onHideHomeMenu;
             this['test:show_home_menu'] = this._onShowHomeMenu;
@@ -75,10 +71,10 @@ const ChatWindowService = AbstractService.extend(EnvMixin, {
             this.component.destroy();
             this.component = undefined;
         }
-        this.component = new ChatWindowManager(this.env);
+        this.component = new ChatWindowManager(null);
         let parentNode;
-        if (this.TEST_ENV.active) {
-            parentNode = document.querySelector(this.TEST_ENV.container);
+        if (this.IS_TEST) {
+            parentNode = document.querySelector(this.TEST_TARGET);
         } else {
             parentNode = document.querySelector('body');
         }
@@ -125,7 +121,7 @@ const ChatWindowService = AbstractService.extend(EnvMixin, {
      */
     async _onWillHideHomeMenu() {
         if (this.component) {
-            this.component.saveChatWindowsStates();
+            this.component.saveChatWindowsScrollTops();
         }
     },
     /**
@@ -133,12 +129,12 @@ const ChatWindowService = AbstractService.extend(EnvMixin, {
      */
     async _onWillShowHomeMenu() {
         if (this.component) {
-            this.component.saveChatWindowsStates();
+            this.component.saveChatWindowsScrollTops();
         }
     },
 });
 
-core.serviceRegistry.add('chat_window', ChatWindowService);
+serviceRegistry.add('chat_window', ChatWindowService);
 
 return ChatWindowService;
 

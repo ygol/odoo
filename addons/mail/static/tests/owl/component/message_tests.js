@@ -5,11 +5,10 @@ const Message = require('mail.component.Message');
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
+    nextRender,
     pause,
     start: startUtils,
 } = require('mail.owl.testUtils');
-
-const testUtils = require('web.test_utils');
 
 QUnit.module('mail.owl', {}, function () {
 QUnit.module('component', {}, function () {
@@ -17,22 +16,20 @@ QUnit.module('Message', {
     beforeEach() {
         utilsBeforeEach(this);
         this.createMessage = async (messageLocalId, otherProps) => {
-            const env = await this.widget.call('env', 'get');
-            this.message = new Message(env, {
-                messageLocalId,
-                ...otherProps
-            });
+            Message.env = this.env;
+            this.message = new Message(null, { messageLocalId, ...otherProps });
             await this.message.mount(this.widget.$el[0]);
+            await nextRender();
         };
         this.start = async params => {
             if (this.widget) {
                 this.widget.destroy();
             }
-            let { store, widget } = await startUtils({
+            let { env, widget } = await startUtils({
                 ...params,
                 data: this.data,
             });
-            this.store = store;
+            this.env = env;
             this.widget = widget;
         };
     },
@@ -44,7 +41,8 @@ QUnit.module('Message', {
         if (this.widget) {
             this.widget.destroy();
         }
-        this.store = undefined;
+        this.env = undefined;
+        delete Message.env;
     }
 });
 
@@ -52,7 +50,7 @@ QUnit.test('default', async function (assert) {
     assert.expect(12);
 
     await this.start();
-    const messageLocalId = this.store.dispatch('_createMessage', {
+    const messageLocalId = this.env.store.dispatch('_createMessage', {
         author_id: [7, "Demo User"],
         body: "<p>Test</p>",
         id: 100,
@@ -124,7 +122,7 @@ QUnit.test('deleteAttachment', async function (assert) {
     assert.expect(2);
 
     await this.start();
-    const messageLocalId = this.store.dispatch('_createMessage', {
+    const messageLocalId = this.env.store.dispatch('_createMessage', {
         attachment_ids: [{
             filename: "BLAH.jpg",
             id: 10,
@@ -135,11 +133,10 @@ QUnit.test('deleteAttachment', async function (assert) {
         id: 100,
     });
     await this.createMessage(messageLocalId);
-    await testUtils.nextTick();
     document.querySelector('.o_Attachment_asideItemUnlink').click();
-    await testUtils.nextTick();
-    assert.ok(!this.store.state.attachments['ir.attachment_10']);
-    assert.ok(!this.store.state.messages[messageLocalId].attachmentLocalIds['ir.attachment_10']);
+    await nextRender();
+    assert.ok(!this.env.store.state.attachments['ir.attachment_10']);
+    assert.ok(!this.env.store.state.messages[messageLocalId].attachmentLocalIds['ir.attachment_10']);
 });
 
 });

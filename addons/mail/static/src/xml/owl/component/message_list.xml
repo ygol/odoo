@@ -4,7 +4,7 @@
     <t t-name="mail.component.MessageList" owl="1">
         <div class="o_MessageList" t-att-class="{ 'o-empty': storeProps.messages.length === 0, 'o-has-message-selection': props.selectedMessageLocalId }" t-on-scroll="_onScroll">
             <t t-if="storeProps.messages.length === 0">
-                <div class="o_MessageList_empty" t-key="'empty'">
+                <div class="o_MessageList_empty">
                     <t t-if="storeProps.thread.localId === 'mail.box_inbox'">
                         <div class="o_MessageList_emptyTitle">
                             Congratulations, your inbox is empty
@@ -29,26 +29,26 @@
                 </div>
             </t>
             <t t-elif="storeProps.threadCache.isLoadingMore">
-                <div class="o_MessageList_isLoadingMore" t-key="'isLoadingMore'">
+                <div class="o_MessageList_isLoadingMore">
                     <i class="o_MessageList_isLoadingMoreIcon fa fa-spin fa-spinner"/>Loading...
                 </div>
             </t>
             <t t-elif="!storeProps.threadCache.isAllHistoryLoaded">
-                <a class="o_MessageList_loadMore" href="#" t-on-click="_onClickLoadMore" t-ref="loadMore" t-key="'load_more'">
+                <a class="o_MessageList_loadMore" href="#" t-on-click="_onClickLoadMore" t-ref="loadMore">
                     Load more
                 </a>
             </t>
             <t t-set="current_day" t-value="0"/>
             <t t-set="prev_message" t-value="0"/>
             <t t-if="storeProps.thread._model === 'mail.channel' and storeProps.thread.message_unread_counter > 0 and !storeProps.thread.seen_message_id">
-                <div class="o_MessageList_separator o_MessageList_separatorNewMessages" t-att-class="{ 'o-test-env': env.isTestEnv }" t-transition="fade" t-key="'new_message_separator'">
+                <div class="o_MessageList_separator o_MessageList_separatorNewMessages" t-att-class="{ 'o-is-test': env.isTest }" t-transition="fade">
                     <hr class="o_MessageList_separatorLine o_MessageList_separatorLineNewMessages"/><span class="o_MessageList_separatorLabel o_MessageList_separatorLabelNewMessages">New messages</span>
                 </div>
             </t>
-            <t t-foreach="messages" t-as="message">
+            <t t-foreach="messages" t-as="message" t-key="message.localId">
                 <t t-set="message_day" t-value="getDateDay(message)"/>
                 <t t-if="current_day !== message_day">
-                    <div class="o_MessageList_separator o_MessageList_separatorDate" t-key="'date_separator' + message_day">
+                    <div class="o_MessageList_separator o_MessageList_separatorDate">
                         <hr class="o_MessageList_separatorLine"/><span class="o_MessageList_separatorLabel o_MessageList_separatorLabelDate"><t t-esc="message_day"/></span><hr class="o_MessageList_separatorLine"/>
                         <t t-set="current_day" t-value="message_day"/>
                         <t t-set="isMessageSquashed" t-value="false"/>
@@ -70,11 +70,10 @@
                     messageLocalId="message.localId"
                     threadLocalId="props.threadLocalId"
                     t-ref="{{ message.localId }}"
-                    t-key="message.localId"
                 />
                 <t t-set="prev_message" t-value="message"/>
                 <t t-if="storeProps.thread._model === 'mail.channel' and storeProps.thread.message_unread_counter > 0 and storeProps.thread.seen_message_id === message.id">
-                    <div class="o_MessageList_separator o_MessageList_separatorNewMessages" t-att-class="{ 'o-test-env': env.isTestEnv }" t-transition="fade" t-key="'new_message_separator'">
+                    <div class="o_MessageList_separator o_MessageList_separatorNewMessages" t-att-class="{ 'o-is-test': env.isTest }" t-transition="fade">
                         <hr class="o_MessageList_separatorLine o_MessageList_separatorLineNewMessages"/><span class="o_MessageList_separatorLabel o_MessageList_separatorLabelNewMessages">New messages</span>
                     </div>
                 </t>

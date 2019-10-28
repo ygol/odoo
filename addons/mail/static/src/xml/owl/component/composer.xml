@@ -16,12 +16,12 @@
                     t-ref="dropzone"
                 />
             </t>
-            <input class="o_Composer_fileInput" t-on-change="_onChangeAttachment" multiple="true" type="file" t-ref="fileInput" t-key="'fileInput'"/>
+            <input class="o_Composer_fileInput" t-on-change="_onChangeAttachment" multiple="true" type="file" t-ref="fileInput"/>
             <t t-if="hasHeader">
                 <div class="o_Composer_coreHeader">
                     <t t-if="props.hasThreadName and storeProps.thread">
                         <span class="o_Composer_threadName">
-                            on: <b><t t-esc="storeGetters.threadName(props.threadLocalId)"/></b>
+                            on: <b><t t-esc="storeGetters.threadName(storeProps.thread.localId)"/></b>
                         </span>
                     </t>
                     <t t-if="props.hasFollowers and !props.isLog">
@@ -41,8 +41,8 @@
                         <t t-if="storeProps.fullSuggestedRecipients.length">
                             <!-- List of followers -->
                             <div class="o_Composer_suggestedPartners">
-                                <t t-foreach="state.hasAllSuggestedRecipients ? storeprops.fullSuggestedRecipients : storeProps.fullSuggestedRecipients.slice(0, 2)" t-as="recipient">
-                                    <div t-attf-title="Add as recipient and follower (reason: {{ recipient.reason }})" t-key="recipient.partner.id">
+                                <t t-foreach="state.hasAllSuggestedRecipients ? storeprops.fullSuggestedRecipients : storeProps.fullSuggestedRecipients.slice(0, 2)" t-as="recipient" t-key="recipient.partner.id">
+                                    <div t-attf-title="Add as recipient and follower (reason: {{ recipient.reason }})">
                                         <div class="custom-control custom-checkbox">
                                             <input class="custom-control-input" t-attf-id="_suggested_partners_{{ recipient_index }}" t-att-checked="recipient.checked" type="checkbox"/>
                                             <label class="custom-control-label" t-attf-for="_suggested_partners_{{ recipient_index }}">
@@ -101,7 +101,7 @@
                         </t>
                     </div>
                     <t t-if="props.hasSendButton and props.areButtonsInline">
-                        <button class="o_Composer_actionButton o_Composer_button o_Composer_buttonSend btn btn-primary" t-att-class="storeProps.isMobile ? 'fa fa-paper-plane-o' : ''" t-on-click="_onClickSend" t-att-disabled="(!state.hasTextInputContent and storeProps.attachmentLocalIds.length === 0) ? 'disabled' : ''" type="button">
+                        <button class="o_Composer_actionButton o_Composer_button o_Composer_buttonSend btn btn-primary" t-att-class="storeProps.isMobile ? 'fa fa-paper-plane-o' : ''" t-on-click="_onClickSend" t-att-disabled="(!state.hasTextInputContent and storeProps.composer.attachmentLocalIds.length === 0) ? 'disabled' : ''" type="button">
                             <t t-if="!storeProps.isMobile"><t t-if="props.isLog">Log</t><t t-else="">Send</t></t>
                         </button>
                     </t>
@@ -114,11 +114,11 @@
             </div>
             <t t-if="hasFooter">
                 <div class="o_Composer_coreFooter">
-                    <t t-if="storeProps.attachmentLocalIds.length > 0">
+                    <t t-if="storeProps.composer.attachmentLocalIds.length > 0">
                         <AttachmentList
                             class="o_Composer_attachmentList"
                             areAttachmentsEditable="true"
-                            attachmentLocalIds="storeProps.attachmentLocalIds"
+                            attachmentLocalIds="storeProps.composer.attachmentLocalIds"
                             attachmentsLayout="props.attachmentsLayout"
                             haveAttachmentsLabelForCardLayout="props.haveAttachmentsLabelForCardLayout"
                         />

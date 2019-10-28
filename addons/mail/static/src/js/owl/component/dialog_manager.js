@@ -14,11 +14,11 @@ class DialogManager extends Component {
      */
     constructor(...args) {
         super(...args);
-        this.DEBUG = true;
+        this.IS_DEV = true;
         this.storeProps = useStore(state => {
             return Object.assign({}, state.dialogManager);
         });
-        if (this.DEBUG) {
+        if (this.IS_DEV) {
             window.dialog_manager = this;
         }
     }

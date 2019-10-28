@@ -32,6 +32,7 @@ class Thread extends Component {
                 : undefined;
             return {
                 isMobile: state.isMobile,
+                thread,
                 threadCache,
                 threadCacheLocalId,
             };
@@ -45,47 +46,29 @@ class Thread extends Component {
          * Reference of the message list. Useful to determine scroll positions.
          */
         this._messageListRef = useRef('messageList');
+
         /**
-         * Track when message list has been mounted. Message list should notify
-         * by means of `o-message-list-mounted` custom event, so that next
-         * `mounted()` or `patched()` call set the scroll position of message
-         * list. @see messageListInitialScrollTop prop definitions.
+         * Last rendered thread cache. Useful to determine a change of thread
+         * cache, which is useful to set initial scroll position of message
+         * list.
          */
-        this._isMessageListJustMounted = false;
+        this._lastRenderedThreadCacheLocalId = undefined;
+        /**
+         * Determine whether there is a change of thread cache happening.
+         * This is useful to set initial scroll position of message. Note that
+         * there may be a change of thread cache, but the cache is not yet
+         * loaded, hence setting the initial scroll position of message list
+         * may have to wait for several patches.
+         */
+        this._isChangeOfThreadCache = false;
     }
 
     mounted() {
-        if (
-            !this.storeProps.threadCache ||
-            (
-                !this.storeProps.threadCache.isLoaded &&
-                !this.storeProps.threadCache.isLoading
-            )
-        ) {
-            this._loadThreadCache();
-        }
-        if (this._isMessageListJustMounted) {
-            this._isMessageListJustMounted = false;
-            this._handleMessageListScrollOnMount();
-        }
-        this.trigger('o-rendered');
+        this._update();
     }
 
     patched() {
-        if (
-            !this.storeProps.threadCache ||
-            (
-                !this.storeProps.threadCache.isLoaded &&
-                !this.storeProps.threadCache.isLoading
-            )
-        ) {
-            this._loadThreadCache();
-        }
-        if (this._isMessageListJustMounted) {
-            this._isMessageListJustMounted = false;
-            this._handleMessageListScrollOnMount();
-        }
-        this.trigger('o-rendered');
+        this._update();
     }
 
     //--------------------------------------------------------------------------
@@ -113,19 +96,6 @@ class Thread extends Component {
     }
 
     /**
-     * Get the state of the composer. This is useful to backup thread state on
-     * re-mount.
-     *
-     * @return {Object|undefined}
-     */
-    getComposerState() {
-        if (!this.props.hasComposer) {
-            return;
-        }
-        return this._composerRef.comp.getState();
-    }
-
-    /**
      * Get the scroll position in the message list.
      *
      * @return {integer|undefined}
@@ -145,22 +115,6 @@ class Thread extends Component {
     //--------------------------------------------------------------------------
 
     /**
-     * Handle initial scroll value for message list subcomponent.
-     * We need to this within thread as the scroll position for message list
-     * can be affected by the composer component.
-     *
-     * @private
-     */
-    async _handleMessageListScrollOnMount() {
-        const messageList = this._messageListRef.comp;
-        if (this.props.messageListInitialScrollTop !== undefined) {
-            await messageList.setScrollTop(this.props.messageListInitialScrollTop);
-        } else if (messageList.hasMessages()) {
-            await messageList.scrollToLastMessage();
-        }
-    }
-
-    /**
      * Load the thread cache, i.e. the thread at given domain for the messages.
      *
      * @private
@@ -171,18 +125,40 @@ class Thread extends Component {
         });
     }
 
-    //--------------------------------------------------------------------------
-    // Handlers
-    //--------------------------------------------------------------------------
-
     /**
-     * Called when message list notifies it just has been mounted.
+     * Set the scroll position of message list.
      *
      * @private
-     * @param {CustomEvent} ev
      */
-    _onMessageListMounted(ev) {
-        this._isMessageListJustMounted = true;
+    async _setMessageListInitialScroll() {
+        const messageList = this._messageListRef.comp;
+        if (this.props.messageListInitialScrollTop !== undefined) {
+            await messageList.setScrollTop(this.props.messageListInitialScrollTop);
+        } else if (messageList.hasMessages()) {
+            await messageList.scrollToLastMessage();
+        }
+    }
+
+    /**
+     * Called when thread component is mounted or patched.
+     *
+     * @private
+     */
+    _update() {
+        if (!this.storeProps.threadCache || (!this.storeProps.threadCache.isLoaded && !this.storeProps.threadCache.isLoading)) {
+            this._loadThreadCache();
+        }
+        if (this._lastRenderedThreadCacheLocalId !== this.storeProps.threadCacheLocalId) {
+            this._isChangeOfThreadCache = true;
+        }
+        if (this._isChangeOfThreadCache && this.storeProps.threadCache && this.storeProps.threadCache.isLoaded) {
+            this._setMessageListInitialScroll();
+            this._isChangeOfThreadCache = false;
+        } else if (this._messageListRef.comp) {
+            this._messageListRef.comp.updateScroll();
+        }
+        this._lastRenderedThreadCacheLocalId = this.storeProps.threadCacheLocalId;
+        this.trigger('o-rendered');
     }
 }
 
@@ -207,15 +183,6 @@ Thread.props = {
         optional: true,
     },
     composerAttachmentLayout: {
-        type: String,
-        optional: true,
-    },
-    composerInitialAttachmentLocalIds: {
-        type: Array,
-        element: String,
-        optional: true,
-    },
-    composerInitialTextInputHtmlContent: {
         type: String,
         optional: true,
     },

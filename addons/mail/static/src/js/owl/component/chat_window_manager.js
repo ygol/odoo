@@ -15,22 +15,22 @@ class ChatWindowManager extends Component {
      */
     constructor(...args) {
         super(...args);
-        this.DEBUG = true;
+        this.IS_DEV = true;
         this.TEXT_DIRECTION = this.env._t.database.parameters.direction;
         this.storeDispatch = useDispatch();
         this.storeProps = useStore(state => {
             const {
                 autofocusCounter,
                 autofocusChatWindowLocalId,
+                chatWindowInitialScrollTops,
                 computed,
-                storedChatWindowStates,
             } = state.chatWindowManager;
             return {
                 autofocusCounter,
                 autofocusChatWindowLocalId,
+                chatWindowInitialScrollTops,
                 computed,
                 isMobile: state.isMobile,
-                storedChatWindowStates,
             };
         });
         /**
@@ -46,7 +46,7 @@ class ChatWindowManager extends Component {
          */
         this._lastAutofocusedCounter = 0;
         this._lastAutofocusedChatWindowLocalId = undefined;
-        if (this.DEBUG) {
+        if (this.IS_DEV) {
             window.chat_window_manager = this;
         }
     }
@@ -102,25 +102,17 @@ class ChatWindowManager extends Component {
     }
 
     /**
-     * Save the states of chat windows in the store that are related to a
-     * thread. This includes scroll positions and composer state
-     * (input content + attachments).
+     * Save the scroll positions of chat windows in the store. This happens
+     * when chat window manager has to be re-mounted, but the scroll positions
+     * should be recovered.
      */
-    saveChatWindowsStates() {
-        this.storeDispatch('saveChatWindowsStates', Object
-            .entries(this.__owl__.refs)
-            .reduce((acc, [refId, ref]) => {
-                if (!refId.startsWith('chatWindow_')) {
-                    return acc;
-                }
-                if (ref.props.chatWindowLocalId === 'new_message') {
-                    return acc;
-                }
-                return Object.assign({}, acc, {
-                    [ref.props.chatWindowLocalId]: ref.getState(),
-                });
-            }, {})
-        );
+    saveChatWindowsScrollTops() {
+        const chatWindowsWithThreadRefs = Object.entries(this.__owl__.refs)
+            .filter(([refId, ref]) => refId.startsWith('chatWindow_'))
+            .map(([refId, ref]) => ref);
+        for (const chatWindowRef of chatWindowsWithThreadRefs) {
+            chatWindowRef.saveScrollTop();
+        }
     }
 
     //--------------------------------------------------------------------------

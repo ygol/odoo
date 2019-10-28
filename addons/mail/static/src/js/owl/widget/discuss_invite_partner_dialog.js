@@ -29,9 +29,7 @@ const PartnerInviteDialog = Dialog.extend({
         this.channelId = store.state.threads[activeThreadLocalId].id;
         this.store = store;
         this._super(parent, {
-            title: _.str.sprintf(
-                _t("Invite people to #%s"),
-                channelName),
+            title: _.str.sprintf(_t("Invite people to #%s"), channelName),
             size: 'medium',
             buttons: [{
                 text: _t("Invite"),
@@ -108,7 +106,8 @@ const PartnerInviteDialog = Dialog.extend({
         const names = _.escape(_.pluck(data, 'text').join(', '));
         const notification = _.str.sprintf(
             _t("You added <b>%s</b> to the conversation."),
-            names);
+            names
+        );
         this.do_notify(_t("New people"), notification);
     },
 });

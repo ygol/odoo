@@ -6,6 +6,7 @@ const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
     dragenterFiles,
+    nextRender,
     pause,
     start: utilsStart,
 } = require('mail.owl.testUtils');
@@ -21,23 +22,21 @@ QUnit.module('Thread', {
          * @param {Object} [otherProps]
          */
         this.createThread = async (threadLocalId, otherProps) => {
-            const env = await this.widget.call('env', 'get');
-            this.thread = new Thread(env, {
-                threadLocalId,
-                ...otherProps,
-            });
+            Thread.env = this.env;
+            this.thread = new Thread(null, { threadLocalId, ...otherProps });
             await this.thread.mount(this.widget.$el[0]);
+            await nextRender();
         };
 
         this.start = async params => {
             if (this.widget) {
                 this.widget.destroy();
             }
-            let { store, widget } = await utilsStart({
+            let { env, widget } = await utilsStart({
                 ...params,
                 data: this.data,
             });
-            this.store = store;
+            this.env = env;
             this.widget = widget;
         };
     },
@@ -49,7 +48,8 @@ QUnit.module('Thread', {
         if (this.widget) {
             this.widget.destroy();
         }
-        this.store = undefined;
+        this.env = undefined;
+        delete Thread.env;
     }
 });
 
@@ -57,7 +57,7 @@ QUnit.test('dragover files on thread with composer', async function (assert) {
     assert.expect(1);
 
     await this.start();
-    const threadLocalId = this.store.dispatch('_createThread', {
+    const threadLocalId = this.env.store.dispatch('_createThread', {
         channel_type: 'channel',
         id: 100,
         members: [

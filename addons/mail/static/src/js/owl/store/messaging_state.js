@@ -9,6 +9,7 @@ const config = require('web.config');
  */
 function init(alteration) {
     let state = {
+        isMessagingReady: false,
         MESSAGE_FETCH_LIMIT: 30,
         PREVIEW_MSG_MAX_SIZE: 350,
         attachments: {},
@@ -34,6 +35,13 @@ function init(alteration) {
              * autofocus it nonetheless.
              */
             autofocusCounter: 0,
+            /**
+             * Initial scrolltops of chat windows.
+             *
+             * - key: chatWindowLocalId
+             * - value: scrollTop
+             */
+            chatWindowInitialScrollTops: {},
             /**
              * Ordered list of chat windows, from right to left when docked.
              */
@@ -92,28 +100,8 @@ function init(alteration) {
              * case it is mounted and the autofocus counter has not changed.
              */
             notifiedAutofocusCounter: 0,
-            /**
-             * Stored chat window states (scroll positions, composer text & composer attachments).
-             * Useful to restore chat window UI state when showing/hiding home menu.
-             * This is necessary because toggling home menu cleans the DOM, so chat windows need
-             * re-mount.
-             *
-             * Format:
-             *    {
-             *       [chatWindowLocalId]: {
-             *           composerAttachmentLocalIds {string[]},
-             *           composerTextInputHtmlContent {string},
-             *           scrollTop {integer},
-             *       },
-             *    }
-             */
-            storedChatWindowStates: {}
         },
         commands: {},
-        /**
-         * State slice related to Composers.
-         * (key: composerId, value: store data of component)
-         */
         composers: {},
         currentPartnerLocalId: undefined,
         /**
@@ -162,18 +150,6 @@ function init(alteration) {
              */
             menu_id: null,
             /**
-             * Stored state of composers of a thread. Composer state is stored
-             * on changing thread, and is recover on re-selecting this thread.
-             *
-             * - Key: threadLocalId
-             * - Value:
-             *      {
-             *          attachmentLocalIds,
-             *          textInputHtmlContent,
-             *      }
-             */
-            storedThreadComposers: {},
-            /**
              * Stringified domain. This is computed once in order to avoid
              * making JSON.stringify whenever we need the stringified domain.
              * Stringified domain is used to determine the thread cache local
@@ -181,6 +157,13 @@ function init(alteration) {
              * cache changes.
              */
             stringifiedDomain: '[]',
+            /**
+             * Initial scrolltops of threads.
+             *
+             * - key: threadLocalId
+             * - value: scrollTop
+             */
+            threadInitialScrollTops: {},
         },
         /**
          * State slice related to global window object dynamic properties.

@@ -10,20 +10,19 @@
                 </div>
             </div>
             <ul class="dropdown-menu dropdown-menu-right o_ChatWindowHiddenMenu_list" t-att-class="{ show: state.isOpen }" role="menu" t-ref="list">
-                <t t-foreach="props.chatWindowLocalIds" t-as="chatWindowLocalId">
-                    <li class="o_ChatWindowHiddenMenu_listItem" role="menuitem" t-key="'li_' + chatWindowLocalId">
+                <t t-foreach="props.chatWindowLocalIds" t-as="chatWindowLocalId" t-key="chatWindowLocalId">
+                    <li class="o_ChatWindowHiddenMenu_listItem" role="menuitem">
                         <ChatWindowHeader
                             class="o_ChatWindowHiddenMenu_chatWindowHeader"
                             t-on-o-clicked="_onClickedChatWindow"
                             t-on-o-close="_onCloseChatWindow"
                             chatWindowLocalId="chatWindowLocalId"
-                            t-key="'chatWindowHeader_' + chatWindowLocalId"
                         />
                     </li>
                 </t>
             </ul>
             <t t-if="unreadCounter > 0">
-                <div class="badge badge-pill o_ChatWindowHiddenMenu_unreadCounter" t-key="'unreadCounter'">
+                <div class="badge badge-pill o_ChatWindowHiddenMenu_unreadCounter">
                     <t t-esc="unreadCounter"/>
                 </div>
             </t>

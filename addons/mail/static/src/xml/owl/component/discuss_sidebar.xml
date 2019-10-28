@@ -3,23 +3,22 @@
 
     <t t-name="mail.component.DiscussSidebar" owl="1">
         <div class="o_DiscussSidebar">
-            <div class="o_DiscussSidebar_group o_DiscussSidebar_groupMailbox" t-key="'mailbox'">
-                <t t-foreach="storeProps.pinnedMailboxList" t-as="mailbox">
+            <div class="o_DiscussSidebar_group o_DiscussSidebar_groupMailbox">
+                <t t-foreach="storeProps.pinnedMailboxList" t-as="mailbox" t-key="mailbox.localId">
                     <SidebarItem
                         class="o_DiscussSidebar_item"
                         isActive="props.activeThreadLocalId === mailbox.localId"
                         threadLocalId="mailbox.localId"
                         t-on-o-clicked="_onClickedItem"
                         t-ref="{{ mailbox.localId }}"
-                        t-key="mailbox.localId"
                     />
                 </t>
             </div>
-            <hr class="o_DiscussSidebar_separator" t-key="'separator'"/>
+            <hr class="o_DiscussSidebar_separator"/>
             <t t-if="storeProps.pinnedMailChannelAmount > 19">
-                <input class="o_DiscussSidebar_quickSearch" t-on-input.stop="_onInputQuickSearch" placeholder="Quick search..." t-ref="quickSearch" t-key="'quickSearch'"/>
+                <input class="o_DiscussSidebar_quickSearch" t-on-input.stop="_onInputQuickSearch" placeholder="Quick search..." t-ref="quickSearch"/>
             </t>
-            <div class="o_DiscussSidebar_group o_DiscussSidebar_groupChannel" t-key="'channel'">
+            <div class="o_DiscussSidebar_group o_DiscussSidebar_groupChannel">
                 <div class="o_DiscussSidebar_groupHeader">
                     <div class="o_DiscussSidebar_groupHeaderItem o_DiscussSidebar_groupTitle o_clickable" t-on-click.stop="_onClickChannelTitle">
                         Channels
@@ -29,7 +28,7 @@
                 </div>
                 <div class="o_DiscussSidebar_list">
                     <t t-if="props.isAddingChannel">
-                        <div class="o_DiscussSidebar_item o_DiscussSidebar_itemNew" t-key="'add_item_channel'">
+                        <div class="o_DiscussSidebar_item o_DiscussSidebar_itemNew">
                             <AutocompleteInput
                                 class="o_DiscussSidebar_itemNewInput"
                                 isFocusOnMount="true"
@@ -41,19 +40,18 @@
                             />
                         </div>
                     </t>
-                    <t t-foreach="quickSearchChannelList" t-as="channel">
+                    <t t-foreach="quickSearchChannelList" t-as="channel" t-key="channel.localId">
                         <SidebarItem
                             class="o_DiscussSidebar_item"
                             isActive="props.activeThreadLocalId === channel.localId"
                             threadLocalId="channel.localId"
                             t-on-o-clicked="_onClickedItem"
                             t-ref="{{ channel.localId }}"
-                            t-key="channel.localId"
                         />
                     </t>
                 </div>
             </div>
-            <div class="o_DiscussSidebar_group o_DiscussSidebar_groupChat" t-key="'chat'">
+            <div class="o_DiscussSidebar_group o_DiscussSidebar_groupChat">
                 <div class="o_DiscussSidebar_groupHeader">
                     <div class="o_DiscussSidebar_groupHeaderItem o_DiscussSidebar_groupTitle">
                         Direct Messages
@@ -63,7 +61,7 @@
                 </div>
                 <div class="o_DiscussSidebar_list">
                     <t t-if="props.isAddingChat">
-                        <div class="o_DiscussSidebar_item o_DiscussSidebar_itemNew" t-key="'add_item_chat'">
+                        <div class="o_DiscussSidebar_item o_DiscussSidebar_itemNew">
                             <AutocompleteInput
                                 class="o_DiscussSidebar_itemNewInput"
                                 isFocusOnMount="true"
@@ -74,14 +72,13 @@
                             />
                         </div>
                     </t>
-                    <t t-foreach="quickSearchChatList" t-as="chat">
+                    <t t-foreach="quickSearchChatList" t-as="chat" t-key="chat.localId">
                         <SidebarItem
                             class="o_DiscussSidebar_item"
                             isActive="props.activeThreadLocalId === chat.localId"
                             threadLocalId="chat.localId"
                             t-on-o-clicked="_onClickedItem"
                             t-ref="{{ chat.localId }}"
-                            t-key="chat.localId"
                         />
                     </t>
                 </div>

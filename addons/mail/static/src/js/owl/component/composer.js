@@ -19,12 +19,7 @@ class Composer extends Component {
      */
     constructor(...args) {
         super(...args);
-        /**
-         * Unique local data used to track file uploads from this component.
-         * This is used to intercept event telling that the files have been
-         * uploaded.
-         */
-        this.fileuploadId = _.uniqueId('o_Composer_fileupload');
+        this.fileuploadId = _.uniqueId('composerComponent_');
         this.state = useState({
             /**
              * Determine whether the "all" suggested recipients should be
@@ -48,18 +43,17 @@ class Composer extends Component {
         this.storeDispatch = useDispatch();
         this.storeGetters = useGetters();
         this.storeProps = useStore((state, props) => {
-            const storeComposerState = _.defaults({}, state.composers[props.id], {
-                attachmentLocalIds: [],
-            });
-            return Object.assign({}, storeComposerState, {
+            const composer = state.composers[props.composerLocalId];
+            return {
+                composer,
                 fullSuggestedRecipients: (props.suggestedRecipients || []).map(recipient => {
                     return Object.assign({}, recipient, {
                         partner: state.partners[recipient.partnerLocalId],
                     });
                 }),
                 isMobile: state.isMobile,
-                thread: state.threads[props.threadLocalId],
-            });
+                thread: state.threads[composer.threadLocalId],
+            };
         });
         /**
          * Reference of the emoji button. Useful to include emoji popover as
@@ -101,26 +95,10 @@ class Composer extends Component {
         if (this.props.isFocusOnMount) {
             this.focus();
         }
-        if (this.env.store.state.composers[this.props.id]) {
-            throw new Error(`Already some store data in composer with id '${this.props.id}'`);
-        }
-        this.storeDispatch('createComposer', this.props.id, {
-            attachmentLocalIds: this.props.initialAttachmentLocalIds || [],
-        });
         document.addEventListener('click', this._onClickCaptureGlobal, true);
         document.addEventListener('dragenter', this._onDragenterCaptureGlobal, true);
         document.addEventListener('dragleave', this._onDragleaveCaptureGlobal, true);
         document.addEventListener('drop', this._onDropCaptureGlobal, true);
-    }
-
-    /**
-     * @param {Object} nextProps
-     * @param {string} nextProps.id
-     */
-    willUpdateProps(nextProps) {
-        if (nextProps.id !== this.props.id) {
-            throw new Error("'id' in props changed. Parent should keep same 'id' for same instance of component");
-        }
     }
 
     patched() {
@@ -131,7 +109,6 @@ class Composer extends Component {
     }
 
     willUnmount() {
-        this.storeDispatch('deleteComposer', this.props.id);
         $(window).off(this.fileuploadId, this._onAttachmentUploaded);
         document.removeEventListener('click', this._onClickCaptureGlobal, true);
         document.removeEventListener('dragenter', this._onDragenterCaptureGlobal, true);
@@ -165,7 +142,7 @@ class Composer extends Component {
      * @return {boolean}
      */
     get hasFooter() {
-        return this.storeProps.attachmentLocalIds.length > 0;
+        return this.storeProps.composer.attachmentLocalIds.length > 0;
     }
 
     /**
@@ -201,19 +178,6 @@ class Composer extends Component {
         this._textInputRef.comp.focusout();
     }
 
-    /**
-     * Get state of composer, which is basically text input content and
-     * attachments. Useful to restore the state on another composer component.
-     *
-     * @return {Object}
-     */
-    getState() {
-        return {
-            attachmentLocalIds: this.storeProps.attachmentLocalIds,
-            textInputHtmlContent: this._textInputRef.comp.getHtmlContent(),
-        };
-    }
-
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
@@ -226,14 +190,12 @@ class Composer extends Component {
     async _postMessage() {
         // TODO: take suggested recipients into account
         try {
-            await this.storeDispatch('postMessageOnThread', this.props.threadLocalId, {
-                attachmentLocalIds: this.storeProps.attachmentLocalIds,
+            await this.storeDispatch('postMessage', this.props.composerLocalId, {
                 htmlContent: this._textInputRef.comp.getHtmlContent(),
                 isLog: this.props.isLog,
-                threadCacheLocalId: this.props.threadCacheLocalId,
             });
             this._textInputRef.comp.reset();
-            this.storeDispatch('unlinkAttachmentsFromComposer', this.props.id);
+            this.storeDispatch('unlinkAttachmentsFromComposer', this.props.composerLocalId);
             // TODO: we might need to remove trigger and use the store to wait for
             // the post rpc to be done
             this.trigger('o-message-posted');
@@ -251,7 +213,7 @@ class Composer extends Component {
      */
     async _uploadFiles(files) {
         for (const file of files) {
-            const attachment = this.storeProps.attachmentLocalIds
+            const attachment = this.storeProps.composer.attachmentLocalIds
                 .map(localId => this.env.store.state.attachments[localId])
                 .find(attachment =>
                     attachment.name === file.name && attachment.size === file.size);
@@ -266,7 +228,7 @@ class Composer extends Component {
                 isTemporary: true,
                 name: file.name,
             });
-            this.storeDispatch('linkAttachmentToComposer', this.props.id, attachmentLocalId);
+            this.storeDispatch('linkAttachmentToComposer', this.props.composerLocalId, attachmentLocalId);
         }
         let formData = new window.FormData();
         formData.append('callback', this.fileuploadId);
@@ -380,7 +342,7 @@ class Composer extends Component {
      * @private
      */
     async _onClickFullComposer() {
-        const attachmentIds = this.storeProps.attachmentLocalIds
+        const attachmentIds = this.storeProps.composer.attachmentLocalIds
             .map(localId => this.env.store.state.attachments[localId].res_id);
 
         const context = {
@@ -428,7 +390,7 @@ class Composer extends Component {
     _onClickSend(ev) {
         if (
             this._textInput.comp.isEmpty() &&
-            this.storeProps.attachmentLocalIds.length === 0
+            this.storeProps.composer.attachmentLocalIds.length === 0
         ) {
             return;
         }
@@ -541,7 +503,7 @@ class Composer extends Component {
     _onTextInputKeydownEnter(ev) {
         if (
             this._textInputRef.comp.isEmpty() &&
-            this.storeProps.attachmentLocalIds.length === 0
+            this.storeProps.composer.attachmentLocalIds.length === 0
         ) {
             return;
         }
@@ -594,6 +556,7 @@ Composer.props = {
         type: String,
         optional: true,
     },
+    composerLocalId: String,
     focusCounter: {
         type: Number,
         optional: true,
@@ -622,7 +585,6 @@ Composer.props = {
         type: Boolean,
         optional: true,
     },
-    id: String,
     initialAttachmentLocalIds: {
         type: Array,
         element: String,
@@ -646,14 +608,6 @@ Composer.props = {
     },
     isLog: {
         type: Boolean,
-        optional: true,
-    },
-    threadCacheLocalId: {
-        type: String,
-        optional: true,
-    },
-    threadLocalId: {
-        type: String,
         optional: true,
     },
 };

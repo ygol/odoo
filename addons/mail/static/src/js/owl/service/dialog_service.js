@@ -2,33 +2,29 @@ odoo.define('mail.service.Dialog', function (require) {
 'use strict';
 
 const DialogManager = require('mail.component.DialogManager');
-const EnvMixin = require('mail.widget.EnvMixin');
+const OwlMixin = require('mail.widget.OwlMixin');
 
 const AbstractService = require('web.AbstractService');
-const core = require('web.core');
+const { bus, serviceRegistry } = require('web.core');
 
-const DEBUG = true;
-
-const DialogService = AbstractService.extend(EnvMixin, {
+const DialogService = AbstractService.extend(OwlMixin, {
+    IS_DEV: true,
     /**
-     * Data related to dialog service when used in a test environment.
+     * This is set when dialog service is used in a test environment.
+     * Useful to prevent sending and/or receiving events from
+     * core.bus.
      */
-    TEST_ENV: {
-        /**
-         * This is set when dialog service is used in a test environment.
-         * Useful to prevent sending and/or receiving events from
-         * core.bus.
-         */
-        active: false,
-    },
-    dependencies: ['env', 'store'],
+    IS_TEST: false,
+    TEST_TARGET: 'body',
+    dependencies: ['owl'],
     /**
      * @override {web.AbstractService}
      */
     init() {
         this._super(...arguments);
         this._webClientReady = false;
-        if (DEBUG) {
+        DialogManager.env = OwlMixin.getEnv.call(this);
+        if (this.IS_DEV) {
             window.dialog_service = this;
         }
     },
@@ -37,10 +33,10 @@ const DialogService = AbstractService.extend(EnvMixin, {
      */
     start() {
         this._super(...arguments);
-        if (!this.TEST_ENV.active) {
-            core.bus.on('hide_home_menu', this, this._onHideHomeMenu.bind(this));
-            core.bus.on('show_home_menu', this, this._onShowHomeMenu.bind(this));
-            core.bus.on('web_client_ready', this, this._onWebClientReady.bind(this));
+        if (!this.IS_TEST) {
+            bus.on('hide_home_menu', this, this._onHideHomeMenu.bind(this));
+            bus.on('show_home_menu', this, this._onShowHomeMenu.bind(this));
+            bus.on('web_client_ready', this, this._onWebClientReady.bind(this));
         } else {
             this['test:hide_home_menu'] = this._onHideHomeMenu;
             this['test:show_home_menu'] = this._onShowHomeMenu;
@@ -69,13 +65,10 @@ const DialogService = AbstractService.extend(EnvMixin, {
             this.component.destroy();
             this.component = undefined;
         }
-        if (!this.env) {
-            await this.getEnv();
-        }
-        this.component = new DialogManager(this.env);
+        this.component = new DialogManager(null);
         let parentNode;
-        if (this.TEST_ENV.active) {
-            parentNode = document.querySelector(this.TEST_ENV.container);
+        if (this.IS_TEST) {
+            parentNode = document.querySelector(this.TEST_TARGET);
         } else {
             parentNode = document.querySelector('body');
         }
@@ -116,7 +109,7 @@ const DialogService = AbstractService.extend(EnvMixin, {
     }
 });
 
-core.serviceRegistry.add('dialog', DialogService);
+serviceRegistry.add('dialog', DialogService);
 
 return DialogService;
 

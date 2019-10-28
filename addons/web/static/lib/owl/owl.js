@@ -112,10 +112,6 @@
             const metadata = this.weakMap.get(value);
             return metadata ? metadata.rev : 0;
         }
-        deepRevNumber(value) {
-            const metadata = this.weakMap.get(value);
-            return metadata ? metadata.deepRev : 0;
-        }
         _observe(value, parent) {
             var self = this;
             const proxy = new Proxy(value, {
@@ -148,7 +144,6 @@
                 value,
                 proxy,
                 rev: this.rev,
-                deepRev: this.rev,
                 parent
             };
             this.weakMap.set(value, metadata);
@@ -158,11 +153,10 @@
         _updateRevNumber(target) {
             this.rev++;
             let metadata = this.weakMap.get(target);
-            metadata.rev++;
             let parent = target;
             do {
                 metadata = this.weakMap.get(parent);
-                metadata.deepRev++;
+                metadata.rev++;
             } while ((parent = metadata.parent) && parent !== target);
         }
     }
@@ -405,6 +399,7 @@
             this.shouldDefineUtils = false;
             this.shouldDefineRefs = false;
             this.shouldDefineResult = true;
+            this.shouldDefineSibling = true;
             this.shouldProtectContext = false;
             this.shouldTrackScope = false;
             this.loopNumber = 0;
@@ -440,6 +435,9 @@
             }
             if (this.shouldDefineResult) {
                 this.code.unshift("    let result;");
+            }
+            if (this.shouldDefineSibling) {
+                this.code.unshift("    let sibling = null;");
             }
             if (this.shouldDefineRefs) {
                 this.code.unshift("    context.__owl__.refs = context.__owl__.refs || {};");
@@ -837,20 +835,10 @@
                 vnode.elm = api.createComment(vnode.text);
             }
             else if (sel !== undefined) {
-                // Parse selector
-                const hashIdx = sel.indexOf("#");
-                const dotIdx = sel.indexOf(".", hashIdx);
-                const hash = hashIdx > 0 ? hashIdx : sel.length;
-                const dot = dotIdx > 0 ? dotIdx : sel.length;
-                const tag = hashIdx !== -1 || dotIdx !== -1 ? sel.slice(0, Math.min(hash, dot)) : sel;
                 const elm = (vnode.elm =
                     isDef(data) && isDef((i = data.ns))
-                        ? api.createElementNS(i, tag)
-                        : api.createElement(tag));
-                if (hash < dot)
-                    elm.setAttribute("id", sel.slice(hash + 1, dot));
-                if (dotIdx > 0)
-                    elm.setAttribute("class", sel.slice(dot + 1).replace(/\./g, " "));
+                        ? api.createElementNS(i, sel)
+                        : api.createElement(sel));
                 for (i = 0, iLen = cbs.create.length; i < iLen; ++i)
                     cbs.create[i](emptyNode, vnode);
                 if (array(children)) {
@@ -1135,13 +1123,15 @@
         setTextContent
     };
     function addNS(data, children, sel) {
+        if (sel === "dummy") {
+            // we do not need to add the namespace on dummy elements, they come from a
+            // subcomponent, which will handle the namespace itself
+            return;
+        }
         data.ns = "http://www.w3.org/2000/svg";
         if (sel !== "foreignObject" && children !== undefined) {
             for (let i = 0, iLen = children.length; i < iLen; ++i) {
                 const child = children[i];
-                if (child === null) {
-                    continue;
-                }
                 let childData = child.data;
                 if (childData !== undefined) {
                     addNS(childData, child.children, child.sel);
@@ -1288,6 +1278,7 @@
     }
 
     var _utils = /*#__PURE__*/Object.freeze({
+        __proto__: null,
         whenReady: whenReady,
         loadJS: loadJS,
         loadFile: loadFile,
@@ -1300,6 +1291,7 @@
     // Const/global stuff/helpers
     //------------------------------------------------------------------------------
     const DISABLED_TAGS = ["input", "textarea", "button", "select", "option", "optgroup"];
+    const TRANSLATABLE_ATTRS = ["label", "title", "placeholder", "alt"];
     const lineBreakRE = /[\r\n]/;
     const whitespaceRE = /\s+/g;
     const NODE_HOOKS_PARAMS = {
@@ -1361,7 +1353,7 @@
     // QWeb rendering engine
     //------------------------------------------------------------------------------
     class QWeb extends EventBus {
-        constructor(data) {
+        constructor(config = {}) {
             super();
             this.h = h;
             // recursiveTemplates contains sub templates called with t-call, but which
@@ -1370,8 +1362,11 @@
             this.recursiveFns = {};
             this.isUpdating = false;
             this.templates = Object.create(QWeb.TEMPLATES);
-            if (data) {
-                this.addTemplates(data);
+            if (config.templates) {
+                this.addTemplates(config.templates);
+            }
+            if (config.translateFn) {
+                this.translateFn = config.translateFn;
             }
         }
         static addDirective(directive) {
@@ -1601,6 +1596,11 @@
                     }
                     text = text.replace(whitespaceRE, " ");
                 }
+                if (this.translateFn) {
+                    if (node.parentNode.getAttribute("t-translation") !== "off") {
+                        text = this.translateFn(text);
+                    }
+                }
                 if (ctx.parentNode) {
                     if (node.nodeType === 3) {
                         ctx.addLine(`c${ctx.parentNode}.push({text: \`${text}\`});`);
@@ -1778,7 +1778,10 @@
             let classObj = "";
             for (let i = 0; i < attributes.length; i++) {
                 let name = attributes[i].name;
-                const value = attributes[i].textContent;
+                let value = attributes[i].textContent;
+                if (this.translateFn && TRANSLATABLE_ATTRS.includes(name)) {
+                    value = this.translateFn(value);
+                }
                 // regular attributes
                 if (!name.startsWith("t-") && !node.getAttribute("t-attf-" + name)) {
                     const attID = ctx.generateID();
@@ -1805,7 +1808,7 @@
                 if (name.startsWith("t-att-")) {
                     let attName = name.slice(6);
                     const v = ctx.getValue(value);
-                    let formattedValue = v.id || ctx.formatExpression(v);
+                    let formattedValue = typeof v === "string" ? ctx.formatExpression(v) : v.id;
                     if (attName === "class") {
                         ctx.rootContext.shouldDefineUtils = true;
                         formattedValue = `utils.toObj(${formattedValue})`;
@@ -1863,15 +1866,7 @@
                 }
             }
             let nodeID = ctx.generateID();
-            let nodeKey = node.getAttribute("t-key");
-            if (nodeKey) {
-                ctx.addLine(`const nodeKey${nodeID} = ${ctx.formatExpression(nodeKey)}`);
-                nodeKey = `nodeKey${nodeID}`;
-                ctx.lastNodeKey = nodeKey;
-            }
-            else {
-                nodeKey = nodeID;
-            }
+            let nodeKey = ctx.lastNodeKey || nodeID;
             const parts = [`key:${nodeKey}`];
             if (attrs.length + tattrs.length > 0) {
                 parts.push(`attrs:{${attrs.join(",")}}`);
@@ -1917,7 +1912,7 @@
         name: 1,
         att: 1,
         attf: 1,
-        key: 1
+        translation: 1
     };
     QWeb.DIRECTIVES = [];
     QWeb.TEMPLATES = {};
@@ -2082,7 +2077,7 @@
         priority: 20,
         atNodeEncounter({ node, ctx }) {
             let cond = ctx.getValue(node.getAttribute("t-if"));
-            ctx.addIf(`${ctx.formatExpression(cond)}`);
+            ctx.addIf(typeof cond === "string" ? ctx.formatExpression(cond) : cond.id);
             return false;
         },
         finalize({ ctx }) {
@@ -2094,7 +2089,7 @@
         priority: 30,
         atNodeEncounter({ node, ctx }) {
             let cond = ctx.getValue(node.getAttribute("t-elif"));
-            ctx.addLine(`else if (${ctx.formatExpression(cond)}) {`);
+            ctx.addLine(`else if (${typeof cond === "string" ? ctx.formatExpression(cond) : cond.id}) {`);
             ctx.indent();
             return false;
         },
@@ -2231,18 +2226,10 @@
             ctx.addToScope(name, `_${keysID}[${loopVar}]`);
             ctx.addToScope(name + "_value", `_${valuesID}[${loopVar}]`);
             const nodeCopy = node.cloneNode(true);
-            let shouldWarn = nodeCopy.tagName !== "t" && !nodeCopy.hasAttribute("t-key");
-            if (!shouldWarn && node.tagName === "t") {
-                if (node.hasAttribute("t-component") && !node.hasAttribute("t-key")) {
-                    shouldWarn = true;
-                }
-                if (!shouldWarn &&
-                    node.children.length === 1 &&
-                    node.children[0].tagName !== "t" &&
-                    !node.children[0].hasAttribute("t-key")) {
-                    shouldWarn = true;
-                }
-            }
+            let shouldWarn = !nodeCopy.hasAttribute("t-key") &&
+                node.children.length === 1 &&
+                node.children[0].tagName !== "t" &&
+                !node.children[0].hasAttribute("t-key");
             if (shouldWarn) {
                 console.warn(`Directive t-foreach should always be used with a t-key! (in template: '${ctx.templateName}')`);
             }
@@ -2312,38 +2299,32 @@
                 extraArgs = args.slice(1, -1);
                 return "";
             });
-            ctx.addIf(`!context['${handlerName}']`);
-            ctx.addLine(`throw new Error('Missing handler \\'' + '${handlerName}' + \`\\' when evaluating template '${ctx.templateName.replace(/`/g, "'")}'\`)`);
-            ctx.closeIf();
             let params = extraArgs ? `owner, ${ctx.formatExpression(extraArgs)}` : "owner";
-            if (mods.length > 0) {
-                let handler = `function (e) {`;
-                handler += mods
-                    .map(function (mod) {
-                    return MODS_CODE[mod];
-                })
-                    .join("");
+            let handler = `function (e) {`;
+            handler += mods
+                .map(function (mod) {
+                return MODS_CODE[mod];
+            })
+                .join("");
+            if (handlerName) {
                 if (!extraArgs) {
-                    handler += `context['${handlerName}'].call(${params}, e);}`;
+                    handler += `const fn = context['${handlerName}'];`;
+                    handler += `if (fn) { fn.call(${params}, e); } else { context.${handlerName}; }`;
+                    handler += `}`;
                     ctx.addLine(`extra.handlers['${eventName}' + ${nodeID}] = extra.handlers['${eventName}' + ${nodeID}] || ${handler};`);
                     ctx.addLine(`p${nodeID}.on['${eventName}'] = extra.handlers['${eventName}' + ${nodeID}];`);
                 }
                 else {
                     const handlerKey = `handler${ctx.generateID()}`;
-                    ctx.addLine(`const ${handlerKey} = context['${handlerName}'].bind(${params});`);
-                    handler += `${handlerKey}(e);}`;
+                    ctx.addLine(`const ${handlerKey} = context['${handlerName}'] && context['${handlerName}'].bind(${params});`);
+                    handler += `if (${handlerKey}) { ${handlerKey}(e); } else { context.${value}; }`;
+                    handler += `}`;
                     ctx.addLine(`p${nodeID}.on['${eventName}'] = ${handler};`);
                 }
             }
             else {
-                const handler = `context['${handlerName}'].bind(${params})`;
-                if (extraArgs) {
-                    ctx.addLine(`p${nodeID}.on['${eventName}'] = ${handler};`);
-                }
-                else {
-                    ctx.addLine(`extra.handlers['${eventName}' + ${nodeID}] = extra.handlers['${eventName}' + ${nodeID}] || ${handler};`);
-                    ctx.addLine(`p${nodeID}.on['${eventName}'] = extra.handlers['${eventName}' + ${nodeID}];`);
-                }
+                handler += "}";
+                ctx.addLine(`p${nodeID}.on['${eventName}'] = ${handler};`);
             }
         }
     });
@@ -2467,7 +2448,7 @@
             }
             ctx.addLine(`slot${slotKey}.call(this, context.__owl__.parent, Object.assign({}, extra, {parentNode: ${parentNode}, vars: extra.vars, parent: owner}));`);
             if (!ctx.parentNode) {
-                ctx.addLine(`Promise.all(extra.promises).then(() => utils.defineProxy(result, ${parentNode}[0]))`);
+                ctx.addLine(`utils.defineProxy(result, ${parentNode}[0]);`);
             }
             ctx.closeIf();
             return true;
@@ -2516,6 +2497,35 @@
             }
             ctx.addLine(`extra.handlers['${event}' + ${nodeID}] = extra.handlers['${event}' + ${nodeID}] || (${handler});`);
             ctx.addLine(`p${nodeID}.on['${event}'] = extra.handlers['${event}' + ${nodeID}];`);
+        }
+    });
+    //------------------------------------------------------------------------------
+    // t-key
+    //------------------------------------------------------------------------------
+    QWeb.addDirective({
+        name: "key",
+        priority: 45,
+        atNodeEncounter({ ctx, value }) {
+            let id = ctx.generateID();
+            ctx.addLine(`const nodeKey${id} = ${ctx.formatExpression(value)};`);
+            ctx.lastNodeKey = `nodeKey${id}`;
+        }
+    });
+
+    const config = {};
+    Object.defineProperty(config, "mode", {
+        get() {
+            return QWeb.dev ? "dev" : "prod";
+        },
+        set(mode) {
+            QWeb.dev = mode === "dev";
+            if (QWeb.dev) {
+                const url = `https://github.com/odoo/owl/blob/master/doc/reference/config.md#mode`;
+                console.warn(`Owl is running in 'dev' mode.  This is not suitable for production use. See ${url} for more information.`);
+            }
+            else {
+                console.log(`Owl is now running in 'prod' mode.`);
+            }
         }
     });
 
@@ -2699,7 +2709,7 @@
      */
     QWeb.addDirective({
         name: "component",
-        extraNames: ["props", "keepalive", "asyncroot"],
+        extraNames: ["props"],
         priority: 100,
         atNodeEncounter({ ctx, value, node, qweb }) {
             ctx.addLine("//COMPONENT");
@@ -2707,9 +2717,7 @@
             ctx.rootContext.shouldDefineQWeb = true;
             ctx.rootContext.shouldDefineParent = true;
             ctx.rootContext.shouldDefineUtils = true;
-            let keepAlive = node.getAttribute("t-keepalive") ? true : false;
             let hasDynamicProps = node.getAttribute("t-props") ? true : false;
-            let async = node.getAttribute("t-asyncroot") ? true : false;
             // t-on- events and t-transition
             const events = [];
             let transition = "";
@@ -2721,11 +2729,11 @@
                 if (name.startsWith("t-on-")) {
                     const [eventName, ...mods] = name.slice(5).split(".");
                     let extraArgs;
-                    let handlerName = value.replace(/\(.*\)/, function (args) {
+                    let handlerValue = value.replace(/\(.*\)/, function (args) {
                         extraArgs = args.slice(1, -1);
                         return "";
                     });
-                    events.push([eventName, mods, handlerName, extraArgs]);
+                    events.push([eventName, mods, handlerValue, extraArgs]);
                 }
                 else if (name === "t-transition") {
                     transition = value;
@@ -2737,30 +2745,18 @@
                     }
                 }
             }
-            let key = node.getAttribute("t-key");
-            if (key) {
-                key = ctx.formatExpression(key);
-            }
             // computing the props string representing the props object
             let propStr = Object.keys(props)
                 .map(k => k + ":" + props[k])
                 .join(",");
-            let dummyID = ctx.generateID();
             let defID = ctx.generateID();
             let componentID = ctx.generateID();
-            let keyID = key && ctx.generateID();
-            if (key) {
-                // we bind a variable to the key (could be a complex expression, so we
-                // want to evaluate it only once)
-                ctx.addLine(`let key${keyID} = 'key' + ${key};`);
-            }
-            ctx.addLine(`let def${defID};`);
             let locationExpr = `\`__${ctx.generateID()}__`;
             for (let i = 0; i < ctx.loopNumber - 1; i++) {
                 locationExpr += `\${i${i + 1}}__`;
             }
-            if (key || ctx.currentKey) {
-                const k = key ? `key${keyID}` : ctx.currentKey;
+            if (ctx.lastNodeKey || ctx.currentKey) {
+                const k = ctx.lastNodeKey || ctx.currentKey;
                 ctx.addLine(`let templateId${componentID} = ${locationExpr}\` + ${k};`);
             }
             else {
@@ -2781,8 +2777,8 @@
             if (transition) {
                 transitionsInsertCode = `utils.transitionInsert(vn, '${transition}');`;
             }
-            let finalizeComponentCode = `w${componentID}.${keepAlive ? "unmount" : "destroy"}();`;
-            if (ref && !keepAlive) {
+            let finalizeComponentCode = `w${componentID}.destroy();`;
+            if (ref) {
                 finalizeComponentCode += `delete context.__owl__.refs[${refKey}];`;
             }
             if (transition) {
@@ -2826,7 +2822,7 @@
                     }
                 }
                 let eventsCode = events
-                    .map(function ([eventName, mods, handlerName, extraArgs]) {
+                    .map(function ([eventName, mods, handlerValue, extraArgs]) {
                     let params = "owner";
                     if (extraArgs) {
                         if (ctx.loopNumber) {
@@ -2841,19 +2837,17 @@
                             params = `owner, ${ctx.formatExpression(extraArgs)}`;
                         }
                     }
-                    let handler;
-                    if (mods.length > 0) {
-                        handler = `function (e) {`;
-                        handler += mods
-                            .map(function (mod) {
-                            return T_COMPONENT_MODS_CODE[mod];
-                        })
-                            .join("");
-                        handler += `owner['${handlerName}'].call(${params}, e);}`;
+                    let handler = `function (e) {`;
+                    handler += mods
+                        .map(function (mod) {
+                        return T_COMPONENT_MODS_CODE[mod];
+                    })
+                        .join("");
+                    if (handlerValue) {
+                        handler += `const fn = owner['${handlerValue}'];`;
+                        handler += `if (fn) { fn.call(${params}, e); } else { owner.${handlerValue}; }`;
                     }
-                    else {
-                        handler = `owner['${handlerName}'].bind(${params})`;
-                    }
+                    handler += `}`;
                     return `vn.elm.addEventListener('${eventName}', ${handler});`;
                 })
                     .join("");
@@ -2862,28 +2856,14 @@
                 createHook = `vnode.data.hook = {create(_, vn){${styleCode}${eventsCode}}};`;
             }
             ctx.addLine(`let w${componentID} = ${templateId} in parent.__owl__.cmap ? parent.__owl__.children[parent.__owl__.cmap[${templateId}]] : false;`);
-            if (ctx.parentNode) {
-                ctx.addLine(`let _${dummyID}_index = c${ctx.parentNode}.length;`);
-            }
-            let shouldProxy = false;
-            if (async || keepAlive) {
-                ctx.addLine(`const fiber${componentID} = Object.assign(Object.create(extra.fiber), {patchQueue: []});`);
-            }
-            if (async) {
-                ctx.addLine(`c${ctx.parentNode}.push(w${componentID} && w${componentID}.__owl__.pvnode || null);`);
-            }
-            else {
-                if (ctx.parentNode) {
-                    ctx.addLine(`c${ctx.parentNode}.push(null);`);
-                }
-                else {
-                    let id = ctx.generateID();
-                    ctx.rootContext.rootNode = id;
-                    shouldProxy = true;
-                    ctx.rootContext.shouldDefineResult = true;
-                    ctx.addLine(`let vn${id} = {};`);
-                    ctx.addLine(`result = vn${id};`);
-                }
+            let shouldProxy = !ctx.parentNode;
+            if (shouldProxy) {
+                let id = ctx.generateID();
+                ctx.rootContext.rootNode = id;
+                shouldProxy = true;
+                ctx.rootContext.shouldDefineResult = true;
+                ctx.addLine(`let vn${id} = {};`);
+                ctx.addLine(`result = vn${id};`);
             }
             if (hasDynamicProps) {
                 const dynamicProp = ctx.formatExpression(node.getAttribute("t-props"));
@@ -2893,14 +2873,49 @@
                 ctx.addLine(`let props${componentID} = {${propStr}};`);
             }
             ctx.addIf(`w${componentID} && w${componentID}.__owl__.currentFiber && !w${componentID}.__owl__.vnode`);
-            ctx.addIf(`utils.shallowEqual(props${componentID}, w${componentID}.__owl__.currentFiber.props)`);
-            ctx.addLine(`def${defID} = w${componentID}.__owl__.currentFiber.promise;`);
-            ctx.addElse();
             ctx.addLine(`w${componentID}.destroy();`);
             ctx.addLine(`w${componentID} = false;`);
             ctx.closeIf();
-            ctx.closeIf();
-            ctx.addIf(`!w${componentID}`);
+            let registerCode = "";
+            if (shouldProxy) {
+                registerCode = `utils.defineProxy(vn${ctx.rootNode}, pvnode);`;
+            }
+            // SLOTS
+            const varDefs = [];
+            const hasSlots = node.childNodes.length;
+            if (hasSlots) {
+                ctx.rootContext.shouldTrackScope = true;
+                for (let v of Object.values(ctx.variables)) {
+                    if (v["id"]) {
+                        varDefs.push(v["id"]);
+                    }
+                }
+            }
+            let scopeVars;
+            if (hasSlots) {
+                let scope = ctx.scopeVars.length ? `Object.assign({}, scope)` : `{}`;
+                let vars = varDefs.length ? `{${varDefs.join(",")}}` : "undefined";
+                scopeVars = `${scope}, ${vars}`;
+            }
+            else {
+                scopeVars = "undefined, undefined";
+            }
+            ctx.addIf(`w${componentID}`);
+            // need to update component
+            let styleCode = "";
+            if (tattStyle) {
+                styleCode = `.then(()=>{if (w${componentID}.__owl__.isDestroyed) {return};w${componentID}.el.style=${tattStyle};});`;
+            }
+            ctx.addLine(`w${componentID}.__updateProps(props${componentID}, extra.fiber${scopeVars &&
+            ", " + scopeVars}, sibling)${styleCode};`);
+            ctx.addLine(`let pvnode = w${componentID}.__owl__.pvnode;`);
+            if (registerCode) {
+                ctx.addLine(registerCode);
+            }
+            if (ctx.parentNode) {
+                ctx.addLine(`c${ctx.parentNode}.push(pvnode);`);
+            }
+            ctx.addElse();
             // new component
             let dynamicFallback = "";
             if (!value.match(INTERP_REGEXP)) {
@@ -2913,16 +2928,7 @@
             ctx.addLine(`if (!W${componentID}) {throw new Error('Cannot find the definition of component "' + componentKey${componentID} + '"')}`);
             ctx.addLine(`w${componentID} = new W${componentID}(parent, props${componentID});`);
             ctx.addLine(`parent.__owl__.cmap[${templateId}] = w${componentID}.__owl__.id;`);
-            // SLOTS
-            const varDefs = [];
-            const hasSlots = node.childNodes.length;
             if (hasSlots) {
-                ctx.rootContext.shouldTrackScope = true;
-                for (let v of Object.values(ctx.variables)) {
-                    if (v["id"]) {
-                        varDefs.push(v["id"]);
-                    }
-                }
                 const clone = node.cloneNode(true);
                 const slotNodes = clone.querySelectorAll("[t-set]");
                 const slotId = QWeb.nextSlotId++;
@@ -2946,55 +2952,273 @@
                     QWeb.slots[`${slotId}_default`] = slotFn;
                 }
             }
-            let scopeVars;
-            if (hasSlots) {
-                let scope = ctx.scopeVars.length ? `Object.assign({}, scope)` : `{}`;
-                let vars = varDefs.length ? `{${varDefs.join(",")}}` : "undefined";
-                scopeVars = `${scope}, ${vars}`;
-            }
-            else {
-                scopeVars = "undefined, undefined";
-            }
-            ctx.addLine(`def${defID} = w${componentID}.__prepare(extra.fiber, ${scopeVars});`);
+            ctx.addLine(`let def${defID} = w${componentID}.__prepare(extra.fiber, ${scopeVars}, sibling);`);
             // hack: specify empty remove hook to prevent the node from being removed from the DOM
-            let registerCode = `c${ctx.parentNode}[_${dummyID}_index]=pvnode;`;
-            if (shouldProxy) {
-                registerCode = `utils.defineProxy(vn${ctx.rootNode}, pvnode);`;
+            ctx.addLine(`let pvnode = h('dummy', {key: ${templateId}, hook: {insert(vn) { let nvn=w${componentID}.__mount(fiber, pvnode.elm);pvnode.elm=nvn.elm;${refExpr}${transitionsInsertCode}},remove() {},destroy(vn) {${finalizeComponentCode}}}});`);
+            ctx.addLine(`const fiber = w${componentID}.__owl__.currentFiber;`);
+            ctx.addLine(`def${defID}.then(function () {if (w${componentID}.__owl__.isDestroyed || fiber.isCancelled) {return;} const vnode = fiber.vnode; pvnode.sel = vnode.sel; ${createHook}});`);
+            if (registerCode) {
+                ctx.addLine(registerCode);
             }
-            ctx.addLine(`def${defID} = def${defID}.then(vnode=>{if (w${componentID}.__owl__.isDestroyed){return}${createHook}let pvnode=h(vnode.sel, {key: ${templateId}, hook: {insert(vn) {let nvn=w${componentID}.__mount(vnode, pvnode.elm);pvnode.elm=nvn.elm;${refExpr}${transitionsInsertCode}},remove() {},destroy(vn) {${finalizeComponentCode}}}});${registerCode}w${componentID}.__owl__.pvnode = pvnode;});`);
-            ctx.addElse();
-            // need to update component
-            let patchQueueCode = async || keepAlive ? `fiber${componentID}` : "extra.fiber";
-            if (keepAlive) {
-                // if we have t-keepalive="1", the component could be unmounted, but then
-                // we __updateProps is called.  This is ok, but we do not want to call
-                // the willPatch/patched hooks of the component in this case, so we
-                // disable the patch queue
-                patchQueueCode = `w${componentID}.__owl__.isMounted ? extra.fiber : fiber${componentID}`;
+            if (ctx.parentNode) {
+                ctx.addLine(`c${ctx.parentNode}.push(pvnode);`);
             }
-            if (QWeb.dev) {
-                ctx.addLine(`utils.validateProps(w${componentID}.constructor, props${componentID})`);
-            }
-            ctx.addLine(`def${defID} = def${defID} || w${componentID}.__updateProps(props${componentID}, ${patchQueueCode}${scopeVars &&
-            ", " + scopeVars});`);
-            let keepAliveCode = "";
-            if (keepAlive) {
-                keepAliveCode = `pvnode.data.hook.insert = vn => {vn.elm.parentNode.replaceChild(w${componentID}.el,vn.elm);vn.elm=w${componentID}.el;w${componentID}.__remount();};`;
-            }
-            ctx.addLine(`def${defID} = def${defID}.then(()=>{if (w${componentID}.__owl__.isDestroyed) {return};${tattStyle ? `w${componentID}.el.style=${tattStyle};` : ""}let pvnode=w${componentID}.__owl__.pvnode;${keepAliveCode}${registerCode}});`);
+            ctx.addLine(`w${componentID}.__owl__.pvnode = pvnode;`);
             ctx.closeIf();
             if (classObj) {
                 ctx.addLine(`w${componentID}.__owl__.classObj=${classObj};`);
             }
-            if (async) {
-                ctx.addLine(`def${defID}.then(w${componentID}.__applyPatchQueue.bind(w${componentID}, fiber${componentID}));`);
-            }
-            else {
-                ctx.addLine(`extra.promises.push(def${defID});`);
-            }
+            ctx.addLine(`sibling = w${componentID}.__owl__.currentFiber || sibling;`);
             return true;
         }
     });
+
+    class Scheduler {
+        constructor(requestAnimationFrame) {
+            this.tasks = [];
+            this.isRunning = false;
+            this.requestAnimationFrame = requestAnimationFrame;
+        }
+        addFiber(fiber, callback) {
+            this.tasks.push({ fiber, callback });
+            if (this.isRunning) {
+                return;
+            }
+            this.scheduleTasks();
+        }
+        /**
+         * Process all current tasks. This only applies to the fibers that are ready.
+         * Other tasks are left unchanged.
+         */
+        flush() {
+            let tasks = this.tasks;
+            this.tasks = [];
+            tasks = tasks.filter(task => {
+                if (task.fiber.isCancelled) {
+                    return false;
+                }
+                if (task.fiber.counter === 0) {
+                    task.callback(task.fiber.error);
+                    return false;
+                }
+                return true;
+            });
+            this.tasks = tasks.concat(this.tasks);
+        }
+        scheduleTasks() {
+            this.isRunning = true;
+            this.requestAnimationFrame(() => {
+                this.flush();
+                if (this.tasks.length > 0) {
+                    this.scheduleTasks();
+                }
+                else {
+                    this.isRunning = false;
+                }
+            });
+        }
+    }
+    const raf = window.requestAnimationFrame.bind(window);
+    const scheduler = new Scheduler(raf);
+
+    /**
+     * Owl Fiber Class
+     *
+     * Fibers are small abstractions designed to contain all the internal state
+     * associated with a "rendering work unit", relative to a specific component.
+     *
+     * A rendering will cause the creation of a fiber for each impacted components.
+     *
+     * Fibers capture all that necessary information, which is critical to owl
+     * asynchronous rendering pipeline. Fibers can be cancelled, can be in different
+     * states and in general determine the state of the rendering.
+     */
+    class Fiber {
+        constructor(parent, component, scope, vars, force) {
+            // isCancelled means that the rendering corresponding to this fiber and its
+            // children is cancelled. No extra work should be done.
+            this.isCancelled = false;
+            // the fibers corresponding to component updates (updateProps) need to call
+            // the willPatch and patched hooks from the corresponding component. However,
+            // fibers corresponding to a new component do not need to do that. So, the
+            // shouldPatch hook is the boolean that we check whenever we need to apply
+            // a patch.
+            this.shouldPatch = true;
+            // isRendered is the last state of a fiber. If true, this means that it has
+            // been rendered and is inert (so, it should not be taken into account when
+            // counting the number of active fibers).
+            this.isRendered = false;
+            // the counter number is a critical information. It is only necessary for a
+            // root fiber.  For that fiber, this number counts the number of active sub
+            // fibers.  When that number reaches 0, the fiber can be applied by the
+            // scheduler.
+            this.counter = 0;
+            this.vnode = null;
+            this.child = null;
+            this.sibling = null;
+            this.parent = null;
+            this.force = force;
+            this.scope = scope;
+            this.vars = vars;
+            this.component = component;
+            this.root = parent ? parent.root : this;
+            this.parent = parent;
+            let oldFiber = component.__owl__.currentFiber;
+            if (oldFiber && !oldFiber.isCancelled) {
+                this._remapFiber(oldFiber);
+            }
+            this.root.counter++;
+            component.__owl__.currentFiber = this;
+        }
+        /**
+         * In some cases, a rendering initiated at some component can detect that it
+         * should be part of a larger rendering initiated somewhere up the component
+         * tree.  In that case, it needs to cancel the previous rendering and
+         * remap itself as a part of the current parent rendering.
+         */
+        _remapFiber(oldFiber) {
+            oldFiber.cancel();
+            if (oldFiber === oldFiber.root) {
+                oldFiber.root.counter++;
+            }
+            if (oldFiber.parent && !this.parent) {
+                // re-map links
+                this.parent = oldFiber.parent;
+                this.root = this.parent.root;
+                this.sibling = oldFiber.sibling;
+                if (this.parent.child === oldFiber) {
+                    this.parent.child = this;
+                }
+                else {
+                    let current = this.parent.child;
+                    while (true) {
+                        if (current.sibling === oldFiber) {
+                            current.sibling = this;
+                            break;
+                        }
+                        current = current.sibling;
+                    }
+                }
+            }
+        }
+        /**
+         * This function has been taken from
+         * https://medium.com/react-in-depth/the-how-and-why-on-reacts-usage-of-linked-list-in-fiber-67f1014d0eb7
+         */
+        _walk(doWork) {
+            let root = this;
+            let current = this;
+            while (true) {
+                const child = doWork(current);
+                if (child) {
+                    current = child;
+                    continue;
+                }
+                if (current === root) {
+                    return;
+                }
+                while (!current.sibling) {
+                    if (!current.parent || current.parent === root) {
+                        return;
+                    }
+                    current = current.parent;
+                }
+                current = current.sibling;
+            }
+        }
+        /**
+         * Apply the given patch queue from a fiber.
+         *   1) Call 'willPatch' on the component of each patch
+         *   2) Call '__patch' on the component of each patch
+         *   3) Call 'patched' on the component of each patch, in reverse order
+         */
+        patchComponents() {
+            const patchQueue = [];
+            const doWork = function (f) {
+                if (f.shouldPatch) {
+                    patchQueue.push(f);
+                }
+                return f.child;
+            };
+            this._walk(doWork);
+            let component = this.component;
+            const patchLen = patchQueue.length;
+            try {
+                for (let i = 0; i < patchLen; i++) {
+                    component = patchQueue[i].component;
+                    if (component.__owl__.willPatchCB) {
+                        component.__owl__.willPatchCB();
+                    }
+                    component.willPatch();
+                }
+            }
+            catch (e) {
+                console.error(e);
+            }
+            for (let i = 0; i < patchLen; i++) {
+                const fiber = patchQueue[i];
+                component = fiber.component;
+                component.__patch(fiber.vnode);
+            }
+            try {
+                for (let i = patchLen - 1; i >= 0; i--) {
+                    component = patchQueue[i].component;
+                    component.patched();
+                    if (component.__owl__.patchedCB) {
+                        component.__owl__.patchedCB();
+                    }
+                }
+            }
+            catch (e) {
+                console.error(e);
+            }
+        }
+        /**
+         * Cancel a fiber and all its children.
+         */
+        cancel() {
+            this._walk(f => {
+                if (!f.isRendered) {
+                    f.root.counter--;
+                }
+                f.isCancelled = true;
+                return f.child;
+            });
+        }
+        /**
+         * This is the global error handler for errors occurring in Owl main lifecycle
+         * methods.  Caught errors are triggered on the QWeb instance, and are
+         * potentially given to some parent component which implements `catchError`.
+         *
+         * If there are no such component, we destroy everything. This is better than
+         * being in a corrupted state.
+         */
+        handleError(error) {
+            let canCatch = false;
+            let component = this.component;
+            let qweb = component.env.qweb;
+            let root = component;
+            while (component && !(canCatch = !!component.catchError)) {
+                root = component;
+                component = component.__owl__.parent;
+            }
+            qweb.trigger("error", error);
+            if (canCatch) {
+                setTimeout(() => {
+                    console.error(error);
+                    component.catchError(error);
+                });
+            }
+            else {
+                // the 3 next lines aim to mark the root fiber as being in error, and
+                // to force it to end, without waiting for its children
+                this.root.counter = 0;
+                this.root.error = error;
+                scheduler.flush();
+                root.destroy();
+            }
+        }
+    }
 
     //------------------------------------------------------------------------------
     // Prop validation helper
@@ -3015,7 +3239,7 @@
                     // optional prop
                     break;
                 }
-                if (!props[propName]) {
+                if (!(propName in props)) {
                     throw new Error(`Missing props '${propsDef[i]}' (component '${Widget.name}')`);
                 }
             }
@@ -3102,46 +3326,35 @@
         /**
          * Creates an instance of Component.
          *
-         * The root component of a component tree needs an environment:
-         *
-         * ```javascript
-         *   const root = new RootComponent(env, props);
-         * ```
-         *
-         * Every other component simply needs a reference to its parent:
-         *
-         * ```javascript
-         *   const child = new SomeComponent(parent, props);
-         * ```
-         *
          * Note that most of the time, only the root component needs to be created by
          * hand.  Other components should be created automatically by the framework (with
          * the t-component directive in a template)
          */
         constructor(parent, props) {
-            const defaultProps = this.constructor.defaultProps;
             Component.current = this;
+            let constr = this.constructor;
+            const defaultProps = constr.defaultProps;
             if (defaultProps) {
-                props = this.__applyDefaultProps(props, defaultProps);
+                props = props || {};
+                this.__applyDefaultProps(props, defaultProps);
             }
-            // is this a good idea?
-            //   Pro: if props is empty, we can create easily a component
-            //   Con: this is not really safe
-            //   Pro: but creating component (by a template) is always unsafe anyway
-            this.props = props || {};
-            let id = nextId++;
-            let p = null;
-            if (parent instanceof Component) {
-                p = parent;
+            this.props = props;
+            if (QWeb.dev) {
+                QWeb.utils.validateProps(constr, this.props);
+            }
+            const id = nextId++;
+            let depth;
+            if (parent) {
                 this.env = parent.env;
-                parent.__owl__.children[id] = this;
+                const __powl__ = parent.__owl__;
+                __powl__.children[id] = this;
+                depth = __powl__.depth + 1;
             }
             else {
-                this.env = parent;
-                if (QWeb.dev) {
-                    // we only validate props for root widgets here.  "Regular" widget
-                    // props are validated by the t-component directive
-                    QWeb.utils.validateProps(this.constructor, this.props);
+                // we are the root component
+                this.env = this.constructor.env;
+                if (!this.env.qweb) {
+                    this.env.qweb = new QWeb();
                 }
                 this.env.qweb.on("update", this, () => {
                     if (this.__owl__.isMounted) {
@@ -3156,14 +3369,18 @@
                         this.env.qweb.off("update", this);
                     }
                 });
+                depth = 0;
             }
             const qweb = this.env.qweb;
+            const template = constr.template || this.__getTemplate(qweb);
             this.__owl__ = {
                 id: id,
+                depth: depth,
                 vnode: null,
+                pvnode: null,
                 isMounted: false,
                 isDestroyed: false,
-                parent: p,
+                parent: parent || null,
                 children: {},
                 cmap: {},
                 currentFiber: null,
@@ -3175,7 +3392,7 @@
                 willStartCB: null,
                 willUpdatePropsCB: null,
                 observer: null,
-                render: qweb.render.bind(qweb, this.__getTemplate(qweb)),
+                renderFn: qweb.render.bind(qweb, template),
                 classObj: null,
                 refs: null
             };
@@ -3253,11 +3470,6 @@
          * @see mounted
          */
         willUnmount() { }
-        /**
-         * catchError is a method called whenever some error happens in the rendering or
-         * lifecycle hooks of a child.
-         */
-        catchError(error) { }
         //--------------------------------------------------------------------------
         // Public
         //--------------------------------------------------------------------------
@@ -3269,31 +3481,39 @@
          *
          * Note that a component can be mounted an unmounted several times
          */
-        async mount(target, renderBeforeRemount = false) {
+        async mount(target) {
             const __owl__ = this.__owl__;
             if (__owl__.isMounted) {
-                return;
+                return Promise.resolve();
             }
-            const fiber = this.__createFiber(false, undefined, undefined, undefined);
-            if (!__owl__.vnode) {
-                fiber.promise = this.__prepareAndRender(fiber);
-                const vnode = await fiber.promise;
-                if (__owl__.isDestroyed) {
-                    // component was destroyed before we get here...
-                    return;
+            if (!(target instanceof HTMLElement)) {
+                let message = `Component '${this.constructor.name}' cannot be mounted: the target is not a valid DOM node.`;
+                message += `\nMaybe the DOM is not ready yet? (in that case, you can use owl.utils.whenReady)`;
+                throw new Error(message);
+            }
+            return new Promise((resolve, reject) => {
+                const fiber = new Fiber(null, this, undefined, undefined, false);
+                scheduler.addFiber(fiber, err => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    if (!__owl__.isDestroyed) {
+                        this.__patch(fiber.vnode);
+                        target.appendChild(this.el);
+                        if (document.body.contains(target)) {
+                            this.__callMounted();
+                        }
+                    }
+                    resolve();
+                });
+                if (!__owl__.vnode) {
+                    this.__prepareAndRender(fiber);
                 }
-                this.__patch(vnode);
-            }
-            else if (renderBeforeRemount) {
-                fiber.patchQueue.push(fiber);
-                fiber.promise = this.__render(fiber);
-                await fiber.promise;
-                this.__applyPatchQueue(fiber);
-            }
-            target.appendChild(this.el);
-            if (document.body.contains(target)) {
-                this.__callMounted();
-            }
+                else {
+                    this.__render(fiber);
+                }
+            });
         }
         /**
          * The unmount method is the opposite of the mount method.  It is useful
@@ -3316,18 +3536,24 @@
          */
         async render(force = false) {
             const __owl__ = this.__owl__;
-            if (!__owl__.isMounted) {
+            if ((!__owl__.isMounted && !__owl__.currentFiber) ||
+                (__owl__.currentFiber && !__owl__.currentFiber.isRendered)) {
                 return;
             }
-            const fiber = this.__createFiber(force, undefined, undefined, undefined);
-            fiber.patchQueue.push(fiber);
-            fiber.promise = this.__render(fiber);
-            await fiber.promise;
-            if (__owl__.isMounted && fiber === __owl__.currentFiber) {
-                // we only update the vnode and the actual DOM if no other rendering
-                // occurred between now and when the render method was initially called.
-                this.__applyPatchQueue(fiber);
-            }
+            return new Promise((resolve, reject) => {
+                const fiber = new Fiber(null, this, undefined, undefined, force);
+                scheduler.addFiber(fiber.root, err => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    if (__owl__.isMounted && fiber === fiber.root) {
+                        fiber.patchComponents();
+                    }
+                    resolve();
+                });
+                this.__render(fiber);
+            });
         }
         /**
          * Destroy the component.  This operation is quite complex:
@@ -3375,26 +3601,6 @@
         //--------------------------------------------------------------------------
         // Private
         //--------------------------------------------------------------------------
-        /**
-         * This method is a helper to create a fiber element.
-         */
-        __createFiber(force, scope, vars, parent) {
-            const fiber = {
-                force,
-                scope,
-                vars,
-                rootFiber: null,
-                isCancelled: false,
-                component: this,
-                vnode: null,
-                patchQueue: parent ? parent.patchQueue : [],
-                props: this.props,
-                promise: null
-            };
-            fiber.rootFiber = parent ? parent.rootFiber : fiber;
-            this.__owl__.currentFiber = fiber;
-            return fiber;
-        }
         /**
          * Private helper to perform a full destroy, from the point of view of an Owl
          * component. It does not remove the el (this is done only once on the top
@@ -3445,7 +3651,7 @@
                 }
             }
             catch (e) {
-                errorHandler(e, this);
+                console.error(e); // TODO : add a test
             }
         }
         __callWillUnmount() {
@@ -3467,21 +3673,33 @@
          * The __updateProps method is called by the t-component directive whenever
          * it updates a component (so, when the parent template is rerendered).
          */
-        async __updateProps(nextProps, parentFiber, scope, vars) {
+        async __updateProps(nextProps, parentFiber, scope, vars, previousSibling) {
             const shouldUpdate = parentFiber.force || this.shouldUpdate(nextProps);
             if (shouldUpdate) {
+                const __owl__ = this.__owl__;
+                const fiber = new Fiber(parentFiber, this, scope, vars, parentFiber.force);
+                if (!parentFiber.child) {
+                    parentFiber.child = fiber;
+                }
+                else {
+                    previousSibling.sibling = fiber;
+                }
                 const defaultProps = this.constructor.defaultProps;
                 if (defaultProps) {
-                    nextProps = this.__applyDefaultProps(nextProps, defaultProps);
+                    this.__applyDefaultProps(nextProps, defaultProps);
+                }
+                if (QWeb.dev) {
+                    QWeb.utils.validateProps(this.constructor, nextProps);
                 }
                 await Promise.all([
                     this.willUpdateProps(nextProps),
-                    this.__owl__.willUpdatePropsCB && this.__owl__.willUpdatePropsCB(nextProps)
+                    __owl__.willUpdatePropsCB && __owl__.willUpdatePropsCB(nextProps)
                 ]);
+                if (fiber.isCancelled) {
+                    return;
+                }
                 this.props = nextProps;
-                const fiber = this.__createFiber(parentFiber.force, scope, vars, parentFiber);
-                fiber.patchQueue.push(fiber);
-                await this.__render(fiber);
+                this.__render(fiber);
             }
         }
         /**
@@ -3492,37 +3710,39 @@
             const __owl__ = this.__owl__;
             const target = __owl__.vnode || document.createElement(vnode.sel);
             __owl__.vnode = patch(target, vnode);
+            __owl__.currentFiber = null;
         }
         /**
          * The __prepare method is only called by the t-component directive, when a
          * subcomponent is created. It gets its scope and vars, if any, from the
          * parent template.
          */
-        __prepare(parentFiber, scope, vars) {
-            const fiber = this.__createFiber(parentFiber.force, scope, vars, parentFiber);
-            fiber.promise = this.__prepareAndRender(fiber);
-            return fiber.promise;
+        __prepare(parentFiber, scope, vars, previousSibling) {
+            const fiber = new Fiber(parentFiber, this, scope, vars, parentFiber.force);
+            fiber.shouldPatch = false;
+            if (!parentFiber.child) {
+                parentFiber.child = fiber;
+            }
+            else {
+                previousSibling.sibling = fiber;
+            }
+            return this.__prepareAndRender(fiber);
         }
         __getTemplate(qweb) {
             let p = this.constructor;
             if (!p.hasOwnProperty("_template")) {
-                if (p.template) {
-                    p._template = p.template;
+                // here, the component and none of its superclasses defines a static `template`
+                // key. So we fall back on looking for a template matching its name (or
+                // one of its subclass).
+                let template;
+                while ((template = p.name) && !(template in qweb.templates) && p !== Component) {
+                    p = p.__proto__;
+                }
+                if (p === Component) {
+                    throw new Error(`Could not find template for component "${this.constructor.name}"`);
                 }
                 else {
-                    // here, the component and none of its superclasses defines a static `template`
-                    // key. So we fall back on looking for a template matching its name (or
-                    // one of its subclass).
-                    let template;
-                    while ((template = p.name) && !(template in qweb.templates) && p !== Component) {
-                        p = p.__proto__;
-                    }
-                    if (p === Component) {
-                        throw new Error(`Could not find template for component "${this.constructor.name}"`);
-                    }
-                    else {
-                        p._template = template;
-                    }
+                    p._template = template;
                 }
             }
             return p._template;
@@ -3532,60 +3752,60 @@
                 await Promise.all([this.willStart(), this.__owl__.willStartCB && this.__owl__.willStartCB()]);
             }
             catch (e) {
-                errorHandler(e, this);
-                return Promise.resolve(h("div"));
+                fiber.handleError(e);
+                fiber.vnode = h("div"); // -> we render this div at the end
+                return Promise.resolve();
             }
-            const __owl__ = this.__owl__;
-            if (__owl__.isDestroyed) {
-                return Promise.resolve(h("div"));
+            if (this.__owl__.isDestroyed) {
+                return Promise.resolve();
             }
-            return this.__render(fiber);
+            if (!fiber.isCancelled) {
+                this.__render(fiber);
+            }
         }
         __render(fiber) {
             const __owl__ = this.__owl__;
-            const promises = [];
             if (__owl__.observer) {
                 __owl__.observer.allowMutations = false;
             }
             let vnode;
             try {
-                vnode = __owl__.render(this, {
-                    promises,
+                vnode = __owl__.renderFn(this, {
                     handlers: __owl__.boundHandlers,
                     fiber: fiber
                 });
             }
             catch (e) {
                 vnode = __owl__.vnode || h("div");
-                errorHandler(e, this);
+                fiber.handleError(e);
             }
             fiber.vnode = vnode;
             if (__owl__.observer) {
                 __owl__.observer.allowMutations = true;
             }
-            // this part is critical for the patching process to be done correctly. The
-            // tricky part is that a child component can be rerendered on its own, which
-            // will update its own vnode representation without the knowledge of the
-            // parent component.  With this, we make sure that the parent component will be
-            // able to patch itself properly after
-            vnode.key = __owl__.id;
-            // we applly here the class information described on the component by the
+            // we apply here the class information described on the component by the
             // template (so, something like <MyComponent class="..."/>) to the actual
             // root vnode
             if (__owl__.classObj) {
                 vnode.data.class = Object.assign(vnode.data.class || {}, __owl__.classObj);
             }
-            return Promise.all(promises).then(() => vnode);
+            fiber.root.counter--;
+            fiber.isRendered = true;
         }
         /**
          * Only called by qweb t-component directive
          */
-        __mount(vnode, elm) {
+        __mount(fiber, elm) {
+            if (fiber !== this.__owl__.currentFiber) {
+                fiber = this.__owl__.currentFiber; // TODO: check if we can remove fiber arg
+            }
+            const vnode = fiber.vnode;
             const __owl__ = this.__owl__;
             if (__owl__.classObj) {
                 vnode.data.class = Object.assign(vnode.data.class || {}, __owl__.classObj);
             }
             __owl__.vnode = patch(elm, vnode);
+            __owl__.currentFiber = null;
             if (__owl__.parent.__owl__.isMounted && !__owl__.isMounted) {
                 this.__callMounted();
             }
@@ -3604,51 +3824,13 @@
         /**
          * Apply default props (only top level).
          *
-         * Note that this method does not modify in place the props, it returns a new
-         * prop object
+         * Note that this method does modify in place the props
          */
         __applyDefaultProps(props, defaultProps) {
-            props = props ? Object.assign({}, props) : {};
             for (let propName in defaultProps) {
                 if (props[propName] === undefined) {
                     props[propName] = defaultProps[propName];
                 }
-            }
-            return props;
-        }
-        /**
-         * Apply the given patch queue from a fiber.
-         *   1) Call 'willPatch' on the component of each patch
-         *   2) Call '__patch' on the component of each patch
-         *   3) Call 'patched' on the component of each patch, in reverse order
-         */
-        __applyPatchQueue(fiber) {
-            const patchQueue = fiber.patchQueue;
-            let component = this;
-            try {
-                const patchLen = patchQueue.length;
-                for (let i = 0; i < patchLen; i++) {
-                    component = patchQueue[i].component;
-                    if (component.__owl__.willPatchCB) {
-                        component.__owl__.willPatchCB();
-                    }
-                    component.willPatch();
-                }
-                for (let i = 0; i < patchLen; i++) {
-                    const fiber = patchQueue[i];
-                    component = fiber.component;
-                    component.__patch(fiber.vnode);
-                }
-                for (let i = patchLen - 1; i >= 0; i--) {
-                    component = patchQueue[i].component;
-                    component.patched();
-                    if (component.__owl__.patchedCB) {
-                        component.__owl__.patchedCB();
-                    }
-                }
-            }
-            catch (e) {
-                errorHandler(e, component);
             }
         }
     }
@@ -3656,37 +3838,9 @@
     Component._template = null;
     Component.current = null;
     Component.components = {};
-    //------------------------------------------------------------------------------
-    // Error handling
-    //------------------------------------------------------------------------------
-    /**
-     * This is the global error handler for errors occurring in Owl main lifecycle
-     * methods.  Caught errors are triggered on the QWeb instance, and are
-     * potentially given to some parent component which implements `catchError`.
-     *
-     * If there are no such component, we destroy everything. This is better than
-     * being in a corrupted state.
-     */
-    function errorHandler(error, component) {
-        let canCatch = false;
-        let qweb = component.env.qweb;
-        let root = component;
-        while (component && !(canCatch = component.catchError !== Component.prototype.catchError)) {
-            root = component;
-            component = component.__owl__.parent;
-        }
-        console.error(error);
-        // we trigger error on QWeb so it can be logged/handled
-        qweb.trigger("error", error);
-        if (canCatch) {
-            setTimeout(() => {
-                component.catchError(error);
-            });
-        }
-        else {
-            root.destroy();
-        }
-    }
+    Component.env = {};
+    // expose scheduler s.t. it can be mocked for testing purposes
+    Component.scheduler = scheduler;
 
     /**
      * Owl Hook System
@@ -3775,7 +3929,13 @@
         return {
             get el() {
                 const val = __owl__.refs && __owl__.refs[name];
-                return val instanceof HTMLElement ? val : null;
+                if (val instanceof HTMLElement) {
+                    return val;
+                }
+                else if (val instanceof Component) {
+                    return val.el;
+                }
+                return null;
             },
             get comp() {
                 const val = __owl__.refs && __owl__.refs[name];
@@ -3797,6 +3957,7 @@
     }
 
     var _hooks = /*#__PURE__*/Object.freeze({
+        __proto__: null,
         useState: useState,
         onMounted: onMounted,
         onWillUnmount: onWillUnmount,
@@ -3818,44 +3979,74 @@
      * With a `Context` object, each component can subscribe (with the `useContext`
      * hook) to its state, and will be updated whenever the context state is updated.
      */
+    function partitionBy(arr, fn) {
+        let lastGroup = false;
+        let lastValue;
+        return arr.reduce((acc, cur) => {
+            let curVal = fn(cur);
+            if (lastGroup) {
+                if (curVal === lastValue) {
+                    lastGroup.push(cur);
+                }
+                else {
+                    lastGroup = false;
+                }
+            }
+            if (!lastGroup) {
+                lastGroup = [cur];
+                acc.push(lastGroup);
+            }
+            lastValue = curVal;
+            return acc;
+        }, []);
+    }
     class Context extends EventBus {
         constructor(state = {}) {
             super();
-            this.id = 1;
+            this.rev = 1;
             // mapping from component id to last observed context id
             this.mapping = {};
             this.observer = new Observer();
             this.observer.notifyCB = this.__notifyComponents.bind(this);
             this.state = this.observer.observe(state);
+            this.subscriptions.update = [];
         }
         /**
          * Instead of using trigger to emit an update event, we actually implement
          * our own function to do that.  The reason is that we need to be smarter than
          * a simple trigger function: we need to wait for parent components to be
-         * done before doing children components.  The reason is that if an update
-         * as an effect of destroying a children, we do not want to call the
-         * mapStoreToProps function of the child, nor rendering it.
+         * done before doing children components.  More precisely, if an update
+         * as an effect of destroying a children, we do not want to call any code
+         * from the child, and certainly not render it.
          *
-         * This method is not optimal if we have a bunch of asynchronous components:
-         * we wait sequentially for each component to be completed before updating the
-         * next.  However, the only things that matters is that children are updated
-         * after their parents.  So, this could be optimized by being smarter, and
-         * updating all widgets concurrently, except for parents/children.
+         * This method implements a simple grouping algorithm by depth. If we have
+         * connected components of depths [2, 4,4,4,4, 3,8,8], the Context will notify
+         * them in the following groups: [2], [4,4,4,4], [3], [8,8]. Each group will
+         * be updated sequentially, but each components in a given group will be done in
+         * parallel.
          *
-         * A potential cheap way to improve this situation is to keep track of the
-         * depth of a component in the component tree. A root component has a depth of
-         * 1, then its children of 2 and so on... Then, we can update all components
-         * with the same depth in parallel.
+         * This is a very simple algorithm, but it avoids checking if a given
+         * component is a child of another.
          */
         async __notifyComponents() {
-            const id = ++this.id;
-            const subs = this.subscriptions.update || [];
-            for (let i = 0, iLen = subs.length; i < iLen; i++) {
-                const sub = subs[i];
-                const shouldCallback = sub.owner ? sub.owner.__owl__.isMounted : true;
-                if (shouldCallback) {
-                    await sub.callback.call(sub.owner, id);
-                }
+            const rev = ++this.rev;
+            const subscriptions = this.subscriptions.update;
+            const groups = partitionBy(subscriptions, s => (s.owner ? s.owner.__owl__.depth : -1));
+            for (let group of groups) {
+                const proms = Promise.all(group.map(sub => {
+                    if (sub.owner ? sub.owner.__owl__.isMounted : true) {
+                        return sub.callback.call(sub.owner, rev);
+                    }
+                }));
+                // at this point, each component in the current group has registered a
+                // top level fiber in the scheduler. It could happen that rendering these
+                // components is done (if they have no children).  This is why we manually
+                // flush the scheduler.  This will force the scheduler to check
+                // immediately if they are done, which will cause their rendering
+                // promise to resolve earlier, which means that there is a chance of
+                // processing the next group in the same frame.
+                scheduler.flush();
+                await proms;
             }
         }
     }
@@ -3874,15 +4065,29 @@
         if (id in mapping) {
             return ctx.state;
         }
+        if (!__owl__.observer) {
+            __owl__.observer = new Observer();
+            __owl__.observer.notifyCB = component.render.bind(component);
+        }
+        const currentCB = __owl__.observer.notifyCB;
+        __owl__.observer.notifyCB = function () {
+            if (ctx.rev > mapping[id]) {
+                // in this case, the context has been updated since we were rendering
+                // last, and we do not need to render here with the observer. A
+                // rendering is coming anyway, with the correct props.
+                return;
+            }
+            currentCB();
+        };
         mapping[id] = 0;
-        const renderFn = __owl__.render;
-        __owl__.render = function (comp, params) {
-            mapping[id] = ctx.id;
+        const renderFn = __owl__.renderFn;
+        __owl__.renderFn = function (comp, params) {
+            mapping[id] = ctx.rev;
             return renderFn(comp, params);
         };
-        ctx.on("update", component, async (contextId) => {
-            if (mapping[id] < contextId) {
-                mapping[id] = contextId;
+        ctx.on("update", component, async (contextRev) => {
+            if (mapping[id] < contextRev) {
+                mapping[id] = contextRev;
                 await method();
             }
         });
@@ -3927,8 +4132,11 @@
     function useStore(selector, options = {}) {
         const component = Component.current;
         const store = options.store || component.env.store;
+        if (!(store instanceof Store)) {
+            throw new Error(`No store found when connecting '${component.constructor.name}'`);
+        }
         let result = selector(store.state, component.props);
-        const hashFn = store.observer.deepRevNumber.bind(store.observer);
+        const hashFn = store.observer.revNumber.bind(store.observer);
         let revNumber = hashFn(result) || result;
         const isEqual = options.isEqual || isStrictEqual;
         if (!store.updateFunctions[component.__owl__.id]) {
@@ -3956,7 +4164,6 @@
             }
         });
         onWillUpdateProps(props => {
-            // FIXME: only do that if not keepalive + do it in destroy in that case
             delete store.updateFunctions[component.__owl__.id];
             result = selector(store.state, props);
         });
@@ -4005,8 +4212,24 @@
     }
 
     var _tags = /*#__PURE__*/Object.freeze({
+        __proto__: null,
         xml: xml
     });
+
+    /**
+     * AsyncRoot
+     *
+     * Owl is by default asynchronous, and the user interface will wait for all its
+     * subcomponents to be rendered before updating the DOM. This is most of the
+     * time what we want, but in some cases, it makes sense to "detach" a component
+     * from this coordination.  This is the goal of the AsyncRoot component.
+     */
+    class AsyncRoot extends Component {
+        async __updateProps(nextProps, parentFiber) {
+            this.render(parentFiber.force);
+        }
+    }
+    AsyncRoot.template = xml `<t t-slot="default"/>`;
 
     class Link extends Component {
         constructor() {
@@ -4149,7 +4372,7 @@
         // Private helpers
         //--------------------------------------------------------------------------
         setUrlFromPath(path) {
-            const separator = this.mode === "hash" ? "/" : "";
+            const separator = this.mode === "hash" ? location.pathname : "";
             const url = location.origin + separator + path;
             if (url !== window.location.href) {
                 window.history.pushState({}, path, url);
@@ -4281,6 +4504,7 @@
     const Store$1 = Store;
     const utils = _utils;
     const tags = _tags;
+    const misc = { AsyncRoot };
     const hooks$1 = Object.assign({}, _hooks, {
         useContext: useContext,
         useDispatch: useDispatch,
@@ -4288,37 +4512,24 @@
         useStore: useStore
     });
     const __info__ = {};
-    Object.defineProperty(__info__, "mode", {
-        get() {
-            return QWeb.dev ? "dev" : "prod";
-        },
-        set(mode) {
-            QWeb.dev = mode === "dev";
-            if (QWeb.dev) {
-                const url = `https://github.com/odoo/owl/blob/master/doc/tooling.md#development-mode`;
-                console.warn(`Owl is running in 'dev' mode.  This is not suitable for production use. See ${url} for more information.`);
-            }
-            else {
-                console.log(`Owl is now running in 'prod' mode.`);
-            }
-        }
-    });
 
     exports.Component = Component;
     exports.Context = Context$1;
     exports.QWeb = QWeb;
     exports.Store = Store$1;
     exports.__info__ = __info__;
+    exports.config = config;
     exports.core = core;
     exports.hooks = hooks$1;
+    exports.misc = misc;
     exports.router = router;
     exports.tags = tags;
     exports.useState = useState$1;
     exports.utils = utils;
 
-    exports.__info__.version = '0.23.0';
-    exports.__info__.date = '2019-10-23T08:25:48.788Z';
-    exports.__info__.hash = 'a54ea22';
+    exports.__info__.version = '1.0.0-alpha2';
+    exports.__info__.date = '2019-11-07T09:30:21.614Z';
+    exports.__info__.hash = 'aa8febf';
     exports.__info__.url = 'https://github.com/odoo/owl';
 
 }(this.owl = this.owl || {}));

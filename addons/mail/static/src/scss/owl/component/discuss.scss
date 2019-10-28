@@ -35,6 +35,17 @@
     flex-flow: column;
 }
 
+.o_Discuss_messagingNotReady {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.o_Discuss_messagingNotReadyIcon {
+    margin-right: 3px;
+}
+
 .o_Discuss_mobileAddItemHeader {
     display: flex;
     justify-content: center;

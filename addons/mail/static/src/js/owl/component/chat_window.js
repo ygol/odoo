@@ -99,32 +99,6 @@ class ChatWindow extends Component {
     }
 
     /**
-     * Get the state of the chat window. Chat windows that have no thread do
-     * not have any state, hence it returns `undefined`.
-     *
-     * @return {Object|undefined} with format:
-     *  {
-     *      composerAttachmentLocalIds: {Array},
-     *      composerTextInputHtmlContent: {String},
-     *      scrollTop: {integer}
-     *  }
-     */
-    getState() {
-        if (!this._threadRef.comp) {
-            return;
-        }
-        const {
-            attachmentLocalIds: composerAttachmentLocalIds,
-            textInputHtmlContent: composerTextInputHtmlContent
-        } = this._threadRef.comp.getComposerState();
-        return {
-            composerAttachmentLocalIds,
-            composerTextInputHtmlContent,
-            scrollTop: this._threadRef.comp.getScrollTop()
-        };
-    }
-
-    /**
      * Determine whether this chat window is folded or not.
      *
      * @return {boolean}
@@ -134,6 +108,22 @@ class ChatWindow extends Component {
             return this.storeProps.thread.state === 'folded';
         }
         return this.state.isFolded;
+    }
+
+    /**
+     * Save the scroll positions of the chat window in the store.
+     * This is useful in order to remount chat windows and keep previous
+     * scroll positions. This is necessary because when toggling on/off
+     * home menu, the chat windows have to be remade from scratch.
+     */
+    saveScrollTop() {
+        if (this.props.chatWindowLocalId === 'new_message') {
+            return;
+        }
+        this.storeDispatch('saveChatWindowScrollTop',
+            this.props.chatWindowLocalId,
+            this._threadRef.comp.getScrollTop()
+        );
     }
 
     //--------------------------------------------------------------------------
@@ -306,15 +296,6 @@ ChatWindow.defaultProps = {
 
 ChatWindow.props = {
     chatWindowLocalId: String,
-    composerInitialAttachmentLocalIds: {
-        type: Array,
-        element: String,
-        optional: true,
-    },
-    composerInitialTextInputHtmlContent: {
-        type: String,
-        optional: true,
-    },
     dockDirection: {
         type: String,
         optional: true,

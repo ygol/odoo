@@ -35,23 +35,23 @@
                     </div>
                 </t>
                 <div class="o_Attachment_aside">
-                    <t t-if="storeProps.attachment.composerId and storeProps.attachment.isTemporary">
-                        <div class="o_Attachment_asideItem o_Attachment_asideItemUploading" title="Uploading" aria-label="Uploading" t-key="'uploading'">
+                    <t t-if="storeProps.attachment.composerLocalId and storeProps.attachment.isTemporary">
+                        <div class="o_Attachment_asideItem o_Attachment_asideItemUploading" title="Uploading" aria-label="Uploading">
                             <i class="fa fa-spin fa-spinner"/>
                         </div>
                     </t>
-                    <t t-if="storeProps.attachment.composerId and !storeProps.attachment.isTemporary">
-                        <div class="o_Attachment_asideItem o_Attachment_asideItemUploaded" title="Uploaded" aria-label="Uploaded" t-key="'uploaded'">
+                    <t t-if="storeProps.attachment.composerLocalId and !storeProps.attachment.isTemporary">
+                        <div class="o_Attachment_asideItem o_Attachment_asideItemUploaded" title="Uploaded" aria-label="Uploaded">
                             <i class="fa fa-check"/>
                         </div>
                     </t>
                     <t t-if="props.isEditable and !storeProps.attachment.isTemporary">
-                        <div class="o_Attachment_asideItem o_Attachment_asideItemUnlink" t-att-class="{ 'o-pretty': storeProps.attachment.composerId }" t-on-click="_onClickUnlink" title="Remove" aria-label="Remove" t-key="'unlink'">
+                        <div class="o_Attachment_asideItem o_Attachment_asideItemUnlink" t-att-class="{ 'o-pretty': storeProps.attachment.composerLocalId }" t-on-click="_onClickUnlink" title="Remove" aria-label="Remove">
                             <i class="fa fa-times"/>
                         </div>
                     </t>
                     <t t-if="props.isDownloadable and !storeProps.attachment.isTemporary">
-                        <div class="o_Attachment_asideItem o_Attachment_asideItemDownload" t-on-click="_onClickDownload" title="Download" aria-label="Download" t-key="'download'">
+                        <div class="o_Attachment_asideItem o_Attachment_asideItemDownload" t-on-click="_onClickDownload" title="Download" aria-label="Download">
                             <i class="fa fa-download"/>
                         </div>
                     </t>
