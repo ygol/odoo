@@ -2587,7 +2587,33 @@ class BaseModel(object):
         cr = self._cr
         query = 'ALTER TABLE "%s" ADD FOREIGN KEY ("%s") REFERENCES "%s" ON DELETE %s'
         for table1, column, table2, ondelete, module in self._foreign_keys:
-            cr.execute(query % (table1, column, table2, ondelete))
+            try:
+                with cr.savepoint():
+                    cr.execute(query % (table1, column, table2, ondelete))
+            except psycopg2.IntegrityError as e:
+                if e.pgcode == '23503':  # foreign_key_violation
+                    try:
+                        cr.execute("""
+                            SELECT %(column)s
+                              FROM %(table1)s table1
+                         LEFT JOIN %(table2)s table2 ON (table1.%(column)s = table2.id)
+                             WHERE table1.%(column)s is not null
+                               AND table2.id is null
+                          GROUP BY table1.%(column)s;
+                        """ % {'table1': table1, 'table2': table2, 'column': column})
+                        missing_ids = tuple(record[0] for record in cr.fetchall())
+                        _logger.warning('ids %s set in %s.%s are missing in %s', missing_ids, table1, column, table2)
+                        _logger.warning('Attempt to set them to null to be able to reset the expected foreign key')
+                        cr.execute("""
+                            UPDATE %(table1)s
+                               SET %(column)s = NULL
+                             WHERE %(column)s IN %%s
+                            """ % {'table1': table1, 'column': column}, (missing_ids,))
+                    except Exception:
+                        raise
+                    cr.execute(query % (table1, column, table2, ondelete))
+                else:
+                    raise
             self._save_constraint("%s_%s_fkey" % (table1, column), 'f', False, module)
         cr.commit()
         del type(self)._foreign_keys
