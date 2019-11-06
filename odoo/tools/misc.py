@@ -823,11 +823,13 @@ class mute_logger(object):
             do_suff()
 
     """
-    def __init__(self, *loggers):
+    def __init__(self, *loggers, max_level=logging.INFO):
         self.loggers = loggers
+        self.max_level = max_level
 
     def filter(self, record):
-        return 0
+        import pudb
+        return record.levelno > self.max_level
 
     def __enter__(self):
         for logger in self.loggers:
