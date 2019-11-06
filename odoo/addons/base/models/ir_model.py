@@ -314,7 +314,13 @@ class IrModel(models.Model):
         cr.execute('SELECT * FROM ir_model WHERE state=%s', ['manual'])
         for model_data in cr.dictfetchall():
             model_class = self._instanciate(model_data)
-            model_class._build_model(self.pool, cr)
+            model = model_class._build_model(self.pool, cr)
+            if not tools.table_kind(cr, model._table) == 'r':
+                model._auto = model._log_acess = False
+                cr.execute('SELECT * FROM %s LIMIT 0' % model._table)
+                columns = [desc[0] for desc in cr.description]
+                if all(column in columns for column in models.LOG_ACCESS_COLUMNS):
+                    model._log_acess = True
 
 
 # retrieve field types defined by the framework only (not extensions)
