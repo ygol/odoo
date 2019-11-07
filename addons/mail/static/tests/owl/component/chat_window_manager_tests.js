@@ -500,6 +500,14 @@ QUnit.skip('chat window: state conservation on toggle home menu', async function
      * Disabled for the moment because the back-up of composer state seems to
      * preserve "uploading" attachments instead of uploaded attachments
      */
+    /**
+     * Crashes on runbot when building with "Cannot read property 'mimetype' of undefined".
+     *
+     * Skipped test due to (hypothetically) concurrent rendering issue on runbot.
+     * Could not reproduce neither locally or on awaken runbot on our browser.
+     * Apparently may be related to creating/deleting attachments while uploading,
+     * so all tests with attachment uploads are skipped until this is solved.
+     */
     assert.expect(6);
 
     Object.assign(this.data.initMessaging, {
