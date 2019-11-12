@@ -1067,7 +1067,7 @@ class OrderedSet(MutableSet):
     """ A set collection that remembers the elements first insertion order. """
     __slots__ = ['_map']
     def __init__(self, elems=()):
-        self._map = OrderedDict((elem, None) for elem in elems)
+        self._map = OrderedDict.fromkeys(elems)
     def __contains__(self, elem):
         return elem in self._map
     def __iter__(self):
@@ -1083,8 +1083,8 @@ class OrderedSet(MutableSet):
 class LastOrderedSet(OrderedSet):
     """ A set collection that remembers the elements last insertion order. """
     def add(self, elem):
-        OrderedSet.discard(self, elem)
-        OrderedSet.add(self, elem)
+        super().add(elem)
+        self._map.move_to_end(elem)
 
 
 class IterableGenerator:

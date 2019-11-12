@@ -269,20 +269,7 @@ class TreeCase(unittest.TestCase):
             self.assertTreesEqual(c1, c2, msg)
 
 
-class MetaCase(type):
-    """ Metaclass of test case classes to assign default 'test_tags':
-        'standard', 'at_install' and the name of the module.
-    """
-    def __init__(cls, name, bases, attrs):
-        super(MetaCase, cls).__init__(name, bases, attrs)
-        # assign default test tags
-        if cls.__module__.startswith('odoo.addons.'):
-            cls.test_tags = {'standard', 'at_install'}
-            cls.test_module = cls.__module__.split('.')[2]
-            cls.test_class = cls.__name__
-
-
-class BaseCase(TreeCase, MetaCase('DummyCase', (object,), {})):
+class BaseCase(TreeCase):
     """
     Subclass of TestCase for common OpenERP-specific code.
 
@@ -292,6 +279,14 @@ class BaseCase(TreeCase, MetaCase('DummyCase', (object,), {})):
 
     longMessage = True      # more verbose error message by default: https://www.odoo.com/r/Vmh
     warm = True             # False during warm-up phase (see :func:`warmup`)
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        # assign default test tags
+        if cls.__module__.startswith('odoo.addons.'):
+            cls.test_tags = {'standard', 'at_install'}
+            cls.test_module = cls.__module__.split('.')[2]
+            cls.test_class = cls.__name__
 
     def cursor(self):
         return self.registry.cursor()

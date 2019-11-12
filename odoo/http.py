@@ -891,20 +891,20 @@ class ControllerType(type):
                 if first_arg in ["req", "request"]:
                     v._first_arg_is_req = True
 
-        # store the controller in the controllers list
+
+class Controller(metaclass=ControllerType):
+    def __init_subclass__(cls, **kw):
+        super().__init_subclass__(**kw)
+
+        if Controller not in cls.__bases__:
+            return
+
         name_class = ("%s.%s" % (cls.__module__, cls.__name__), cls)
         class_path = name_class[0].split(".")
-        if not class_path[:2] == ["odoo", "addons"]:
-            module = ""
-        else:
-            # we want to know all modules that have controllers
+        module = ""
+        if class_path[:2] == ["odoo", "addons"]:
             module = class_path[2]
-        # but we only store controllers directly inheriting from Controller
-        if not "Controller" in globals() or not Controller in bases:
-            return
         controllers_per_module[module].append(name_class)
-
-Controller = ControllerType('Controller', (object,), {})
 
 class EndPoint(object):
     def __init__(self, method, routing):

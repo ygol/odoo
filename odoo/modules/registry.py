@@ -219,8 +219,8 @@ class Registry(Mapping):
         model_names = []
         for cls in models.MetaModel.module_to_models.get(module.name, []):
             # models register themselves in self.models
-            model = cls._build_model(self, cr)
-            model_names.append(model._name)
+            Model = self[Model._name] = cls._build_model(self, cr)
+            model_names.append(Model._name)
 
         return self.descendants(model_names, '_inherit', '_inherits')
 

@@ -107,7 +107,7 @@ class MetaField(type):
                 cls.description_attrs.append((attr[13:], attr))
 
 _global_seq = iter(itertools.count())
-class Field(MetaField('DummyField', (object,), {})):
+class Field(metaclass=MetaField):
     """The field descriptor contains the field definition, and manages accesses
     and assignments of the corresponding field on records. The following
     attributes may be provided when instanciating a field:

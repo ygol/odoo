@@ -149,27 +149,27 @@ class MetaModel(api.Meta):
 
     module_to_models = defaultdict(list)
 
-    def __init__(self, name, bases, attrs):
-        if not self._register:
-            self._register = True
-            super(MetaModel, self).__init__(name, bases, attrs)
+    def __init__(cls, name, bases, attrs):
+        if not cls._register:
+            cls._register = True
+            super(MetaModel, cls).__init__(name, bases, attrs)
             return
 
-        if not hasattr(self, '_module'):
-            self._module = self._get_addon_name(self.__module__)
+        if not hasattr(cls, '_module'):
+            cls._module = cls._get_addon_name(cls.__module__)
 
         # Remember which models to instanciate for this module.
-        if not self._custom:
-            self.module_to_models[self._module].append(self)
+        if not cls._custom:
+            cls.module_to_models[cls._module].append(cls)
 
         # check for new-api conversion error: leave comma after field definition
         for key, val in attrs.items():
             if type(val) is tuple and len(val) == 1 and isinstance(val[0], Field):
-                _logger.error("Trailing comma after field definition: %s.%s", self, key)
+                _logger.error("Trailing comma after field definition: %s.%s", cls, key)
             if isinstance(val, Field):
-                val.args = dict(val.args, _module=self._module)
+                val.args = dict(val.args, _module=cls._module)
 
-    def _get_addon_name(self, full_name):
+    def _get_addon_name(cls, full_name):
         # The (OpenERP) module name can be in the ``odoo.addons`` namespace
         # or not. For instance, module ``sale`` can be imported as
         # ``odoo.addons.sale`` (the right way) or ``sale`` (for backward
@@ -180,6 +180,199 @@ class MetaModel(api.Meta):
         else:
             addon_name = full_name.split('.')[0]
         return addon_name
+
+    #
+    # Goal: try to apply inheritance at the instantiation level and
+    #       put objects in the pool var
+    #
+    def _build_model(cls, pool, cr):
+        """ Instantiate a given model in the registry.
+
+        This method creates or extends a "registry" class for the given model.
+        This "registry" class carries inferred model metadata, and inherits (in
+        the Python sense) from all classes that define the model, and possibly
+        other registry classes.
+
+        """
+
+        # In the simplest case, the model's registry class inherits from cls and
+        # the other classes that define the model in a flat hierarchy. The
+        # registry contains the instance ``model`` (on the left). Its class,
+        # ``ModelClass``, carries inferred metadata that is shared between all
+        # the model's instances for this registry only.
+        #
+        #   class A1(Model):                          Model
+        #       _name = 'a'                           / | \
+        #                                            A3 A2 A1
+        #   class A2(Model):                          \ | /
+        #       _inherit = 'a'                      ModelClass
+        #                                             /   \
+        #   class A3(Model):                      model   recordset
+        #       _inherit = 'a'
+        #
+        # When a model is extended by '_inherit', its base classes are modified
+        # to include the current class and the other inherited model classes.
+        # Note that we actually inherit from other ``ModelClass``, so that
+        # extensions to an inherited model are immediately visible in the
+        # current model class, like in the following example:
+        #
+        #   class A1(Model):
+        #       _name = 'a'                           Model
+        #                                            / / \ \
+        #   class B1(Model):                        / A2 A1 \
+        #       _name = 'b'                        /   \ /   \
+        #                                         B2  ModelA  B1
+        #   class B2(Model):                       \    |    /
+        #       _name = 'b'                         \   |   /
+        #       _inherit = ['a', 'b']                \  |  /
+        #                                             ModelB
+        #   class A2(Model):
+        #       _inherit = 'a'
+
+        if getattr(cls, '_constraints', None):
+            _logger.warning("Model attribute '_constraints' is no longer supported, "
+                            "please use @api.constrains on methods instead.")
+
+        # Keep links to non-inherited constraints in cls; this is useful for
+        # instance when exporting translations
+        cls._local_sql_constraints = cls.__dict__.get('_sql_constraints', [])
+
+        # determine inherited models
+        parents = cls._inherit
+        parents = [parents] if isinstance(parents, str) else (parents or [])
+
+        # determine the model's name
+        name = cls._name or (len(parents) == 1 and parents[0]) or cls.__name__
+
+        # all models except 'base' implicitly inherit from 'base'
+        if name != 'base':
+            parents = list(parents) + ['base']
+
+        # is this really a useful optimisation compared to re-creating the
+        # ModelClass?
+        if name in parents:
+            if name not in pool:
+                raise TypeError("Model %r does not exist in registry." % name)
+            ModelClass = pool[name]
+            ModelClass._build_model_check_base(cls)
+            check_parent = ModelClass._build_model_check_parent
+        else:
+            ModelClass = type(name, (BaseModel,), {
+                '_name': name,
+                '_register': False,
+                '_original_module': cls._module,
+                '_inherit_children': OrderedSet(),      # names of children models
+                '_inherits_children': set(),            # names of children models
+                '_fields': OrderedDict(),               # populated in _setup_base()
+            })
+            check_parent = cls._build_model_check_parent
+
+        # determine all the classes the model should inherit from
+        bases = LastOrderedSet([cls])
+        for parent in parents:
+            if parent not in pool:
+                raise TypeError("Model %r inherits from non-existing model %r." % (name, parent))
+            parent_class = pool[parent]
+            if parent == name:
+                for base in parent_class.__bases__:
+                    bases.add(base)
+            else:
+                check_parent(cls, parent_class)
+                bases.add(parent_class)
+                parent_class._inherit_children.add(name)
+        ModelClass.__bases__ = tuple(bases)
+
+        # determine the attributes of the model's class
+        ModelClass._build_model_attributes(pool)
+
+        check_pg_name(ModelClass._table)
+
+        # Transience
+        if ModelClass._transient:
+            assert ModelClass._log_access, \
+                "TransientModels must have log_access turned on, " \
+                "in order to implement their access rights policy"
+
+        # link the class to the registry, and update the registry
+        ModelClass.pool = pool
+
+        # backward compatibility: instantiate the model, and initialize it
+        # TODO: * add model-creation hook to replace __init__
+        #       * check __init__ and move old-style overrides to new hook
+        #       * ??? __new__ weirdness ???
+        #       => make normal Python object construction work again
+        #          (with Foo() ~ Foo._browse())
+        model = object.__new__(ModelClass)
+        model.__init__(pool, cr)
+
+        return ModelClass
+
+    def _build_model_check_base(cls, candidate_extension):
+        """ Check whether ``model_class`` can be extended with ``cls``. """
+        if cls._abstract and not candidate_extension._abstract:
+            msg = ("%s transforms the abstract model %r into a non-abstract model. "
+                   "That class should either inherit from AbstractModel, or set a different '_name'.")
+            raise TypeError(msg % (candidate_extension, cls._name))
+        if cls._transient != candidate_extension._transient:
+            if cls._transient:
+                msg = ("%s transforms the transient model %r into a non-transient model. "
+                       "That class should either inherit from TransientModel, or set a different '_name'.")
+            else:
+                msg = ("%s transforms the model %r into a transient model. "
+                       "That class should either inherit from Model, or set a different '_name'.")
+            raise TypeError(msg % (candidate_extension, cls._name))
+
+    def _build_model_check_parent(cls, no_idea, parent_class):
+        """ Check whether ``model_class`` can inherit from ``parent_class``. """
+        if cls._abstract and not parent_class._abstract:
+            msg = ("In %s, the abstract model %r cannot inherit from the non-abstract model %r.")
+            raise TypeError(msg % (no_idea, cls._name, parent_class._name))
+
+    def _build_model_attributes(cls, pool):
+        """ Initialize base model attributes. """
+        cls._description = cls._name
+        cls._table = cls._name.replace('.', '_')
+        cls._sequence = None
+        cls._log_access = cls._auto
+        cls._inherits = {}
+        cls._sql_constraints = {}
+
+        for base in reversed(cls.__bases__):
+            if not getattr(base, 'pool', None):
+                # the following attributes are not taken from model classes
+                parents = [base._inherit] if base._inherit and isinstance(base._inherit, str) else (base._inherit or [])
+                if cls._name not in parents and not base._description:
+                    _logger.warning("The model %s has no _description", cls._name)
+                cls._description = base._description or cls._description
+                cls._table = base._table or cls._table
+                cls._sequence = base._sequence or cls._sequence
+                cls._log_access = getattr(base, '_log_access', cls._log_access)
+
+            cls._inherits.update(base._inherits)
+
+            for cons in base._sql_constraints:
+                cls._sql_constraints[cons[0]] = cons
+
+        cls._sequence = cls._sequence or (cls._table + '_id_seq')
+        cls._sql_constraints = list(cls._sql_constraints.values())
+
+        # update _inherits_children of parent models
+        for parent_name in cls._inherits:
+            pool[parent_name]._inherits_children.add(cls._name)
+
+        # recompute attributes of _inherit_children models
+        for child_name in cls._inherit_children:
+            child_class = pool[child_name]
+            child_class._build_model_attributes(pool)
+
+    def _init_constraints_onchanges(cls):
+        # store list of sql constraint qualified names
+        for (key, _, _) in cls._sql_constraints:
+            cls.pool._sql_constraints.add(cls._table + '_' + key)
+
+        # reset properties memoized on cls
+        cls._constraint_methods = BaseModel._constraint_methods
+        cls._onchange_methods = BaseModel._onchange_methods
 
 
 class NewId(object):
@@ -236,7 +429,7 @@ VALID_AGGREGATE_FUNCTIONS = {
 }
 
 
-class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
+class BaseModel(metaclass=MetaModel):
     """Base class for Odoo models.
 
     Odoo models are created by inheriting one of the following:
@@ -446,199 +639,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         for record in self:
             record[self.CONCURRENCY_CHECK_FIELD] = \
                 record.write_date or record.create_date or odoo.fields.Datetime.now()
-
-    #
-    # Goal: try to apply inheritance at the instantiation level and
-    #       put objects in the pool var
-    #
-    @classmethod
-    def _build_model(cls, pool, cr):
-        """ Instantiate a given model in the registry.
-
-        This method creates or extends a "registry" class for the given model.
-        This "registry" class carries inferred model metadata, and inherits (in
-        the Python sense) from all classes that define the model, and possibly
-        other registry classes.
-
-        """
-
-        # In the simplest case, the model's registry class inherits from cls and
-        # the other classes that define the model in a flat hierarchy. The
-        # registry contains the instance ``model`` (on the left). Its class,
-        # ``ModelClass``, carries inferred metadata that is shared between all
-        # the model's instances for this registry only.
-        #
-        #   class A1(Model):                          Model
-        #       _name = 'a'                           / | \
-        #                                            A3 A2 A1
-        #   class A2(Model):                          \ | /
-        #       _inherit = 'a'                      ModelClass
-        #                                             /   \
-        #   class A3(Model):                      model   recordset
-        #       _inherit = 'a'
-        #
-        # When a model is extended by '_inherit', its base classes are modified
-        # to include the current class and the other inherited model classes.
-        # Note that we actually inherit from other ``ModelClass``, so that
-        # extensions to an inherited model are immediately visible in the
-        # current model class, like in the following example:
-        #
-        #   class A1(Model):
-        #       _name = 'a'                           Model
-        #                                            / / \ \
-        #   class B1(Model):                        / A2 A1 \
-        #       _name = 'b'                        /   \ /   \
-        #                                         B2  ModelA  B1
-        #   class B2(Model):                       \    |    /
-        #       _name = 'b'                         \   |   /
-        #       _inherit = ['a', 'b']                \  |  /
-        #                                             ModelB
-        #   class A2(Model):
-        #       _inherit = 'a'
-
-        if getattr(cls, '_constraints', None):
-            _logger.warning("Model attribute '_constraints' is no longer supported, "
-                            "please use @api.constrains on methods instead.")
-
-        # Keep links to non-inherited constraints in cls; this is useful for
-        # instance when exporting translations
-        cls._local_sql_constraints = cls.__dict__.get('_sql_constraints', [])
-
-        # determine inherited models
-        parents = cls._inherit
-        parents = [parents] if isinstance(parents, str) else (parents or [])
-
-        # determine the model's name
-        name = cls._name or (len(parents) == 1 and parents[0]) or cls.__name__
-
-        # all models except 'base' implicitly inherit from 'base'
-        if name != 'base':
-            parents = list(parents) + ['base']
-
-        # create or retrieve the model's class
-        if name in parents:
-            if name not in pool:
-                raise TypeError("Model %r does not exist in registry." % name)
-            ModelClass = pool[name]
-            ModelClass._build_model_check_base(cls)
-            check_parent = ModelClass._build_model_check_parent
-        else:
-            ModelClass = type(name, (BaseModel,), {
-                '_name': name,
-                '_register': False,
-                '_original_module': cls._module,
-                '_inherit_children': OrderedSet(),      # names of children models
-                '_inherits_children': set(),            # names of children models
-                '_fields': OrderedDict(),               # populated in _setup_base()
-            })
-            check_parent = cls._build_model_check_parent
-
-        # determine all the classes the model should inherit from
-        bases = LastOrderedSet([cls])
-        for parent in parents:
-            if parent not in pool:
-                raise TypeError("Model %r inherits from non-existing model %r." % (name, parent))
-            parent_class = pool[parent]
-            if parent == name:
-                for base in parent_class.__bases__:
-                    bases.add(base)
-            else:
-                check_parent(cls, parent_class)
-                bases.add(parent_class)
-                parent_class._inherit_children.add(name)
-        ModelClass.__bases__ = tuple(bases)
-
-        # determine the attributes of the model's class
-        ModelClass._build_model_attributes(pool)
-
-        check_pg_name(ModelClass._table)
-
-        # Transience
-        if ModelClass._transient:
-            assert ModelClass._log_access, \
-                "TransientModels must have log_access turned on, " \
-                "in order to implement their access rights policy"
-
-        # link the class to the registry, and update the registry
-        ModelClass.pool = pool
-        pool[name] = ModelClass
-
-        # backward compatibility: instantiate the model, and initialize it
-        model = object.__new__(ModelClass)
-        model.__init__(pool, cr)
-
-        return ModelClass
-
-    @classmethod
-    def _build_model_check_base(model_class, cls):
-        """ Check whether ``model_class`` can be extended with ``cls``. """
-        if model_class._abstract and not cls._abstract:
-            msg = ("%s transforms the abstract model %r into a non-abstract model. "
-                   "That class should either inherit from AbstractModel, or set a different '_name'.")
-            raise TypeError(msg % (cls, model_class._name))
-        if model_class._transient != cls._transient:
-            if model_class._transient:
-                msg = ("%s transforms the transient model %r into a non-transient model. "
-                       "That class should either inherit from TransientModel, or set a different '_name'.")
-            else:
-                msg = ("%s transforms the model %r into a transient model. "
-                       "That class should either inherit from Model, or set a different '_name'.")
-            raise TypeError(msg % (cls, model_class._name))
-
-    @classmethod
-    def _build_model_check_parent(model_class, cls, parent_class):
-        """ Check whether ``model_class`` can inherit from ``parent_class``. """
-        if model_class._abstract and not parent_class._abstract:
-            msg = ("In %s, the abstract model %r cannot inherit from the non-abstract model %r.")
-            raise TypeError(msg % (cls, model_class._name, parent_class._name))
-
-    @classmethod
-    def _build_model_attributes(cls, pool):
-        """ Initialize base model attributes. """
-        cls._description = cls._name
-        cls._table = cls._name.replace('.', '_')
-        cls._sequence = None
-        cls._log_access = cls._auto
-        cls._inherits = {}
-        cls._sql_constraints = {}
-
-        for base in reversed(cls.__bases__):
-            if not getattr(base, 'pool', None):
-                # the following attributes are not taken from model classes
-                parents = [base._inherit] if base._inherit and isinstance(base._inherit, str) else (base._inherit or [])
-                if cls._name not in parents and not base._description:
-                    _logger.warning("The model %s has no _description", cls._name)
-                cls._description = base._description or cls._description
-                cls._table = base._table or cls._table
-                cls._sequence = base._sequence or cls._sequence
-                cls._log_access = getattr(base, '_log_access', cls._log_access)
-
-            cls._inherits.update(base._inherits)
-
-            for cons in base._sql_constraints:
-                cls._sql_constraints[cons[0]] = cons
-
-        cls._sequence = cls._sequence or (cls._table + '_id_seq')
-        cls._sql_constraints = list(cls._sql_constraints.values())
-
-        # update _inherits_children of parent models
-        for parent_name in cls._inherits:
-            pool[parent_name]._inherits_children.add(cls._name)
-
-        # recompute attributes of _inherit_children models
-        for child_name in cls._inherit_children:
-            child_class = pool[child_name]
-            child_class._build_model_attributes(pool)
-
-    @classmethod
-    def _init_constraints_onchanges(cls):
-        # store list of sql constraint qualified names
-        for (key, _, _) in cls._sql_constraints:
-            cls.pool._sql_constraints.add(cls._table + '_' + key)
-
-        # reset properties memoized on cls
-        cls._constraint_methods = BaseModel._constraint_methods
-        cls._onchange_methods = BaseModel._onchange_methods
 
     @property
     def _constraint_methods(self):
@@ -2589,6 +2589,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         # a model's base structure depends on its mro (without registry classes)
         cls._model_cache_key = tuple(c for c in cls.mro() if getattr(c, 'pool', None) is None)
 
+    # FIXME: why is setup_base an instance method?
     @api.model
     def _setup_base(self):
         """ Determine the inherited and custom fields of the model. """
