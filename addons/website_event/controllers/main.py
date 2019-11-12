@@ -148,6 +148,7 @@ class WebsiteEventController(http.Controller):
             'pager': pager,
             'searches': searches,
             'keep': keep,
+            'search_count': event_count,
         }
 
         if searches['date'] == 'old':
