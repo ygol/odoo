@@ -12,6 +12,8 @@ import base64
 import binascii
 import pytz
 
+from . import SUPERUSER_ID, api
+
 try:
     from xmlrpc.client import MAXINT
 except ImportError:
@@ -61,7 +63,9 @@ def resolve_mro(model, name, predicate):
         (the ones that appear in the registry) are ignored.
     """
     result = []
-    for cls in type(model).__mro__:
+    if not isinstance(model, type):
+        model = type(model)
+    for cls in model.mro():
         if not getattr(cls, 'pool', None) and name in cls.__dict__:
             value = cls.__dict__[name]
             if not predicate(value):
@@ -440,7 +444,12 @@ class Field(metaclass=MetaField):
         depends_context = list(self.depends_context or ())
         for func in funcs:
             deps = getattr(func, '_depends', ())
-            depends.extend(deps(model) if callable(deps) else deps)
+            if callable(deps):
+                # urgh...
+                with model.pool.cursor() as cr:
+                    env = api.Environment(cr, SUPERUSER_ID, {})
+                    deps = deps(model._browse(env, (), ()))
+            depends.extend(deps)
             depends_context.extend(getattr(func, '_depends_context', ()))
 
         self.depends = tuple(depends)
@@ -463,10 +472,12 @@ class Field(metaclass=MetaField):
 
         # determine the chain of fields, and make sure they are all set up
         target = model
+        registry = model.pool
         for name in self.related:
             field = target._fields[name]
             field.setup_full(target)
-            target = target[name]
+            if field.comodel_name:
+                target = registry[field.comodel_name]
 
         self.related_field = field
 
@@ -2321,7 +2332,7 @@ class Many2one(_Relational):
         # 3) The ondelete attribute is explicitly defined as 'set null' for a required m2o,
         #    this is considered a programming error.
         if not self.ondelete:
-            comodel = model.env[self.comodel_name]
+            comodel = model.pool[self.comodel_name]
             if model.is_transient() and not comodel.is_transient():
                 # Many2one relations from TransientModel Model are annoying because
                 # they can block deletion due to foreign keys. So unless stated
@@ -2808,7 +2819,7 @@ class One2many(_RelationalMulti):
         super(One2many, self)._setup_regular_full(model)
         if self.inverse_name:
             # link self to its inverse field and vice-versa
-            comodel = model.env[self.comodel_name]
+            comodel = model.pool[self.comodel_name]
             invf = comodel._fields[self.inverse_name]
             if isinstance(invf, (Many2one, Many2oneReference)):
                 # setting one2many fields only invalidates many2one inverses;
@@ -3106,7 +3117,7 @@ class Many2many(_RelationalMulti):
             if not (self.relation and self.column1 and self.column2):
                 self._explicit = False
                 # table name is based on the stable alphabetical order of tables
-                comodel = model.env[self.comodel_name]
+                comodel = model.pool[self.comodel_name]
                 if not self.relation:
                     tables = sorted([model._table, comodel._table])
                     assert tables[0] != tables[1], \
@@ -3147,7 +3158,7 @@ class Many2many(_RelationalMulti):
             # retrieve inverse fields, and link them in _field_inverses
             for field in m2m[(self.relation, self.column2, self.column1)]:
                 model._field_inverses.add(self, field)
-                model.env[field.model_name]._field_inverses.add(field, self)
+                model.pool[field.model_name]._field_inverses.add(field, self)
 
     def update_db(self, model, columns):
         cr = model._cr

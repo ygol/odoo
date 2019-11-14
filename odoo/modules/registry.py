@@ -236,7 +236,7 @@ class Registry(Mapping):
             env['ir.model']._add_manual_models()
 
         # prepare the setup on all models
-        models = list(env.values())
+        models = list(self.values())
         for model in models:
             model._prepare_setup()
 

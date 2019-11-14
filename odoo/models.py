@@ -554,10 +554,9 @@ class BaseModel(metaclass=MetaModel):
         self.env['ir.model.constraint']._reflect_model(self)
         self.invalidate_cache()
 
-    @api.model
-    def _add_field(self, name, field):
+    @classmethod
+    def _add_field(cls, name, field):
         """ Add the given ``field`` under the given ``name`` in the class """
-        cls = type(self)
         # add field as an attribute and in cls._fields (for reflection)
         if not isinstance(getattr(cls, name, field), Field):
             _logger.warning("In model %r, field %r overriding existing value", cls._name, name)
@@ -565,7 +564,7 @@ class BaseModel(metaclass=MetaModel):
         cls._fields[name] = field
 
         # basic setup of field
-        field.setup_base(self, name)
+        field.setup_base(cls, name)
 
     @api.model
     def _pop_field(self, name):
@@ -578,8 +577,8 @@ class BaseModel(metaclass=MetaModel):
             delattr(cls, name)
         return field
 
-    @api.model
-    def _add_magic_fields(self):
+    @classmethod
+    def _add_magic_fields(cls):
         """ Introduce magic fields on the current class
 
         * id is a "normal" field (with a specific getter)
@@ -600,19 +599,19 @@ class BaseModel(metaclass=MetaModel):
         """
         def add(name, field):
             """ add ``field`` with the given ``name`` if it does not exist yet """
-            if name not in self._fields:
-                self._add_field(name, field)
+            if name not in cls._fields:
+                cls._add_field(name, field)
 
         # cyclic import
         from . import fields
 
         # this field 'id' must override any other column or field
-        self._add_field('id', fields.Id(automatic=True))
+        cls._add_field('id', fields.Id(automatic=True))
 
         add('display_name', fields.Char(string='Display Name', automatic=True,
             compute='_compute_display_name'))
 
-        if self._log_access:
+        if cls._log_access:
             add('create_uid', fields.Many2one(
                 'res.users', string='Created by', automatic=True, readonly=True))
             add('create_date', fields.Datetime(
@@ -626,7 +625,7 @@ class BaseModel(metaclass=MetaModel):
             last_modified_name = 'compute_concurrency_field'
 
         # this field must override any other column or field
-        self._add_field(self.CONCURRENCY_CHECK_FIELD, fields.Datetime(
+        cls._add_field(cls.CONCURRENCY_CHECK_FIELD, fields.Datetime(
             string='Last Modified on', compute=last_modified_name,
             compute_sudo=False, automatic=True))
 
@@ -2530,13 +2529,13 @@ class BaseModel(metaclass=MetaModel):
     # Update objects that uses this one to update their _inherits fields
     #
 
-    @api.model
-    def _add_inherited_fields(self):
+    @classmethod
+    def _add_inherited_fields(cls):
         """ Determine inherited fields. """
         # determine candidate inherited fields
         fields = {}
-        for parent_model, parent_field in self._inherits.items():
-            parent = self.env[parent_model]
+        for parent_model, parent_field in cls._inherits.items():
+            parent = cls.pool[parent_model]
             for name, field in parent._fields.items():
                 # inherited fields are implemented as related fields, with the
                 # following specific properties:
@@ -2553,18 +2552,18 @@ class BaseModel(metaclass=MetaModel):
 
         # add inherited fields that are not redefined locally
         for name, field in fields.items():
-            if name not in self._fields:
-                self._add_field(name, field)
+            if name not in cls._fields:
+                cls._add_field(name, field)
 
-    @api.model
-    def _inherits_check(self):
-        for table, field_name in self._inherits.items():
-            field = self._fields.get(field_name)
+    @classmethod
+    def _inherits_check(cls):
+        for table, field_name in cls._inherits.items():
+            field = cls._fields.get(field_name)
             if not field:
                 _logger.info('Missing many2one field definition for _inherits reference "%s" in "%s", using default one.', field_name, self._name)
                 from .fields import Many2one
                 field = Many2one(table, string="Automatically created field to link to parent %s" % table, required=True, ondelete="cascade")
-                self._add_field(field_name, field)
+                cls._add_field(field_name, field)
             elif not field.required or field.ondelete.lower() not in ("cascade", "restrict"):
                 _logger.warning('Field definition for _inherits reference "%s" in "%s" must be marked as "required" with ondelete="cascade" or "restrict", forcing it to required + cascade.', field_name, self._name)
                 field.required = True
@@ -2572,28 +2571,25 @@ class BaseModel(metaclass=MetaModel):
             field.delegate = True
 
         # reflect fields with delegate=True in dictionary self._inherits
-        for field in self._fields.values():
+        for field in cls._fields.values():
             if field.type == 'many2one' and not field.related and field.delegate:
                 if not field.required:
                     _logger.warning("Field %s with delegate=True must be required.", field)
                     field.required = True
                 if field.ondelete.lower() not in ('cascade', 'restrict'):
                     field.ondelete = 'cascade'
-                self._inherits[field.comodel_name] = field.name
+                cls._inherits[field.comodel_name] = field.name
 
-    @api.model
-    def _prepare_setup(self):
+    @classmethod
+    def _prepare_setup(cls):
         """ Prepare the setup of the model. """
-        cls = type(self)
         cls._setup_done = False
         # a model's base structure depends on its mro (without registry classes)
         cls._model_cache_key = tuple(c for c in cls.mro() if getattr(c, 'pool', None) is None)
 
-    # FIXME: why is setup_base an instance method?
-    @api.model
-    def _setup_base(self):
+    @classmethod
+    def _setup_base(cls):
         """ Determine the inherited and custom fields of the model. """
-        cls = type(self)
         if cls._setup_done:
             return
 
@@ -2616,9 +2612,9 @@ class BaseModel(metaclass=MetaModel):
                 field = cls0._fields[name]
                 # regular fields are shared, while related fields are setup from scratch
                 if not field.related:
-                    self._add_field(name, field)
+                    cls._add_field(name, field)
                 else:
-                    self._add_field(name, field.new(**field.args))
+                    cls._add_field(name, field.new(**field.args))
             cls._proper_fields = OrderedSet(cls._fields)
 
         else:
@@ -2630,22 +2626,22 @@ class BaseModel(metaclass=MetaModel):
             for name, field in sorted(getmembers(cls, Field.__instancecheck__), key=lambda f: f[1]._sequence):
                 # do not retrieve magic, custom and inherited fields
                 if not any(field.args.get(k) for k in ('automatic', 'manual', 'inherited')):
-                    self._add_field(name, field.new())
-            self._add_magic_fields()
+                    cls._add_field(name, field.new())
+            cls._add_magic_fields()
             cls._proper_fields = OrderedSet(cls._fields)
 
         cls.pool.model_cache[cls._model_cache_key] = cls
 
         # 2. add manual fields
-        if self.pool._init_modules:
-            self.env['ir.model.fields']._add_manual_fields(self)
+        # if self.pool._init_modules:
+        #     self.env['ir.model.fields']._add_manual_fields(self)
 
         # 3. make sure that parent models determine their own fields, then add
         # inherited fields to cls
-        self._inherits_check()
-        for parent in self._inherits:
-            self.env[parent]._setup_base()
-        self._add_inherited_fields()
+        cls._inherits_check()
+        for parent in cls._inherits:
+            cls.pool[parent]._setup_base()
+        cls._add_inherited_fields()
 
         # 4. initialize more field metadata
         cls._field_computed = {}            # fields computed with the same method
@@ -2662,18 +2658,16 @@ class BaseModel(metaclass=MetaModel):
         elif 'x_name' in cls._fields:
             cls._rec_name = 'x_name'
 
-    @api.model
-    def _setup_fields(self):
+    @classmethod
+    def _setup_fields(cls):
         """ Setup the fields, except for recomputation triggers. """
-        cls = type(self)
-
         # set up fields
         bad_fields = []
         for name, field in cls._fields.items():
             try:
-                field.setup_full(self)
+                field.setup_full(cls)
             except Exception:
-                if not self.pool.loaded and field.base_field.manual:
+                if not cls.pool.loaded and field.base_field.manual:
                     # Something goes wrong when setup a manual field.
                     # This can happen with related fields using another manual many2one field
                     # that hasn't been loaded because the comodel does not exist yet.
@@ -2702,12 +2696,11 @@ class BaseModel(metaclass=MetaModel):
             compute_sudo = fields[0].compute_sudo
             if not all(field.compute_sudo == compute_sudo for field in fields):
                 _logger.warning("%s: inconsistent 'compute_sudo' for computed fields: %s",
-                                self._name, ", ".join(field.name for field in fields))
+                                cls._name, ", ".join(field.name for field in fields))
 
-    @api.model
-    def _setup_complete(self):
+    @classmethod
+    def _setup_complete(cls):
         """ Setup recomputation triggers, and complete the model setup. """
-        cls = type(self)
 
         # The triggers of a field F is a tree that contains the fields that
         # depend on F, together with the fields to inverse to find out which
