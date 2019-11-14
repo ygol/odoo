@@ -5,6 +5,9 @@ import odoo
 
 from odoo import tools
 from odoo.addons.point_of_sale.tests.common import TestPoSCommon
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 @odoo.tests.tagged('post_install', '-at_install')

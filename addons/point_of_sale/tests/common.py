@@ -72,19 +72,19 @@ class TestPointOfSaleCommon(StockAccountTestCommon):
             'receivable_account_id': cls.default_receivable_account.id,
             'is_cash_count': True,
             'cash_journal_id': cls.cash_journal.id,
-            'company_id': cls.env.user.company_id.id,
+            'company_id': cls.company.id,
         })
         cls.bank_payment_method = cls.env['pos.payment.method'].create({
             'name': 'Bank',
             'receivable_account_id': cls.default_receivable_account.id,
             'is_cash_count': False,
-            'company_id': cls.env.user.company_id.id,
+            'company_id': cls.company.id,
         })
         cls.credit_payment_method = cls.env['pos.payment.method'].create({
             'name': 'Credit',
             'receivable_account_id': cls.default_receivable_account.id,
             'split_transactions': True,
-            'company_id': cls.env.user.company_id.id,
+            'company_id': cls.company.id,
         })
         cls.pos_config.write({'payment_method_ids': [(4, cls.credit_payment_method.id), (4, cls.bank_payment_method.id), (4, cls.cash_payment_method.id)]})
 
@@ -93,7 +93,7 @@ class TestPointOfSaleCommon(StockAccountTestCommon):
             'type': 'sale',
             'name': 'Point of Sale',
             'code': 'POSS - Test',
-            'company_id': cls.env.user.company_id.id,
+            'company_id': cls.company.id,
             'sequence': 20
         })
 
@@ -158,8 +158,6 @@ class TestPoSCommon(StockAccountTestCommon):
     def setUpClass(cls):
         super(TestPoSCommon, cls).setUpClass()
 
-        cls.pos_manager = cls.env.ref('base.user_admin')
-        cls.env = cls.env(user=cls.pos_manager)
 
         # Set basic defaults
         cls.company = cls.env.ref('base.main_company')
@@ -178,7 +176,7 @@ class TestPoSCommon(StockAccountTestCommon):
             'company_id': cls.company.id,
             'sequence': 21
         })
-        cls.receivable_account = cls.pos_manager.partner_id.property_account_receivable_id
+        cls.receivable_account = cls.company.partner_id.with_context(force_company=cls.company.id).property_account_receivable_id
         cls.tax_received_account = cls.a_expense # Whatever the account, just not receivable/payable
         cls.company.account_default_pos_receivable_account_id = cls.env['account.account'].create({
             'code': 'X1012 - POS',
@@ -224,7 +222,7 @@ class TestPoSCommon(StockAccountTestCommon):
         cls.categ_anglo = cls._create_categ_anglo()
 
         # other basics
-        cls.sale_account = cls.categ_basic.property_account_income_categ_id
+        cls.sale_account = cls.categ_basic.with_context(force_company=cls.company.id).property_account_income_categ_id
         cls.other_sale_account = cls.env['account.account'].search([
             ('company_id', '=', cls.company.id),
             ('user_type_id', '=', cls.env.ref('account.data_account_type_revenue').id),
@@ -265,13 +263,13 @@ class TestPoSCommon(StockAccountTestCommon):
             'receivable_account_id': cls.pos_receivable_account.id,
             'is_cash_count': True,
             'cash_journal_id': cls.cash_journal.id,
-            'company_id': cls.env.user.company_id.id,
+            'company_id': cls.company.id,
         })
         bank_payment_method = cls.env['pos.payment.method'].create({
             'name': 'Bank',
             'receivable_account_id': cls.pos_receivable_account.id,
             'is_cash_count': False,
-            'company_id': cls.env.user.company_id.id,
+            'company_id': cls.company.id,
         })
         cash_split_pm = cls.env['pos.payment.method'].create({
             'name': 'Split (Cash) PM',
@@ -280,7 +278,7 @@ class TestPoSCommon(StockAccountTestCommon):
             'is_cash_count': True,
             'cash_journal_id': cls.cash_journal.id,
         })
-        config.write({'payment_method_ids': [(4, cash_split_pm.id), (4, cash_payment_method.id), (4, bank_payment_method.id)]})
+        config.write({'payment_method_ids': [(4, cash_split_pm.id), (4, cash_payment_method.id), (4, bank_payment_method.id)], 'company_id': cls.company.id})
         return config
 
     @classmethod
@@ -346,7 +344,7 @@ class TestPoSCommon(StockAccountTestCommon):
     @classmethod
     def _create_categ_anglo(cls):
         cls.o_income.reconcile = True
-        return cls.env['product.category'].create({
+        return cls.env['product.category'].with_context(force_company=cls.company.id).create({
             'name': 'Anglo',
             'parent_id': False,
             'property_cost_method': 'fifo',
@@ -406,7 +404,7 @@ class TestPoSCommon(StockAccountTestCommon):
         :param list(tuple) payments: pair of `payment_method` and `amount`
         """
         default_fiscal_position = self.config.default_fiscal_position_id
-        fiscal_position = customer.property_account_position_id if customer else default_fiscal_position
+        fiscal_position = customer.with_context(force_company=self.pos_session.company_id.id).property_account_position_id if customer else default_fiscal_position
 
         def create_order_line(product, quantity):
             price_unit = self.pricelist.get_product_price(product, quantity, False)
@@ -471,7 +469,7 @@ class TestPoSCommon(StockAccountTestCommon):
                 'sequence_number': 2,
                 'statement_ids': payments,
                 'uid': uid,
-                'user_id': self.pos_manager.id,
+                'user_id': self.env.user.id,
                 'to_invoice': is_invoiced,
             },
             'id': uid,
@@ -491,7 +489,7 @@ class TestPoSCommon(StockAccountTestCommon):
         })
         product.invoice_policy = 'delivery'
         if sale_account:
-            product.property_account_income_id = sale_account
+            product.with_context(force_company=sale_account.company_id.id).property_account_income_id = sale_account
         return product
 
     @classmethod
