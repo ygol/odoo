@@ -56,7 +56,7 @@ class TestOutOfOffice(TestHrHolidaysCommon):
 
     def test_consolidated_leave_date_to(self):
         # leave from Thursday to Friday
-        leave_date_end = datetime.today() - relativedelta(days=datetime.today().weekday() - 4)
+        leave_date_end = datetime.today() + relativedelta(days=7) - relativedelta(days=datetime.today().weekday() - 4)
         leave = self.env['hr.leave'].create({
             'name': 'Holiday 1',
             'employee_id': self.employee_hruser.id,
