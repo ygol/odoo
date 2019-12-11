@@ -1034,7 +1034,12 @@ class PosOrder(models.Model):
             data_for_copy = order._prepare_refund_order_data(current_session)
             clone = order.copy(data_for_copy)
             for line in order.lines:
-                line.copy(line._prepare_refund_data(clone))
+                copy_line = line.copy(line._prepare_refund_data(clone))
+                PosOrderLineLot = self.env['pos.pack.operation.lot']
+                for lot_id in line.pack_lot_ids:
+                    PosOrderLineLot += lot_id.copy()
+                copy_line.pack_lot_ids = PosOrderLineLot
+                clone.lines += copy_line
             PosOrder += clone
 
         return {
