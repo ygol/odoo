@@ -481,6 +481,7 @@ class TestUi(TestPointOfSaleHttpCommon):
         })
 
         # open a session, the /pos/web controller will redirect to it
+        self.main_pos_config.module_account = True
         self.main_pos_config.open_session_cb(check_coa=False)
 
         # needed because tests are run before the module is marked as
