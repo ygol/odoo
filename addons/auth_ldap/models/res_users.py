@@ -38,3 +38,12 @@ class Users(models.Model):
                     if Ldap._authenticate(conf, self.env.user.login, password):
                         return
             raise
+
+    @api.model
+    def change_password(self, old_passwd, new_passwd):
+        Ldap = self.env['res.company.ldap']
+        for conf in Ldap._get_ldap_dicts():
+            changed = Ldap._change_password(conf, self.env.user.login, old_passwd, new_passwd)
+            if changed:
+                return True
+        return super(Users, self).change_password(old_passwd, new_passwd)
