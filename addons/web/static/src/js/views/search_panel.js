@@ -470,13 +470,16 @@ var SearchPanel = Widget.extend({
             var category = self.categories[categoryId];
             if (category.activeValueId) {
                 var field = self.fields[category.fieldName];
-                var op = (field.type === 'many2one' && category.parentField) ? 'child_of' : '=';
+                var op = (field.type === 'many2one' && category.parentField) ? self._getM2oOperator() : '=';
                 domain.push([category.fieldName, op, category.activeValueId]);
             }
             return domain;
         }
 
         return Object.keys(this.categories).reduce(categoryToDomain, []);
+    },
+    _getM2oOperator() {
+        return 'child_of';
     },
     /**
      * Compute and return the domain based on the current checked filters.
