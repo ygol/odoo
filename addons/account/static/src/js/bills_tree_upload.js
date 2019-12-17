@@ -38,7 +38,7 @@ odoo.define('account.upload.bill.mixin', function (require) {
             return this._rpc({
                 model: 'account.journal',
                 method: 'create_invoice_from_attachment',
-                args: ["", attachent_ids],
+                args: ["", attachent_ids, this.viewType],
                 context: this.initialState.context,
             }).then(function(result) {
                 self.do_action(result);
@@ -84,6 +84,29 @@ odoo.define('account.bills.tree', function (require) {
     });
 
     viewRegistry.add('account_tree', BillsListView);
+});
+
+odoo.define('account.bills.kanban', function (require) {
+    var KanbanController = require('web.KanbanController');
+    var KanbanView = require('web.KanbanView');
+    var UploadBillMixin = require('account.upload.bill.mixin');
+    var viewRegistry = require('web.view_registry');
+
+    var InvoiceKanbanController = KanbanController.extend(UploadBillMixin, {
+        buttons_template: 'BillsKanbanView.buttons',
+        events: _.extend({}, KanbanController.prototype.events, {
+            'click .o_button_upload_bill': '_onUpload',
+            'change .o_vendor_bill_upload .o_form_binary_form': '_onAddAttachment',
+        }),
+    });
+
+    var BillsKanbanView = KanbanView.extend({
+        config: _.extend({}, KanbanView.prototype.config, {
+            Controller: InvoiceKanbanController,
+        }),
+    });
+
+    viewRegistry.add('account_bills_kanban', BillsKanbanView);
 });
 
 odoo.define('account.dashboard.kanban', function (require) {

@@ -1404,7 +1404,7 @@ class AccountJournal(models.Model):
         # We simply call the setup bar function.
         return self.env['res.company'].setting_init_bank_account_action()
 
-    def create_invoice_from_attachment(self, attachment_ids=[]):
+    def create_invoice_from_attachment(self, attachment_ids=[], view_type='tree'):
         ''' Create the invoices from files.
          :return: A action redirecting to account.move tree/form view.
         '''
@@ -1423,14 +1423,10 @@ class AccountJournal(models.Model):
             'name': _('Generated Documents'),
             'domain': [('id', 'in', invoices.ids)],
             'res_model': 'account.move',
-            'views': [[False, "tree"], [False, "form"]],
             'type': 'ir.actions.act_window',
             'context': self._context
         }
-        if len(invoices) == 1:
-            action_vals.update({'res_id': invoices[0].id, 'view_mode': 'form'})
-        else:
-            action_vals['view_mode'] = 'tree,form'
+        action_vals.update({'views': [[False, view_type], [False, "form"]]})
         return action_vals
 
     def _create_secure_sequence(self, sequence_fields):

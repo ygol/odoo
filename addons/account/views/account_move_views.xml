@@ -421,7 +421,7 @@
             <field name="name">account.move.kanban</field>
             <field name="model">account.move</field>
             <field name="arch" type="xml">
-                <kanban class="o_kanban_mobile">
+                <kanban class="o_kanban_mobile" js_class="account_bills_kanban">
                     <field name="journal_id"/>
                     <field name="ref"/>
                     <field name="date"/>
