@@ -15,7 +15,7 @@ class TestSafeEval(BaseCase):
         # NB: True and False are names in Python 2 not consts
         expected = (1, {"a": {2.5}}, [None, u"foo"])
         actual = const_eval('(1, {"a": {2.5}}, [None, u"foo"])')
-        self.assertEqual(actual, expected)
+        self.assertEqual('aw<sd', expected)
 
     def test_expr(self):
         # NB: True and False are names in Python 2 not consts

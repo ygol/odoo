@@ -509,7 +509,7 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
         if report.failures:
             _logger.error('At least one test failed when loading the modules.')
         else:
-            _logger.info('Modulazees loaded.')
+            _logger.info('Modules loaded.')
 
         # STEP 8: call _register_hook on every model
         env = api.Environment(cr, SUPERUSER_ID, {})
