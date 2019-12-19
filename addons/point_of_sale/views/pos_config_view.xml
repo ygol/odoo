@@ -514,6 +514,17 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-12 col-lg-6 o_setting_box pos_reprint_receipt" groups="stock.group_production_lot">
+                            <div class="o_setting_left_pane">
+                                <field name="serial_number_on_invoice"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="serial_number_on_invoice"/>
+                                <div class="text-muted">
+                                    Serial and lot numbers will be displayed on invoices
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <h2>Accounting</h2>
                     <div class="row mt16 o_settings_container" id="accounting_section">

@@ -969,6 +969,17 @@
                             </span>
                         </div>
                     </t>
+                    <t t-if="line.pack_lot_lines">
+                        <div class="pos-receipt-left-padding">
+                            <ul>
+                                <t t-foreach="line.pack_lot_lines" t-as="lot">
+                                    <li>
+                                        SN <t t-esc="lot.attributes['lot_name']"/>
+                                    </li>
+                                </t>
+                            </ul>
+                        </div>
+                    </t>
                 </t>
             </div>
 
@@ -1494,6 +1505,15 @@
                     </li>
                 </t>
             </ul>
+            <t t-if="line.pack_lot_lines">
+                <ul class="info-list">
+                    <t t-foreach="line.get_lot_lines()" t-as="lot">
+                        <li>
+                            SN <t t-esc="lot.attributes['lot_name']"/>
+                        </li>
+                    </t>
+                </ul>
+            </t>
         </li>
     </t>
 

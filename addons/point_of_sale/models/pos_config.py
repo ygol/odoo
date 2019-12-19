@@ -217,6 +217,7 @@ class PosConfig(models.Model):
     rounding_method = fields.Many2one('account.cash.rounding', string="Cash rounding")
     cash_rounding = fields.Boolean(string="Cash Rounding")
     only_round_cash_method = fields.Boolean(string="Only apply rounding on cash")
+    serial_number_on_invoice = fields.Boolean(string="Serial Numbers on receipts and invoices")
 
     @api.depends('use_pricelist', 'available_pricelist_ids')
     def _compute_allowed_pricelist_ids(self):
