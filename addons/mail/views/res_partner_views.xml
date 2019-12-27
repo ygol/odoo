@@ -37,7 +37,7 @@
                     <progressbar field="activity_state" colors='{"planned": "success", "today": "warning", "overdue": "danger"}'/>
                 </field>
                 <xpath expr="//div[hasclass('oe_kanban_details')]" position="inside">
-                    <div>
+                    <div class="mt-auto">
                         <field name="activity_ids" widget="kanban_activity"/>
                     </div>
                 </xpath>
