@@ -87,6 +87,7 @@
     ],
     'demo': [
         'data/website_demo.xml',
+        'data/website_visitor_demo.xml',
     ],
     'qweb': [
         'static/src/xml/website.backend.xml',
