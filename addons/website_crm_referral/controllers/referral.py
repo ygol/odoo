@@ -49,7 +49,7 @@ class Referral(http.Controller):
         # create lead
         lead = request.env['crm.lead'].create({
             'name': 'Referral',
-            'type': 'lead'
+            'type': 'lead',
             'partner_id': referred.id,
             'user_id': user.id,
             'team_id': None,
