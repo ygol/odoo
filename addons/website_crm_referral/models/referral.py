@@ -55,6 +55,7 @@ class Referral(models.Model):
         ('linkedin', 'Linkedin')], default='direct')
     url = fields.Char(readonly=True, compute='_compute_url')
     lead_id = fields.Many2one('crm.lead')
+    # YTI rename into campaign_id
     campaign = fields.Many2one('website_crm_referral.referral.campaign', required=True)
     mail = fields.Many2one(related='campaign.mail_template_id')
 
@@ -85,10 +86,7 @@ class Referral(models.Model):
 
     def send_mail(self):
         self.ensure_one()
-        self.flush()
-        campaign = self.env['website_crm_referral.referral.campaign'].search([('id','=',self.campaign.id)], limit=1)
-        template = self.env['mail.template'].search([('id','=',campaign.mail_template_id.id)])
-        template.send_mail(self.id, force_send=True)
+        self.campaign.mail_template_id.send_mail(self.id, force_send=True)
 
         # for r in self:
         #     import logging

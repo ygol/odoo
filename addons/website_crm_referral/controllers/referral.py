@@ -16,24 +16,26 @@ class Referral(http.Controller):
 
     @http.route(['/referral/create'], type='http', auth="user", method='POST', website=True)
     def referral_create(self, **post):
-        user = request.env['res.users'].sudo().search([('id', '=', request.uid)])
-
+        user = request.env.user
         company = None
-        if(post.get('company')):
-            company = request.env['res.company'].sudo().search([('name','=', post.get('company'))], limit=1)
-            if(not company):
-                company= request.env['res.company'].create({
+        if post.get('company'):
+            company = request.env['res.company'].sudo().search([('name', '=', post.get('company'))], limit=1)
+            if not company:
+                company = request.env['res.company'].create({
                     'name':post.get('name'),
                 })
 
-        referred = request.env['res.partner'].sudo().search([('name', '=', post.get('name')), ('email','=', post.get('email'))], limit=1)
-        if(not referred):
+        # YTI: Maybe use find_or_create
+        referred = request.env['res.partner'].sudo().search([
+            ('name', '=', post.get('name')),
+            ('email', '=', post.get('email'))], limit=1)
+        if not referred:
             referred = request.env['res.partner'].create({
-                'name':post.get('name'),
-                'email':post.get('email'),
-                'phone':post.get('phone'),    
+                'name': post.get('name'),
+                'email': post.get('email'),
+                'phone': post.get('phone'),    
             })
-            if(company):
+            if company:
                 referred.update({'company_id':company.id})
 
         referral = request.env['website_crm_referral.referral'].create({
@@ -41,7 +43,7 @@ class Referral(http.Controller):
             'referred':referred.id,
             'comment':post.get('comment'),
             'channel':post.get('channel'),
-            'campaign':post.get('campaign_id'),
+            'campaign': int(post.get('campaign_id')),
         })
 
         #create lead
