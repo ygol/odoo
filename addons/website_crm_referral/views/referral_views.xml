@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_form_referral" model="ir.ui.view">
+        <field name="name">Referral Form</field>
+        <field name="model">website_crm_referral.referral</field>
+        <field name="arch" type="xml">
+            <form string="Referral">
+                <header>
+                    <field name="stage_id" widget="statusbar" clickable="True" options="{'fold_field': 'fold'}" />
+                    <button name="button_send_mail" type="object" string="Send mMail" />
+                </header>
+                <sheet>
+                    <group name="group_top">
+                        <group name="group_left">
+                            <field name="referred"/>
+                            <field name="user_id" />
+                        </group>
+                        <group name="group_right">
+                            <field name="channel" />
+                            <field name="comment" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tree_referral" model="ir.ui.view">
+        <field name="name">Referral List</field>
+        <field name="model">website_crm_referral.referral</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="referred" />
+                <field name="user_id" />
+                <field name="comment" optional='show' />
+                <field name="channel" optional='show' />
+                <field name="state"  optional='show' />
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_search_referral" model="ir.ui.view">
+        <field name="name">Referral filters</field>
+        <field name="model">website_crm_referral.referral</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="user_id" />
+                <field name="referred" />
+                <field name="channel" />
+            </search>
+        </field>
+    </record>
+
+
+    <record id="view_form_referral_campaign" model="ir.ui.view">
+        <field name="name">Referral Campaign Form</field>
+        <field name="model">website_crm_referral.referral.campaign</field>
+        <field name="arch" type="xml">
+            <form string="Campaign">
+                <sheet>
+                    <group name="group_top">
+                        <group name="group_left">
+                            <field name="name" />
+                            <field name="reward" />
+                            <field name="description" />
+                        </group>
+                        <group name="group_right">
+                            <field name="subject"/>
+                            <field name="mail_template_id" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tree_referral_campaign" model="ir.ui.view">
+        <field name="name">Referral Campaign List</field>
+        <field name="model">website_crm_referral.referral.campaign</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="subject" />
+                <field name="description" />
+            </tree>
+        </field>
+    </record>
+</odoo>

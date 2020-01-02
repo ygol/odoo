@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_referral_portal,Referral Portal Access,website_crm_referral.model_website_crm_referral_referral,base.group_portal,1,0,0,0
+access_referral_user,Referral User Access,website_crm_referral.model_website_crm_referral_referral,referral_group_user,1,1,1,1
+access_referral_stage_portal,Referral Stage Portal Access,website_crm_referral.model_website_crm_referral_referral_stage,base.group_portal,1,0,0,0
+access_referral_stage_user,Referral Stage user Access,website_crm_referral.model_website_crm_referral_referral_stage,referral_group_user,1,1,1,1
+access_referral_campaign_portal,Campaign Portal Access,website_crm_referral.model_website_crm_referral_referral_campaign,base.group_portal,1,0,0,0
+access_referral_campaign_manager,Campaign Manager Access,website_crm_referral.model_website_crm_referral_referral_campaign,referral_group_user,1,1,1,1

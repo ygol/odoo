@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <menuitem id="menu_referral"
+              name="Referral" />
+
+    <act_window id="action_referral"
+                name="Referrals"
+                res_model="website_crm_referral.referral"
+                view_mode="tree,form" />
+
+    <menuitem id="menu_referral_referrals"
+              name="Referrals"
+              parent="menu_referral"
+              action="action_referral"/>
+
+    <act_window id="action_campaign"
+                name="Campaigns"
+                res_model="website_crm_referral.referral.campaign"
+                view_mode="tree,form" />
+
+    <menuitem id="menu_referral_campaign"
+              name="Campaigns"
+              parent="menu_referral"
+              action="action_campaign" />
+</odoo>

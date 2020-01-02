@@ -1,0 +1,96 @@
+<odoo>
+    <template id="portal_my_home_menu_referral" name="Portal layout : referral menu entries" inherit_id="portal.portal_breadcrumbs" priority="90">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name == 'referral'" t-attf-class="breadcrumb-item #{'active ' if not referral else ''}">
+                <a t-if="referral" t-attf-href="/referral">Referrals</a>
+                <t t-else="">Referral</t>
+            </li>
+            <li t-if="referral" class="breadcrumb-item active">
+                <t t-esc="referral.name" t-if="referral.name"/>
+            </li>
+        </xpath>
+    </template>
+
+
+    <template id="portal_my_home_referral" name="Portal My Home : Referrals" inherit_id="portal.portal_my_home" priority="90">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry"> <!-- TODO t-if referral count > 0 ?? -->
+                <t t-set="title">Referrals</t>
+                <t t-set="url" t-value="'/referral'"/> <!-- TODO redirect to /my/referral for follow-up ? -->
+                <!-- <t t-set="count" t-value="ticket_count"/> -->
+            </t>
+        </xpath>
+    </template>
+
+
+    <template id="referral_controller_template"
+              name="Referrals">
+        <t t-call="website.layout">
+            <div class="container mt-2">
+                <div class="col-lg-8">
+                    <h1>
+                        <span>Get </span>
+                        <span t-field="campaign.reward" />
+                        <span> for each referral !</span>
+                    </h1>
+                    <h2>Refer a friend</h2>
+                    <b t-field="campaign.description" />
+                    <form id="comment" t-attf-action="/referral/create" method="POST">
+                        <div>
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <input type="hidden" name="campaign_id" t-att-value="campaign.id" />
+                            <p>Email</p>
+                            <input type="email" class="form-control" name="email" required="required"/>
+                            <p>Name</p>
+                            <input type="text" name="name" class="form-control" required="required"/>
+                            <p>Phone</p>
+                            <input type="text" name="phone" class="form-control" />
+                            <p>Company</p>
+                            <input type='text' name="company" class="form-control" />
+                            <p>Business Need</p>
+                            <textarea rows="3" name="comment" class="form-control" placeholder="Write a comment..."></textarea>
+                            <div class="row">
+                                <button type="submit" name="channel" value="direct" class="btn btn-primary mt8">Send</button>
+                                <t t-foreach="[{'lower': 'facebook', 'name': 'Facebook'}, {'lower': 'twitter', 'name': 'Twitter'}, {'lower': 'linkedin', 'name': 'Linkedin'}]" t-as="network">
+                                    <button name="channel" type="submit" class="btn btn-sm p-2 btn-secondary" t-attf-value="{{network['lower']}}">
+                                        <span t-attf-title="Share on {{network['name']}}"><i t-attf-class="fa fa-lg fa-{{network['lower']}} text-secondary" role="img" t-attf-aria-label="Share on {{network['name']}}"/></span>
+                                        <span class="d-block mt-2 text-primary">Share Now</span>
+                                    </button>
+                                </t>
+                            </div>
+                        </div>
+                    </form>
+                    <div>
+                        <h2>Your referrals</h2>
+                        <t t-foreach="referrals" t-as="r">
+                            <div class="row">
+                                <bold>
+                                    <b t-field='r.referred.name' class="col-sm" />
+                                </bold>
+                                <t t-set="first" t-value="True"/>
+                                <t t-foreach="state_values" t-as="st">
+                                    <t t-if="first">
+                                        <t t-set="first" t-value="False" />
+                                    </t>
+                                    <t t-else="" >
+                                        <span>&#160;&gt;&#160;</span>
+                                    </t>
+                                    <t t-if="st[0] == r.state" >
+                                        <b>
+                                            <span t-esc='st[1]' /> 
+                                        </b>
+                                    </t>
+                                    <t t-else="">
+                                        <span t-esc='st[1]' /> 
+                                    </t>
+                                </t>
+                            </div>
+                        </t>
+
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>
