@@ -1,6 +1,7 @@
 from odoo import fields, models, api
 import uuid
 
+
 class ReferralCampaign(models.Model):
     _name = 'website_crm_referral.referral.campaign'
     _description = 'Referral stage campaign'
@@ -9,11 +10,12 @@ class ReferralCampaign(models.Model):
     subject = fields.Char()
     reward = fields.Char()
     description = fields.Html()
-    referrals = fields.One2many('website_crm_referral.referral', 'campaign')
+    referrals = fields.One2many('website_crm_referral.referral', 'campaign_id')
     mail_template_id = fields.Many2one(
         'mail.template',
         string='Email Template',
         domain=[('model', '=', 'website_crm_referral.referral')])
+
 
 class ReferralStage(models.Model):
     _name = 'website_crm_referral.referral.stage'
@@ -25,11 +27,12 @@ class ReferralStage(models.Model):
     fold = fields.Boolean()
     active = fields.Boolean(default=True)
     state = fields.Selection(
-        [('new','Sent'),
-         ('trial','Trial'),
-         ('done','Paying')],
+        [('new', 'Sent'),
+         ('trial', 'Trial'),
+         ('done', 'Paying')],
         default='new'
     )
+
 
 class Referral(models.Model):
     _name = 'website_crm_referral.referral'
@@ -44,7 +47,7 @@ class Referral(models.Model):
         return stages.search([], order=order)
 
     user_id = fields.Many2one('res.users', string='Referrer')
-    referred = fields.Many2one('res.partner')
+    referred_id = fields.Many2one('res.partner')
     comment = fields.Text()
     stage_id = fields.Many2one('website_crm_referral.referral.stage', default=_default_stage, group_expand='_group_expand_stage_id')
     state = fields.Selection(related='stage_id.state')
@@ -55,9 +58,7 @@ class Referral(models.Model):
         ('linkedin', 'Linkedin')], default='direct')
     url = fields.Char(readonly=True, compute='_compute_url')
     lead_id = fields.Many2one('crm.lead')
-    # YTI rename into campaign_id
-    campaign = fields.Many2one('website_crm_referral.referral.campaign', required=True)
-    mail = fields.Many2one(related='campaign.mail_template_id')
+    campaign_id = fields.Many2one('website_crm_referral.referral.campaign', required=True)
 
     @api.depends('channel')
     def _compute_url(self):
@@ -66,7 +67,7 @@ class Referral(models.Model):
             self.env.user.utm_source_id = self.env['utm.source'].sudo().create({'name': utm_name}).id
 
         link_tracker = self.env['link.tracker'].sudo().create({
-            'url': '/referral', #TODO : id for specific referral 
+            'url': '/referral',  #TODO : id for specific referral
             #TODO 'campaign_id': self.env.ref(customer_referralProgram''),
             'source_id': self.env.user.utm_source_id.id,
             'medium_id': self.env.ref('utm.utm_medium_%s' % self.channel).id
@@ -80,23 +81,6 @@ class Referral(models.Model):
         elif self.channel == 'linkedin':
             self.url = 'https://www.linkedin.com/shareArticle?mini=true&url=%s' % link_tracker.short_url
 
-    def button_send_mail(self):
-        self.ensure_one()
-        self.send_mail()
-
     def send_mail(self):
         self.ensure_one()
-        self.campaign.mail_template_id.send_mail(self.id, force_send=True)
-
-        # for r in self:
-        #     import logging
-        #     campaign = self.env['website_crm_referral.referral.campaign'].search([('id','=',r.campaign.id)], limit=1)
-        #     template = campaign.mail_template_id
-        #     # if(not self.campaign or not self.campaign.mail_template_id):
-        #     #     return False
-        #     logging.warning(str(campaign))
-        #     logging.warning(str(template))
-        #     logging.warning(str(r))
-        #     logging.warning(str(r.comment))
-        #     template.send_mail(r.id, force_send=True)
-        #     return True
+        self.campaign_id.mail_template_id.send_mail(self.id, force_send=True)

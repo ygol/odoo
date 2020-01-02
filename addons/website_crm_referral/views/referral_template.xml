@@ -65,7 +65,7 @@
                         <t t-foreach="referrals" t-as="r">
                             <div class="row">
                                 <bold>
-                                    <b t-field='r.referred.name' class="col-sm" />
+                                    <b t-field='r.referred_id.name' class="col-sm" />
                                 </bold>
                                 <t t-set="first" t-value="True"/>
                                 <t t-foreach="state_values" t-as="st">

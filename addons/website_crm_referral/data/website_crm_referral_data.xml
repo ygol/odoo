@@ -32,10 +32,10 @@
                 <field name="name">Referral email</field>
                 <field name="model_id" ref="website_crm_referral.model_website_crm_referral_referral" />        
                 <field name="auto_delete" eval="True"/>
-                <field name="email_to">${object.referred.email}</field>
-                <field name="subject">${object.campaign.subject}</field>
+                <field name="email_to">${object.referred_id.email}</field>
+                <field name="subject">${object.campaign_id.subject}</field>
                 <field name="body_html"><![CDATA[
-             <p>Dear ${(object.referred.name)},<br/><br/>
+             <p>Dear ${(object.referred_id.name)},<br/><br/>
              You were invited to try Odoo, mode information here: ${(object.url)}<br/></p>
                   Regards.<br/> ]]></field>
                   <field name="user_signature" eval="False"/>
