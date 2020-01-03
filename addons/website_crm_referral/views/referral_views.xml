@@ -5,12 +5,10 @@
         <field name="model">website_crm_referral.referral</field>
         <field name="arch" type="xml">
             <form string="Referral">
-                <header>
-                    <field name="stage_id" widget="statusbar" clickable="True" options="{'fold_field': 'fold'}" />
-                </header>
                 <sheet>
                     <group name="group_top">
                         <group name="group_left">
+                            <field name="campaign_id" />
                             <field name="referred_id"/>
                             <field name="user_id" />
                         </group>
@@ -33,7 +31,6 @@
                 <field name="user_id" />
                 <field name="comment" optional='show' />
                 <field name="channel" optional='show' />
-                <field name="state"  optional='show' />
             </tree>
         </field>
     </record>
@@ -46,6 +43,7 @@
                 <field name="user_id" />
                 <field name="referred_id" />
                 <field name="channel" />
+                <field name="campaign_id" />
             </search>
         </field>
     </record>
@@ -66,6 +64,7 @@
                         <group name="group_right">
                             <field name="subject"/>
                             <field name="mail_template_id" />
+                            <field name="crm_stages" widget="many2many_tags" />
                         </group>
                     </group>
                 </sheet>

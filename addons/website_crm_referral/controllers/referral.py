@@ -8,12 +8,10 @@ class Referral(http.Controller):
     def referral(self, **kwargs):
         Campaign = request.env['website_crm_referral.referral.campaign']
         campaign = Campaign.search([], limit=1)  # La vue ne supporte qu'une campagne, et il n'y en a qu'une pour l'instant. TODO changer la vue
-        ReferralStage = request.env['website_crm_referral.referral.stage']
         return request.render('website_crm_referral.referral_controller_template',
                               {'campaign': campaign,
                                'referrals': campaign.referrals.search([('campaign_id', '=', campaign.id), ('user_id', '=', request.uid)]),
-                               'state_values': ReferralStage._fields['state'].selection})
-
+                               })
 
     @http.route(['/referral/create'], type='http', auth="user", method='POST', website=True)
     def referral_create(self, **post):

@@ -68,20 +68,20 @@
                                     <b t-field='r.referred_id.name' class="col-sm" />
                                 </bold>
                                 <t t-set="first" t-value="True"/>
-                                <t t-foreach="state_values" t-as="st">
+                                <t t-foreach="campaign.crm_stages" t-as="st">
                                     <t t-if="first">
                                         <t t-set="first" t-value="False" />
                                     </t>
                                     <t t-else="" >
                                         <span>&#160;&gt;&#160;</span>
                                     </t>
-                                    <t t-if="st[0] == r.state" >
+                                    <t t-if="st == r.crm_stage_id" >
                                         <b>
-                                            <span t-esc='st[1]' /> 
+                                            <span t-esc='st.name' /> 
                                         </b>
                                     </t>
                                     <t t-else="">
-                                        <span t-esc='st[1]' /> 
+                                        <span t-esc='st.name' /> 
                                     </t>
                                 </t>
                             </div>

@@ -9,23 +9,6 @@
             <field name="sequence">55</field>
         </record>
 
-        <!-- Stages -->
-        <record id="stage_10" model="website_crm_referral.referral.stage">
-            <field name="name">Sent</field>
-            <field name="sequence">10</field>
-            <field name="state">new</field>
-        </record>
-        <record id="stage_20" model="website_crm_referral.referral.stage">
-            <field name="name">Trial</field>
-            <field name="sequence">20</field>
-            <field name="state">trial</field>
-        </record>
-        <record id="stage_30" model="website_crm_referral.referral.stage">
-            <field name="name">Paying</field>
-            <field name="sequence">30</field>
-            <field name="state">done</field>
-        </record>
-
         <!-- Email Templates -->
         <data>
             <record id="referral_email_template" model="mail.template">

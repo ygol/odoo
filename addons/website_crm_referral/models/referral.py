@@ -4,7 +4,7 @@ import uuid
 
 class ReferralCampaign(models.Model):
     _name = 'website_crm_referral.referral.campaign'
-    _description = 'Referral stage campaign'
+    _description = 'Referral campaign'
 
     name = fields.Char()
     subject = fields.Char()
@@ -15,42 +15,17 @@ class ReferralCampaign(models.Model):
         'mail.template',
         string='Email Template',
         domain=[('model', '=', 'website_crm_referral.referral')])
-
-
-class ReferralStage(models.Model):
-    _name = 'website_crm_referral.referral.stage'
-    _description = 'Referral stage'
-    _order = 'sequence,name'
-
-    name = fields.Char()
-    sequence = fields.Integer(default=10)
-    fold = fields.Boolean()
-    active = fields.Boolean(default=True)
-    state = fields.Selection(
-        [('new', 'Sent'),
-         ('trial', 'Trial'),
-         ('done', 'Paying')],
-        default='new'
-    )
+    crm_stages = fields.Many2many('crm.stage', string="CRM Stages")
 
 
 class Referral(models.Model):
     _name = 'website_crm_referral.referral'
     _description = 'Allow customers to send referral links.'
 
-    @api.model
-    def _default_stage(self):
-        return self.env['website_crm_referral.referral.stage'].search([], limit=1)
-
-    @api.model
-    def _group_expand_stage_id(self, stages, domain, order):
-        return stages.search([], order=order)
-
     user_id = fields.Many2one('res.users', string='Referrer')
     referred_id = fields.Many2one('res.partner')
     comment = fields.Text()
-    stage_id = fields.Many2one('website_crm_referral.referral.stage', default=_default_stage, group_expand='_group_expand_stage_id')
-    state = fields.Selection(related='stage_id.state')
+    crm_stage_id = fields.Many2one('crm.stage', string='CRM Stage')
     channel = fields.Selection([
         ('direct', 'Link'),
         ('facebook', 'Facebook'),
@@ -59,6 +34,21 @@ class Referral(models.Model):
     url = fields.Char(readonly=True, compute='_compute_url')
     lead_id = fields.Many2one('crm.lead')
     campaign_id = fields.Many2one('website_crm_referral.referral.campaign', required=True)
+
+    @api.model
+    def create(self, vals):
+        if 'crm_stage_id' not in vals and 'campaign_id' in vals:
+            campaign = self.env['website_crm_referral.referral.campaign'].search([('id', '=', vals['campaign_id'])], limit=1)
+            stages = sorted(campaign.crm_stages, key=lambda s: s.sequence)
+            if(len(stages) > 0):
+                vals['crm_stage_id'] = stages[0].id
+        return super().create(vals)
+
+    @api.constrains('crm_stage_id')
+    def _crm_stage_in_campaign(self):
+        for r in self:
+            if(r.crm_stage_id not in r.campaign_id.crm_stages):
+                raise ValueError('Stage not valid for this referral')
 
     @api.depends('channel')
     def _compute_url(self):
