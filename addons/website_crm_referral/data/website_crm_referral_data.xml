@@ -23,6 +23,45 @@
                   Regards.<br/> ]]></field>
                   <field name="user_signature" eval="False"/>
             </record>
+
+            <record id="referral_stage_changed_email_template" model="mail.template">
+                <field name="name">Referral Stage Changed email</field>
+                <field name="model_id" ref="website_crm_referral.model_website_crm_referral_referral" />        
+                <field name="auto_delete" eval="True"/>
+                <field name="email_to">${object.user_id.email}</field>
+                <field name="subject">Referral "${object.campaign_id.subject}" Updated</field>
+                <field name="body_html"><![CDATA[
+             <p>Dear ${(object.user_id.name)},<br/><br/>
+             Your referral for ${(object.referred_id.name)} has reached a new stage : ${(object.crm_stage_id)}<br/></p>
+                  Regards.<br/> ]]></field>
+                  <field name="user_signature" eval="False"/>
+            </record>
+
+            <record id="referral_won_email_template" model="mail.template">
+                <field name="name">Referral Won email</field>
+                <field name="model_id" ref="website_crm_referral.model_website_crm_referral_referral" />        
+                <field name="auto_delete" eval="True"/>
+                <field name="email_to">${object.user_id.email}</field>
+                <field name="subject">Referral "${object.campaign_id.subject}" Won !</field>
+                <field name="body_html"><![CDATA[
+             <p>Dear ${(object.user_id.name)},<br/><br/>
+             Your referral for ${(object.referred_id.name)} is won ! You will get your reward soon !<br/></p>
+                  Regards.<br/> ]]></field>
+                  <field name="user_signature" eval="False"/>
+            </record>
+
+            <record id="referral_cancel_email_template" model="mail.template">
+                <field name="name">Referral Cancel email</field>
+                <field name="model_id" ref="website_crm_referral.model_website_crm_referral_referral" />        
+                <field name="auto_delete" eval="True"/>
+                <field name="email_to">${object.user_id.email}</field>
+                <field name="subject">Referral "${object.campaign_id.subject}" Cancelled</field>
+                <field name="body_html"><![CDATA[
+             <p>Dear ${(object.user_id.name)},<br/><br/>
+             Unfortunately, your referral for ${(object.referred_id.name)} was cancelled. Try to send more referrals to different people to get more rewards !<br/></p>
+                  Regards.<br/> ]]></field>
+                  <field name="user_signature" eval="False"/>
+            </record>
     
             <!-- Campaigns -->
             <record id="internal_campaign" model="website_crm_referral.referral.campaign">

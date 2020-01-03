@@ -44,23 +44,10 @@ class Referral(http.Controller):
             'campaign_id': int(post.get('campaign_id')),
         })
 
-        # create lead
-        lead = request.env['crm.lead'].create({
-            'name': 'Referral',
-            'type': 'lead',
-            'partner_id': referred.id,
-            'user_id': user.id,
-            'team_id': None,
-            'description': post.get('comment'),
-            'referred': referred.name,
-            'source_id': user.utm_source_id.id,
-            'referral_id': referral.id,
-        })
-
-        referral.update({'lead_id': lead.id})
+        referral.create_lead()
 
         if(post.get('channel') == 'direct'):
-            referral.send_mail()
+            referral.send_mail_to_referred()
 
         if(post.get('channel') == 'direct'):
             return request.redirect('/referral')

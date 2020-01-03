@@ -15,6 +15,7 @@ Help the company to get more leads by leveraging his existing customers' base. M
         'views/referral_menu.xml',
         'views/referral_views.xml',
         'views/referral_template.xml',
+        'views/crm_lead_views.xml',
     ],
-    'application':True,
+    'application': True,
 }

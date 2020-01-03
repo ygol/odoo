@@ -1,4 +1,5 @@
 from odoo import fields, models, api
+from odoo.exceptions import UserError
 import uuid
 
 
@@ -25,7 +26,6 @@ class Referral(models.Model):
     user_id = fields.Many2one('res.users', string='Referrer')
     referred_id = fields.Many2one('res.partner')
     comment = fields.Text()
-    crm_stage_id = fields.Many2one('crm.stage', string='CRM Stage')
     channel = fields.Selection([
         ('direct', 'Link'),
         ('facebook', 'Facebook'),
@@ -33,22 +33,8 @@ class Referral(models.Model):
         ('linkedin', 'Linkedin')], default='direct')
     url = fields.Char(readonly=True, compute='_compute_url')
     lead_id = fields.Many2one('crm.lead')
+    crm_stage_id = fields.Many2one(related='lead_id.stage_id', string='CRM Stage')
     campaign_id = fields.Many2one('website_crm_referral.referral.campaign', required=True)
-
-    @api.model
-    def create(self, vals):
-        if 'crm_stage_id' not in vals and 'campaign_id' in vals:
-            campaign = self.env['website_crm_referral.referral.campaign'].search([('id', '=', vals['campaign_id'])], limit=1)
-            stages = sorted(campaign.crm_stages, key=lambda s: s.sequence)
-            if(len(stages) > 0):
-                vals['crm_stage_id'] = stages[0].id
-        return super().create(vals)
-
-    @api.constrains('crm_stage_id')
-    def _crm_stage_in_campaign(self):
-        for r in self:
-            if(r.crm_stage_id not in r.campaign_id.crm_stages):
-                raise ValueError('Stage not valid for this referral')
 
     @api.depends('channel')
     def _compute_url(self):
@@ -71,6 +57,33 @@ class Referral(models.Model):
         elif self.channel == 'linkedin':
             self.url = 'https://www.linkedin.com/shareArticle?mini=true&url=%s' % link_tracker.short_url
 
-    def send_mail(self):
+    def send_mail_to_referred(self):
         self.ensure_one()
         self.campaign_id.mail_template_id.send_mail(self.id, force_send=True)
+
+    def send_mail_update_to_referrer(self, template_id):
+        self.ensure_one()
+        template = self.env.ref('website_crm_referral.' + template_id)
+        template.send_mail(self.id, force_send=True)  # TODO force_send = False
+
+    def create_lead(self):
+        self.ensure_one()
+        if(self.lead_id):
+            raise UserError(_("This referral already has a lead."))
+
+        lead = self.env['crm.lead'].create({
+            'name': 'Referral',
+            'type': 'lead',
+            'partner_id': self.referred_id.id,
+            'user_id': self.user_id.id,
+            'team_id': None,
+            'description': self.comment,
+            'referred': self.referred_id.name,
+            'source_id': self.env.user.utm_source_id.id,
+            'referral_id': self.id,
+        })
+        stages = sorted(self.campaign_id.crm_stages, key=lambda s: s.sequence)
+        if(len(stages) > 0):
+            lead.update({'stage_id': stages[0].id})
+
+        self.lead_id = lead.id

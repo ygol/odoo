@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="crm_lead_view_form_extend" model="ir.ui.view">
+        <field name="name">crm.lead.form</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='lead_priority']" position="after" >
+                <group name="referrals" attrs="{'invisible': [('referral_id', '=', False)]}">
+                    <field name="to_be_rewarded" />
+                    <field name="referral_id" invisible="True" />
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_crm_case_leads_filter_extend" model="ir.ui.view">
+        <field name="name">crm.lead.search.lead</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.view_crm_case_leads_filter" />
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='inactive']" position="after" >
+                <separator />
+                <filter name="filter_to_be_rewarded"
+                        string="To Be Rewarded"
+                        domain="[('to_be_rewarded', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_crm_case_opportunities_filter_extend" model="ir.ui.view">
+        <field name="name">crm.lead.search.opportunity</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.view_crm_case_opportunities_filter" />
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='inactive']" position="after" >
+                <separator />
+                <filter name="filter_to_be_rewarded"
+                        string="To Be Rewarded"
+                        domain="[('to_be_rewarded', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
