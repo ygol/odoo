@@ -9,7 +9,6 @@
 Help the company to get more leads by leveraging his existing customers' base. Main objective: everyone can refer a prospect. If the prospect subscribes, the referrer is rewarded.""",
     'depends': ['crm', 'website', 'link_tracker', 'mail'],
     'data': [
-        'security/referral_security.xml',
         'security/ir.model.access.csv',
         'data/website_crm_referral_data.xml',
         'views/referral_menu.xml',

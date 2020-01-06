@@ -20,7 +20,7 @@ class Referral(http.Controller):
         if post.get('company'):
             company = request.env['res.company'].sudo().search([('name', '=', post.get('company'))], limit=1)
             if not company:
-                company = request.env['res.company'].create({
+                company = request.env['res.company'].sudo().create({
                     'name': post.get('name'),
                 })
 
@@ -28,13 +28,13 @@ class Referral(http.Controller):
             ('name', '=', post.get('name')),
             ('email', '=', post.get('email'))], limit=1)
         if not referred:
-            referred = request.env['res.partner'].create({
+            referred = request.env['res.partner'].sudo().create({
                 'name': post.get('name'),
                 'email': post.get('email'),
                 'phone': post.get('phone'),
             })
             if company:
-                referred.update({'company_id': company.id})
+                referred.sudo().update({'company_id': company.id})
 
         referral = request.env['website_crm_referral.referral'].create({
             'user_id': user.id,

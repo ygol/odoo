@@ -21,16 +21,16 @@ class ReferralCampaign(models.Model):
 
 class Referral(models.Model):
     _name = 'website_crm_referral.referral'
-    _description = 'Allow customers to send referral links.'
+    _description = 'Referral'
 
-    user_id = fields.Many2one('res.users', string='Referrer')
-    referred_id = fields.Many2one('res.partner')
+    user_id = fields.Many2one('res.users', string='Referrer', required=True)
+    referred_id = fields.Many2one('res.partner', required=True)
     comment = fields.Text()
     channel = fields.Selection([
         ('direct', 'Link'),
         ('facebook', 'Facebook'),
         ('twitter', 'Twitter'),
-        ('linkedin', 'Linkedin')], default='direct')
+        ('linkedin', 'Linkedin')], default='direct', required=True)
     url = fields.Char(readonly=True, compute='_compute_url')
     lead_id = fields.Many2one('crm.lead')
     crm_stage_id = fields.Many2one(related='lead_id.stage_id', string='CRM Stage')
@@ -59,19 +59,19 @@ class Referral(models.Model):
 
     def send_mail_to_referred(self):
         self.ensure_one()
-        self.campaign_id.mail_template_id.send_mail(self.id, force_send=True)
+        self.campaign_id.mail_template_id.sudo().send_mail(self.id, force_send=True)
 
     def send_mail_update_to_referrer(self, template_id):
         self.ensure_one()
         template = self.env.ref('website_crm_referral.' + template_id)
-        template.send_mail(self.id, force_send=True)  # TODO force_send = False
+        template.send_mail(self.id)
 
     def create_lead(self):
         self.ensure_one()
         if(self.lead_id):
             raise UserError(_("This referral already has a lead."))
 
-        lead = self.env['crm.lead'].create({
+        lead = self.env['crm.lead'].sudo().create({
             'name': 'Referral',
             'type': 'lead',
             'partner_id': self.referred_id.id,
@@ -84,6 +84,6 @@ class Referral(models.Model):
         })
         stages = sorted(self.campaign_id.crm_stages, key=lambda s: s.sequence)
         if(len(stages) > 0):
-            lead.update({'stage_id': stages[0].id})
+            lead.sudo().update({'stage_id': stages[0].id})
 
-        self.lead_id = lead.id
+        self.sudo().update({'lead_id': lead.id})
