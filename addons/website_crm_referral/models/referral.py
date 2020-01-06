@@ -87,3 +87,5 @@ class Referral(models.Model):
             lead.sudo().update({'stage_id': stages[0].id})
 
         self.sudo().update({'lead_id': lead.id})
+
+        return lead
