@@ -4,18 +4,21 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 12.0\n"
+"Project-Id-Version: Odoo Server 13.0+e\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-12 05:39+0000\n"
-"PO-Revision-Date: 2019-02-12 12:06+0530\n"
-"Last-Translator: didier.donze@camptocamp.com\n"
+"POT-Creation-Date: 2020-01-06 08:32+0000\n"
+"PO-Revision-Date: 2020-01-06 08:32+0000\n"
+"Last-Translator: \n"
 "Language-Team: \n"
-"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Content-Transfer-Encoding: \n"
 "Plural-Forms: \n"
-"X-Generator: Poedit 2.2.1\n"
+
+#. module: l10n_ch
+#: model:account.tax.template,description:l10n_ch.vat_other_movements_910
+msgid "0% dons"
+msgstr ""
 
 #. module: l10n_ch
 #: model:account.tax.template,description:l10n_ch.vat_O_exclude
@@ -26,6 +29,11 @@ msgstr "0% Exkl."
 #: model:account.tax.template,description:l10n_ch.vat_O_import
 msgid "0% import."
 msgstr "0% Import."
+
+#. module: l10n_ch
+#: model:account.tax.template,description:l10n_ch.vat_other_movements_900
+msgid "0% subventions"
+msgstr ""
 
 #. module: l10n_ch
 #: model:account.tax.template,name:l10n_ch.vat_100_import
@@ -68,6 +76,57 @@ msgid "2.5% invest. Incl."
 msgstr "2.5% Invest. Inkl."
 
 #. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_200
+msgid "200 Chiffre d'affaires"
+msgstr "200 Umsatz"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_220_289
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_220_289
+msgid "220 Chiffre d'affaires imposable a 0% (export)"
+msgstr "220 Von der Steuer befreite Leistungen (u.a. Exporte)"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_221
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_221
+msgid "221 Prestations fournies à l'étranger"
+msgstr "221 Leistungen im Ausland"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_225
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_225
+msgid "225 Transfer avec la procédure de déclaration"
+msgstr "225 Übertragung im Meldeverfahren"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_230
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_230
+msgid "230 Chiffre d'affaires non-imposable a 0% (exclu)"
+msgstr "230 Nicht steuerbare Leistungen (ausgenommen)"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_235
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_235
+msgid "235 Diminution de la contre-prestation"
+msgstr "235 Entgeltsminderungen"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_280
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_280
+msgid "280 Divers (p.ex valeur du terrain)"
+msgstr "280 Diverses (z.B. Wert des Bodens)"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_289
+msgid "289 Déductions (ch.220 à ch.280)"
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_299
+msgid "299 Chiffre d'affaires imposable (ch.200 moins ch.289)"
+msgstr ""
+
+#. module: l10n_ch
 #: model:account.tax.template,description:l10n_ch.vat_37
 msgid "3.7%"
 msgstr "3.7%"
@@ -96,6 +155,116 @@ msgstr "3.7% Invest."
 #: model:account.tax.template,description:l10n_ch.vat_37_invest_incl
 msgid "3.7% invest Incl."
 msgstr "3.7% Invest. Inkl."
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_302a
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_302a
+msgid "302a Chiffre d'affaires imposable a 7.7% (TS)"
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_302b
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_302b
+msgid "302b TVA due a 7.7% (TS)"
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_312a
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_312a
+msgid "312a Chiffre d'affaires imposable a 2.5% (TR)"
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_312b
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_312b
+msgid "312b TVA due a 2.5% (TR)"
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_342a
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_342a
+msgid "342a Chiffre d'affaires imposable a 3.7% (TS)"
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_342b
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_342b
+msgid "342b TVA due a 3.7% (TS)"
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_381a
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_381a
+msgid "381a Impots sur les acquisitions"
+msgstr "381a Zu versteuernder Umsatz Bezugsteuer"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_381b
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_381b
+msgid "381b Impots sur les acquisitions "
+msgstr "381b Zu zahlende MwSt. Bezugsteuer"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_382a
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_382a
+msgid "382a Impots sur les acquisitions"
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_382b
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_382b
+msgid "382b Impots sur les acquisitions "
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_399
+msgid "399 TVA Due "
+msgstr "399 Total geschuldete Steuer"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_400
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_400
+msgid "400 TVA préalable sur biens et services"
+msgstr "400 Vorsteuer auf Material- und Dienstleistungsaufwand"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_405
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_405
+msgid "405 TVA préalable sur invest. et autres ch."
+msgstr "405 Vorsteuer auf Investitionen und übrigem Betriebsaufwand"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_410
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_410
+msgid "410 Dégrèvement ultérieur de l'impot préalable"
+msgstr "410 Einlageentsteuerung"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_415
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_415
+msgid "415 Correction de l'impot préalable"
+msgstr "415 Vorsteuerkorrekturen"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_420
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_420
+msgid "420 Réduction de la déduction de l'impot préalable"
+msgstr "420 Vorsteuerkürzungen"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_479
+msgid "479 TVA préalable"
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_500
+msgid "500 Solde de TVA a payer a l'AFC"
+msgstr "500 An die eidg. Steuerverwaltung zu bezahlender Betrag"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_510
+msgid "510 Solde de TVA a recevoir de l'AFC"
+msgstr "510 Guthaben der steuerpflichtigen Person"
 
 #. module: l10n_ch
 #: model:account.tax.template,description:l10n_ch.vat_77
@@ -132,6 +301,23 @@ msgstr "7.7% Invest."
 #: model:account.tax.template,description:l10n_ch.vat_77_invest_incl
 msgid "7.7% invest. Incl."
 msgstr "7.7% Invest. Inkl."
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_900
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_900
+msgid "900 Subventions, taxes touristiques"
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_910
+#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_910
+msgid "910 Les dons, les dividendes, les dédommagements, ..."
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_autres_mouv
+msgid "AUTRES MOUVEMENTS DE FONDS"
+msgstr ""
 
 #. module: l10n_ch
 #: model:account.account.template,name:l10n_ch.ch_coa_4200
@@ -300,6 +486,11 @@ msgid "Avances et prêts"
 msgstr "Vorschüsse und Darlehen"
 
 #. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_calc_impot_base
+msgid "Base Impôt sur acquisitions de services"
+msgstr ""
+
+#. module: l10n_ch
 #: model:account.account.template,name:l10n_ch.ch_coa_1700
 msgid "Brevets, know-how, licences, droits, développement"
 msgstr "Patente, Know-how, Lizenzen, Rechte, Entwicklungen"
@@ -407,6 +598,11 @@ msgid "Charges à payer"
 msgstr "Noch nicht bezahlter Aufwand"
 
 #. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_calc_impot_chiffre
+msgid "Chiffre d'affaires imposable"
+msgstr ""
+
+#. module: l10n_ch
 #: model:account.account.template,name:l10n_ch.ch_coa_3803
 msgid "Commissions de tiers"
 msgstr "Provisionen an Dritte"
@@ -415,11 +611,6 @@ msgstr "Provisionen an Dritte"
 #: model:account.account.template,name:l10n_ch.ch_coa_4903
 msgid "Commissions obtenues sur achats"
 msgstr "Einkaufsprovisionen"
-
-#. module: l10n_ch
-#: model:ir.model,name:l10n_ch.model_res_company
-msgid "Companies"
-msgstr "Unternehmen"
 
 #. module: l10n_ch
 #: model:account.account.template,name:l10n_ch.ch_coa_1099
@@ -494,6 +685,11 @@ msgid "Dividendes"
 msgstr "Beschlossene Ausschüttungen"
 
 #. module: l10n_ch
+#: model:account.tax.template,name:l10n_ch.vat_other_movements_910
+msgid "Dons, dividendes, dédommagements à 0%"
+msgstr ""
+
+#. module: l10n_ch
 #: model:account.account.template,name:l10n_ch.ch_coa_4071
 msgid "Droits de douanes à l'importation"
 msgstr "Einfuhrzölle"
@@ -507,6 +703,11 @@ msgstr "Delkredere"
 #: model:account.account.template,name:l10n_ch.ch_coa_1100
 msgid "Débiteurs"
 msgstr "Forderungen aus Lieferungen und Leistungen (Debitoren)"
+
+#. module: l10n_ch
+#: model:account.account.template,name:l10n_ch.ch_coa_1101
+msgid "Débiteurs (PoS)"
+msgstr "Forderungen aus Lieferungen und Leistungen (Debitoren) (PoS)"
 
 #. module: l10n_ch
 #: model:account.account.template,name:l10n_ch.ch_coa_2201
@@ -532,11 +733,6 @@ msgstr "Wasser"
 #: model:account.account.template,name:l10n_ch.ch_coa_4500
 msgid "Electricité"
 msgstr "Strom"
-
-#. module: l10n_ch
-#: model:ir.model,name:l10n_ch.model_mail_template
-msgid "Email Templates"
-msgstr ""
 
 #. module: l10n_ch
 #: model:account.account.template,name:l10n_ch.ch_coa_2450
@@ -611,6 +807,16 @@ msgstr "Goodwill"
 #: model:account.account.template,name:l10n_ch.ch_coa_2451
 msgid "Hypothèques"
 msgstr "Hypotheken"
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chiffre_af
+msgid "I - CHIFFRE D'AFFAIRES"
+msgstr ""
+
+#. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_calc_impot
+msgid "II - CALCUL DE L'IMPOT"
+msgstr ""
 
 #. module: l10n_ch
 #: model:account.account.template,name:l10n_ch.ch_coa_1600
@@ -741,8 +947,8 @@ msgstr "Verluste Forderungen (Debitoren), Veränderung Delkredere"
 
 #. module: l10n_ch
 #: model:account.chart.template,name:l10n_ch.l10nch_chart_template
-msgid "Plan comptable 2015"
-msgstr "Kontenrahmen 2015"
+msgid "Plan comptable 2015 (Suisse)"
+msgstr "Kontenrahmen 2015 (Suisse)"
 
 #. module: l10n_ch
 #: model:account.account.template,name:l10n_ch.ch_coa_4400
@@ -852,6 +1058,11 @@ msgid "Réserves légales issues du capital"
 msgstr "Gesetzliche Kapitalreserve"
 
 #. module: l10n_ch
+#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_solde
+msgid "SOLDE"
+msgstr "Saldo"
+
+#. module: l10n_ch
 #: model:account.account.template,name:l10n_ch.ch_coa_5000
 msgid "Salaires"
 msgstr "Lohnaufwand"
@@ -867,118 +1078,8 @@ msgid "Stocks de produits semi-ouvrés"
 msgstr ""
 
 #. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_dedouanement
-msgid "Switzerland VAT Form: 100% dédouanement (base in grid 400)"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_200
-msgid "Switzerland VAT Form: grid 200"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_220
-msgid "Switzerland VAT Form: grid 220"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_221
-msgid "Switzerland VAT Form: grid 221"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_225
-msgid "Switzerland VAT Form: grid 225"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_230
-msgid "Switzerland VAT Form: grid 230"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_235
-msgid "Switzerland VAT Form: grid 235"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_280
-msgid "Switzerland VAT Form: grid 280"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_302_a
-msgid "Switzerland VAT Form: grid 302 base"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_302_b
-msgid "Switzerland VAT Form: grid 302 tax"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_311_a
-msgid "Switzerland VAT Form: grid 311 base"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_311_b
-msgid "Switzerland VAT Form: grid 311 tax"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_342_a
-msgid "Switzerland VAT Form: grid 342 base"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_342_b
-msgid "Switzerland VAT Form: grid 342 tax"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_381_a
-msgid "Switzerland VAT Form: grid 381 base"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_381_b
-msgid "Switzerland VAT Form: grid 381 tax"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_382_a
-msgid "Switzerland VAT Form: grid 382 base"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_382_b
-msgid "Switzerland VAT Form: grid 382 tax"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_400
-msgid "Switzerland VAT Form: grid 400"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_405
-msgid "Switzerland VAT Form: grid 405"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_410
-msgid "Switzerland VAT Form: grid 410"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_415
-msgid "Switzerland VAT Form: grid 415"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.account.tag,name:l10n_ch.vat_tag_420
-msgid "Switzerland VAT Form: grid 420"
+#: model:account.tax.template,name:l10n_ch.vat_other_movements_900
+msgid "Subventions, taxes touristiques à 0%"
 msgstr ""
 
 #. module: l10n_ch
@@ -1207,189 +1308,3 @@ msgstr "Produktionserlöse"
 #: model:account.account.template,name:l10n_ch.ch_coa_1530
 msgid "Véhicules"
 msgstr "Fahrzeuge"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_200
-msgid "200 Chiffre d'affaires"
-msgstr "200 Umsatz"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_220_289
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_220_289
-msgid "220 Chiffre d'affaires imposable a 0% (export)"
-msgstr "220 Von der Steuer befreite Leistungen (u.a. Exporte)"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_221
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_221
-msgid "221 Prestations fournies à l'étranger"
-msgstr "221 Leistungen im Ausland"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_225
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_225
-msgid "225 Transfer avec la procédure de déclaration"
-msgstr "225 Übertragung im Meldeverfahren"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_230
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_230
-msgid "230 Chiffre d'affaires non-imposable a 0% (exclu)"
-msgstr "230 Nicht steuerbare Leistungen (ausgenommen)"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_235
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_235
-msgid "235 Diminution de la contre-prestation"
-msgstr "235 Entgeltsminderungen"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_280
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_280
-msgid "280 Divers (p.ex valeur du terrain)"
-msgstr "280 Diverses (z.B. Wert des Bodens)"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_289
-msgid "289 Déductions (ch.220 à ch.280)"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_299
-msgid "299 Chiffre d'affaires imposable (ch.200 moins ch.289)"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_302a
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_302a
-msgid "302a Chiffre d'affaires imposable a 7.7% (TS)"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_302b
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_302b
-msgid "302b TVA due a 7.7% (TS)"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_312a
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_312a
-msgid "312a Chiffre d'affaires imposable a 2.5% (TR)"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_312b
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_312b
-msgid "312b TVA due a 2.5% (TR)"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_342a
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_342a
-msgid "342a Chiffre d'affaires imposable a 3.7% (TS)"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_342b
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_342b
-msgid "342b TVA due a 3.7% (TS)"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_381a
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_381a
-msgid "381a Impots sur les acquisitions"
-msgstr "381a Zu versteuernder Umsatz Bezugsteuer"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_381b
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_381b
-msgid "381b Impots sur les acquisitions "
-msgstr "381b Zu zahlende MwSt. Bezugsteuer"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_382a
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_382a
-msgid "382a Impots sur les acquisitions"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_382b
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_382b
-msgid "382b Impots sur les acquisitions "
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_399
-msgid "399 TVA Due "
-msgstr "399 Total geschuldete Steuer"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_400
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_400
-msgid "400 TVA préalable sur biens et services"
-msgstr "400 Vorsteuer auf Material- und Dienstleistungsaufwand"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_405
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_405
-msgid "405 TVA préalable sur invest. et autres ch."
-msgstr "405 Vorsteuer auf Investitionen und übrigem Betriebsaufwand"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_410
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_410
-msgid "410 Dégrèvement ultérieur de l'impot préalable"
-msgstr "410 Einlageentsteuerung"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_415
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_415
-msgid "415 Correction de l'impot préalable"
-msgstr "415 Vorsteuerkorrekturen"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_420
-#: model:account.tax.report.line,tag_name:l10n_ch.account_tax_report_line_chtax_420
-msgid "420 Réduction de la déduction de l'impot préalable"
-msgstr "420 Vorsteuerkürzungen"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_479
-msgid "479 TVA préalable"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_500
-msgid "500 Solde de TVA a payer a l'AFC"
-msgstr "500 An die eidg. Steuerverwaltung zu bezahlender Betrag"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_510
-msgid "510 Solde de TVA a recevoir de l'AFC"
-msgstr "510 Guthaben der steuerpflichtigen Person"
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_calc_impot_base
-msgid "Base Impôt sur acquisitions de services"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_calc_impot_chiffre
-msgid "Chiffre d'affaires imposable"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chiffre_af
-msgid "I - CHIFFRE D'AFFAIRES"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_calc_impot
-msgid "II - CALCUL DE L'IMPOT"
-msgstr ""
-
-#. module: l10n_ch
-#: model:account.tax.report.line,name:l10n_ch.account_tax_report_line_chtax_solde
-msgid "SOLDE"
-msgstr "Saldo"
