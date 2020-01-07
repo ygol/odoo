@@ -9,7 +9,7 @@ class Lead(models.Model):
 
     def write(self, vals):
         if(self.referral_id):
-            stages = sorted(self.referral_id.campaign_id.crm_stages, key=lambda s: s.sequence)
+            stages = sorted(self.env['res.config.settings'].crm_stages, key=lambda s: s.sequence)  # TODO
             stages = [s.id for s in stages]
 
             if stages and 'stage_id' in vals:

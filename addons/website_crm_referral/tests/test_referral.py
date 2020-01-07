@@ -22,18 +22,12 @@ class TestReferral(TransactionCase):
                 'is_won': s == 'won',
             }).id)
 
-        self.ReferralCampaign = self.env['website_crm_referral.referral.campaign']
-        self.campaign = self.ReferralCampaign.create({
-            'name': 'Test Campaign',
-            'crm_stages': self.stages_ids,
-        })
         self.Referral = self.env['website_crm_referral.referral']
         self.referral = self.Referral.create({
             'user_id': self.env.user.id,
             'referred_id': referred.id,
             'comment': 'A test referral.',
             'channel': 'direct',
-            'campaign_id': self.campaign.id,
         })
 
         return result

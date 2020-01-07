@@ -3,22 +3,6 @@ from odoo.exceptions import UserError
 import uuid
 
 
-class ReferralCampaign(models.Model):
-    _name = 'website_crm_referral.referral.campaign'
-    _description = 'Referral campaign'
-
-    name = fields.Char()
-    subject = fields.Char()
-    reward = fields.Char()
-    description = fields.Html()
-    referrals = fields.One2many('website_crm_referral.referral', 'campaign_id')
-    mail_template_id = fields.Many2one(
-        'mail.template',
-        string='Email Template',
-        domain=[('model', '=', 'website_crm_referral.referral')])
-    crm_stages = fields.Many2many('crm.stage', string="CRM Stages")
-
-
 class Referral(models.Model):
     _name = 'website_crm_referral.referral'
     _description = 'Referral'
@@ -34,7 +18,6 @@ class Referral(models.Model):
     url = fields.Char(readonly=True, compute='_compute_url')
     lead_id = fields.Many2one('crm.lead')
     crm_stage_id = fields.Many2one(related='lead_id.stage_id', string='CRM Stage')
-    campaign_id = fields.Many2one('website_crm_referral.referral.campaign', required=True)
 
     @api.depends('channel')
     def _compute_url(self):
@@ -59,7 +42,7 @@ class Referral(models.Model):
 
     def send_mail_to_referred(self):
         self.ensure_one()
-        self.campaign_id.mail_template_id.sudo().send_mail(self.id, force_send=True)
+        self.env['res.config.settings'].mail_template_id.sudo().send_mail(self.id, force_send=True) #TODO
 
     def send_mail_update_to_referrer(self, template_id):
         self.ensure_one()
@@ -82,7 +65,7 @@ class Referral(models.Model):
             'source_id': self.env.user.utm_source_id.id,
             'referral_id': self.id,
         })
-        stages = sorted(self.campaign_id.crm_stages, key=lambda s: s.sequence)
+        stages = sorted(self.env['res.config.settings'].crm_stages, key=lambda s: s.sequence) #TODO
         if(len(stages) > 0):
             lead.sudo().update({'stage_id': stages[0].id})
 

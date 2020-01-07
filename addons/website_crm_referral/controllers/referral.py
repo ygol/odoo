@@ -6,12 +6,11 @@ class Referral(http.Controller):
 
     @http.route('/referral', auth='user', website=True)
     def referral(self, **kwargs):
-        Campaign = request.env['website_crm_referral.referral.campaign']
-        campaign = Campaign.search([], limit=1)  # La vue ne supporte qu'une campagne, et il n'y en a qu'une pour l'instant. TODO changer la vue
-        return request.render('website_crm_referral.referral_controller_template',
-                              {'campaign': campaign,
-                               'referrals': campaign.referrals.search([('campaign_id', '=', campaign.id), ('user_id', '=', request.uid)]),
-                               })
+        Referral = request.env['website_crm_referral.referral.referral']
+        return request.render('website_crm_referral.referral_controller_template', {
+            'referrals': referrals.search([('user_id', '=', request.uid)]),
+            'crm_stages': "", #TODO
+            })
 
     @http.route(['/referral/create'], type='http', auth="user", method='POST', website=True)
     def referral_create(self, **post):
@@ -41,7 +40,6 @@ class Referral(http.Controller):
             'referred_id': referred.id,
             'comment': post.get('comment'),
             'channel': post.get('channel'),
-            'campaign_id': int(post.get('campaign_id')),
         })
 
         referral.create_lead()

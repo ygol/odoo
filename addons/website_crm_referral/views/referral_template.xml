@@ -29,16 +29,12 @@
             <div class="container mt-2">
                 <div class="col-lg-8">
                     <h1>
-                        <span>Get </span>
-                        <span t-field="campaign.reward" />
-                        <span> for each referral !</span>
+                        <span>Get a reward for each referral !</span>
                     </h1>
                     <h2>Refer a friend</h2>
-                    <b t-field="campaign.description" />
                     <form id="comment" t-attf-action="/referral/create" method="POST">
                         <div>
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                            <input type="hidden" name="campaign_id" t-att-value="campaign.id" />
                             <p>Email</p>
                             <input type="email" class="form-control" name="email" required="required"/>
                             <p>Name</p>
@@ -68,7 +64,7 @@
                                     <b t-field='r.referred_id.sudo().name' class="col-sm" />
                                 </bold>
                                 <t t-set="first" t-value="True"/>
-                                <t t-foreach="campaign.crm_stages" t-as="st">
+                                <t t-foreach="crm_stages" t-as="st">
                                     <t t-if="first">
                                         <t t-set="first" t-value="False" />
                                     </t>

@@ -8,7 +8,6 @@
                 <sheet>
                     <group name="group_top">
                         <group name="group_left">
-                            <field name="campaign_id" />
                             <field name="referred_id"/>
                             <field name="user_id" />
                         </group>
@@ -43,44 +42,7 @@
                 <field name="user_id" />
                 <field name="referred_id" />
                 <field name="channel" />
-                <field name="campaign_id" />
             </search>
-        </field>
-    </record>
-
-
-    <record id="view_form_referral_campaign" model="ir.ui.view">
-        <field name="name">Referral Campaign Form</field>
-        <field name="model">website_crm_referral.referral.campaign</field>
-        <field name="arch" type="xml">
-            <form string="Campaign">
-                <sheet>
-                    <group name="group_top">
-                        <group name="group_left">
-                            <field name="name" />
-                            <field name="reward" />
-                            <field name="description" />
-                        </group>
-                        <group name="group_right">
-                            <field name="subject"/>
-                            <field name="mail_template_id" />
-                            <field name="crm_stages" widget="many2many_tags" />
-                        </group>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-    <record id="view_tree_referral_campaign" model="ir.ui.view">
-        <field name="name">Referral Campaign List</field>
-        <field name="model">website_crm_referral.referral.campaign</field>
-        <field name="arch" type="xml">
-            <tree>
-                <field name="name" />
-                <field name="subject" />
-                <field name="description" />
-            </tree>
         </field>
     </record>
 </odoo>
