@@ -29,34 +29,43 @@
             <div class="container mt-2">
                 <div class="col-lg-8">
                     <h1>
-                        <span>Get a reward for each referral !</span>
+                        <span>Get $700 per referral</span>
                     </h1>
-                    <h2>Refer a friend</h2>
-                    <form id="comment" t-attf-action="/referral/create" method="POST">
-                        <div>
-                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                            <p>Email</p>
-                            <input type="email" class="form-control" name="email" required="required"/>
-                            <p>Name</p>
-                            <input type="text" name="name" class="form-control" required="required"/>
-                            <p>Phone</p>
-                            <input type="text" name="phone" class="form-control" />
-                            <p>Company</p>
-                            <input type='text' name="company" class="form-control" />
-                            <p>Business Need</p>
-                            <textarea rows="3" name="comment" class="form-control" placeholder="Write a comment..."></textarea>
-                            <div class="row">
-                                <button type="submit" name="channel" value="direct" class="btn btn-primary mt8">Send</button>
-                                <t t-foreach="[{'lower': 'facebook', 'name': 'Facebook'}, {'lower': 'twitter', 'name': 'Twitter'}, {'lower': 'linkedin', 'name': 'Linkedin'}]" t-as="network">
-                                    <button name="channel" type="submit" class="btn btn-sm p-2 btn-secondary" t-attf-value="{{network['lower']}}">
-                                        <span t-attf-title="Share on {{network['name']}}"><i t-attf-class="fa fa-lg fa-{{network['lower']}} text-secondary" role="img" t-attf-aria-label="Share on {{network['name']}}"/></span>
-                                        <span class="d-block mt-2 text-primary">Share Now</span>
-                                    </button>
-                                </t>
+                    <h2>When one of your referrals signs up to a paid plan, you get a $700 Amazon gift card</h2>
+                    
+                    <form id="website_sale_referral.send" t-attf-action="/referral/send" method="POST">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        
+                        <t t-if="env.user == website.user_id" >
+                            <div>   
+                                <p>Your email:</p>
+                                <input type="email" class="form-control" name="my_email" />
                             </div>
-                        </div>
+                        </t>
+
+                        <t t-foreach="[{'lower': 'facebook', 'name': 'Facebook'}, {'lower': 'twitter', 'name': 'Twitter'}, {'lower': 'linkedin', 'name': 'Linkedin'}]" t-as="network">
+                            <button  type="submit" class="btn btn-sm p-2 btn-secondary" name="channel" t-attf-value="{{network['lower']}}">
+                                <span t-attf-title="Share on {{network['name']}}"><i t-attf-class="fa fa-lg fa-{{network['lower']}} text-secondary" role="img" t-attf-aria-label="Share on {{network['name']}}"/></span>
+                                <span class="d-block mt-2 text-primary">Share Now</span>
+                            </button>
+                        </t>
+
+                        <p>Email</p>
+                        <input type="email" class="form-control" name="email"/> <!-- TODO Required when press on submit (but not on facebook, etc) ? -->
+                        <p>Name</p>
+                        <input type="text" name="name" class="form-control"/>
+                        <p>Phone</p>
+                        <input type="text" name="phone" class="form-control" />
+                        <p>Company</p>
+                        <input type='text' name="company" class="form-control" />
+                        <p>Business Need</p>
+                        <textarea rows="3" name="comment" class="form-control" placeholder="Write a comment..."></textarea>
+                        <button type="submit" name="channel" value="direct" class="btn btn-primary mt8">Send</button>
+
                     </form>
-                    <div>
+
+
+                    <!-- <div>
                         <h2>Your referrals</h2>
                         <t t-foreach="referrals" t-as="r">
                             <div class="row">
@@ -83,7 +92,7 @@
                             </div>
                         </t>
 
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </t>

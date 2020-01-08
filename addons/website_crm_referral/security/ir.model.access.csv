@@ -1,4 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_referral_public,Referral Public Access,website_crm_referral.model_website_crm_referral_referral,base.group_public,1,0,1,0
-access_referral_portal,Referral Portal Access,website_crm_referral.model_website_crm_referral_referral,base.group_portal,1,0,1,0
-access_referral_user,Referral User Access,website_crm_referral.model_website_crm_referral_referral,base.group_user,1,1,1,1

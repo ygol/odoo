@@ -9,5 +9,7 @@ class ResConfigSettings(models.TransientModel):
 
     mail_template_id = fields.Many2one(
         'mail.template',
-        string='Referral Email Template',
-        domain=[('model', '=', 'website_crm_referral.referral')])
+        string='Referral Email Template')
+        #domain=[('model', '=', 'website_sale_referral.referral')])
+    #TODO required ?
+    #TODO set domain

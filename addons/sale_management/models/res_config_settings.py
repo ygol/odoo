@@ -11,7 +11,7 @@ class ResConfigSettings(models.TransientModel):
     default_sale_order_template_id = fields.Many2one('sale.order.template', default_model='sale.order', string='Default Template')
     module_sale_quotation_builder = fields.Boolean("Quotation Builder")
 
-    module_website_crm_referral = fields.Boolean(string="Referral Program", help="Allow customers to send referral links.")
+    module_website_sale_referral = fields.Boolean(string="Referral Program", help="Allow customers to send referral links.")
 
     @api.onchange('group_sale_order_template')
     def _onchange_group_sale_order_template(self):
