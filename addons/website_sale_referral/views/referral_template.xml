@@ -43,25 +43,15 @@
                             </div>
                         </t>
 
-                        <t t-foreach="[{'lower': 'facebook', 'name': 'Facebook'}, {'lower': 'twitter', 'name': 'Twitter'}, {'lower': 'linkedin', 'name': 'Linkedin'}]" t-as="network">
-                            <button  type="submit" class="btn btn-sm p-2 btn-secondary" name="channel" t-attf-value="{{network['lower']}}">
-                                <span t-attf-title="Share on {{network['name']}}"><i t-attf-class="fa fa-lg fa-{{network['lower']}} text-secondary" role="img" t-attf-aria-label="Share on {{network['name']}}"/></span>
-                                <span class="d-block mt-2 text-primary">Share Now</span>
-                            </button>
-                        </t>
 
-                        <p>Email</p>
-                        <input type="email" class="form-control" name="email"/> <!-- TODO Required when press on submit (but not on facebook, etc) ? -->
-                        <p>Name</p>
-                        <input type="text" name="name" class="form-control"/>
-                        <p>Phone</p>
-                        <input type="text" name="phone" class="form-control" />
-                        <p>Company</p>
-                        <input type='text' name="company" class="form-control" />
-                        <p>Business Need</p>
-                        <textarea rows="3" name="comment" class="form-control" placeholder="Write a comment..."></textarea>
-                        <button type="submit" name="channel" value="direct" class="btn btn-primary mt8">Send</button>
-
+                        <div id="sharer">
+                            <t t-foreach="[{'lower': 'facebook', 'name': 'Facebook'}, {'lower': 'twitter', 'name': 'Twitter'}, {'lower': 'linkedin', 'name': 'Linkedin'}]" t-as="network">
+                                <button  type="submit" class="btn btn-sm p-2 btn-secondary" name="channel" t-attf-value="{{network['lower']}}">
+                                    <span t-attf-title="Share on {{network['name']}}"><i t-attf-class="fa fa-lg fa-{{network['lower']}} text-secondary" role="img" t-attf-aria-label="Share on {{network['name']}}"/></span>
+                                    <span class="d-block mt-2 text-primary">Share Now</span>
+                                </button>
+                            </t>
+                        </div>
                     </form>
 
 

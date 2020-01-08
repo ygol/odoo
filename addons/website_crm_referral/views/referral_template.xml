@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="referral_controller_template_extended" name="Referrals" inherit_id="website_sale_referral.referral_controller_template">
+        <xpath expr="//div[@id='sharer']" position="after">
+            <div id="lead_generator">
+                <p>Email</p>
+                <input type="email" class="form-control" name="email"/> <!-- TODO Required when press on submit (but not on facebook, etc) ? -->
+                <p>Name</p>
+                <input type="text" name="name" class="form-control"/>
+                <p>Phone</p>
+                <input type="text" name="phone" class="form-control" />
+                <p>Company</p>
+                <input type='text' name="company" class="form-control" />
+                <p>Business Need</p>
+                <textarea rows="3" name="comment" class="form-control" placeholder="Write a comment..."></textarea>
+                <button type="submit" name="channel" value="direct" class="btn btn-primary mt8">Send</button>
+            </div>
+        </xpath>
+    </template>
+
+</odoo>

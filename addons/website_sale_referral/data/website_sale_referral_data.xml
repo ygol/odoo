@@ -23,7 +23,16 @@
                 <field name="user_signature" eval="False"/>
         </record>
 
-     </data>
+        <record model="utm.tag" id="utm_campaign_tag_referral">
+            <field name="name">Referral</field>
+            <field name="color" eval="3"/>
+        </record>
 
+        <record model="utm.campaign" id="utm_campaign_referral">
+            <field name="name">Referral</field>
+            <field name="stage_id" ref="utm.default_utm_stage"/>
+            <field name="tag_ids" eval="[(6, 0, [ref('utm_campaign_tag_referral')])]" />
+        </record>
+     </data>
 
 </odoo>
