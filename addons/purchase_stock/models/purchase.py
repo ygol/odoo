@@ -221,6 +221,15 @@ class PurchaseOrder(models.Model):
                     subtype_id=self.env.ref('mail.mt_note').id)
         return True
 
+    @api.model
+    def create(self, values):
+        if values.get('company_id', False):
+            # Ensure the default picking_type is taken from the correct company
+            # if no picking type was given in create values.
+            # company_id context key is supported by _default_picking_type()
+            self = self.with_context(company_id=values.get('company_id'))
+        return super(PurchaseOrder, self).create(values)
+
 
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'

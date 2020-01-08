@@ -156,7 +156,8 @@ class PurchaseOrder(models.Model):
     @api.model
     def create(self, vals):
         if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code('purchase.order') or '/'
+            company_id = vals.get('company_id', self.default_get(['company_id'])['company_id'])
+            vals['name'] = self.env['ir.sequence'].with_context(force_company=company_id).next_by_code('purchase.order') or '/'
         return super(PurchaseOrder, self).create(vals)
 
     @api.multi
