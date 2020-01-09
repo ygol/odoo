@@ -23,6 +23,7 @@
                 <field name="user_signature" eval="False"/>
         </record>
 
+        <!-- UTM -->
         <record model="utm.tag" id="utm_campaign_tag_referral">
             <field name="name">Referral</field>
             <field name="color" eval="3"/>

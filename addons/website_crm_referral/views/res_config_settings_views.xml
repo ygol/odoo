@@ -10,7 +10,7 @@
                 <group>
                     <div class="col-12 col-lg-6 o_setting_box" id="referral_crm_setting">
                         <div class="o_setting_right_pane">
-                            <field name="lead_creation_mode" widget="radio" />
+                            <field name="referral_reward_mode" widget="radio" />
                         </div>
                     </div>
                 </group>
