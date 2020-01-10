@@ -102,7 +102,10 @@ class EventMailScheduler(models.Model):
              '- After/Before the event & On stage update: Scheduled time of the email')
     mail_registration_ids = fields.One2many('event.mail.registration', 'scheduler_id', copy=False)
     mail_sent = fields.Boolean('Mail Sent on Event', copy=False)
-    done = fields.Boolean('Sent', compute='_compute_done', store=True)
+    done = fields.Boolean('Sent', compute='_compute_done', store=True, copy=False)
+    # UX fields
+    state = fields.Selection([('running', 'Running'), ('scheduled', 'Scheduled'), ('sent', 'Sent')], compute='_compute_state')
+    sent_to_message = fields.Char('Sent to message', readonly=True, copy=False)
 
     @api.depends('interval_type')
     def _compute_trigger_stage_id(self):
@@ -117,6 +120,18 @@ class EventMailScheduler(models.Model):
                 mail.done = mail.mail_sent
             else:
                 mail.done = len(mail.mail_registration_ids) == len(mail.event_id.registration_ids) and all(mail.mail_sent for mail in mail.mail_registration_ids)
+
+    @api.depends('done', 'interval_type', 'scheduled_date', 'mail_sent')
+    def _compute_state(self):
+        for mail in self:
+            if mail.interval_type == 'after_sub':
+                mail.state = 'running'
+            elif mail.mail_sent:
+                mail.state = 'sent'
+            elif mail.scheduled_date:
+                mail.state = 'scheduled'
+            else:
+                mail.state = 'running'
 
     @api.depends('event_id.date_begin', 'interval_type', 'interval_unit', 'interval_nbr', 'trigger_stage_date')
     def _compute_scheduled_date(self):
@@ -145,11 +160,18 @@ class EventMailScheduler(models.Model):
                     mail.write({'mail_registration_ids': lines})
                 # execute scheduler on registrations
                 mail.mail_registration_ids.filtered(lambda reg: reg.scheduled_date and reg.scheduled_date <= now).execute()
+
+                contacted_attendees = len(mail.mail_registration_ids.filtered(lambda reg: reg.mail_sent))
+                mail.sent_to_message = _('%i Attendees') % contacted_attendees if contacted_attendees else False
             else:
                 # Do not send emails if the mailing was scheduled before the event but the event is over
                 if not mail.mail_sent and (mail.interval_type != 'before_event' or mail.event_id.date_end > now) and mail.notification_type == 'mail':
                     mail.event_id.mail_attendees(mail.template_id.id)
                     mail.write({'mail_sent': True})
+
+                    contacted_attendees = len(mail.event_id.registration_ids.filtered(lambda reg: reg.state != 'cancel'))
+                    mail.sent_to_message = _('%i Attendees') % contacted_attendees if contacted_attendees else False
+
         return True
 
     @api.model

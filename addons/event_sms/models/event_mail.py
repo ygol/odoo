@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 
 
 class EventTypeMail(models.Model):
@@ -43,6 +43,10 @@ class EventMailScheduler(models.Model):
                         mass_keep_log=True
                     )
                     mail.write({'mail_sent': True})
+
+                    contacted_attendees = len(mail.event_id.registration_ids.filtered(lambda reg: reg.state != 'cancel'))
+                    mail.sent_to_message = _('%i Attendees') % contacted_attendees if contacted_attendees else False
+
         return super(EventMailScheduler, self).execute()
 
 
