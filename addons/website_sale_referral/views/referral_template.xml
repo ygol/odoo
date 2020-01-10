@@ -54,38 +54,40 @@
                         </div>
                     </form>
 
-
-                    <!-- <div>
+                    <div>
                         <h2>Your referrals</h2>
-                        <t t-foreach="referrals" t-as="r">
+                        <t t-foreach="my_referrals" t-as="r">
                             <div class="row">
                                 <bold>
-                                    <b t-field='r.referred_id.sudo().name' class="col-sm" />
+                                    <b t-field="r.name" class="col-sm" />
                                 </bold>
-                                <t t-set="first" t-value="True"/>
-                                <t t-foreach="crm_stages" t-as="st">
-                                    <t t-if="first">
-                                        <t t-set="first" t-value="False" />
-                                    </t>
-                                    <t t-else="" >
-                                        <span>&#160;&gt;&#160;</span>
-                                    </t>
-                                    <t t-if="st == r.crm_stage_id" >
-                                        <b>
-                                            <span t-esc='st.name' /> 
-                                        </b>
-                                    </t>
-                                    <t t-else="">
-                                        <span t-esc='st.name' /> 
+                                <t t-if="my_referrals[r] == 'cancel'">
+                                    Canceled
+                                </t>
+                                <t t-else="">
+                                    <t t-set="first" t-value="True"/>
+                                    <t t-foreach="stages" t-as="st">
+                                        <t t-if="first">
+                                            <t t-set="first" t-value="False" />
+                                        </t>
+                                        <t t-else="" >
+                                            <span>&#160;&gt;&#160;</span>
+                                        </t>
+                                        <t t-if="st == my_referrals[r]" >
+                                            <b>
+                                                <span t-esc='stages[st]' /> 
+                                            </b>
+                                        </t>
+                                        <t t-else="">
+                                            <span t-esc='stages[st]' /> 
+                                        </t>
                                     </t>
                                 </t>
                             </div>
                         </t>
-
-                    </div> -->
+                    </div>
                 </div>
             </div>
         </t>
     </template>
-
 </odoo>

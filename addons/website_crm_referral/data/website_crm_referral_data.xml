@@ -1,8 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <record id="group_lead_referral" model="res.groups">
-        <field name="name">Referral reward based on lead</field>
-        <field name="category_id" ref="base.module_category_hidden"/>
-        <field name="comment">This group is assigned if the reward is not based on sales order (see res_config_settings)</field>
-    </record>
+    <data noupdate="1">
+        <record id="group_lead_referral" model="res.groups">
+            <field name="name">Referral reward based on lead</field>
+            <field name="category_id" ref="base.module_category_hidden"/>
+            <field name="comment">This group is assigned if the reward is not based on sales order (see res_config_settings)</field>
+        </record>
+
+        <!-- Email templates -->
+        <record id="referral_email_template" model="mail.template">
+            <field name="name">Referral email</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="auto_delete" eval="True"/>
+            <field name="email_to">${(object.email)}</field>
+            <field name="subject">You have been referred !</field>
+            <field name="body_html"><![CDATA[
+            <p>Dear ${(object.name)},<br/><br/>
+            You were invited to try Odoo, mode information here: ${(ctx.get('link'))}<br/></p>
+                Regards.<br/> ]]></field>
+                <field name="user_signature" eval="False"/>
+        </record>
+    </data>
 </odoo>

@@ -6,8 +6,7 @@ class SaleOrder(models.Model):
 
     is_fully_paid = fields.Boolean(compute='_compute_is_fully_paid', store=True)
 
-    # TODO delete
-    @api.depends('state', 'is_expired', 'require_payment', 'amount_total', 'transaction_ids')
+    @api.depends('state', 'is_expired', 'require_payment', 'amount_total', 'transaction_ids', 'transaction_ids.state')
     def _compute_is_fully_paid(self):
         for so in self:
-            is_fully_paid = so.has_to_be_paid()
+            is_fully_paid = not so.has_to_be_paid()
