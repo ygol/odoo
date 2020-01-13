@@ -16,7 +16,7 @@
             <field name="subject">You have been referred !</field>
             <field name="body_html"><![CDATA[
             <p>Dear ${(object.name)},<br/><br/>
-            You were invited to try Odoo, mode information here: ${(ctx.get('link'))}<br/></p>
+            You were invited to try Odoo, more information here: ${(ctx.get('link'))}<br/></p>
                 Regards.<br/> ]]></field>
                 <field name="user_signature" eval="False"/>
         </record>

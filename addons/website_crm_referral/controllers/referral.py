@@ -1,4 +1,4 @@
-from odoo import http
+from odoo import http, tools
 from odoo.http import request
 import uuid
 from odoo.addons.website_sale_referral.controllers.referral import Referral
@@ -10,9 +10,12 @@ class CrmReferral(Referral):
     def referral_send(self, **post):
         r = super(CrmReferral, self).referral_send(**post)
         if(post.get('channel') == 'direct'):
-            referred = request.env['res.partner'].sudo().create({
+            referred = request.env['res.partner'].sudo().find_or_create(
+                tools.formataddr((post.get('name'), post.get('email')))
+            )
+            referred = request.env['res.partner'].browse(referred)
+            referred.sudo().update({
                 'name': post.get('name'),
-                'email': post.get('email'),
                 'phone': post.get('phone'),
             })
 
@@ -44,9 +47,9 @@ class CrmReferral(Referral):
             return super()._get_referral_status(utm_source_id)
 
         CrmLead = request.env['crm.lead']
-        leads = CrmLead.search([
+        leads = CrmLead.sudo().search([
             ('campaign_id', '=', request.env.ref('website_sale_referral.utm_campaign_referral').id),
-            ('source_id', '=', utm_source_id)])
+            ('source_id', '=', utm_source_id.id)])
 
         first_stage = request.env['crm.stage'].search([], limit=1).id  # ordered automatically by orm
 

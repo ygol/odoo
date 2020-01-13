@@ -4,6 +4,8 @@
     <template id="referral_controller_template_extended" name="Referrals" inherit_id="website_sale_referral.referral_controller_template">
         <xpath expr="//div[@id='sharer']" position="after">
             <div id="lead_generator">
+                <h2>Or refer us someone</h2>
+                <h3>Give us details of your interested acquaintances, our business advisors will contact them soon.</h3>
                 <p>Email</p>
                 <input type="email" class="form-control" name="email"/> <!-- TODO Required when press on submit (but not on facebook, etc) ? -->
                 <p>Name</p>

@@ -18,7 +18,7 @@
             <field name="subject">Referral created !</field>
             <field name="body_html"><![CDATA[
          <p>Dear ${(object.name)},<br/><br/>
-         Your referral has been created successfully, you can track its status here : ${(ctx.get('link_tracking'))}<br/></p>
+         Your referral has been created successfully, you can track its status here : ${(ctx.get('link'))}<br/></p>
               Regards.<br/> ]]></field>
               <field name="user_signature" eval="False"/>
         </record>
