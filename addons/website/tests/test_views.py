@@ -10,6 +10,7 @@ import unittest
 from lxml import etree as ET, html
 from lxml.html import builder as h
 
+from odoo.exceptions import ValidationError
 from odoo.tests import common, HttpCase, tagged
 
 
@@ -895,6 +896,41 @@ class TestCowViewSaving(common.TransactionCase):
         # 4  | Base        |  modified content     |     1      |     /    |  website.base_view
         # 5  | Extension   |  , extended content   |     1      |     4    |  website.extension_view
         # 3  | Extension 2 |  , extended content 2 |     1      |     5    |  website.extension_view_2
+
+    def test_soc_complete_flow(self):
+        """
+        Check the creation of views from specific-website environments.
+        """
+        View = self.env['ir.ui.view']
+
+        View.with_context(website_id=1).create({
+            'name': 'Name',
+            'key': 'website.no_website_id',
+            'type': 'qweb',
+            'arch': '<data></data>',
+        })
+        # Get created views by searching to consider potential unwanted COW
+        created_views = View.search([('key', '=', 'website.no_website_id')])
+        self.assertEqual(len(created_views), 1, "Should only have created one view")
+        self.assertEqual(created_views.website_id.id, 1, "The created view should be specific to website 1")
+
+        with self.assertRaises(ValidationError, msg="Should not allow to create generic view explicitely from website 1 specific context"):
+            View.with_context(website_id=1).create({
+                'name': 'Name',
+                'key': 'website.explicit_no_website_id',
+                'type': 'qweb',
+                'arch': '<data></data>',
+                'website_id': False,
+            })
+
+        with self.assertRaises(ValidationError, msg="Should not allow to create specific view for website 2 from website 1 specific context"):
+            View.with_context(website_id=1).create({
+                'name': 'Name',
+                'key': 'website.different_website_id',
+                'type': 'qweb',
+                'arch': '<data></data>',
+                'website_id': 2,
+            })
 
 
 @tagged('-at_install', 'post_install')

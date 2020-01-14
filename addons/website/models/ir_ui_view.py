@@ -8,6 +8,7 @@ import uuid
 from odoo import api, fields, models
 from odoo import tools
 from odoo.addons.http_routing.models.ir_http import url_for
+from odoo.exceptions import ValidationError
 from odoo.osv import expression
 from odoo.http import request
 
@@ -31,6 +32,30 @@ class View(models.Model):
     def _compute_first_page_id(self):
         for view in self:
             view.first_page_id = self.env['website.page'].search([('view_id', '=', view.id)], limit=1)
+
+    def create(self, vals_list):
+        """
+        SOC for ir.ui.view creation. If a view is created without a website_id,
+        it should get one if one is present in the context. Also check that
+        an explicit website_id in create values matches the one in the context.
+        """
+        website_id = self.env.context.get('website_id', False)
+        if not website_id:
+            return super().create(vals_list)
+
+        if 'website_id' not in vals_list:
+            # Automatic addition of website ID during view creation if not
+            # specified but present in the context
+            vals_list['website_id'] = website_id
+        else:
+            # If website ID specified, automatic check that it is the same as
+            # the one in the context. Otherwise raise an error.
+            new_website_id = vals_list['website_id']
+            if not new_website_id:
+                raise ValidationError("Trying to create a generic view from a website %s environment" % (website_id))
+            elif new_website_id != website_id:
+                raise ValidationError("Trying to create a view for website %s from a website %s environment" % (new_website_id, website_id))
+        return super().create(vals_list)
 
     def name_get(self):
         if (not self._context.get('display_website') and not self.env.user.has_group('website.group_multi_website')) or \
