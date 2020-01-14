@@ -4,7 +4,10 @@
         <record id="group_lead_referral" model="res.groups">
             <field name="name">Referral reward based on lead</field>
             <field name="category_id" ref="base.module_category_hidden"/>
-            <field name="comment">This group is assigned if the reward is not based on sales order (see res_config_settings)</field>
+        </record>
+
+        <record id="lost_reason_cancel_by_referred" model="crm.lost.reason">
+            <field name="name">Cancelled by referred</field>
         </record>
 
         <!-- Email templates -->
@@ -17,7 +20,16 @@
             <field name="body_html"><![CDATA[
             <p>Dear ${(object.name)},<br/><br/>
             You were invited to try Odoo, more information here: ${(ctx.get('link'))}<br/></p>
-                Regards.<br/> ]]></field>
+                Regards.<br/> 
+                
+            Not interested ?
+            <p style="margin: 16px 0px 16px 0px;">
+                <a href="${(ctx['decline_url'])}"
+                    style="background-color:#875A7B; padding: 8px 16px 8px 16px; text-decoration: none; color: #fff; border-radius: 5px;">
+                    Decline Here
+                </a>
+            </p>
+            ]]></field>
                 <field name="user_signature" eval="False"/>
         </record>
     </data>

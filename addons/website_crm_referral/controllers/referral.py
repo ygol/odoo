@@ -1,4 +1,4 @@
-from odoo import http, tools
+from odoo import http, tools, SUPERUSER_ID
 from odoo.http import request
 import uuid
 from odoo.addons.website_sale_referral.controllers.referral import Referral
@@ -19,7 +19,7 @@ class CrmReferral(Referral):
                 'phone': post.get('phone'),
             })
 
-            lead_type = 'lead' if request.env['res.config.settings'].group_use_lead else 'opportunity'
+            lead_type = 'lead' if request.env['res.users'].with_user(SUPERUSER_ID).has_group('crm.group_use_lead') else 'opportunity'
 
             lead = request.env['crm.lead'].sudo().create({
                 'name': 'Referral',
@@ -32,37 +32,28 @@ class CrmReferral(Referral):
                 'campaign_id': request.env.ref('website_sale_referral.utm_campaign_referral').id,
                 'medium_id': request.env.ref('utm.utm_medium_direct').id
             })
+            self.referral_tracking.update({'lead_id': lead.id})
 
-            self.send_mail_to_referred(referred, self.link_tracker.short_url)
+            decline_url_relative = '/referral/decline?access_token=%s' % (self.referral_tracking.token)
+            base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            template = request.env.ref('website_crm_referral.referral_email_template', False)  # TODO : do we still want a custom template ? request.env['res.config.settings'].mail_template_id
+            template.sudo().with_context({'link': self.link_tracker.short_url, 'decline_url': base_url + decline_url_relative}).send_mail(referred.id, force_send=True)
 
         return r
 
-    def send_mail_to_referred(self, referred, link):
-        template = request.env.ref('website_crm_referral.referral_email_template', False)  # TODO : do we still want a custom template ? request.env['res.config.settings'].mail_template_id
-        template.sudo().with_context({'link': link}).send_mail(referred.id, force_send=True)
+    @http.route(['/referral/decline'], type="http", auth='public', method='POST', website=True)
+    def referral_decline(self, access_token, **post):
+        tracking = request.env['referral.tracking'].search([('token', '=', access_token)], limit=1)
+        if not tracking:  # incorrect token
+            return request.not_found()
+
+        tracking.lead_id.sudo().action_set_lost(lost_reason=request.env.ref('website_crm_referral.lost_reason_cancel_by_referred')) #TODO send email
+
+        return request.redirect('')
 
     # OVERRIDE
-    def _get_referral_status(self, utm_source_id):
-        if request.env['res.config.settings'].referral_reward_mode == 'sales_order':
-            return super()._get_referral_status(utm_source_id)
+    def _get_referral_status(self, request, referrer):
+        #if request.env['res.config.settings'].referral_reward_mode == 'sales_order':
+            #return super()._get_referral_status(utm_source_id)
 
-        CrmLead = request.env['crm.lead']
-        leads = CrmLead.sudo().search([
-            ('campaign_id', '=', request.env.ref('website_sale_referral.utm_campaign_referral').id),
-            ('source_id', '=', utm_source_id.id)])
-
-        first_stage = request.env['crm.stage'].search([], limit=1).id  # ordered automatically by orm
-
-        result = {}
-        states_priority = {'cancel': 0, 'new': 1, 'in_progress': 2, 'done': 3}
-        for l in leads:
-            state = 'in_progress'
-            if l.type == 'lead' or l.stage_id.id == first_stage:
-                state = 'new'
-            elif l.stage_id.is_won:
-                state = 'done'
-            elif l.stage_id.name == 'cancel':
-                state = 'cancel'
-            if(l.partner_id not in result or states_priority[state] > states_priority[result[so.partner_id]]):
-                result[l.partner_id] = state
-        return result
+        return request.env['crm.lead'].sudo().get_referral_statuses(referrer)

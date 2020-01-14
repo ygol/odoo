@@ -48,7 +48,7 @@
 
                         <div id="sharer">
                             <t t-foreach="[{'lower': 'facebook', 'name': 'Facebook'}, {'lower': 'twitter', 'name': 'Twitter'}, {'lower': 'linkedin', 'name': 'Linkedin'}]" t-as="network">
-                                <button  type="submit" class="btn btn-sm p-2 btn-secondary" name="channel" t-attf-value="{{network['lower']}}">
+                                <button type="submit" class="btn btn-sm p-2 btn-secondary" name="channel" t-attf-value="{{network['lower']}}">
                                     <span t-attf-title="Share on {{network['name']}}"><i t-attf-class="fa fa-lg fa-{{network['lower']}} text-secondary" role="img" t-attf-aria-label="Share on {{network['name']}}"/></span>
                                     <span class="d-block mt-2 text-primary">Share Now</span>
                                 </button>
@@ -72,10 +72,11 @@
         <t t-call="website.layout">
             <div class="container mt-2">
                 <div class="col-lg-8">
-                    <!-- <t t-if="referrer_to_signup">
-                        <a role="button" t-att-href='referrer_to_signup.signup_prepare() and referrer_to_signup.with_context(relative_url=True).signup_url' class='btn btn-primary'>Sign Up</a>
+                    <t t-if="referrer_to_signup">
+                        <a role="button" t-att-href='referrer_to_signup.sudo().signup_prepare() and referrer_to_signup.sudo().with_context(relative_url=True).signup_url' class='btn btn-primary'>Sign Up</a>
                         to track your referral.
-                    </t> -->
+                    </t>
+                    <br/>
                     <t t-call="website_sale_referral.referral_track_controller_sub_template" />
                 </div>
             </div>

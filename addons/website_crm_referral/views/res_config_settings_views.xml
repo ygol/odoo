@@ -8,11 +8,8 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@id='referral_mail_template_setting']" position="after">
                 <group>
-                    <div class="col-12 col-lg-6 o_setting_box" id="referral_crm_setting">
-                        <div class="o_setting_right_pane">
-                            <field name="referral_reward_mode" widget="radio" />
-                        </div>
-                    </div>
+                    <field name="referral_reward_on_lead" widget="radio"/>
+                    <field name="group_referral_reward_on_lead" invisible="1"/>
                 </group>
             </xpath>
         </field>

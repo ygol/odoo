@@ -11,7 +11,7 @@
                 <filter name="filter_to_reward"
                         string="To Reward"
                         domain="[('is_fully_paid', '=', True), ('campaign_id.name', '=', 'Referral')]"
-                        />
+                        groups="!website_crm_referral.group_lead_referral" />
             </xpath>
         </field>
     </record>

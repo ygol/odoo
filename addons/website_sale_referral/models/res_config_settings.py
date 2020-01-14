@@ -13,3 +13,5 @@ class ResConfigSettings(models.TransientModel):
         #domain=[('model', '=', 'website_sale_referral.referral')])
     #TODO required ?
     #TODO set domain
+
+    responsible_id = fields.Many2one('res.users', string='Salesperson responsible for reward attribution')

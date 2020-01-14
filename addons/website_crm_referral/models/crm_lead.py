@@ -1,49 +1,44 @@
-from odoo import models, fields, api, _
+from odoo import models, fields, api
 
 STATES_PRIORITY = {'cancel': 0, 'new': 1, 'in_progress': 2, 'done': 3}
 
 
-class SaleOrder(models.Model):
-    _inherit = 'sale.order'
-
-    is_fully_paid = fields.Boolean(compute='_compute_is_fully_paid', store=True)
-
-    @api.depends('state', 'is_expired', 'require_payment', 'amount_total', 'transaction_ids', 'transaction_ids.state')
-    def _compute_is_fully_paid(self):
-        for so in self:
-            is_fully_paid = not so.has_to_be_paid()
+class Lead(models.Model):
+    _inherit = 'crm.lead'
 
     def get_referral_statuses(self, referrer, referred=None):
         criteria = [
             ('campaign_id', '=', self.env.ref('website_sale_referral.utm_campaign_referral').id),
             ('source_id', '=', referrer.sudo().utm_source_id.id)]
-        if referred:
+        if(referred):
             criteria.append(('partner_id', '=', referred.id))
-        sales_orders = self.search(criteria)
+        leads = self.search(criteria)
 
         result = {}
-        for so in sales_orders:
-            state = so._get_state_for_referral()
-            if(so.partner_id not in result or STATES_PRIORITY[state] > STATES_PRIORITY[result[so.partner_id]]):
-                result[so.partner_id] = state
+        for l in leads:
+            state = l._get_state_for_referral()
+            if(l.partner_id not in result or STATES_PRIORITY[state] > STATES_PRIORITY[result[l.partner_id]]):
+                result[l.partner_id] = state
 
         if referred:
             return result[referred]
         else:
             return result
 
-    def _get_state_for_referral(self):
+    def get_state_for_referral(self):
         self.ensure_one()
+        first_stage = self.env['crm.stage'].search([], limit=1).id  # ordered automatically by orm
         r = 'in_progress'
-        if self.state == 'draft' or self.state == 'sent':
+        if self.type == 'lead' or self.stage_id.id == first_stage:
             r = 'new'
-        elif not self.has_to_be_paid():
+        elif l.stage_id.is_won:
             r = 'done'
-        elif self.state == 'lost':
+        elif l.stage_id.name == 'cancel':  # TODO does this stage really exist ?
             r = 'cancel'
+        return r
 
     def write(self, vals):
-        if(any(elem in vals for elem in ['state', 'is_expired', 'require_payment', 'amount_total', 'transaction_ids', 'transaction_ids.state'])):
+        if 'stage_id' in vals or 'type' in vals:
             referrer = self.env['res.partner'].search([('utm_source_id', '=', self.source_id.id)])
             if not referrer.referrer_rewarded_id:
                 old_state = self.get_referral_statuses(referrer, self.partner_id)
@@ -52,5 +47,8 @@ class SaleOrder(models.Model):
                 if(STATES_PRIORITY[new_state] > STATES_PRIORITY[old_state]):
                     template = self.env.ref('website_sale_referral.referral_state_changed_email_template', False)
                     template.sudo().with_context({'referred': self.partner_id, 'state': _(new_state)}).send_mail(referrer.id, force_send=True)
-                return r
-        return super().write(vals)
+                    if(new_state == 'done'):
+                        pass  # TODO next activity
+            return r
+        else:
+            return super().write(vals)
