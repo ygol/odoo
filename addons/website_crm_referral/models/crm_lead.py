@@ -21,7 +21,7 @@ class Lead(models.Model):
                 result[l.partner_id] = state
 
         if referred:
-            return result[referred]
+            return result.get(referred, None)
         else:
             return result
 
@@ -29,31 +29,44 @@ class Lead(models.Model):
         self.ensure_one()
         first_stage = self.env['crm.stage'].search([], limit=1).id  # ordered automatically by orm
         r = 'in_progress'
-        if self.type == 'lead' or self.stage_id.id == first_stage:
+        if not self.active and self.probability == 0:
+            r = 'cancel'
+        elif self.type == 'lead' or self.stage_id.id == first_stage:
             r = 'new'
         elif self.stage_id.is_won:
             r = 'done'
-        elif self.stage_id.name == 'cancel':  # TODO does this stage really exist ?
-            r = 'cancel'
         return r
 
     def write(self, vals):
-        #TODO check that we are in lead mode
-        if 'stage_id' in vals or 'type' in vals:
+        if self.env.user.has_group('website_crm_referral.group_lead_referral') and \
+           not self.partner_id.referrer_rewarded_id and \
+           any(elem in vals for elem in ['stage_id', 'type', 'active', 'probability']):
             referrer = self.env['res.partner'].search([('utm_source_id', '=', self.source_id.id)])
-            if not referrer.referrer_rewarded_id:
-                old_state = self.get_referral_statuses(referrer, self.partner_id)
-                r = super().write(vals)
-                new_state = self.get_referral_statuses(referrer, self.partner_id)
-                if(STATES_PRIORITY[new_state] > STATES_PRIORITY[old_state]):
-                    template = self.env.ref('website_sale_referral.referral_state_changed_email_template', False)
-                    template.sudo().with_context({'referred': self.partner_id, 'state': _(new_state)}).send_mail(referrer.id, force_send=True)
-                    if(new_state == 'done'):
+            old_state = self.get_referral_statuses(referrer, self.partner_id)
+            r = super().write(vals)
+            new_state = self.get_referral_statuses(referrer, self.partner_id)
+
+            if new_state != old_state:
+                if new_state == 'done':
+                    template = self.env.ref('website_sale_referral.referral_won_email_template', False)
+                    template.sudo().with_context({'referred': self.partner_id}).send_mail(referrer.id, force_send=True)
+
+                    responsible_id = self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.responsible_id') or self.user_id.id
+                    if responsible_id:
                         self.activity_schedule(
                             act_type_xmlid='mail.mail_activity_data_todo',
                             summary='The referrer for this lead deserves a reward',
-                            user_id=self.env['res.config.settings'].responsible_id)
+                            user_id=responsible_id)
+                        self.partner_id.referrer_rewarded_id = referrer.id
+
+                elif new_state == 'cancel':
+                    template = self.env.ref('website_sale_referral.referral_cancelled_email_template', False)
+                    template.sudo().with_context({'referred': self.partner_id}).send_mail(referrer.id, force_send=True)
+
+                else:
+                    template = self.env.ref('website_sale_referral.referral_state_changed_email_template', False)
+                    template.sudo().with_context({'referred': self.partner_id, 'state': _(new_state)}).send_mail(referrer.id, force_send=True)
+
             return r
         else:
             return super().write(vals)
-

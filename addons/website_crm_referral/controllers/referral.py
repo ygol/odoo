@@ -25,7 +25,7 @@ class CrmReferral(Referral):
                 'name': 'Referral',
                 'type': lead_type,
                 'partner_id': referred.id,
-                # TODO ?? 'user_id': self.user_id.id,
+                'user_id': None,
                 'team_id': None,
                 'description': post.get('comment'),
                 'source_id': self.referrer.utm_source_id.id,
