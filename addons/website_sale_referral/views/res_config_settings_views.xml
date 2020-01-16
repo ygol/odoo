@@ -19,6 +19,15 @@
                                 <field name="mail_template_id" class="oe_inline"/>
                             </div>
                         </div>
+                        <div class="o_setting_right_pane">
+                            <span class="o_form_label">Person in charge of the action</span>
+                            <div class="text-muted">
+                                This person will get a new activity once a referral reaches the last stage. Then, he can take contact with the referrer to send him the reward.
+                            </div>
+                            <div class="row mt16">
+                                <field name="responsible_id" class="oe_inline"/>
+                            </div>
+                        </div>
                     </group>
                 </div>
             </xpath>

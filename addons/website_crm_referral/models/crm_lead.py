@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 
 STATES_PRIORITY = {'cancel': 0, 'new': 1, 'in_progress': 2, 'done': 3}
 
@@ -25,19 +25,20 @@ class Lead(models.Model):
         else:
             return result
 
-    def get_state_for_referral(self):
+    def _get_state_for_referral(self):
         self.ensure_one()
         first_stage = self.env['crm.stage'].search([], limit=1).id  # ordered automatically by orm
         r = 'in_progress'
         if self.type == 'lead' or self.stage_id.id == first_stage:
             r = 'new'
-        elif l.stage_id.is_won:
+        elif self.stage_id.is_won:
             r = 'done'
-        elif l.stage_id.name == 'cancel':  # TODO does this stage really exist ?
+        elif self.stage_id.name == 'cancel':  # TODO does this stage really exist ?
             r = 'cancel'
         return r
 
     def write(self, vals):
+        #TODO check that we are in lead mode
         if 'stage_id' in vals or 'type' in vals:
             referrer = self.env['res.partner'].search([('utm_source_id', '=', self.source_id.id)])
             if not referrer.referrer_rewarded_id:
@@ -48,7 +49,11 @@ class Lead(models.Model):
                     template = self.env.ref('website_sale_referral.referral_state_changed_email_template', False)
                     template.sudo().with_context({'referred': self.partner_id, 'state': _(new_state)}).send_mail(referrer.id, force_send=True)
                     if(new_state == 'done'):
-                        pass  # TODO next activity
+                        self.activity_schedule(
+                            act_type_xmlid='mail.mail_activity_data_todo',
+                            summary='The referrer for this lead deserves a reward',
+                            user_id=self.env['res.config.settings'].responsible_id)
             return r
         else:
             return super().write(vals)
+

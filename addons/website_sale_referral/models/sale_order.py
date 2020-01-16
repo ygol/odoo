@@ -52,5 +52,10 @@ class SaleOrder(models.Model):
                 if(STATES_PRIORITY[new_state] > STATES_PRIORITY[old_state]):
                     template = self.env.ref('website_sale_referral.referral_state_changed_email_template', False)
                     template.sudo().with_context({'referred': self.partner_id, 'state': _(new_state)}).send_mail(referrer.id, force_send=True)
+                    if(new_state == 'done'):
+                        self.activity_schedule(
+                            act_type_xmlid='mail.mail_activity_data_todo',
+                            summary='The referrer for this lead deserves a reward',
+                            user_id=self.env['res.config.settings'].responsible_id)
                 return r
         return super().write(vals)

@@ -28,7 +28,7 @@
             <field name="model_id" ref="base.model_res_partner" />        
             <field name="auto_delete" eval="True"/>
             <field name="email_to">${object.email}</field>
-            <field name="subject">Referral created !</field>
+            <field name="subject">Referral progressed !</field>
             <field name="body_html"><![CDATA[
          <p>Dear ${(object.name)},<br/><br/>
          Your referral for ${(ctx.get('referred').name)} has reached a new state (${(ctx.get('state'))})<br/></p>

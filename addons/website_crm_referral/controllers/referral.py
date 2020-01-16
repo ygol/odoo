@@ -49,11 +49,11 @@ class CrmReferral(Referral):
 
         tracking.lead_id.sudo().action_set_lost(lost_reason=request.env.ref('website_crm_referral.lost_reason_cancel_by_referred')) #TODO send email
 
-        return request.redirect('')
+        return request.redirect('')  # TODO notify success
 
     # OVERRIDE
     def _get_referral_status(self, request, referrer):
-        #if request.env['res.config.settings'].referral_reward_mode == 'sales_order':
-            #return super()._get_referral_status(utm_source_id)
+        if request.env.user.has_group('website_crm_referral.group_lead_referral'):
+            return super()._get_referral_status(utm_source_id)
 
         return request.env['crm.lead'].sudo().get_referral_statuses(referrer)
