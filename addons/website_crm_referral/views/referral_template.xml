@@ -4,19 +4,35 @@
     <template id="referral_controller_template_extended" name="Referrals" inherit_id="website_sale_referral.referral_controller_template">
         <xpath expr="//div[@id='sharer']" position="after">
             <div id="lead_generator">
-                <h2>Or refer us someone</h2>
-                <h3>Give us details of your interested acquaintances, our business advisors will contact them soon.</h3>
-                <p>Email</p>
-                <input type="email" class="form-control" name="email"/> <!-- TODO Required when press on submit (but not on facebook, etc) ? -->
-                <p>Name</p>
-                <input type="text" name="name" class="form-control"/>
-                <p>Phone</p>
-                <input type="text" name="phone" class="form-control" />
-                <p>Company</p>
-                <input type='text' name="company" class="form-control" />
-                <p>Business Need</p>
-                <textarea rows="3" name="comment" class="form-control" placeholder="Write a comment..."></textarea>
-                <button type="submit" name="channel" value="direct" class="btn btn-primary mt8">Send</button>
+                <div class="col-lg-12 text-center mb32">
+                    <hr/>
+                    <h2 class="col-lg-12 text-center">Or refer us someone</h2>
+                    <p>Give us details of your interested acquaintances, our business advisors will contact them soon.</p>
+                    <hr/>
+                </div>
+                <div class="col-lg-12 text-center mb64">
+                    <div class="container col-lg-12">
+                        <div class="row mb16 col-lg-12">
+                            <p class="col-sm-2 text-left">Email</p>
+                            <input class="col-sm-4 form-control" type="email" name="email"/> <!-- TODO Required when press on submit (but not on facebook, etc) ? -->
+                            <p class="col-sm-2 text-left">Name</p>
+                            <input class="col-sm-4 form-control" type="text" name="name"/>
+                        </div>
+                        <div class="row mb16 col-lg-12">
+                            <p class="col-sm-2 text-left">Phone</p>
+                            <input class="col-sm-4 form-control" type="text" name="phone"/>
+                            <p class="col-sm-2 text-left">Company</p>
+                            <input class="col-sm-4 form-control" type='text' name="company" />
+                        </div>
+                        <div class="row mb16 col-lg-12">
+                            <p class="col-sm-2 text-left">Comment</p>
+                            <textarea class="col-sm-10 form-control" name="comment" placeholder="Write a comment..."></textarea>
+                        </div>
+                        <div class="row justify-content-end col-lg-12">
+                            <button type="submit" name="channel" value="direct" class="btn btn-primary mt8">Submit</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </xpath>
     </template>

@@ -3,6 +3,7 @@ from odoo.http import request
 import uuid
 
 REFERRAL_STAGES = {'new': 'New', 'in_progress': 'In Progress', 'done': 'Done'}  # TODO refactof this and stages_priority
+REWARD = 700  # hardcoded for now
 
 
 class Referral(http.Controller):
@@ -26,16 +27,23 @@ class Referral(http.Controller):
                 my_referrals = self._get_referral_status(request, request.env.user.partner_id)
                 referrer_to_signup = None
 
+        total_won = len(list(filter(lambda x: x == 'done', my_referrals.values())))
+        total_won *= REWARD
         return request.render('website_sale_referral.referral_track_controller_template', {
-            'my_referrals': my_referrals,
+            'my_referrals': my_referral,
+            'total_won': total_won,
             'stages': REFERRAL_STAGES,
             'referrer_to_signup': referrer_to_signup,
         })
 
     @http.route('/referral', auth='public', website=True)
     def referral(self, **kwargs):
+        my_referrals = self._get_referral_status(request, request.env.user.partner_id) if not request.website.is_public_user() else {}
+        total_won = len(list(filter(lambda x: x == 'done', my_referrals.values())))
+        total_won *= REWARD
         return request.render('website_sale_referral.referral_controller_template', {
-            'my_referrals': self._get_referral_status(request, request.env.user.partner_id) if not request.website.is_public_user() else {},
+            'my_referrals': my_referrals,
+            'total_won': total_won,
             'stages': REFERRAL_STAGES})
 
     @http.route(['/referral/send'], type='http', auth='public', method='POST', website=True)

@@ -6,29 +6,33 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="sale_management.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[@id='referral_setting_container']" position="after">
+            <xpath expr="//div[@id='sales_setting_referral']" position="after">
                 <div class="col-12 col-lg-6 o_setting_box" id="referral_mail_template_setting">
-                    <group>
-                        <div class="o_setting_right_pane">
-                            <span class="o_form_label">Referral Email</span>
-                            <div class="text-muted">
-                                The email to send when one of your customer refer someone.
-                            </div>
-                            <div class="row mt16">
-                                <label for="mail_template_id" class="col-lg-4 o_light_label"/>
-                                <field name="mail_template_id" class="oe_inline"/>
-                            </div>
+                    <div class="o_setting_right_pane">
+                        <span class="o_form_label">Referral Email</span>
+                        <div class="text-muted">
+                            The email to send when one of your customer refer someone.
                         </div>
-                        <div class="o_setting_right_pane">
-                            <span class="o_form_label">Person in charge of the action</span>
-                            <div class="text-muted">
-                                This person will get a new activity once a referral reaches the last stage. Then, he can take contact with the referrer to send him the reward.
-                            </div>
-                            <div class="row mt16">
-                                <field name="responsible_id" class="oe_inline"/>
-                            </div>
+                        <div class="row mt16">
+                            <label for="mail_template_id" class="col-lg-4 o_light_label"/>
+                            <field name="mail_template_id" class="oe_inline"/>
                         </div>
-                    </group>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-6 o_setting_box" id="referral_responsible_setting">
+                    <div class="o_setting_left_pane"/>
+                    <div class="o_setting_right_pane">
+                        <div class="mt16">
+                            <span class="o_form_label">
+                                Person in charge of the action
+                            </span>
+                            <field name="responsible_id"/>
+                        </div>
+                        <div class="text-muted">
+                            This person will get a new activity once a referral reaches the last stage. Then, he can take contact with the referrer to send him the reward.
+                        </div>
+                    </div>
                 </div>
             </xpath>
         </field>
