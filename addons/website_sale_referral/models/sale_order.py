@@ -41,6 +41,7 @@ class SaleOrder(models.Model):
             r = 'done'
         elif self.state == 'cancel':
             r = 'cancel'
+        return r
 
     def write(self, vals):
         if not self.env.user.has_group('website_crm_referral.group_lead_referral') and \

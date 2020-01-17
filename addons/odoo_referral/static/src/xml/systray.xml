@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates>
+   <t t-name="systray_odoo_referral.gift_icon">
+       <li class="gift_icon">
+           <a role="button" href="javascript:void(0)" class="gift_icon">
+             <i class="fa fa-gift" />
+           </a>
+       </li>
+   </t>
+</templates>
