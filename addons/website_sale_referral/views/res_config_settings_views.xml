@@ -4,18 +4,15 @@
     <record id="res_config_settings_view_form" model="ir.ui.view">
         <field name="name">res.config.settings.view.form.inherit.referral</field>
         <field name="model">res.config.settings</field>
-        <field name="inherit_id" ref="sale_management.res_config_settings_view_form"/>
+        <field name="inherit_id" ref="sale.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@id='sales_setting_referral']" position="after">
                 <div class="col-12 col-lg-6 o_setting_box" id="referral_mail_template_setting">
+                    <div class="o_setting_left_pane"/>
                     <div class="o_setting_right_pane">
-                        <span class="o_form_label">Referral Email</span>
-                        <div class="text-muted">
-                            The email to send when one of your customer refer someone.
-                        </div>
                         <div class="row mt16">
-                            <label for="mail_template_id" class="col-lg-4 o_light_label"/>
-                            <field name="mail_template_id" class="oe_inline"/>
+                            <label for="redirect_page" class="col-lg-4 o_light_label"/>
+                            <field name="redirect_page" class="oe_inline"/>
                         </div>
                     </div>
                 </div>
@@ -34,6 +31,10 @@
                         </div>
                     </div>
                 </div>
+            </xpath>
+            <xpath expr="//div[@id='sales_setting_referral_desc']" position="after">
+                <div>Refer prospects using this page :</div>
+                <a href="/referral" target="_new"><i class="fa fa-fw fa-arrow-right"/>Referral Program</a>
             </xpath>
         </field>
     </record>

@@ -8,7 +8,7 @@ odoo.define('systray.systray_odoo_regerral', function(require) {
           'click .gift_icon': 'onclick_gifticon',
       },
      onclick_gifticon:function(){
-      window.open('http://odoo.com')
+      window.open('http://odoo.com/referral')
    },
     });
     SystrayMenu.Items.push(ActionMenu);

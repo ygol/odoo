@@ -442,7 +442,7 @@
                             </div>
                             <div class="o_setting_right_pane">
                                 <label for="module_website_sale_referral"/>
-                                <div class="text-muted">
+                                <div class="text-muted" id="sales_setting_referral_desc">
                                     Allow customers to send referral links.
                                 </div>
                             </div>

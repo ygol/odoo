@@ -1,6 +1,16 @@
-from odoo import models, fields, api, _
+from odoo import models, fields, api, _, SUPERUSER_ID
 
 STATES_PRIORITY = {'cancel': 0, 'new': 1, 'in_progress': 2, 'done': 3}
+
+
+class MailActivity(models.Model):
+    _inherit = 'mail.activity'
+
+    lead_id = fields.Many2one('crm.lead')
+
+    def _action_done(self, feedback=False, attachment_ids=None):
+        self.lead_id.partner_id.reward_done = True
+        return super(MailActivity, self)._action_done(feedback=feedback, attachment_ids=attachment_ids)
 
 
 class Lead(models.Model):
@@ -39,7 +49,7 @@ class Lead(models.Model):
 
     def write(self, vals):
         if self.env.user.has_group('website_crm_referral.group_lead_referral') and \
-           not self.partner_id.referrer_rewarded_id and \
+           not self.partner_id.referrer_to_reward_id and \
            any(elem in vals for elem in ['stage_id', 'type', 'active', 'probability']):
             referrer = self.env['res.partner'].search([('utm_source_id', '=', self.source_id.id)])
             old_state = self.get_referral_statuses(referrer, self.partner_id)
@@ -51,13 +61,14 @@ class Lead(models.Model):
                     template = self.env.ref('website_sale_referral.referral_won_email_template', False)
                     template.sudo().with_context({'referred': self.partner_id}).send_mail(referrer.id, force_send=True)
 
-                    responsible_id = self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.responsible_id') or self.user_id.id
+                    responsible_id = self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.responsible_id') or SUPERUSER_ID
                     if responsible_id:
-                        self.activity_schedule(
+                        activity = self.activity_schedule(
                             act_type_xmlid='mail.mail_activity_data_todo',
                             summary='The referrer for this lead deserves a reward',
                             user_id=responsible_id)
-                        self.partner_id.referrer_rewarded_id = referrer.id
+                        activity.update({'lead_id': self.id})
+                        self.partner_id.referrer_to_reward_id = referrer.id
 
                 elif new_state == 'cancel':
                     template = self.env.ref('website_sale_referral.referral_cancelled_email_template', False)

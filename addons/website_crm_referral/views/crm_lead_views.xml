@@ -9,7 +9,7 @@
                 <separator />
                 <filter name="filter_to_reward"
                         string="To Reward"
-                        domain="[('stage_id.is_won', '=', True), ('campaign_id.name', '=', 'Referral')]"
+                        domain="[('stage_id.is_won', '=', True), ('campaign_id.name', '=', 'Referral'), ('partner_id.reward_done', '=', False)]"
                         groups="website_crm_referral.group_lead_referral"/>
             </xpath>
         </field>

@@ -1,22 +1,9 @@
 <odoo>
-    <template id="portal_my_home_menu_referral" name="Portal layout : referral menu entries" inherit_id="portal.portal_breadcrumbs" priority="90">
-        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
-            <li t-if="page_name == 'referral'" t-attf-class="breadcrumb-item #{'active ' if not referral else ''}">
-                <a t-if="referral" t-attf-href="/referral">Referrals</a>
-                <t t-else="">Referral</t>
-            </li>
-            <li t-if="referral" class="breadcrumb-item active">
-                <t t-esc="referral.name" t-if="referral.name"/>
-            </li>
-        </xpath>
-    </template>
-
-
     <template id="portal_my_home_referral" name="Portal My Home : Referrals" inherit_id="portal.portal_my_home" priority="90">
         <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
             <t t-call="portal.portal_docs_entry"> <!-- TODO t-if referral count > 0 ?? -->
                 <t t-set="title">Referrals</t>
-                <t t-set="url" t-value="'/referral'"/> <!-- TODO redirect to /my/referral for follow-up ? -->
+                <t t-set="url" t-value="'/my/referral'"/> <!-- TODO redirect to /my/referral for follow-up ? -->
                 <!-- <t t-set="count" t-value="ticket_count"/> -->
             </t>
         </xpath>

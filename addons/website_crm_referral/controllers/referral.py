@@ -39,7 +39,9 @@ class CrmReferral(Referral):
             template = request.env.ref('website_crm_referral.referral_email_template', False)  # TODO : do we still want a custom template ? request.env['res.config.settings'].mail_template_id
             template.sudo().with_context({'link': self.link_tracker.short_url, 'decline_url': base_url + decline_url_relative}).send_mail(referred.id, force_send=True)
 
-        return r
+            return request.redirect('/referral?confirmation=%s' % post.get('name'))
+        else:
+            return r
 
     @http.route(['/referral/decline'], type="http", auth='public', method='POST', website=True)
     def referral_decline(self, access_token, **post):

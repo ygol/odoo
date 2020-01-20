@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "Odoo referral program",
+    'name': "Odoo referral program bridge with portal",
 
     'summary': """
         Allow you to refer your friends to Odoo and get rewards""",
 
     'category': 'Hidden',
     'version': '0.1',
-    'depends': ['base', 'web'],
+    'depends': ['website', 'odoo_referral'],
     'data': [
-        'views/templates.xml',
-    ],
-    'qweb': [
-        "static/src/xml/systray.xml",
+        'views/referral_template.xml',
     ],
     'auto_install': True,
 }

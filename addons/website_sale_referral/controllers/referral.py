@@ -8,7 +8,7 @@ REWARD = 700  # hardcoded for now
 
 class Referral(http.Controller):
 
-    @http.route('/referral/track', auth='public', website=True)
+    @http.route(['/referral/track'], auth='public', website=True)
     def referral_track(self, access_token=None, **kwargs):
         if access_token:
             tracking = request.env['referral.tracking'].search([('token', '=', access_token)], limit=1)
@@ -36,7 +36,7 @@ class Referral(http.Controller):
             'referrer_to_signup': referrer_to_signup,
         })
 
-    @http.route('/referral', auth='public', website=True)
+    @http.route(['/referral', '/my/referral'], auth='public', website=True)
     def referral(self, **kwargs):
         my_referrals = self._get_referral_status(request, request.env.user.partner_id) if not request.website.is_public_user() else {}
         total_won = len(list(filter(lambda x: x == 'done', my_referrals.values())))
@@ -44,7 +44,8 @@ class Referral(http.Controller):
         return request.render('website_sale_referral.referral_controller_template', {
             'my_referrals': my_referrals,
             'total_won': total_won,
-            'stages': REFERRAL_STAGES})
+            'stages': REFERRAL_STAGES,
+            'confirmation': kwargs.get('confirmation', None)})
 
     @http.route(['/referral/send'], type='http', auth='public', method='POST', website=True)
     def referral_send(self, **post):
@@ -76,7 +77,7 @@ class Referral(http.Controller):
             referrer.utm_source_id = request.env['utm.source'].sudo().create({'name': utm_name}).id
 
         return request.env['link.tracker'].sudo().create({
-            'url': request.env["ir.config_parameter"].sudo().get_param("web.base.url"),
+            'url': request.env["ir.config_parameter"].sudo().get_param("web.base.url") + request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.redirect_page'),
             'campaign_id': request.env.ref('website_sale_referral.utm_campaign_referral').id,
             'source_id': referrer.utm_source_id.id,
             'medium_id': request.env.ref('utm.utm_medium_%s' % channel).id

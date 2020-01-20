@@ -11,18 +11,18 @@
                     <hr/>
                 </div>
                 <div class="col-lg-12 text-center mb64">
-                    <div class="container col-lg-12">
+                    <div class="container col-lg-12 mb16">
+                        <div class="row mb16 col-lg-12">
+                            <p class="col-sm-2 text-left">Name</p>
+                            <input class="col-sm-4 form-control" type="text" name="name"/>
+                            <p class="col-sm-2 text-left">Company</p>
+                            <input class="col-sm-4 form-control" type='text' name="company" />
+                        </div>
                         <div class="row mb16 col-lg-12">
                             <p class="col-sm-2 text-left">Email</p>
                             <input class="col-sm-4 form-control" type="email" name="email"/> <!-- TODO Required when press on submit (but not on facebook, etc) ? -->
-                            <p class="col-sm-2 text-left">Name</p>
-                            <input class="col-sm-4 form-control" type="text" name="name"/>
-                        </div>
-                        <div class="row mb16 col-lg-12">
                             <p class="col-sm-2 text-left">Phone</p>
                             <input class="col-sm-4 form-control" type="text" name="phone"/>
-                            <p class="col-sm-2 text-left">Company</p>
-                            <input class="col-sm-4 form-control" type='text' name="company" />
                         </div>
                         <div class="row mb16 col-lg-12">
                             <p class="col-sm-2 text-left">Comment</p>
@@ -32,6 +32,11 @@
                             <button type="submit" name="channel" value="direct" class="btn btn-primary mt8">Submit</button>
                         </div>
                     </div>
+                    <t t-if="confirmation">
+                        <div class="col-lg-12 text-center mb64 alert alert-info">
+                            You referral for <t t-esc="confirmation" /> has been successfully created !
+                        </div>
+                    </t>
                 </div>
             </div>
         </xpath>
