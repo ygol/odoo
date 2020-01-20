@@ -53,7 +53,7 @@ class CrmReferral(Referral):
 
     # OVERRIDE
     def _get_referral_status(self, request, referrer):
-        if not request.env.user.has_group('website_crm_referral.group_lead_referral'):
+        if not request.env['res.users'].with_user(SUPERUSER_ID).has_group('website_crm_referral.group_lead_referral'):
             return super()._get_referral_status(request, referrer)
 
         return request.env['crm.lead'].sudo().get_referral_statuses(referrer)

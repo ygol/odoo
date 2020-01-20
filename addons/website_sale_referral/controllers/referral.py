@@ -30,7 +30,7 @@ class Referral(http.Controller):
         total_won = len(list(filter(lambda x: x == 'done', my_referrals.values())))
         total_won *= REWARD
         return request.render('website_sale_referral.referral_track_controller_template', {
-            'my_referrals': my_referral,
+            'my_referrals': my_referrals,
             'total_won': total_won,
             'stages': REFERRAL_STAGES,
             'referrer_to_signup': referrer_to_signup,

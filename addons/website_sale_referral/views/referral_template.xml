@@ -73,10 +73,10 @@
               name="Track Referrals"> 
         <t t-call="website.layout">
             <div class="container mt-2">
-                <div class="col-lg-8">
+                <div class="col-lg-12">
                     <t t-if="referrer_to_signup">
                         <a role="button" t-att-href='referrer_to_signup.sudo().signup_prepare() and referrer_to_signup.sudo().with_context(relative_url=True).signup_url' class='btn btn-primary'>Sign Up</a>
-                        to track your referralclass="btn btn-primary mt8".
+                        to track your referral
                     </t>
                     <br/>
                     <t t-call="website_sale_referral.referral_track_controller_sub_template" />
