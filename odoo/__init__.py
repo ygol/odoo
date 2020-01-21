@@ -116,6 +116,7 @@ from . import release
 from . import service
 from . import sql_db
 from . import tools
+from . import upgrades
 
 #----------------------------------------------------------
 # Model classes, fields, api decorators, and translations
