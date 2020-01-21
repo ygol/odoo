@@ -9,6 +9,7 @@ except ImportError:
 import errno
 import logging
 import optparse
+import glob
 import os
 import sys
 import tempfile
@@ -558,8 +559,13 @@ class configmanager(object):
             res = self._normalize(path)
             if not os.path.isdir(res):
                 raise optparse.OptionValueError("option %s: no such directory: %r" % (opt, path))
+            if not self._is_upgrades_path(res):
+                raise optparse.OptionValueError("option %s:  The upgrades-path %r does not seem to a be a valid Upgrade Directory!" % (opt, path))
             upgrades_paths.append(res)
         setattr(parser.values, option.dest, ",".join(upgrades_paths))
+
+    def _is_upgrades_path(self, res):
+        return bool(glob.glob(os.path.join(res, '*/*/*.py')))
 
     def _test_enable_callback(self, option, opt, value, parser):
         if not parser.values.test_tags:
