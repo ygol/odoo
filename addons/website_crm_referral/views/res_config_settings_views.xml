@@ -10,8 +10,12 @@
                 <div class="col-12 col-lg-6 o_setting_box" id="referral_reward_on_lead_setting">
                     <div class="o_setting_left_pane"/>
                     <div class="o_setting_right_pane">
+                        <label for="referral_reward_on_lead" />
+                        <div class="text-muted">
+                            The referrer will be reward once this reaches the 'won' stage
+                        </div>
                         <div class="content-group">
-                            <div>
+                            <div class="mt16">
                                 <field name="referral_reward_on_lead" class="oe_inline o_light_label" widget="radio" />
                                 <field name="group_referral_reward_on_lead" invisible="1"/>
                             </div>

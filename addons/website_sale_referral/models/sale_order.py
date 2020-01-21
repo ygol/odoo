@@ -53,9 +53,9 @@ class SaleOrder(models.Model):
     def _get_state_for_referral(self):
         self.ensure_one()
         r = 'in_progress'
-        if self.state == 'draft' or self.state == 'sent':
+        if self.state == 'draft':
             r = 'new'
-        elif not self.has_to_be_paid():
+        elif self.is_fully_paid:
             r = 'done'
         elif self.state == 'cancel':
             r = 'cancel'
@@ -64,7 +64,7 @@ class SaleOrder(models.Model):
     def write(self, vals):
         if not self.env.user.has_group('website_crm_referral.group_lead_referral') and \
            not self.partner_id.referrer_to_reward_id and \
-           any(elem in vals for elem in ['state', 'is_expired', 'require_payment', 'amount_total', 'transaction_ids', 'transaction_ids.state']):
+           any(elem in vals for elem in ['state', 'invoice_status', 'amount_total', 'invoice_ids']):
             referrer = self.env['res.partner'].search([('utm_source_id', '=', self.source_id.id)])
             old_state = self.get_referral_statuses(referrer, self.partner_id)
             r = super().write(vals)

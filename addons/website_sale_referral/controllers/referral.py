@@ -77,7 +77,7 @@ class Referral(http.Controller):
             referrer.utm_source_id = request.env['utm.source'].sudo().create({'name': utm_name}).id
 
         return request.env['link.tracker'].sudo().create({
-            'url': request.env["ir.config_parameter"].sudo().get_param("web.base.url") + request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.redirect_page'),
+            'url': request.env["ir.config_parameter"].sudo().get_param("web.base.url") + (request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.redirect_page') or ""),
             'campaign_id': request.env.ref('website_sale_referral.utm_campaign_referral').id,
             'source_id': referrer.utm_source_id.id,
             'medium_id': request.env.ref('utm.utm_medium_%s' % channel).id

@@ -9,9 +9,9 @@ class ResConfigSettings(models.TransientModel):
 
     group_referral_reward_on_lead = fields.Boolean(compute='_compute_group_referral_reward_on_lead', implied_group="website_crm_referral.group_lead_referral", readonly=False, store=True)
     referral_reward_on_lead = fields.Selection([
-        ('sale_order', 'Reward based on Sales Order paid'),
-        ('lead', 'Reward based on leads won')
-    ], required=True, default='sale_order')
+        ('sale_order', 'Sales Order paid'),
+        ('lead', 'Leads won')
+    ], string='Rewards based on', required=True, default='sale_order')
 
     @api.model
     def get_values(self):

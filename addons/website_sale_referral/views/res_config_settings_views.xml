@@ -33,8 +33,10 @@
                 </div>
             </xpath>
             <xpath expr="//div[@id='sales_setting_referral_desc']" position="after">
-                <div>Refer prospects using this page :</div>
-                <a href="/referral" target="_new"><i class="fa fa-fw fa-arrow-right"/>Referral Program</a>
+                <div class="mt16">
+                    <span class="o_form_label">Refer prospects using this page :</span>
+                    <a href="/referral" target="_new" class="btn-link" role="button"><i class="fa fa-fw fa-arrow-right"/>Referral Program</a>
+                </div>
             </xpath>
         </field>
     </record>
