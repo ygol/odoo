@@ -1,5 +1,6 @@
 from odoo import http, tools, SUPERUSER_ID
 from odoo.http import request
+from ast import literal_eval
 import uuid
 from odoo.addons.website_sale_referral.controllers.referral import Referral
 
@@ -25,8 +26,9 @@ class CrmReferral(Referral):
                 'name': 'Referral',
                 'type': lead_type,
                 'partner_id': referred.id,
-                'user_id': None,
-                'team_id': None,
+                'user_id': literal_eval(request.env['ir.config_parameter'].get_param('website_sale_referral.salesperson')),
+                'team_id': literal_eval(request.env['ir.config_parameter'].get_param('website_sale_referral.salesteam')),
+                'tag_ids': [(6, 0, literal_eval(request.env['ir.config_parameter'].get_param('website_sale_referral.lead_tag_ids')))],
                 'description': post.get('comment'),
                 'source_id': self.referrer.utm_source_id.id,
                 'campaign_id': request.env.ref('website_sale_referral.utm_campaign_referral').id,
@@ -34,24 +36,9 @@ class CrmReferral(Referral):
             })
             self.referral_tracking.update({'lead_id': lead.id})
 
-            decline_url_relative = '/referral/decline?access_token=%s' % (self.referral_tracking.token)
-            base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
-            template = request.env.ref('website_crm_referral.referral_email_template', False)  # TODO : do we still want a custom template ? request.env['res.config.settings'].mail_template_id
-            template.sudo().with_context({'link': self.link_tracker.short_url, 'decline_url': base_url + decline_url_relative}).send_mail(referred.id, force_send=True)
-
             return request.redirect('/referral?confirmation=%s' % post.get('name'))
         else:
             return r
-
-    @http.route(['/referral/decline'], type="http", auth='public', method='POST', website=True)
-    def referral_decline(self, access_token, **post):
-        tracking = request.env['referral.tracking'].search([('token', '=', access_token)], limit=1)
-        if not tracking:  # incorrect token
-            return request.not_found()
-
-        tracking.lead_id.sudo().action_set_lost(lost_reason=request.env.ref('website_crm_referral.lost_reason_cancel_by_referred')) #TODO send email
-
-        return request.redirect('')  # TODO notify success
 
     # OVERRIDE
     def _get_referral_status(self, request, referrer):

@@ -73,6 +73,12 @@
             <field name="stage_id" ref="utm.default_utm_stage"/>
             <field name="tag_ids" eval="[(6, 0, [ref('utm_campaign_tag_referral')])]" />
         </record>
+
+        <!-- Activity type -->
+        <record id="mail_act_data_referral_reward" model="mail.activity.type">
+            <field name="name">Referral to reward</field>
+            <field name="icon">fa-gift</field>
+        </record>
      </data>
 
 </odoo>

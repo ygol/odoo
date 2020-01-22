@@ -65,7 +65,7 @@ class Lead(models.Model):
                     responsible_id = self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.responsible_id') or SUPERUSER_ID
                     if responsible_id:
                         activity = self.activity_schedule(
-                            act_type_xmlid='mail.mail_activity_data_todo',
+                            act_type_xmlid='website_sale_referral.mail_act_data_referral_reward',
                             summary='The referrer for this lead deserves a reward',
                             user_id=responsible_id)
                         activity.update({'lead_id': self.id})
