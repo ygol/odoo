@@ -71,6 +71,7 @@ class SaleOrder(models.Model):
             new_state = self.get_referral_statuses(referrer, self.partner_id)
 
             if new_state != old_state:
+                referrer.referral_updates += 1
                 if new_state == 'done':
                     template = self.env.ref('website_sale_referral.referral_won_email_template', False)
                     template.sudo().with_context({'referred': self.partner_id}).send_mail(referrer.id, force_send=True)
