@@ -9,6 +9,12 @@
         </xpath>
     </template>
 
+    <template id="assets_frontend" inherit_id="website.assets_frontend" name="Referral Form">
+        <xpath expr="//script[last()]" position="after">
+            <script type="text/javascript" src="/website_sale_referral/static/src/js/referral_form.js"></script>
+        </xpath>
+    </template>
+
 
     <template id="referral_controller_template"
               name="Referrals">
@@ -18,7 +24,7 @@
                 <p class="col-lg-12 text-center mb64">When one of your referrals signs up to a paid plan, you get a $700 Amazon gift card.</p>
 
                 <div class="col-lg-12 mb32">
-                    <form id="website_sale_referral.send" t-attf-action="/referral/send" method="POST">
+                    <form id="website_sale_referral.send" t-attf-action="/referral/send" method="POST" class="referral_form">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         
                         <t t-if="request.website.is_public_user()" >
@@ -26,23 +32,32 @@
                                 <div class="row col-lg-12">
                                     <h2 class="col-sm-4 text-left align-self-center">Identify yourself:</h2>
                                     <p class="col-sm-4 text-right align-self-center">Give us your email to be rewarded </p>
-                                    <input class="col-sm-4 form-control" type="email" name="my_email" />
+                                    <input class="col-sm-4 form-control" type="email" id="referrer_email" name="referrer_email" />
                                 </div>
                             </div>
                         </t>
 
                         <div class="container mb64" id="sharer">
-                            <div class="row col-lg-12">
+                            <div class="row mb16 col-lg-12">
                                 <h2 class="col">Share around the world:</h2>
                                 <div class="col">
+                                    <button type="button" class="get_link" name="channel" t-attf-value="direct">
+                                        <span t-attf-title="Get link"><i t-attf-class="fa fa-lg fa-link text-secondary" role="img" t-attf-aria-label="Get Link"/></span>
+                                        <span class="d-block mt-2 text-primary">Get link</span>
+                                    </button>
                                     <t t-foreach="[{'lower': 'facebook', 'name': 'Facebook'}, {'lower': 'twitter', 'name': 'Twitter'}, {'lower': 'linkedin', 'name': 'Linkedin'}]" t-as="network">
-                                        <button type="submit"  name="channel" t-attf-value="{{network['lower']}}">
+                                        <button type="button" class="share_social_network" name="channel" t-attf-value="{{network['lower']}}">
                                             <span t-attf-title="Share on {{network['name']}}"><i t-attf-class="fa fa-lg fa-{{network['lower']}} text-secondary" role="img" t-attf-aria-label="Share on {{network['name']}}"/></span>
                                             <span class="d-block mt-2 text-primary">Share Now</span>
                                         </button>
                                     </t>
                                 </div>
                             </div>
+                            <div id="share_link_text"/>
+                            <!-- Pour Elizabeth : Ci-dessous une box où on affiche le lien lorsqu'on clique sur "get link". 
+                                Si tu savais mettre un genre de box avec un bouton pour copier le lien.
+                                 Le code est commenté car il est injectée par le javascript. -->
+                            <!-- <div class='row col-lg-12 text-center alert alert-info'>" + data["link"] + "</div> -->
                         </div>
                     </form>
                 </div>
@@ -131,4 +146,5 @@
             </div>
         </t>
     </template>
+
 </odoo>

@@ -1,12 +1,17 @@
 from odoo import http
 from odoo.http import request
 import uuid
+import json
 
 REFERRAL_STAGES = {'new': 'New', 'in_progress': 'In Progress', 'done': 'Done'}  # TODO refactof this and stages_priority
 REWARD = 700  # hardcoded for now
 
 
 class Referral(http.Controller):
+
+    @http.route(['/reft'], auth='public', website=True)
+    def referral_test(self, **kwargs):
+        return request.render('website_sale_referral.referral_widget_test')
 
     @http.route(['/referral/track'], auth='public', website=True)
     def referral_track(self, access_token=None, **kwargs):
@@ -44,15 +49,24 @@ class Referral(http.Controller):
         return request.render('website_sale_referral.referral_controller_template', {
             'my_referrals': my_referrals,
             'total_won': total_won,
-            'stages': REFERRAL_STAGES,
-            'confirmation': kwargs.get('confirmation', None)})
+            'stages': REFERRAL_STAGES})
 
     @http.route(['/referral/send'], type='http', auth='public', method='POST', website=True)
     def referral_send(self, **post):
+        self._referral_do_send(post)
+
+        return request.redirect('/referral')
+
+    @http.route(['/referral/send2'], type='json', auth='public', method='POST', website=True)
+    def referral_send2(self, **post):
+        return _referral_do_send(post)
+
+    def _referral_do_send(self, post):
+        print(post)
         if not request.website.is_public_user():
             self.referrer = request.env.user.partner_id
         else:
-            self.referrer = request.env['res.partner'].sudo().create({'name': post.get('my_email').split('@')[0], 'email': post.get('my_email')})
+            self.referrer = request.env['res.partner'].sudo().create({'name': post.get('referrer_email').split('@')[0], 'email': post.get('referrer_email')})
         self.link_tracker = self._create_link_tracker(self.referrer, post.get('channel'))
         self.referral_tracking = request.env['referral.tracking'].sudo().create({
             'referrer_id': self.referrer.id,
@@ -63,10 +77,7 @@ class Referral(http.Controller):
         template = request.env.ref('website_sale_referral.referral_tracker_email_template', False)
         template.sudo().with_context({'link': base_url + tracking_url_relative}).send_mail(self.referrer.id, force_send=True)
 
-        if post.get('channel') == 'direct':
-            return request.redirect('/referral')
-        else:
-            return request.redirect(self._get_link_tracker_url(self.link_tracker, post.get('channel')))  # TODO new window
+        return {'link': self._get_link_tracker_url(self.link_tracker, post.get('channel'))}
 
     def _get_referral_status(self, request, referrer):
         return request.env['sale.order'].sudo().get_referral_statuses(referrer)
@@ -84,6 +95,8 @@ class Referral(http.Controller):
         })
 
     def _get_link_tracker_url(self, link_tracker, channel):
+        if channel == 'direct':
+            return link_tracker.short_url
         if channel == 'facebook':
             return 'https://www.facebook.com/sharer/sharer.php?u=%s' % link_tracker.short_url
         elif channel == 'twitter':

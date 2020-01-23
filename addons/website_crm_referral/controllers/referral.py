@@ -26,9 +26,9 @@ class CrmReferral(Referral):
                 'name': 'Referral',
                 'type': lead_type,
                 'partner_id': referred.id,
-                'user_id': literal_eval(request.env['ir.config_parameter'].get_param('website_sale_referral.salesperson')),
-                'team_id': literal_eval(request.env['ir.config_parameter'].get_param('website_sale_referral.salesteam')),
-                'tag_ids': [(6, 0, literal_eval(request.env['ir.config_parameter'].get_param('website_sale_referral.lead_tag_ids')))],
+                'user_id': literal_eval(request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesperson')),
+                'team_id': literal_eval(request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesteam')),
+                'tag_ids': [(6, 0, literal_eval(request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.lead_tag_ids')))],
                 'description': post.get('comment'),
                 'source_id': self.referrer.utm_source_id.id,
                 'campaign_id': request.env.ref('website_sale_referral.utm_campaign_referral').id,
@@ -36,7 +36,7 @@ class CrmReferral(Referral):
             })
             self.referral_tracking.update({'lead_id': lead.id})
 
-            return request.redirect('/referral?confirmation=%s' % post.get('name'))
+            return request.redirect('/referral')
         else:
             return r
 
