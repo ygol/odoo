@@ -51,17 +51,8 @@ class Referral(http.Controller):
             'total_won': total_won,
             'stages': REFERRAL_STAGES})
 
-    @http.route(['/referral/send'], type='http', auth='public', method='POST', website=True)
+    @http.route(['/referral/send'], type='json', auth='public', method='POST', website=True)
     def referral_send(self, **post):
-        self._referral_do_send(post)
-
-        return request.redirect('/referral')
-
-    @http.route(['/referral/send2'], type='json', auth='public', method='POST', website=True)
-    def referral_send2(self, **post):
-        return _referral_do_send(post)
-
-    def _referral_do_send(self, post):
         print(post)
         if not request.website.is_public_user():
             self.referrer = request.env.user.partner_id

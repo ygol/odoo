@@ -7,10 +7,10 @@ from odoo.addons.website_sale_referral.controllers.referral import Referral
 
 class CrmReferral(Referral):
 
-    @http.route(['/referral/send'], type='http', auth='public', method='POST', website=True)
+    @http.route(['/referral/send'], type='json', auth='public', method='POST', website=True)
     def referral_send(self, **post):
         r = super(CrmReferral, self).referral_send(**post)
-        if(post.get('channel') == 'direct'):
+        if(post.get('channel') == 'direct' and post.get('name') and post.get('email')):
             referred = request.env['res.partner'].sudo().find_or_create(
                 tools.formataddr((post.get('name'), post.get('email')))
             )
@@ -36,9 +36,7 @@ class CrmReferral(Referral):
             })
             self.referral_tracking.update({'lead_id': lead.id})
 
-            return request.redirect('/referral')
-        else:
-            return r
+        return r
 
     # OVERRIDE
     def _get_referral_status(self, request, referrer):

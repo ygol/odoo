@@ -19,34 +19,84 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
         return this._super.apply(this, arguments);
     },
 
-    onclick_common: function(ev, then) {
-        var form = this.el
-        if(form.checkValidity())
-        {
-            var referrer_email_input = $("input[id='referrer_email']")
-            var params = {}
-            if(referrer_email_input.length) {
-                params['referrer_email'] = referrer_email_input[0].value
-            }
-            params['channel'] = ev.target.closest('button').value
-            ajax.jsonRpc('/referral/send2', 'call', params)
-            .then(function (data) {
-                referrer_email_input[0].value = ''
-                then(data)
-            })
-        } else {debugger}
-    },
-
     onclick_share_social_network: function(ev) {
-        this.onclick_common(ev, function(data) {window.open(data["link"])})
+        this.clean_checks()
+        this.onclick_common(ev, [$("input[id='referrer_email']")], function(data) {window.open(data["link"])})
     },
 
     onclick_get_link: function(ev) {
+        this.clean_checks()
         this.onclick_common(ev, function(data) {
-            debugger
             $("#share_link_text").append("<div class='row col-lg-12 text-center alert alert-info'>" + data["link"] + "</div>");
         })
-    }
+    },
+
+    onclick_common: function(ev, then_func) {
+        if(this.check_form_validity(ev.target.closest('button')))
+        {
+            var self = this
+            ajax.jsonRpc('/referral/send', 'call', this.get_params(ev))
+            .then(function (data) {
+                self.empty_form()
+                then_func(data)
+            })
+        }
+    },
+
+    clean_checks: function() {
+        _.each($("input:required"), function(input) {
+            $(input).removeClass('bg-danger');
+        })
+    },
+
+    empty_form: function() {
+        $("input[id='referrer_email']")[0].val = ''
+    },
+
+    check_form_validity: function(submit_button) {
+        var required_empty_input = _.find($("input:required"), function(input) {return input.value === ''; });
+        if(required_empty_input) {
+            $(submit_button).parent().append("<div class='alert alert-danger alert-dismissable fade show'>" + _('Some required fields are not filled') + "</div>");
+            _.each($("input:required"), function(input) {
+                if (input.value === '') {
+                    $(input).addClass('bg-danger');
+                }
+            });
+        }
+
+        var invalid_email = false
+        var all_emails = $("input[type='email']:required")
+        all_emails.each(function(index) {
+            var email_input = $(all_emails[index])
+            var email = email_input.val();
+            if(email != '') {
+                var atpos = email.indexOf("@");
+                var dotpos = email.lastIndexOf(".");
+                var invalid = atpos<1 || dotpos<atpos+2 || dotpos+2>=email.length;
+                if (invalid) {
+                    email_input.addClass('bg-danger');
+                    if(!invalid_email) {
+                        $(submit_button).parent().append("<div class='alert alert-danger alert-dismissable fade show'>" + _('Not a valid e-mail address') + "</div>");
+                        //$("section#hr_cs_personal_information")[0].scrollIntoView({block: "end", behavior: "smooth"});
+                        invalid_email = true
+                    }
+                } else {
+                    email_input.removeClass('bg-danger');
+                }
+            }
+        })
+        $(".alert").delay(4000).slideUp(200, function() {
+            $(this).alert('close');
+        });
+        return !invalid_email && !required_empty_input;
+    },
+
+    get_params:function(ev) {
+        var params = {}
+        params['referrer_email'] = $("input[id='referrer_email']").val()
+        params['channel'] = ev.target.closest('button').value
+        return params
+    },
 });
 
 return publicWidget.registry.ReferralWidget;
