@@ -51,12 +51,16 @@
                                             <span class="d-block mt-2 text-primary">Share Now</span>
                                         </button>
                                     </t>
+                                    <!-- ELIZABETH2 -->
+                                    <!-- Voir fichiers website_sale_referral/static/src/js/referral_form.js et website_crm_referral/static/src/js/referral_form.js-->
+                                    <!-- <div class='alert alert-danger alert-dismissable fade show'>Some required fields are not filled</div> -->
+                                    <!-- <div class='alert alert-danger alert-dismissable fade show'>Not a valid e-mail address</div> -->
+                                    <!-- Oui, je sais, c'est crade :) -->
                                 </div>
                             </div>
                             <div id="share_link_text"/>
-                            <!-- Pour Elizabeth : Ci-dessous une box où on affiche le lien lorsqu'on clique sur "get link". 
-                                Si tu savais mettre un genre de box avec un bouton pour copier le lien.
-                                 Le code est commenté car il est injectée par le javascript. -->
+                            <!-- ELIZABETH1: Ci-dessous une box où on affiche le lien lorsqu'on clique sur "get link". 
+                                Si tu savais mettre un genre de box avec un bouton pour copier le lien. -->
                             <!-- <div class='row col-lg-12 text-center alert alert-info'>" + data["link"] + "</div> -->
                         </div>
                     </form>

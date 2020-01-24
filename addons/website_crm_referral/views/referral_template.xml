@@ -36,6 +36,11 @@
                         </div>
                         <div class="row justify-content-end col-lg-12">
                             <button type="button" id="submit" name="channel" value="direct" class="btn btn-primary mt8">Submit</button>
+                            <!-- ELIZABETH2 -->
+                            <!-- Voir fichiers website_sale_referral/static/src/js/referral_form.js et website_crm_referral/static/src/js/referral_form.js-->
+                            <!-- <div class='alert alert-danger alert-dismissable fade show'>Some required fields are not filled</div> -->
+                            <!-- <div class='alert alert-danger alert-dismissable fade show'>Not a valid e-mail address</div> -->
+                            <!-- Oui, je sais, c'est crade aussi :) -->
                         </div>
                     </div>
                 </div>

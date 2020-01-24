@@ -21,12 +21,14 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
 
     onclick_share_social_network: function(ev) {
         this.clean_checks()
-        this.onclick_common(ev, [$("input[id='referrer_email']")], function(data) {window.open(data["link"])})
+        this.onclick_common(ev, function(data) {window.open(data["link"])})
     },
 
     onclick_get_link: function(ev) {
         this.clean_checks()
         this.onclick_common(ev, function(data) {
+            //ELIZABETH1
+            //Voir fichiers website_sale_referral/views/referral_template.xml et website_crm_referral/views/referral_template.xml
             $("#share_link_text").append("<div class='row col-lg-12 text-center alert alert-info'>" + data["link"] + "</div>");
         })
     },
@@ -40,12 +42,12 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
                 self.empty_form()
                 then_func(data)
             })
-        }
+        } else {debugger}
     },
 
     clean_checks: function() {
         _.each($("input:required"), function(input) {
-            $(input).removeClass('bg-danger');
+            $(input).removeClass('bg-danger')
         })
     },
 
@@ -54,41 +56,34 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
     },
 
     check_form_validity: function(submit_button) {
-        var required_empty_input = _.find($("input:required"), function(input) {return input.value === ''; });
-        if(required_empty_input) {
-            $(submit_button).parent().append("<div class='alert alert-danger alert-dismissable fade show'>" + _('Some required fields are not filled') + "</div>");
-            _.each($("input:required"), function(input) {
-                if (input.value === '') {
-                    $(input).addClass('bg-danger');
-                }
-            });
+        var required_empty_input = $("input:required").filter(function(index, item) { return item.value === '' })
+        if(required_empty_input.length) {
+            //ELIZABETH2 => Il y a 2 endroits ou cette injection peut se produire
+            //Voir fichiers website_sale_referral/views/referral_template.xml et website_crm_referral/views/referral_template.xml
+            $(submit_button).parent().parent().append("<div class='alert alert-danger alert-dismissable fade show'>" + _('Some required fields are not filled') + "</div>")
+            required_empty_input.each(function(index, item) { $(item).addClass('bg-danger') })
         }
 
         var invalid_email = false
-        var all_emails = $("input[type='email']:required")
-        all_emails.each(function(index) {
-            var email_input = $(all_emails[index])
-            var email = email_input.val();
+        $("input[type='email']:required").each(function(index, item) {
+            var email = item.value
             if(email != '') {
                 var atpos = email.indexOf("@");
                 var dotpos = email.lastIndexOf(".");
-                var invalid = atpos<1 || dotpos<atpos+2 || dotpos+2>=email.length;
-                if (invalid) {
-                    email_input.addClass('bg-danger');
+                if (atpos<1 || dotpos<atpos+2 || dotpos+2>=email.length) { //invalid
+                    $(item).addClass('bg-danger');
                     if(!invalid_email) {
+                        //ELIZABETH2
                         $(submit_button).parent().append("<div class='alert alert-danger alert-dismissable fade show'>" + _('Not a valid e-mail address') + "</div>");
-                        //$("section#hr_cs_personal_information")[0].scrollIntoView({block: "end", behavior: "smooth"});
                         invalid_email = true
                     }
-                } else {
-                    email_input.removeClass('bg-danger');
                 }
             }
         })
         $(".alert").delay(4000).slideUp(200, function() {
             $(this).alert('close');
         });
-        return !invalid_email && !required_empty_input;
+        return !invalid_email && !required_empty_input.length;
     },
 
     get_params:function(ev) {
