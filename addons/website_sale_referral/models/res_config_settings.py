@@ -10,7 +10,7 @@ class ResConfigSettings(models.TransientModel):
     redirect_page = fields.Char(
         string="Redirect page",
         config_parameter='website_sale_referral.redirect_page',
-        help='Choose the page where referes are redirected when they click on the link sent by the referee')
+        help='Choose the page where referees are redirected when they click on the link sent by the referer')
 
     responsible_id = fields.Many2one(
         'res.users',

@@ -53,7 +53,6 @@ class Referral(http.Controller):
 
     @http.route(['/referral/send'], type='json', auth='public', method='POST', website=True)
     def referral_send(self, **post):
-        print(post)
         if not request.website.is_public_user():
             self.referrer = request.env.user.partner_id
         else:

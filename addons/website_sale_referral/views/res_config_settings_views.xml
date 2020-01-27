@@ -10,16 +10,14 @@
                 <div class="col-12 col-lg-6 o_setting_box">
                     <div class="o_setting_left_pane"/>
                     <div class="o_setting_right_pane">
-                        <div class="mt16">
-                            <div id="referral_sale_setting">
-                                <div class="row">
-                                    <label for="responsible_id"  class="col-lg-5 o_light_label"/>
-                                    <field name="responsible_id"/>
-                                </div>
-                                <div class="row">
-                                    <label for="redirect_page" class="col-lg-5 o_light_label"/>
-                                    <field name="redirect_page"/>
-                                </div>
+                        <div id="referral_sale_setting">
+                            <div class="row">
+                                <label for="responsible_id"  class="col-lg-5 o_light_label"/>
+                                <field name="responsible_id"/>
+                            </div>
+                            <div class="row">
+                                <label for="redirect_page" class="col-lg-5 o_light_label"/>
+                                <field name="redirect_page"/>
                             </div>
                         </div>
                     </div>

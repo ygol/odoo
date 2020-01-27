@@ -42,7 +42,7 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
                 self.empty_form()
                 then_func(data)
             })
-        } else {debugger}
+        } else {}
     },
 
     clean_checks: function() {
