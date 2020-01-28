@@ -10,6 +10,7 @@ from lxml import etree
 
 from odoo.http import request
 from odoo import http, tools, _
+from odoo.addons.web_editor.tools import get_video_url_data
 from odoo.exceptions import UserError
 
 logger = logging.getLogger(__name__)
@@ -153,6 +154,10 @@ class Web_Editor(http.Controller):
                 self._update_checklist_recursive(node, allSelected, ancestors=True)
 
         return True
+
+    @http.route('/web_editor/video_url/data', type='json', auth='user', website=True)
+    def video_url_data(self, video_url, **kwargs):
+        return get_video_url_data(video_url, **kwargs)
 
     @http.route('/web_editor/attachment/add_data', type='json', auth='user', methods=['POST'], website=True)
     def add_data(self, name, data, quality=0, width=0, height=0, res_id=False, res_model='ir.ui.view', **kwargs):
