@@ -15,8 +15,8 @@ class ResConfigSettings(models.TransientModel):
     ], string='Rewards based on', required=True, default='sale_order')
 
     lead_tag_ids = fields.Many2many('crm.lead.tag', string="Lead tags")
-    salesteam = fields.Many2one('crm.team', string="Salesteam", config_parameter='website_sale_referral.salesteam')
-    salesperson = fields.Many2one('res.users', string="Salesperson", config_parameter='website_sale_referral.salesperson')
+    salesteam_id = fields.Many2one('crm.team', string="Salesteam", config_parameter='website_sale_referral.salesteam')
+    salesperson_id = fields.Many2one('res.users', string="Salesperson", config_parameter='website_sale_referral.salesperson')
 
     @api.model
     def get_values(self):
@@ -26,7 +26,7 @@ class ResConfigSettings(models.TransientModel):
         else:
             res['referral_reward_on_lead'] = 'sale_order'
 
-        res['lead_tag_ids'] = [(6, 0, literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.lead_tag_ids')))]
+        res['lead_tag_ids'] = [(6, 0, literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.lead_tag_ids') or '[]'))]
         return res
 
     def set_values(self):

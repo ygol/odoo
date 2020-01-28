@@ -13,7 +13,7 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
 
     start: function() {
         var referrer_email = $("input[id='referrer_email']")
-        if(referrer_email.length) { //user is not connected
+        if(referrer_email.value == "") { //user is not connected
             referrer_email.attr('required','1')
         }
         return this._super.apply(this, arguments);
@@ -89,6 +89,8 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
     get_params:function(ev) {
         var params = {}
         params['referrer_email'] = $("input[id='referrer_email']").val()
+        params['token'] = $("input[name='token']").val()
+        debugger
         params['channel'] = ev.target.closest('button').value
         return params
     },

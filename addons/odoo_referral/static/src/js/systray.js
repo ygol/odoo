@@ -19,7 +19,8 @@ odoo.define('systray.systray_odoo_referral', function(require) {
         },
         onclick_gifticon:function(){
         ajax.jsonRpc('/referral/notifications/clear', 'call', {})
-        window.open('http://odoo.com/referral')
+        ajax.jsonRpc('/referral/generate_token/', 'call', {})
+        .then(lambda d: window.open(d['link']))
         },
     });
 

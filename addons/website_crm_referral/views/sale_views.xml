@@ -7,10 +7,9 @@
         <field name="arch" type="xml">
             <xpath expr="//group[@name='to_reward']" position="replace" >
                 <separator />
-                <field name="is_fully_paid" invisible="1" />
                 <filter name="filter_to_reward"
                         string="To Reward"
-                        domain="[('is_fully_paid', '=', True), ('campaign_id.name', '=', 'Referral')]"
+                        domain="[('to_reward', '=', True), ('reward_done', '=', False)]"
                         groups="!website_crm_referral.group_lead_referral" />
             </xpath>
         </field>

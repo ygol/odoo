@@ -19,12 +19,12 @@
                     <field name="lead_tag_ids" widget="many2many_tags"/>
                 </div>
                 <div class="row">
-                    <label for="salesteam" class="col-lg-5 o_light_label"/>
-                    <field name="salesteam" class="oe_inline"/>
+                    <label for="salesteam_id" class="col-lg-5 o_light_label"/>
+                    <field name="salesteam_id" class="oe_inline"/>
                 </div>
                 <div class="row">
-                    <label for="salesperson" class="col-lg-5 o_light_label"/>
-                    <field name="salesperson" class="oe_inline"/>
+                    <label for="salesperson_id" class="col-lg-5 o_light_label"/>
+                    <field name="salesperson_id" class="oe_inline"/>
                 </div>
             </xpath>
         </field>

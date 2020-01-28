@@ -11,5 +11,5 @@
     'depends': ['website', 'website_sale_referral'],
     'data': [
     ],
-    'auto_install': True,
+    'auto_install': False,  # TODO
 }

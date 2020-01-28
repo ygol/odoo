@@ -12,13 +12,13 @@
         <!-- Email Templates -->
         <record id="referral_tracker_email_template" model="mail.template">
             <field name="name">Referral tracker email</field>
-            <field name="model_id" ref="base.model_res_partner" />        
+            <field name="model_id" ref="website_sale_referral.model_referral_tracking" />
             <field name="auto_delete" eval="True"/>
-            <field name="email_to">${object.email}</field>
+            <field name="email_to">${object.referrer_email}</field>
             <field name="subject">Referral created !</field>
             <field name="body_html"><![CDATA[
-         <p>Dear ${(object.name)},<br/><br/>
-         Your referral has been created successfully, you can track its status here : ${(ctx.get('link'))}<br/></p>
+         <p>Dear,<br/><br/>
+         Your referral has been created successfully, you can track its status here : ${object.get_link()}<br/></p>
               Regards.<br/> ]]></field>
               <field name="user_signature" eval="False"/>
         </record>

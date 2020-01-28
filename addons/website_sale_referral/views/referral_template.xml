@@ -26,8 +26,9 @@
                 <div class="col-lg-12 mb32">
                     <form id="website_sale_referral.send" t-attf-action="/referral/send" method="POST" class="referral_form">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                        
-                        <t t-if="request.website.is_public_user()" >
+                        <input type="hidden" name="token" t-att-value="token"/>
+
+                        <t t-if="not referrer_email" >
                             <div class="container mb64">
                                 <div class="row col-lg-12">
                                     <h2 class="col-sm-4 text-left align-self-center">Identify yourself:</h2>
@@ -35,6 +36,10 @@
                                     <input class="col-sm-4 form-control" type="email" id="referrer_email" name="referrer_email" />
                                 </div>
                             </div>
+                        </t>
+                        <t t-else="">
+                            <!-- TODO mettre ici un bandeau "vous êtes connecté avec telle adresse, cliquez ici pour changer" -->
+                            <input type="hidden" id="referrer_email" name="referrer_email" t-att-value="referrer_email"/>
                         </t>
 
                         <div class="container mb64" id="sharer">
@@ -114,7 +119,7 @@
                     </div>
                     <t t-foreach="my_referrals" t-as="r">
                         <div class="row mb16 col-lg-12 text-center">
-                            <span t-field="r.name" class="col-sm-3" />
+                            <span t-esc="r" class="col-sm-3" />
                             <div class="col-sm-6">
                                 <b>Stage:</b>
                                 <t t-set="first" t-value="True"/>
