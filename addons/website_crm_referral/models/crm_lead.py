@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _, SUPERUSER_ID
+from ast import literal_eval
 
 
 class Lead(models.Model):
@@ -46,3 +47,26 @@ class Lead(models.Model):
             return r
         else:
             return super().write(vals)
+
+    def create(self, vals):
+        if(isinstance(vals_list, dict)):
+            vals_list = [vals_list]
+        for vals in vals_list:
+            if(vals.get('campaign_id', None) == self.env.ref('website_sale_referral.utm_campaign_referral').id):
+                if('user_id' not in vals):
+                    salesperson = literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesperson') or 'None')
+                    if(salesperson):
+                        vals['user_id'] = salesperson
+                if('team_id' not in vals):
+                    salesteam = literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesteam') or 'None')
+                    if(salesteam):
+                        vals['team_id'] = salesteam
+
+                tags = [(6, 0, literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.lead_tag_ids') or '[]'))]
+                if(tags):
+                    if('tag_ids' in vals):
+                        vals['tag_ids'].extend(tags)
+                    else:
+                        vals['tag_ids'] = tags
+
+        return super(Lead, self).create(vals)

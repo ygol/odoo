@@ -20,9 +20,6 @@ class CrmReferral(Referral):
                 'partner_name': post.get('company'),
                 'phone': post.get('phone'),
                 'email_from': post.get('email'),
-                'user_id': literal_eval(request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesperson') or 'None'),
-                'team_id': literal_eval(request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesteam') or 'None'),
-                'tag_ids': [(6, 0, literal_eval(request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.lead_tag_ids') or '[]'))],
                 'description': post.get('comment'),
                 'source_id': self.referral_tracking.utm_source_id.id,  # TODO
                 'campaign_id': request.env.ref('website_sale_referral.utm_campaign_referral').id,

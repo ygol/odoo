@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _, SUPERUSER_ID
+from ast import literal_eval
 
 
 class SaleOrder(models.Model):
@@ -56,3 +57,19 @@ class SaleOrder(models.Model):
             return r
         else:
             return super().write(vals)
+
+    def create(self, vals_list):
+        if(isinstance(vals_list, dict)):
+            vals_list = [vals_list]
+        for vals in vals_list:
+            if(vals.get('campaign_id', None) == self.env.ref('website_sale_referral.utm_campaign_referral').id):
+                if('user_id' not in vals):
+                    salesperson = literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesperson') or 'None')
+                    if(salesperson):
+                        vals['user_id'] = salesperson
+                if('team_id' not in vals):
+                    salesteam = literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesteam') or 'None')
+                    if(salesteam):
+                        vals['team_id'] = salesteam
+
+        return super(SaleOrder, self).create(vals)

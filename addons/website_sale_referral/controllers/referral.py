@@ -20,19 +20,22 @@ class Referral(http.Controller):
         if(not request.website.is_public_user() and request.env.user.partner_id.referral_tracking_id and request.env.user.partner_id.referral_tracking_id.token != token):
             request.redirect('/referral/' + request.env.user.partner_id.referral_tracking_id.token)
 
-        referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
+        if(True):  # TODO if('referrer_email' in post):
+            referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
 
-        my_referrals = self._get_referral_status(referral_tracking[0].utm_source_id) if len(referral_tracking) else {}
-        total_won = len(list(filter(lambda x: x == 'done', my_referrals.values())))
-        total_won *= REWARD
+            my_referrals = self._get_referral_status(referral_tracking[0].sudo().utm_source_id) if len(referral_tracking) else {}
+            total_won = len(list(filter(lambda x: x == 'done', my_referrals.values())))
+            total_won *= REWARD
 
-        return request.render('website_sale_referral.referral_controller_template', {
-            'token': token,
-            'referrer_email': post.get('referrer_email') if request.website.is_public_user() else request.env.user.partner_id.email,
-            'my_referrals': my_referrals,
-            'total_won': total_won,
-            'stages': request.env['referral.mixin'].REFERRAL_STAGES
-        })
+            return request.render('website_sale_referral.referral_controller_template', {
+                'token': token,
+                'referrer_email': post.get('referrer_email') if request.website.is_public_user() else request.env.user.partner_id.email,
+                'my_referrals': my_referrals,
+                'total_won': total_won,
+                'stages': request.env['referral.mixin'].REFERRAL_STAGES
+            })
+        else:
+            return request.render('website_sale_referral.referral_controller_auth_template')
 
     @http.route(['/referral/send'], type='json', auth='public', method='POST', website=True)
     def referral_send(self, **post):
