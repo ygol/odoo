@@ -21,7 +21,7 @@ class ReferralMixin(models.AbstractModel):
     to_reward = fields.Boolean()
     reward_done = fields.Boolean()
 
-    def find(self, utm_source_id, referred_email=None, extra_criteria=[]):
+    def find_others(self, utm_source_id, referred_email=None, extra_criteria=[]):
         criteria = [
             ('campaign_id', '=', self.env.ref('website_sale_referral.utm_campaign_referral').id),
             ('source_id', '=', utm_source_id.id)]
@@ -31,11 +31,13 @@ class ReferralMixin(models.AbstractModel):
             criteria.extend(extra_criteria)
         return self.search(criteria)
 
+    def get_referral_tracking(self):
+        return self.env['referral.tracking'].search([('utm_source_id', '=', self.source_id)], limit=1)
+
     def check_referral_progress(self, old_state, new_state):
-        other_objects = self.find(self.source_id, referred_email=self.referral_email, extra_criteria=[('to_reward', '=', True)]) #TODO exclude self
-        print('CHECKING referral_mixin', old_state, new_state)
+        other_objects = self.find_others(self.source_id, referred_email=self.referral_email, extra_criteria=[('to_reward', '=', True)]) #TODO exclude self
         if new_state != old_state and not len(other_objects):
-            #referrer.referral_updates += 1
+            self.get_referral_tracking().updates_count += 1
             if new_state == 'done':
                 # template = self.env.ref('website_sale_referral.referral_won_email_template', False)
                 # template.sudo().with_context({'referred': self.email_from}).send_mail(referrer.id, force_send=True)

@@ -8,6 +8,7 @@ class ReferralTracking(models.Model):
     token = fields.Char(required=True, readonly=False, unique=True, index=True)
     utm_source_id = fields.Many2one('utm.source', 'Source', ondelete='cascade', groups="base.group_user")
     referrer_email = fields.Char()  # TODO am i necessary ?
+    updates_count = fields.Integer(string='Referral Updates')  # TODO mettre ceci dans odoo_internal_referral
 
     _sql_constraints = [
         ('referral_tracking_token_unique', 'unique(token)', 'Referral tracking with this token already exists !'),  # TODO do some check when creating the token

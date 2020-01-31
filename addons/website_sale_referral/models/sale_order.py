@@ -20,7 +20,7 @@ class SaleOrder(models.Model):
             return 0 == self.currency_id.compare_amounts(self.amount_total, amount_paid)
 
     def get_referral_statuses(self, utm_source_id, referred_email=None):
-        sales_orders = self.find(utm_source_id, referred_email)
+        sales_orders = self.find_others(utm_source_id, referred_email)
 
         result = {}
         for so in sales_orders:

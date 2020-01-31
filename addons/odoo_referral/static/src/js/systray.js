@@ -11,16 +11,24 @@ odoo.define('systray.systray_odoo_referral', function(require) {
         },
         start:function(parent) {
             this._super.apply(this, arguments);
-            ajax.jsonRpc('/referral/notifications', 'call', {})
+            ajax.jsonRpc('/referral/generate_token', 'call', {})
             .then(function (data) {
-                var output_data = data['referral_notif_count']
-                self.$('.o_notification_counter').text(output_data);
+                ajax.jsonRpc('/referral/notifications/'.concat(data['token'])) //TODO query odoo.com instead
+                .then(function (data) {
+                    if('updates_count' in data) {
+                        var output_data = data['updates_count']
+                        self.$('.o_notification_counter').text(output_data);
+                    }
+                })
+
             })
         },
         onclick_gifticon:function(){
-        ajax.jsonRpc('/referral/notifications/clear', 'call', {})
-        ajax.jsonRpc('/referral/generate_token/', 'call', {})
-        .then(lambda d: window.open(d['link']))
+            // ajax.jsonRpc('/referral/notifications/clear', 'call', {})
+            ajax.jsonRpc('/referral/generate_token/', 'call', {})
+            .then(function (data) {
+                window.open(string.concat('https://odoo.com/referral/', d['link']))
+            })
         },
     });
 
