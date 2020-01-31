@@ -14,25 +14,33 @@
                 <p class="text-muted">Know someone who might be interested? Send us their details and we’ll get in touch with them soon.</p>
                 <div class="row">
                     <div class="col-md-6">
-                        <label>Email</label>
-                        <input type="email" class="form-control" placeholder="jane.doe@email.com" name="email"/> <!-- TODO Required when press on submit (but not on facebook, etc) ? -->
-                        <label>Name</label>
-                        <input type="text" name="name" placeholder="Jane Doe" class="form-control"/>
+                        <div class="form-group">
+                            <label class="text-900 font-weight-normal">Name<span class="text-danger">*</span></label>
+                            <input type="text" name="name" placeholder="Jane Doe" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="text-900 font-weight-normal">Email<span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" placeholder="jane.doe@email.com" name="email"/> <!-- TODO Required when press on submit (but not on facebook, etc) ? -->
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label>Phone</label>
-                        <input type="text" name="phone" placeholder="ex: +32472693299" class="form-control" />
-                        <label>Company</label>
-                        <input type='text' name="company" placeholder="My Company" class="form-control" />
+                        <div class="form-group">
+                            <label class="text-900 font-weight-normal">Phone</label>
+                            <input type="text" name="phone" placeholder="ex: +32472693299" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="text-900 font-weight-normal">Company</label>
+                            <input type='text' name="company" placeholder="My Company" class="form-control" />
+                        </div>
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-12">
-                    <label>Business Need</label>
+                    <div class="form-group col-12">
+                    <label class="text-900 font-weight-normal">Business Need</label>
                     <textarea rows="3" name="comment" class="form-control" placeholder="Tell us something about your referral..."></textarea>
                     </div>
                 </div>
-                <button type="submit" name="channel" value="direct" class="btn btn-primary mt8 float-right">Send</button>
+                <button type="submit" name="channel" value="direct" class="btn btn-primary mt-3 float-right">Send</button>
                 <!-- ELIZABETH2 -->
                             <!-- Voir fichiers website_sale_referral/static/src/js/referral_form.js et website_crm_referral/static/src/js/referral_form.js-->
                             <!-- <div class='alert alert-danger alert-dismissable fade show'>Some required fields are not filled</div> -->
