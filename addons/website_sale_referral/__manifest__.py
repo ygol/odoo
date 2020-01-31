@@ -13,6 +13,7 @@ Help the company to get more leads by leveraging his existing customers' base. M
         'data/website_sale_referral_data.xml',
         'views/res_config_settings_views.xml',
         'views/referral_template.xml',
+        'views/referral_views.xml',
         'views/sale_views.xml',
     ],
 }

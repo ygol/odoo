@@ -1,0 +1,34 @@
+
+.website_referral {
+	.o_referral_cover_container {
+		color: white;
+		background: linear-gradient(120deg, #875A7B, #68465f);
+	}
+	.o_btn-facebook {
+		background-color: map-get($o-social-colors, "facebook");
+		&:hover{
+			background-color: darken(map-get($o-social-colors, "facebook"), 10%);
+		}
+	}
+	.o_btn-twitter {
+		background-color: map-get($o-social-colors, "twitter");
+		&:hover{
+			background-color: darken(map-get($o-social-colors, "twitter"), 10%);
+		}
+	}
+	.o_btn-linkedin {
+		background-color: map-get($o-social-colors, "linkedin");
+		&:hover{
+			background-color: darken(map-get($o-social-colors, "linkedin"), 10%);
+		}
+	}
+	.o_border-dashed {
+		border-style: dashed;
+	}
+	.o_referral_sidebar {
+		position: absolute;
+		top:0;
+		bottom: 0;
+		right: 0;
+	}
+}
