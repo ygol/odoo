@@ -21,24 +21,26 @@ class ReferralMixin(models.AbstractModel):
     to_reward = fields.Boolean()
     reward_done = fields.Boolean()
 
-    def find(self, utm_source_id, referred_email=None, extra_criteria=[]):
-        criteria = [
-            ('campaign_id', '=', self.env.ref('website_sale_referral.utm_campaign_referral').id),
-            ('source_id', '=', utm_source_id.id)]
-        if(referred_email):
-            criteria.append(('referral_email', '=', referred_email))
-        if(extra_criteria):
-            criteria.extend(extra_criteria)
-        return self.search(criteria)
+    def get_referral_statuses(self, utm_source_id, referred_email=None):
+        objects = self.find_others(utm_source_id, referred_email)
+
+        result = {}
+        for o in objects:
+            state = o._get_state_for_referral()
+            if(o.referred_email not in result or self.STATES_PRIORITY[state] > self.STATES_PRIORITY[result[o.referred_email]]):
+                result[o.referred_email] = {'state': state, 'name': self.referred_name, 'company': self.referred_company}
+
+        if referred_email:
+            return result.get(referred_email, None)
+        else:
+            return result
 
     def check_referral_progress(self, old_state, new_state):
-        other_objects = self.find(self.source_id, referred_email=self.referral_email, extra_criteria=[('to_reward', '=', True)]) #TODO exclude self
-        print('CHECKING referral_mixin', old_state, new_state)
-        if new_state != old_state and not len(other_objects):
-            #referrer.referral_updates += 1
+        others_to_reward = self.find_others(self.source_id, referred_email=self.referred_email, extra_criteria=[('to_reward', '=', True)])
+        if new_state != old_state and not len(others_to_reward):
+            self.get_referral_tracking().updates_count += 1
             if new_state == 'done':
-                # template = self.env.ref('website_sale_referral.referral_won_email_template', False)
-                # template.sudo().with_context({'referred': self.email_from}).send_mail(referrer.id, force_send=True)
+                self._send_mail('referral_won_email_template', 'Referral won !', {'referred_name': self.referred_name})
 
                 responsible_id = self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.responsible_id') or SUPERUSER_ID
                 if responsible_id:
@@ -51,11 +53,30 @@ class ReferralMixin(models.AbstractModel):
                     self.to_reward = True
 
             elif new_state == 'cancel':
-                pass
-                # template = self.env.ref('website_sale_referral.referral_cancelled_email_template', False)
-                # template.sudo().with_context({'referred': self.partner_id}).send_mail(referrer.id, force_send=True)
-
+                self._send_mail('referral_cancelled_email_template', 'Referral lost...', {'referred_name': self.referred_name})
             else:
-                pass
-                # template = self.env.ref('website_sale_referral.referral_state_changed_email_template', False)
-                # template.sudo().with_context({'referred': self.partner_id, 'state': _(new_state)}).send_mail(referrer.id, force_send=True)
+                self._send_mail('referral_state_changed_email_template', 'Referral progressed !', {'referred_name': self.referred_name, 'state': _(REFERRAL_STAGES[new_state])})
+
+    def find_others(self, utm_source_id, referred_email=None, extra_criteria=[]):
+        criteria = [
+            ('campaign_id', '=', self.env.ref('website_sale_referral.utm_campaign_referral').id),
+            ('source_id', '=', utm_source_id.id)]
+        if(referred_email):
+            criteria.append(('referred_email', '=', referred_email))
+        if(extra_criteria):
+            criteria.extend(extra_criteria)
+        return self.search(criteria)
+
+    def get_referral_tracking(self):
+        return self.env['referral.tracking'].search([('utm_source_id', '=', self.source_id.id)], limit=1)  # TODO if this crashes again, there is a problem with the domain. If not in a few time, then delete this comment
+
+    def _send_mail(self, template, subject, render_context):
+        template = self.env.ref('website_sale_referral.' + template)
+        mail_body = template.render(render_context, engine='ir.qweb', minimal_qcontext=True)
+        mail = self.env['mail.mail'].sudo().create({
+            'subject': subject,
+            'email_to': self.get_referral_tracking().referrer_email,
+            'email_from': None,
+            'body_html': mail_body,
+        })
+        mail.send()

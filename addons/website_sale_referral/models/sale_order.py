@@ -6,7 +6,9 @@ class SaleOrder(models.Model):
     _name = 'sale.order'
     _inherit = ['sale.order', 'referral.mixin']
 
-    referral_email = fields.Char(related='partner_id.email', description="The email used to identify the refered")
+    referred_email = fields.Char(string="Referral email", related='partner_id.email', description="The email used to identify the referred")
+    referred_name = fields.Char(string="Referral name", related='partner_id.name', description="The name of the referred")
+    referred_company = fields.Char(string="Referral company", related='partner_id.company_id.name', description="The company of the referred")
 
     def is_fully_paid(self):
         self.ensure_one()
@@ -18,20 +20,6 @@ class SaleOrder(models.Model):
                 if inv.state == 'posted' and inv.payment_state == 'paid':
                     amount_paid += inv.currency_id._convert(inv.amount_total, self.currency_id, self.company_id, self.date_order)
             return 0 == self.currency_id.compare_amounts(self.amount_total, amount_paid)
-
-    def get_referral_statuses(self, utm_source_id, referred_email=None):
-        sales_orders = self.find(utm_source_id, referred_email)
-
-        result = {}
-        for so in sales_orders:
-            state = so._get_state_for_referral()
-            if(so.partner_id.email not in result or self.STATES_PRIORITY[state] > self.STATES_PRIORITY[result[so.partner_id.email]]):
-                result[so.partner_id.email] = state
-
-        if referred_email:
-            return result.get(referred_email, None)
-        else:
-            return result
 
     def _get_state_for_referral(self):
         self.ensure_one()
@@ -47,10 +35,10 @@ class SaleOrder(models.Model):
     def write(self, vals):
         if not self.env.user.has_group('website_crm_referral.group_lead_referral') and \
            not self.to_reward and \
-           any([elem in vals for elem in ['state', 'invoice_status', 'amount_total', 'invoice_ids']]):
-            old_state = self.get_referral_statuses(self.source_id, self.partner_id.email)
+           any([elem in vals for elem in ['state', 'invoice_status', 'amount_total']]):
+            old_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
             r = super().write(vals)
-            new_state = self.get_referral_statuses(self.source_id, self.partner_id.email)
+            new_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
 
             self.check_referral_progress(old_state, new_state)
 

@@ -1,9 +1,8 @@
 from odoo import http
 from odoo.http import request
+import werkzeug
 import uuid
 import json
-
-REWARD = 700  # hardcoded for now
 
 
 class Referral(http.Controller):
@@ -13,7 +12,7 @@ class Referral(http.Controller):
         token = request.env.user.partner_id.referral_tracking_id.token if not request.website.is_public_user() else None
         if(not token):
             token = uuid.uuid4().hex  # Generate random token
-        return request.redirect('/referral/' + token)
+        return werkzeug.utils.redirect('/referral/' + token, 301)
 
     @http.route(['/referral/<string:token>'], type='http', auth='public', website=True)
     def referral_auth(self, token, **post):
@@ -23,15 +22,17 @@ class Referral(http.Controller):
         if(True):  # TODO if('referrer_email' in post):
             referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
 
-            my_referrals = self._get_referral_status(referral_tracking[0].sudo().utm_source_id) if len(referral_tracking) else {}
-            total_won = len(list(filter(lambda x: x == 'done', my_referrals.values())))
-            total_won *= REWARD
+            my_referrals = self._get_referral_statuses(referral_tracking[0].sudo().utm_source_id) if len(referral_tracking) else {}
+            reward_value = request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.redirect_page')
+            total_won = len(list(filter(lambda x: x['state'] == 'done', my_referrals.values())))
+            total_won *= reward_value
 
             return request.render('website_sale_referral.referral_controller_template', {
                 'token': token,
                 'referrer_email': post.get('referrer_email') if request.website.is_public_user() else request.env.user.partner_id.email,
                 'my_referrals': my_referrals,
                 'total_won': total_won,
+                'reward_value': reward_value,
                 'stages': request.env['referral.mixin'].REFERRAL_STAGES
             })
         else:
@@ -60,7 +61,7 @@ class Referral(http.Controller):
         link_tracker = request.env['link.tracker'].sudo().create({
             'url': request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.redirect_page') or request.env["ir.config_parameter"].sudo().get_param("web.base.url"),
             'campaign_id': request.env.ref('website_sale_referral.utm_campaign_referral').id,
-            'source_id': self.referral_tracking.sudo().utm_source_id.id,
+            'source_id': self.referral_tracking.utm_source_id.id,
             'medium_id': request.env.ref('utm.utm_medium_%s' % post.get('channel')).id
         })
 
@@ -69,9 +70,8 @@ class Referral(http.Controller):
 
         return {'link': self._get_link_tracker_url(link_tracker, post.get('channel'))}
 
-    def _get_referral_status(self, utm_source_id):
-        result = request.env['sale.order'].sudo().get_referral_statuses(utm_source_id)
-        return result
+    def _get_referral_statuses(self, utm_source_id):
+        return request.env['sale.order'].sudo().get_referral_statuses(utm_source_id)
 
     def _get_link_tracker_url(self, link_tracker, channel):
         if channel == 'direct':

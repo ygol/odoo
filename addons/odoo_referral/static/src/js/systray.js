@@ -11,16 +11,18 @@ odoo.define('systray.systray_odoo_referral', function(require) {
         },
         start:function(parent) {
             this._super.apply(this, arguments);
-            ajax.jsonRpc('/referral/notifications', 'call', {})
-            .then(function (data) {
-                var output_data = data['referral_notif_count']
-                self.$('.o_notification_counter').text(output_data);
-            })
+            ajax.jsonRpc('/referral/notifications_internal').then(function (data) {
+                if('result' in data && 'updates_count' in data.result) {
+                    self.$('.o_notification_counter').text(data.result.updates_count);
+                }
+            });
         },
         onclick_gifticon:function(){
-        ajax.jsonRpc('/referral/notifications/clear', 'call', {})
-        ajax.jsonRpc('/referral/generate_token/', 'call', {})
-        .then(lambda d: window.open(d['link']))
+            ajax.jsonRpc('/referral/go/', 'call', {})
+            .then(function (data) {
+                self.$('.o_notification_counter').text(0);
+                window.open(data.link);
+            });
         },
     });
 

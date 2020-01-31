@@ -29,13 +29,14 @@ class CrmReferral(Referral):
         return r
 
     # OVERRIDE
-    def _get_referral_status(self, utm_source_id):
+    def _get_referral_statuses(self, utm_source_id):
         if not request.env['res.users'].with_user(SUPERUSER_ID).has_group('website_crm_referral.group_lead_referral'):
             leads = request.env['crm.lead'].sudo().get_referral_statuses(utm_source_id)
             result = request.env['sale.order'].sudo().get_referral_statuses(utm_source_id)
-            for k, _ in leads.items():
+            for k, v in leads.items():
                 if(k not in result):
-                    result[k] = 'new'
-        return result
+                    result[k] = {'state': 'new', 'name': v['name'], 'company': v['company']}
+            print(result)
+            return result
 
         return request.env['crm.lead'].sudo().get_referral_statuses(utm_source_id)

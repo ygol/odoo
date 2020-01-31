@@ -6,21 +6,9 @@ class Lead(models.Model):
     _name = 'crm.lead'
     _inherit = ['crm.lead', 'referral.mixin']
 
-    referral_email = fields.Char(string="Referral email", related='email_from', description="The email used to identify the refered")
-
-    def get_referral_statuses(self, utm_source_id, referred_email=None):
-        leads = self.find(utm_source_id, referred_email)
-
-        result = {}
-        for l in leads:
-            state = l._get_state_for_referral()
-            if(l.email_from not in result or self.STATES_PRIORITY[state] > self.STATES_PRIORITY[result[l.email_from]]):
-                result[l.email_from] = state
-
-        if referred_email:
-            return result.get(referred_email, None)
-        else:
-            return result
+    referred_email = fields.Char(string="Referral email", related='email_from', description="The email used to identify the referred")
+    referred_name = fields.Char(string="Referral name", related='contact_name', description="The name of the referred")
+    referred_company = fields.Char(string="Referral company", related='partner_name', description="The company of the referred")
 
     def _get_state_for_referral(self):
         self.ensure_one()
@@ -38,9 +26,9 @@ class Lead(models.Model):
         if self.env.user.has_group('website_crm_referral.group_lead_referral') and \
            not self.to_reward and \
            any([elem in vals for elem in ['stage_id', 'type', 'active', 'probability']]):
-            old_state = self.get_referral_statuses(self.source_id, self.email_from)
+            old_state = self.get_referral_statuses(self.source_id, self.email_from)['state']
             r = super().write(vals)
-            new_state = self.get_referral_statuses(self.source_id, self.email_from)
+            new_state = self.get_referral_statuses(self.source_id, self.email_from)['state']
 
             self.check_referral_progress(old_state, new_state)
 
@@ -48,7 +36,7 @@ class Lead(models.Model):
         else:
             return super().write(vals)
 
-    def create(self, vals):
+    def create(self, vals_list):
         if(isinstance(vals_list, dict)):
             vals_list = [vals_list]
         for vals in vals_list:
