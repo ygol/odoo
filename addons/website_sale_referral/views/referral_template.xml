@@ -57,8 +57,9 @@
                                     </div>
                                 </t>
                                 <t t-else="">
+                                    <input type="hidden" id="referrer_email" name="referrer_email" t-att-value="referrer_email"/>
                                     <div class="alert alert-primary" role="alert">
-                                          A simple primary alert—check it out!
+                                         You're connected as <b>jane.doe@email.com</b>.... Not you? <a href="">Click here to change</a>
                                     </div>
                                     <h2 class="h5 mt-2">Share around the world:</h2>
                                     <p class="text-muted">Tell people about us, you’ll be notified when one of your referrals shows an interest in one of our products.</p>
