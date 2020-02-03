@@ -1886,6 +1886,14 @@ class ExportFormat(object):
 
     def base(self, data, token):
         params = json.loads(data)
+        data = self._base(params, request.env)
+        return request.make_response(data,
+            headers=[('Content-Disposition',
+                            content_disposition(self.filename(params["model"]))),
+                     ('Content-Type', self.content_type)],
+            cookies={'fileToken': token})
+
+    def _base(self, params, env):
         model, fields, ids, domain, import_compat = \
             operator.itemgetter('model', 'fields', 'ids', 'domain', 'import_compat')(params)
 
@@ -1895,7 +1903,7 @@ class ExportFormat(object):
         else:
             columns_headers = [val['label'].strip() for val in fields]
 
-        Model = request.env[model].with_context(**params.get('context', {}))
+        Model = env[model].with_context(**params.get('context', {}))
         groupby = params.get('groupby')
         if not import_compat and groupby:
             groupby_type = [Model._fields[x.split(':')[0]].type for x in groupby]
@@ -1918,11 +1926,7 @@ class ExportFormat(object):
 
             export_data = records.export_data(field_names).get('datas',[])
             response_data = self.from_data(columns_headers, export_data)
-        return request.make_response(response_data,
-            headers=[('Content-Disposition',
-                            content_disposition(self.filename(model))),
-                     ('Content-Type', self.content_type)],
-            cookies={'fileToken': token})
+        return response_data
 
 class CSVExport(ExportFormat, http.Controller):
 
@@ -1930,6 +1934,14 @@ class CSVExport(ExportFormat, http.Controller):
     @serialize_exception
     def index(self, data, token):
         return self.base(data, token)
+
+    @http.route('/web/async_export/csv', type='json', auth="user")
+    def index_async(self, data, token):
+        model_desc = request.env[json.loads(data)['model']]._description
+        request.env['ir.async'].call(
+            target=request.env['ir.async']._export_csv,
+            args=(json.loads(data),),
+            description=_("%s CSV export") % model_desc)
 
     @property
     def content_type(self):
@@ -1965,6 +1977,14 @@ class ExcelExport(ExportFormat, http.Controller):
     @serialize_exception
     def index(self, data, token):
         return self.base(data, token)
+
+    @http.route('/web/async_export/xlsx', type='json', auth="user")
+    def index_async(self, data, token):
+        model_desc = request.env[json.loads(data)['model']]._description
+        request.env['ir.async'].call(
+            target=request.env['ir.async']._export_xlsx,
+            args=(json.loads(data),),
+            description=_("%s XLSX export") % model_desc)
 
     @property
     def content_type(self):

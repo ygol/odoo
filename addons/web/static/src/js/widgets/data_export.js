@@ -160,11 +160,9 @@ var DataExport = Dialog.extend({
         if (this.isCompatibleMode) {
             exportedFields.unshift({ name: 'id', label: _t('External ID') });
         }
-
-        framework.blockUI();
-        this.getSession().get_file({
-            url: '/web/export/' + exportFormat,
-            data: {
+        this._rpc({
+            route: '/web/async_export/' + exportFormat,
+            params: {
                 data: JSON.stringify({
                     model: this.record.model,
                     fields: exportedFields,
@@ -173,10 +171,9 @@ var DataExport = Dialog.extend({
                     groupby: this.groupby,
                     context: pyUtils.eval('contexts', [this.record.getContext()]),
                     import_compat: this.isCompatibleMode,
-                })
-            },
-            complete: framework.unblockUI,
-            error: (error) => this.call('crash_manager', 'rpc_error', error),
+                }),
+                token: 'dummy-token',
+            }
         });
     },
     /**
