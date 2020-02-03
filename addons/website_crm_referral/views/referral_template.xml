@@ -17,16 +17,25 @@
                         <div class="form-group">
                             <label class="text-900 font-weight-normal">Name<span class="text-danger">*</span></label>
                             <input type="text" name="name" placeholder="Jane Doe" class="form-control" />
+                            <div class="invalid-feedback">
+                              This field is required
+                            </div>
                         </div>
                         <div class="form-group">
                             <label class="text-900 font-weight-normal">Email<span class="text-danger">*</span></label>
                             <input type="email" class="form-control" placeholder="jane.doe@email.com" name="email"/> <!-- TODO Required when press on submit (but not on facebook, etc) ? -->
+                            <div class="invalid-feedback">
+                              Please input a valid e-mail address
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="text-900 font-weight-normal">Phone</label>
                             <input type="text" name="phone" placeholder="ex: +32472693299" class="form-control" />
+                            <div class="invalid-feedback">
+                              Please input a valid phone number
+                            </div>
                         </div>
                         <div class="form-group">
                             <label class="text-900 font-weight-normal">Company</label>
@@ -36,11 +45,11 @@
                 </div>
                 <div class="row">
                     <div class="form-group col-12">
-                    <label class="text-900 font-weight-normal">Business Need</label>
-                    <textarea rows="3" name="comment" class="form-control" placeholder="Tell us something about your referral..."></textarea>
+                    <label class="text-900 font-weight-normal">Comments</label>
+                    <textarea rows="3" style="min-height:100px" name="comment" class="form-control" placeholder="Tell us something about your referral..."></textarea>
                     </div>
                 </div>
-                <button type="submit" name="channel" value="direct" class="btn btn-primary mt-3 float-right">Send</button>
+                <button type="submit" name="channel" value="direct" class="btn btn-primary float-right">Send</button>
                 <!-- ELIZABETH2 -->
                             <!-- Voir fichiers website_sale_referral/static/src/js/referral_form.js et website_crm_referral/static/src/js/referral_form.js-->
                             <!-- <div class='alert alert-danger alert-dismissable fade show'>Some required fields are not filled</div> -->
