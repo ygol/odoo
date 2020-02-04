@@ -10,6 +10,6 @@ class Referral(http.Controller):
         if(referral_tracking):
             num_notif = referral_tracking.updates_count
             referral_tracking.updates_count = 0
-            return {'updates_count': 11}  # TODO referral_tracking.updates_count}
+            return {'updates_count': referral_tracking.updates_count}
         else:
             return {}

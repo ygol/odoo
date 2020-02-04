@@ -28,12 +28,32 @@ class ReferralMixin(models.AbstractModel):
         for o in objects:
             state = o._get_state_for_referral()
             if(o.referred_email not in result or self.STATES_PRIORITY[state] > self.STATES_PRIORITY[result[o.referred_email]]):
-                result[o.referred_email] = {'state': state, 'name': self.referred_name, 'company': self.referred_company}
+                result[o.referred_email] = {'state': state, 'name': o.referred_name, 'company': o.referred_company}
 
         if referred_email:
             return result.get(referred_email, None)
         else:
             return result
+
+    def get_example_referral_statuses(self):
+        # This is not demo data, this is a dummy to show as an example on the referral register page
+        return {
+            'julie@example.com': {
+                'state': 'in_progress',
+                'name': 'Julie Richards',
+                'company': 'Ready Mat',
+            },
+            'brandon@example.com': {
+                'state': 'new',
+                'name': 'Brandon Freeman',
+                'company': 'Azure Interior',
+            },
+            'collen@example.com': {
+                'state': 'in_progress',
+                'name': 'Colleen Diaz',
+                'company': 'Azure Interior',
+            }
+        }
 
     def check_referral_progress(self, old_state, new_state):
         others_to_reward = self.find_others(self.source_id, referred_email=self.referred_email, extra_criteria=[('to_reward', '=', True)])

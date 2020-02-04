@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-     <data noupdate="0">
+     <data noupdate="1">
          <!-- Controllers -->
          <record id="menu_referral_controller" model="website.menu">
             <field name="name">Referrals</field>

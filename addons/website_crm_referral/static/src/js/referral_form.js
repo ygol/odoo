@@ -7,40 +7,33 @@ var ReferralForm = require('website_sale_referral.referral_form');
 
 ReferralForm.include({
     events: _.extend({}, ReferralForm.prototype.events, {
-        'click #submit' : 'onclick_submit'
+        'click #create_lead' : 'onclick_submit'
     }),
 
     onclick_submit: function(ev) {
-        this.clean_checks()
-
-        $("input[id='referred_email']").attr('required','1');
-        $("input[id='referred_name']").attr('required','1');
-
-        this.onclick_common(ev, function(data) { window.location.reload(); });
-    },
-
-    clean_checks: function() {
-        this._super.apply(this, arguments);
-        $("input[id='referred_email']").removeAttr('required');
-        $("input[id='referred_name']").removeAttr('required');
+        self.empty_form();
+        this.onclick_common(ev, function(data)
+        {
+            window.location.reload(); //TODO inject or completely delete the custom widget (keep it only for window.open)
+        });
     },
 
     empty_form:function() {
         this._super.apply(this, arguments);
-        $("input[id='referred_name']")[0].val = '';
-        $("input[id='referred_email']")[0].val = '';
-        $("input[id='referred_phone']")[0].val = '';
-        $("input[id='referred_company']")[0].val = '';
-        $("textarea[id='referred_comment']")[0].val = '';
+        $("input[name='name']")[0].val = '';
+        $("input[name='email']")[0].val = '';
+        $("input[name='phone']")[0].val = '';
+        $("input[name='company']")[0].val = '';
+        $("textarea[name='comment']")[0].val = '';
     },
 
-    get_params:function() {
+    get_params:function(ev) {
         var params = this._super.apply(this, arguments);
-        params.name = $("input[id='referred_name']").val();
-        params.email = $("input[id='referred_email']").val();
-        params.phone = $("input[id='referred_phone']").val();
-        params.company = $("input[id='referred_company']").val();
-        params.comment = $("textarea[id='referred_comment']").val();
+        params.name = $("input[name='name']").val();
+        params.email = $("input[name='email']").val();
+        params.phone = $("input[name='phone']").val();
+        params.company = $("input[name='company']").val();
+        params.comment = $("textarea[name='comment']").val();
         return params;
     },
 

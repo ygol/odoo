@@ -8,65 +8,72 @@ import json
 class Referral(http.Controller):
 
     @http.route(['/referral'], type='http', auth='public', website=True)
-    def referral_unauth(self, **kwargs):
-        token = request.env.user.partner_id.referral_tracking_id.token if not request.website.is_public_user() else None
-        if(not token):
-            token = uuid.uuid4().hex  # Generate random token
-        return werkzeug.utils.redirect('/referral/' + token, 301)
+    def referral_unauth(self, force=False, **kwargs):
+        if(not force and not request.website.is_public_user()):
+            if(request.env.user.partner_id.referral_tracking_id):
+                token = request.env.user.partner_id.referral_tracking_id.token
+                return request.redirect('/referral/' + token)  # TODO quid if mismatch between referrer_email & token : créer le referral.tracking plus tôt ?
+            else:
+                return self.referral_register(request.env.user.partner_id.email)
+        else:
+            return request.render('website_sale_referral.referral_controller_template_register', {
+                'my_referrals': request.env['referral.mixin'].get_example_referral_statuses(),
+            })
+
+    @http.route(['/referral/register'], type='http', auth='public', method='POST', website=True)
+    def referral_register(self, referrer_email, token=None, **post):
+        if(token):
+            referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
+            if(referral_tracking):
+                if(referral_tracking.referrer_email != referrer_email):
+                    raise ValueError('Mismatch between email and token')
+                else:
+                    return request.redirect('/referral/' + referral_tracking.token)
+            else:
+                pass  # TODO check that the token doesn't already exist
+        else:
+            token = uuid.uuid4().hex  # Generate random token # TODO differentiate token from db and token generated here
+
+        utm_name = ('%s-%s') % (referrer_email, str(uuid.uuid4())[:6])
+        utm_source_id = request.env['utm.source'].sudo().create({'name': utm_name})
+        referral_tracking = request.env['referral.tracking'].sudo().create({
+            'token': token,
+            'utm_source_id': utm_source_id.id,
+            'referrer_email': referrer_email,
+        })
+        if(not request.website.is_public_user() and referrer_email == request.env.user.partner_id.email):
+            request.env.user.partner_id.update({'referral_tracking_id': referral_tracking.id})
+        return request.redirect('/referral/' + referral_tracking.token)
 
     @http.route(['/referral/<string:token>'], type='http', auth='public', website=True)
-    def referral_auth(self, token, **post):
-        if(not request.website.is_public_user() and request.env.user.partner_id.referral_tracking_id and request.env.user.partner_id.referral_tracking_id.token != token):
-            request.redirect('/referral/' + request.env.user.partner_id.referral_tracking_id.token)
+    def referral(self, token, **post):
+        referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
+        if(not referral_tracking):
+            raise ValueError('Incorrect token')  # TODO better error
 
-        if(True):  # TODO if('referrer_email' in post):
-            referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
+        my_referrals = self._get_referral_statuses(referral_tracking.sudo().utm_source_id)
 
-            my_referrals = self._get_referral_statuses(referral_tracking[0].sudo().utm_source_id) if len(referral_tracking) else {}
-            reward_value = request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.redirect_page')
-            total_won = len(list(filter(lambda x: x['state'] == 'done', my_referrals.values())))
-            total_won *= reward_value
-
-            return request.render('website_sale_referral.referral_controller_template', {
-                'token': token,
-                'referrer_email': post.get('referrer_email') if request.website.is_public_user() else request.env.user.partner_id.email,
-                'my_referrals': my_referrals,
-                'total_won': total_won,
-                'reward_value': reward_value,
-                'stages': request.env['referral.mixin'].REFERRAL_STAGES
-            })
-        else:
-            return request.render('website_sale_referral.referral_controller_auth_template')
+        return request.render('website_sale_referral.referral_controller_template', {
+            'token': token,
+            'referrer_email': referral_tracking.referrer_email,
+            'my_referrals': my_referrals,
+        })
 
     @http.route(['/referral/send'], type='json', auth='public', method='POST', website=True)
     def referral_send(self, **post):
-        referrer = post.get('referrer_email')
         token = post.get('token')
+        if(not token):
+            raise ValueError('no token provided')  # TODO better error
 
-        ReferralTracking = request.env['referral.tracking']
-        self.referral_tracking = ReferralTracking.search([('token', '=', token)], limit=1)
-        if(len(self.referral_tracking)):
-            self.referral_tracking = self.referral_tracking[0]
-        else:
-            utm_name = ('%s-%s') % (referrer, str(uuid.uuid4())[:6])
-            utm_source_id = request.env['utm.source'].sudo().create({'name': utm_name})
-            self.referral_tracking = request.env['referral.tracking'].sudo().create({
-                'token': token,
-                'utm_source_id': utm_source_id.id,
-                'referrer_email': referrer
-            })
-            if(not request.website.is_public_user()):
-                request.env.user.partner_id.update({'referral_tracking_id': self.referral_tracking.id})
+        referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
+        self.utm_source_id_id = referral_tracking.sudo().utm_source_id.id
 
         link_tracker = request.env['link.tracker'].sudo().create({
             'url': request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.redirect_page') or request.env["ir.config_parameter"].sudo().get_param("web.base.url"),
             'campaign_id': request.env.ref('website_sale_referral.utm_campaign_referral').id,
-            'source_id': self.referral_tracking.utm_source_id.id,
+            'source_id': self.utm_source_id_id,
             'medium_id': request.env.ref('utm.utm_medium_%s' % post.get('channel')).id
         })
-
-        template = request.env.ref('website_sale_referral.referral_tracker_email_template', False)
-        template.sudo().send_mail(self.referral_tracking.id, force_send=True)
 
         return {'link': self._get_link_tracker_url(link_tracker, post.get('channel'))}
 

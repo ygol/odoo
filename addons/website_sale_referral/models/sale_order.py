@@ -33,18 +33,24 @@ class SaleOrder(models.Model):
         return r
 
     def write(self, vals):
-        if not self.env.user.has_group('website_crm_referral.group_lead_referral') and \
-           not self.to_reward and \
-           any([elem in vals for elem in ['state', 'invoice_status', 'amount_total']]):
-            old_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
-            r = super().write(vals)
-            new_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
+        return super().write(vals)
+        # if not self.env.user.has_group('website_crm_referral.group_lead_referral') and \
+        #    not self.to_reward and \
+        #    any([elem in vals for elem in ['state', 'invoice_status', 'amount_total']]):
+        #     old_state = self.get_referral_statuses(self.source_id, self.partner_id.email)
+        #     if(old_state and 'state' in old_state):  # TODO do something cleaner ?
+        #         old_state = old_state['state']
+        #     else:
+        #         old_state = None
+        #     r = super().write(vals)
+        #     #TODO this is broken
+        #     # new_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
 
-            self.check_referral_progress(old_state, new_state)
+        #     self.check_referral_progress(old_state, new_state)
 
-            return r
-        else:
-            return super().write(vals)
+        #     return r
+        # else:
+        #     return super().write(vals)
 
     def create(self, vals_list):
         if(isinstance(vals_list, dict)):

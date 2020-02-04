@@ -21,7 +21,7 @@ class CrmReferral(Referral):
                 'phone': post.get('phone'),
                 'email_from': post.get('email'),
                 'description': post.get('comment'),
-                'source_id': self.referral_tracking.utm_source_id.id,  # TODO
+                'source_id': self.utm_source_id_id,
                 'campaign_id': request.env.ref('website_sale_referral.utm_campaign_referral').id,
                 'medium_id': request.env.ref('utm.utm_medium_direct').id
             })
@@ -36,7 +36,6 @@ class CrmReferral(Referral):
             for k, v in leads.items():
                 if(k not in result):
                     result[k] = {'state': 'new', 'name': v['name'], 'company': v['company']}
-            print(result)
             return result
 
         return request.env['crm.lead'].sudo().get_referral_statuses(utm_source_id)
