@@ -233,7 +233,13 @@ class Cursor(object):
 
         if self.sql_log:
             encoding = psycopg2.extensions.encodings[self.connection.encoding]
-            _logger.debug("query: %s", self._obj.mogrify(query, params).decode(encoding, 'replace'))
+            print("_ Query %s ________________" % (2+self.sql_log_count-self.sql_log))
+            print(self._obj.mogrify(query, params).decode(encoding, 'replace'))
+            print("- Traceback %s ------------")
+            import traceback
+            trace = traceback.format_stack()
+            print((''.join(trace)).split('return func(*args, **kwargs)')[-1])
+            print("++++++++++++++++++++++++++++")
         now = time.time()
         try:
             params = params or None

@@ -278,7 +278,9 @@ class TestMailAPIPerformance(BaseMailPerformance):
         test_record = self.env['mail.test.full'].browse(self.test_record_full.id)
         test_template = self.env['mail.template'].browse(self.test_template_full.id)
         # TODO XDO/TDE FIXME non deterministic between 25 and 28 queries
-        with self.assertQueryCount(__system__=28, emp=28):
+        with self.assertQueryCount(__system__=27, emp=27):
+            print('##### start test #############')
+            self.cr.sql_log = self.warm and (self.cr.sql_log_count + 1)
             composer = self.env['mail.compose.message'].with_context({
                 'default_composition_mode': 'comment',
                 'default_model': test_record._name,
@@ -286,6 +288,9 @@ class TestMailAPIPerformance(BaseMailPerformance):
                 'default_template_id': test_template.id,
             }).create({})
             composer.onchange_template_id_wrapper()
+            print('** end test **************')
+            #flushing....
+        self.cr.sql_log = False
 
         with self.assertQueryCount(__system__=46, emp=51):
             composer.send_mail()
