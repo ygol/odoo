@@ -27,7 +27,7 @@ class ReferralMixin(models.AbstractModel):
         result = {}
         for o in objects:
             state = o._get_state_for_referral()
-            if(o.referred_email not in result or self.STATES_PRIORITY[state] > self.STATES_PRIORITY[result[o.referred_email]]):
+            if(o.referred_email not in result or self.STATES_PRIORITY[state] > self.STATES_PRIORITY[result[o.referred_email]['state']]):
                 result[o.referred_email] = {'state': state, 'name': o.referred_name, 'company': o.referred_company}
 
         if referred_email:

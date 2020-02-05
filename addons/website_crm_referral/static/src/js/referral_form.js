@@ -4,17 +4,27 @@ odoo.define('website_crm_referral.referral_form', function (require) {
 
 
 var ReferralForm = require('website_sale_referral.referral_form');
+var core = require('web.core');
+var QWeb = core.qweb;
 
 ReferralForm.include({
     events: _.extend({}, ReferralForm.prototype.events, {
         'click #create_lead' : 'onclick_submit'
     }),
 
+    start: function() {
+        QWeb.add_template("/website_crm_referral/static/src/xml/template.xml");
+        return this._super.apply(this, arguments);
+    },
+
     onclick_submit: function(ev) {
+        var params = this.get_params(ev);
         this.empty_form();
+        var self = this;
         this.onclick_common(ev, function(data)
         {
-            window.location.reload(); //TODO inject or completely delete the custom widget (keep it only for window.open)
+            self.inject_tracking(params);
+            //window.location.reload(); //TODO inject or completely delete the custom widget (keep it only for window.open)
         });
     },
 
@@ -34,6 +44,11 @@ ReferralForm.include({
         params.company = $("input[name='company']").val();
         params.comment = $("textarea[name='comment']").val();
         return params;
+    },
+
+    inject_tracking: function(params) {
+        var rendered_html = QWeb.render('website_sale_referral.testt_template', {'r':{'name': params.name, 'company': params.company, 'state': 'new'}});
+        $("div[id='testtt']").append(rendered_html);
     },
 
 });
