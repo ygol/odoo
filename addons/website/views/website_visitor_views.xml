@@ -8,8 +8,8 @@
             <tree string="Visitor Page Views History" create="0">
                 <field name="visitor_id"/>
                 <field name="page_id"/>
-                <field name="url"/>
-                <field name="visit_url" invisible="1"/>
+                <field name="url" invisible="1"/>
+                <field name="visit_url" string="Url"/>
                 <field name="visit_datetime"/>
             </tree>
         </field>
@@ -296,8 +296,8 @@
             <tree string="Visitor Views History" create="0" edit="0">
                 <field name="visitor_id"/>
                 <field name="page_id"/>
-                <field name="url"/>
-                <field name="visit_url" invisible="1"/>
+                <field name="url" invisible="1"/>
+                <field name="visit_url" string="Url"/>
                 <field name="visit_datetime"/>
             </tree>
         </field>

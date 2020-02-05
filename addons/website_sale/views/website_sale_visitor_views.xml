@@ -110,7 +110,7 @@
         <field name="arch" type="xml">
              <xpath expr="//field[@name='page_id']" position="replace">
             </xpath>
-            <xpath expr="//field[@name='url']" position="replace">
+            <xpath expr="//field[@name='visit_url']" position="replace">
                  <field name="product_id"/>
             </xpath>
         </field>
@@ -142,7 +142,7 @@
         ]"/>
         <field name="help" type="html">
           <p class="o_view_nocontent_smiling_face">
-            Wait for visitors to come to your website to see the pages they viewed.
+            Wait for visitors to come to your website to see the products they viewed.
           </p>
         </field>
     </record>
