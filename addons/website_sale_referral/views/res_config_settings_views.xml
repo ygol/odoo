@@ -10,28 +10,29 @@
                 <div class="col-12 col-lg-6 o_setting_box">
                     <div class="o_setting_left_pane"/>
                     <div class="o_setting_right_pane">
-                        <span class="o_form_label">Options</span>
                         <div id="referral_sale_setting">
-                            <div class="row mt16">
+                            <span class="o_form_label">Reward</span>
+                            <div class="row">
                                 <label for="reward_value" class="col-lg-5 o_light_label"/>
                                 <field name="company_currency_id" invisible='1' />
                                 <field name="reward_value"/>
-                            </div>
-                            <div class="row">
-                                <label for="redirect_page" class="col-lg-5 o_light_label"/>
-                                <field name="redirect_page"/>
                             </div>
                             <div class="row" id="responsible_id">
                                 <label for="responsible_id"  class="col-lg-5 o_light_label"/>
                                 <field name="responsible_id"/>
                             </div>
+                            <span class="o_form_label">Follow-up</span>
+                            <div class="row">
+                                <label for="redirect_page" class="col-lg-5 o_light_label"/>
+                                <field name="redirect_page"/>
+                            </div>
                             <div class="row">
                                 <label for="salesteam_id" class="col-lg-5 o_light_label"/>
-                                <field name="salesteam_id" class="oe_inline"/>
+                                <field name="salesteam_id"/>
                             </div>
                             <div class="row">
                                 <label for="salesperson_id" class="col-lg-5 o_light_label"/>
-                                <field name="salesperson_id" class="oe_inline"/>
+                                <field name="salesperson_id"/>
                             </div>
                         </div>
                     </div>

@@ -38,13 +38,9 @@ class SaleOrder(models.Model):
         #    not self.to_reward and \
         #    any([elem in vals for elem in ['state', 'invoice_status', 'amount_total']]):
         #     old_state = self.get_referral_statuses(self.source_id, self.partner_id.email)
-        #     if(old_state and 'state' in old_state):  # TODO do something cleaner ?
-        #         old_state = old_state['state']
-        #     else:
-        #         old_state = None
+        #     old_state = old_state['state']
         #     r = super().write(vals)
-        #     #TODO this is broken
-        #     # new_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
+        #     new_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
 
         #     self.check_referral_progress(old_state, new_state)
 

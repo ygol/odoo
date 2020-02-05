@@ -22,7 +22,7 @@ class ResConfigSettings(models.TransientModel):
 
     responsible_id = fields.Many2one(
         'res.users',
-        string='Reward responsible',
+        string='Reward manager',
         config_parameter='website_sale_referral.responsible_id',
         help='This person will get a new activity once a referral reaches the stage "won". Then he can take contact with the referrer to send him a reward')
 
