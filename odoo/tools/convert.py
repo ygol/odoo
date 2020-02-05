@@ -289,24 +289,18 @@ form: module.record_id""" % (xml_id,)
 
         xml_id = rec.get('id','')
         self._test_xml_id(xml_id)
+        xid = self.make_xml_id(xml_id)
 
-        if rec.get('groups'):
-            g_names = rec.get('groups','').split(',')
-            groups_value = []
-            for group in g_names:
-                if group.startswith('-'):
-                    group_id = self.id_get(group[1:])
-                    groups_value.append((3, group_id))
-                else:
-                    group_id = self.id_get(group)
-                    groups_value.append((4, group_id))
-            res['groups_id'] = groups_value
+        groups = rec.get("groups", "").split(",")
+        if any(g[0] == "-" for g in groups if g):
+            _logger.warning("bad `groups` for %s: %r", xid, rec.get("groups"))
+        res["groups_id"] = [(6, 0, [self.id_get(g) for g in groups if g])]
+
         if rec.get('paperformat'):
             pf_name = rec.get('paperformat')
             pf_id = self.id_get(pf_name)
             res['paperformat_id'] = pf_id
 
-        xid = self.make_xml_id(xml_id)
         data = dict(xml_id=xid, values=res, noupdate=self.noupdate)
         report = self.env['ir.actions.report']._load_records([data], self.mode == 'update')
         self.idref[xml_id] = report.id
@@ -328,6 +322,7 @@ form: module.record_id""" % (xml_id,)
         name = rec.get('name')
         xml_id = rec.get('id','')
         self._test_xml_id(xml_id)
+        xid = self.make_xml_id(xml_id)
         view_id = False
         if rec.get('view_id'):
             view_id = self.id_get(rec.get('view_id'))
@@ -393,17 +388,10 @@ form: module.record_id""" % (xml_id,)
             'limit': limit,
         }
 
-        if rec.get('groups'):
-            g_names = rec.get('groups','').split(',')
-            groups_value = []
-            for group in g_names:
-                if group.startswith('-'):
-                    group_id = self.id_get(group[1:])
-                    groups_value.append((3, group_id))
-                else:
-                    group_id = self.id_get(group)
-                    groups_value.append((4, group_id))
-            res['groups_id'] = groups_value
+        groups = rec.get("groups", "").split(",")
+        if any(g[0] == "-" for g in groups if g):
+            _logger.warning("bad `groups` for %s: %r", xid, rec.get("groups"))
+        res["groups_id"] = [(6, 0, [self.id_get(g) for g in groups if g])]
 
         if rec.get('target'):
             res['target'] = rec.get('target','')
@@ -413,13 +401,13 @@ form: module.record_id""" % (xml_id,)
             views = rec.get('binding_views')
             if views is not None:
                 res['binding_view_types'] = views
-        xid = self.make_xml_id(xml_id)
         data = dict(xml_id=xid, values=res, noupdate=self.noupdate)
         self.env['ir.actions.act_window']._load_records([data], self.mode == 'update')
 
     def _tag_menuitem(self, rec):
         rec_id = rec.attrib["id"]
         self._test_xml_id(rec_id)
+        xid = self.make_xml_id(rec_id)
 
         # The parent attribute was specified, if non-empty determine its ID, otherwise
         # explicitly make a top-level menu
@@ -455,21 +443,13 @@ form: module.record_id""" % (xml_id,)
         if not values.get('name'):
             values['name'] = rec_id or '?'
 
-
-        groups = []
-        for group in rec.get('groups', '').split(','):
-            if group.startswith('-'):
-                group_id = self.id_get(group[1:])
-                groups.append((3, group_id))
-            elif group:
-                group_id = self.id_get(group)
-                groups.append((4, group_id))
-        if groups:
-            values['groups_id'] = groups
-
+        groups = rec.get("groups", "").split(",")
+        if any(g[0] == "-" for g in groups if g):
+            _logger.warning("bad `groups` for %s: %r", xid, rec.get("groups"))
+        values["groups_id"] = [(6, 0, [self.id_get(g) for g in groups if g])]
 
         data = {
-            'xml_id': self.make_xml_id(rec_id),
+            'xml_id': xid,
             'values': values,
             'noupdate': self.noupdate,
         }
