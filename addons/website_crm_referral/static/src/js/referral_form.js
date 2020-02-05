@@ -11,7 +11,7 @@ ReferralForm.include({
     }),
 
     onclick_submit: function(ev) {
-        self.empty_form();
+        this.empty_form();
         this.onclick_common(ev, function(data)
         {
             window.location.reload(); //TODO inject or completely delete the custom widget (keep it only for window.open)
@@ -19,7 +19,6 @@ ReferralForm.include({
     },
 
     empty_form:function() {
-        this._super.apply(this, arguments);
         $("input[name='name']")[0].val = '';
         $("input[name='email']")[0].val = '';
         $("input[name='phone']")[0].val = '';
