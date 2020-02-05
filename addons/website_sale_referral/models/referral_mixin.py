@@ -55,9 +55,6 @@ class ReferralMixin(models.AbstractModel):
             }
         }
 
-    def get_referral_tracking(self):
-        return self.env['referral.tracking'].search([('utm_source_id', '=', self.source_id)], limit=1)
-
     def check_referral_progress(self, old_state, new_state):
         others_to_reward = self.find_others(self.source_id, referred_email=self.referred_email, extra_criteria=[('to_reward', '=', True)])
         if new_state != old_state and not len(others_to_reward):

@@ -3,13 +3,11 @@
         <xpath expr="//link[last()]" position="after">
             <link rel="stylesheet" type="text/scss" href="/website_sale_referral/static/src/scss/website_sale_referral.scss"/>
         </xpath>
-    </template>
-
-    <template id="assets_frontend" inherit_id="website.assets_frontend" name="Referral Form">
         <xpath expr="//script[last()]" position="after">
             <script type="text/javascript" src="/website_sale_referral/static/src/js/referral_form.js"></script>
         </xpath>
     </template>
+
 
     <template id="portal_my_home_menu_referral" name="Portal layout : referral menu entries" inherit_id="portal.portal_breadcrumbs" priority="90">
         <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
@@ -91,7 +89,7 @@
                                 <input type="hidden" name="token" id="token" t-att-value="token" />
                                 <input type="hidden" id="referrer_email" name="referrer_email" t-att-value="referrer_email"/>
                                 <div class="alert alert-primary" role="alert">
-                                        You're connected as <b><t t-esc="referrer_email"/></b>.... Not you? <a href="/referral_test?force=true">Click here to change</a>
+                                        You're connected as <b><t t-esc="referrer_email"/></b>.... Not you? <a href="/referral?force=true">Click here to change</a>
                                 </div>
                                 <h2 class="h5 mt-2">Share around the world:</h2>
                                 <p class="text-muted">Tell people about us, you’ll be notified when one of your referrals shows an interest in one of our products.</p>
