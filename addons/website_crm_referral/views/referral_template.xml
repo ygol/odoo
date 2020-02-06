@@ -2,7 +2,7 @@
 <odoo>
     <template id="assets_frontend" inherit_id="website.assets_frontend" name="Referral Form">
         <xpath expr="//script[last()]" position="after">
-            <script type="text/javascript" src="/website_crm_referral/static/src/js/referral_form.js"></script>
+            <script type="text/javascript" src="/website_crm_referral/static/src/js/referral_widget.js"></script>
         </xpath>
     </template>
 
@@ -16,14 +16,14 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="text-900 font-weight-normal">Name<span class="text-danger">*</span></label>
-                            <input type="text" name="name" placeholder="Jane Doe" class="form-control" />
+                            <input type="text" name="name" required="1" placeholder="Jane Doe" class="form-control" />
                             <div class="invalid-feedback">
                               This field is required
                             </div>
                         </div>
                         <div class="form-group">
                             <label class="text-900 font-weight-normal">Email<span class="text-danger">*</span></label>
-                            <input type="email" name="email" class="form-control" placeholder="jane.doe@email.com"/> 
+                            <input type="email" name="email" required="1" class="form-control" placeholder="jane.doe@email.com"/> 
                             <div class="invalid-feedback">
                               Please input a valid e-mail address
                             </div>

@@ -8,6 +8,7 @@
     'description': """
 Help the company to get more leads by leveraging his existing customers' base. Main objective: everyone can refer a prospect. If the prospect subscribes, the referrer is rewarded.""",
     'depends': ['sale_management', 'website', 'link_tracker', 'mail'],
+    'qweb': ['static/src/xml/referral_tracking_single_sub_template.xml'],
     'data': [
         'security/ir.model.access.csv',
         'data/website_sale_referral_data.xml',

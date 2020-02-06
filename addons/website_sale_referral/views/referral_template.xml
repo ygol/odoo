@@ -4,7 +4,7 @@
             <link rel="stylesheet" type="text/scss" href="/website_sale_referral/static/src/scss/website_sale_referral.scss"/>
         </xpath>
         <xpath expr="//script[last()]" position="after">
-            <script type="text/javascript" src="/website_sale_referral/static/src/js/referral_form.js"></script>
+            <script type="text/javascript" src="/website_sale_referral/static/src/js/referral_widget.js"></script>
         </xpath>
     </template>
 
@@ -68,7 +68,9 @@
                         </section>
                         <section class="col-8 col-lg-4 pb-5 bg-white border-left">
                             <div class="o_sample_overlay bg-white"/>
-                            <t t-call="website_sale_referral.referral_tracking_sub_template" />
+                            <div id="referral_tracking_sub_template" class="referral_widget">
+                                <!-- Here will be the tracking infos, which are generated client-side by js-->
+                            </div>
                         </section>
                     </div>
                 </div>
@@ -82,11 +84,11 @@
             <div id="wrap" class="website_referral bg-light oe_structure">
                 <t t-call="website_sale_referral.referral_title_sub_template" />
                 <div class="container-fluid">
-                    <div class="row">
+                    <div class="row referral_widget">
                         <section class="col-8 col-lg-6 offset-2 py-3">
-                            <form class="referral_form">
+                            <div>
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                <input type="hidden" name="token" id="token" t-att-value="token" />
+                                <input type="hidden" name="referral_token" id="referral_token" t-att-value="token" />
                                 <input type="hidden" id="referrer_email" name="referrer_email" t-att-value="referrer_email"/>
                                 <div class="alert alert-primary" role="alert">
                                         You're connected as <b><t t-esc="referrer_email"/></b>.... Not you? <a href="/referral?force=true">Click here to change</a>
@@ -108,16 +110,12 @@
                                         </t>
                                     </div>
                                 </div>
-                            </form>
+                            </div>
                             <t t-call="website_sale_referral.referral_info_sub_template"/>
                         </section>
                         <section class="col-8 col-lg-4 pb-5 bg-white border-left">
-                            <t t-if="not my_referrals">
-                                <t t-set="my_referrals" t-value="request.env['referral.mixin'].get_example_referral_statuses()"/>
-                                <div class="o_sample_overlay bg-white"/>
-                            </t>
-                            <div id="testtt">
-                                <t t-call="website_sale_referral.referral_tracking_sub_template" />
+                            <div id="referral_tracking_sub_template">
+                                <!-- Here will be the tracking infos, which are generated client-side by js-->
                             </div>
                         </section>
                     </div>
@@ -125,67 +123,5 @@
                 <div class="oe_structure "/>
             </div>
         </t>
-    </template>
-
-    <template id="referral_tracking_sub_template">
-        <t t-if="request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.reward_value')">
-            <div class="row border-bottom">
-                <div class="col-lg-12 p-3">
-                    <h2 class="text-600 mb-0">
-                        <b>
-                            <t t-esc="request.env['res.config.settings'].reward_value_to_text(len(my_referrals))"/>
-                        </b>
-                    </h2>
-                    <p class="text-muted">Potential rewards</p>
-                    <h4 class="text-600 mb-0">
-                        <b>
-                            <t t-esc="request.env['res.config.settings'].reward_value_to_text(len(list(filter(lambda x: x['state'] == 'done', my_referrals.values()))))" />
-                        </b>
-                    </h4>
-                    <p class="text-muted">Rewards won</p>
-                </div>
-            </div>
-        </t>
-        <t t-foreach="my_referrals" t-as='re'>
-            <t t-set="r" t-value="my_referrals[re]"/>
-            <t t-call="website_sale_referral.referral_tracking_single_sub_template" />
-        </t>
-    </template>
-
-    <template id="referral_tracking_single_sub_template">
-        <div class="row pt-3">
-            <div class="col-8">
-                <div class="row">
-                    <div class="col-sm-8">
-                            <p class="font-weight-bolder text-600 m-0"><t t-esc="r['name']" /></p>
-                            <p class="text-muted m-0"><t t-esc="r['company']" /></p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-sm-12">
-                        <t t-if="r['state'] == 'new'">
-                            <span class="badge badge-primary px-2">Referred</span>
-                        </t>
-                        <t t-else="">
-                            <span class="badge badge-secondary px-2">Referred</span>
-                        </t>
-                        <span><i class="text-muted fa fa-chevron-right"/></span>
-                        <t t-if="r['state'] == 'in_progress'">
-                            <span class="badge badge-primary px-2">In Progress</span>
-                        </t>
-                        <t t-else="">
-                            <span class="badge badge-secondary px-2">In Progress</span>
-                        </t>
-                        <span><i class="text-muted fa fa-chevron-right"/></span>
-                        <t t-if="r['state'] == 'done'">
-                            <span class="badge badge-primary px-2">Won</span>
-                        </t>
-                        <t t-else="">
-                            <span class="badge badge-secondary px-2">Won</span>
-                        </t>
-                    </div>
-                </div>
-            </div>
-        </div>
     </template>
 </odoo>

@@ -16,9 +16,7 @@ class Referral(http.Controller):
             else:
                 return self.referral_register(request.env.user.partner_id.email)
         else:
-            return request.render('website_sale_referral.referral_controller_template_register', {
-                'my_referrals': request.env['referral.mixin'].get_example_referral_statuses(),
-            })
+            return request.render('website_sale_referral.referral_controller_template_register')
 
     @http.route(['/referral/register'], type='http', auth='public', method='POST', website=True)
     def referral_register(self, referrer_email, token=None, **post):
@@ -51,19 +49,40 @@ class Referral(http.Controller):
         if(not referral_tracking):
             raise ValueError('Incorrect token')  # TODO better error
 
-        my_referrals = self._get_referral_statuses(referral_tracking.sudo().utm_source_id)
-
         return request.render('website_sale_referral.referral_controller_template', {
             'token': token,
             'referrer_email': referral_tracking.referrer_email,
-            'my_referrals': my_referrals,
         })
+
+    @http.route(['/referral/tracking/<string:token>', '/referral/tracking'], type='json', auth='public', website=True)
+    def referral_tracking(self, token=None, **kwargs):
+        reward_value = request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.reward_value')
+        currency_id = request.env.user.company_id.currency_id
+
+        if(not token):
+            return {
+                'currency_position': currency_id.position,
+                'currency_symbol': currency_id.symbol,
+                'reward_value': reward_value,
+            }
+
+        referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
+        if(not referral_tracking):
+            raise ValueError('Incorrect token')  # TODO better error
+        my_referrals = self._get_referral_statuses(referral_tracking.sudo().utm_source_id)
+
+        return {
+            'currency_position': currency_id.position,
+            'currency_symbol': currency_id.symbol,
+            'reward_value': reward_value,
+            'my_referrals': my_referrals,
+        }
 
     @http.route(['/referral/send'], type='json', auth='public', method='POST', website=True)
     def referral_send(self, **post):
         token = post.get('token')
         if(not token):
-            raise ValueError('no token provided')  # TODO better error
+            raise ValueError('no token provided')  # TODO better error + check token (referral_tracking exists ?)
 
         referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
         self.utm_source_id_id = referral_tracking.sudo().utm_source_id.id

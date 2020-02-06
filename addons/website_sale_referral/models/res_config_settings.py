@@ -39,18 +39,3 @@ class ResConfigSettings(models.TransientModel):
         res = super(ResConfigSettings, self).set_values()
         self.env['ir.config_parameter'].set_param('website_sale_referral.reward_value', self.reward_value)
         return res
-
-    def reward_value_to_text(self, quantity=1):
-        currency_id = self.env.user.company_id.currency_id
-        value = quantity * literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.reward_value') or '0')
-        decimal_places = self.env['decimal.precision'].precision_get('Product Price')
-        if currency_id.position == 'after':
-            return "%s %s" % (
-                float_repr(value, decimal_places),
-                currency_id.symbol,
-            )
-        else:
-            return "%s %s" % (
-                currency_id.symbol,
-                float_repr(value, decimal_places),
-            )

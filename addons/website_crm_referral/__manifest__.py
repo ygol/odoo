@@ -11,7 +11,6 @@
     'category': 'Website/Website',
     'version': '0.1',
     'depends': ['website_sale_referral', 'crm'],
-    'qweb': ['static/src/xml/*.xml'],
     'data': [
         'data/website_crm_referral_data.xml',
         'views/res_config_settings_views.xml',
