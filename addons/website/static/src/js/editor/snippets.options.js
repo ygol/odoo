@@ -211,6 +211,16 @@ options.Class.include({
     custom_events: _.extend({}, options.Class.prototype.custom_events || {}, {
         'google_fonts_custo_request': '_onGoogleFontsCustoRequest',
     }),
+    jsLibs: [
+        '/web/static/lib/ace/ace.js',
+        [
+            '/web/static/lib/ace/javascript_highlight_rules.js',
+            '/web/static/lib/ace/mode-xml.js',
+            '/web/static/lib/ace/mode-scss.js',
+            '/web/static/lib/ace/mode-js.js',
+            '/web/static/lib/ace/theme-monokai.js'
+        ]
+    ],
 
     //--------------------------------------------------------------------------
     // Options
@@ -250,6 +260,57 @@ options.Class.include({
                 onFailure: () => reject(),
             });
         });
+    },
+    /**
+     * @see this.selectClass for parameters
+     */
+    async openCustomCodeDialog(previewMode, widgetValue, params) {
+        let websiteId;
+        const fieldName = widgetValue === 'Head' ? 'custom_code_head' : 'custom_code_footer';
+
+        this.trigger_up('context_get', {
+            callback: (ctx) => {
+                websiteId = ctx['website_id'];
+            },
+        });
+        const websites = await this._rpc({
+            model: 'website',
+            method: 'read',
+            args: [[websiteId], ['custom_code_head', 'custom_code_footer']],
+        });
+
+        const $content = $(core.qweb.render('website.custom_code_dialog_content', {
+            text: _.str.sprintf(_t('Enter code that will be added into the "%s" tag of every page of your site.'), widgetValue),
+        }));
+
+        const dialog = new Dialog(this, {
+            title: _t(widgetValue),
+            $content,
+            buttons: [
+                {
+                    text: _t("Save"),
+                    classes: 'btn-primary',
+                    click: async () => {
+                        await this._rpc({
+                            model: 'website',
+                            method: 'write',
+                            args: [
+                                [websiteId],
+                                {[fieldName]: this._aceEditor && this._aceEditor.getValue()},
+                            ],
+                        });
+                    },
+                    close: true,
+                },
+                {
+                    text: _t("Discard"),
+                    close: true,
+                },
+            ],
+        });
+
+        this._renderAceEditor($content.find('.o_ace_editor_container')[0], websites[0][fieldName] || '');
+        dialog.open();
     },
 
     //--------------------------------------------------------------------------
@@ -419,6 +480,32 @@ options.Class.include({
             return linksLoaded;
         });
         await Promise.all(proms).then(() => $allLinks.remove());
+    },
+    /**
+     * @private
+     * @param {DOMElement} node
+     * @param {String} content text of the editor
+     */
+    _renderAceEditor(node, content) {
+        this._aceEditor = window.ace.edit(node);
+        this._aceEditor.setTheme('ace/theme/monokai');
+        this._aceEditor.setValue(content, 1)
+        this._aceEditor.setOptions({
+            minLines: 20,
+            maxLines: Infinity,
+            enableBasicAutocompletion: true,
+        });
+        this._aceEditor.renderer.setOptions({
+            highlightGutterLine: true,
+            showInvisibles: true,
+            fontSize: 14,
+        });
+
+        const aceSession = this._aceEditor.getSession();
+        aceSession.setOptions({
+            mode: "ace/mode/xml",
+            useWorker: false,
+        });
     },
     /**
      * @override

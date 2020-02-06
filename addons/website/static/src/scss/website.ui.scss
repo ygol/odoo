@@ -432,3 +432,7 @@ body .modal {
         color: $info;
     }
 }
+
+.ace_editor > .ace_gutter {
+    display: block !important;
+}

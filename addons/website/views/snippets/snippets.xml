@@ -539,6 +539,12 @@
             <we-button data-customize-website="">Full</we-button>
             <we-button data-customize-website="website.option_layout_boxed_variables" id="option_layout_boxed">Boxed</we-button>
         </we-select>
+        <we-row string="Head" title="Enter code that will be added into the 'head' tag on every page of your site">
+            <we-button data-no-preview="true" data-open-custom-code-dialog="Head" class="rounded"><i class="fa fa-code"/>Add</we-button>
+        </we-row>
+        <we-row string="Footer" title="Enter code that will be added into the 'footer' tag on every page of your site">
+            <we-button data-no-preview="true" data-open-custom-code-dialog="Footer" class="rounded"><i class="fa fa-code"/>Add</we-button>
+        </we-row>
     </div>
 </template>
 </odoo>
