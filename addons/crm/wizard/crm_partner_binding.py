@@ -4,7 +4,7 @@
 from odoo import api, fields, models
 
 
-class PartnerBinding(models.TransientModel):
+class PartnerBinding(models.AbstractModel):
     """
         Handle the partner binding or generation in any CRM wizard that requires
         such feature, like the lead2opportunity wizard, or the
