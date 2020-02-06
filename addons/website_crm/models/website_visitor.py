@@ -48,15 +48,12 @@ class WebsiteVisitor(models.Model):
         visitor_mail_values = super(WebsiteVisitor, self)._prepare_visitor_send_mail_values()
         if self.lead_ids:
             lead = self.lead_ids._sort_by_confidence_level(reverse=True)[0]
-            partner_id = self.partner_id.id
             if not self.partner_id:
-                partner_id = lead.handle_partner_assignation(action='create')[lead.id]
-                if not lead.partner_id:
-                    lead.partner_id = partner_id
-                self.partner_id = partner_id
+                lead.handle_partner_assignation()
+                self.partner_id = lead.partner_id
             return {
                 'res_model': 'crm.lead',
                 'res_id': lead.id,
-                'partner_ids': [partner_id],
+                'partner_ids': self.partner_id.ids,
             }
         return visitor_mail_values

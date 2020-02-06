@@ -33,17 +33,8 @@ class Opportunity2Quotation(models.TransientModel):
         """
         self.ensure_one()
         if self.action != 'nothing':
-            self.lead_id.write({
-                'partner_id': self.partner_id.id if self.action == 'exist' else self._create_partner()
-            })
+            self.lead_id.handle_partner_assignation(
+                partner_id=self.partner_id.id,
+                create=(self.action=='create'))
             self.lead_id._onchange_partner_id()
         return self.lead_id.action_new_quotation()
-
-    def _create_partner(self):
-        """ Create partner based on action.
-            :return int: created res.partner id
-        """
-        self.ensure_one()
-        result = self.lead_id.handle_partner_assignation(action='create')
-        return result.get(self.lead_id.id)
-

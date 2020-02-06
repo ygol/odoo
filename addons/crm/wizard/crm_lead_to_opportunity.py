@@ -92,8 +92,9 @@ class Lead2OpportunityPartner(models.TransientModel):
 
             partner_id = False
             if self.action != 'nothing':
-                partner_id = self_def_user._create_partner(
-                    lead.id, self.action, vals.get('partner_id') or lead.partner_id.id)
+                create = self.action in ['create', 'each_exist_or_create']
+                partner_id = vals.get('partner_id', False)
+                self_def_user.lead_id.handle_partner_assignation(create=create, partner_id=partner_id)
 
             res = lead.convert_opportunity(partner_id, [], False)
         user_ids = vals.get('user_ids')
@@ -129,22 +130,9 @@ class Lead2OpportunityPartner(models.TransientModel):
             elif not self._context.get('no_force_assignation') or not leads.user_id:
                 values['user_id'] = self.user_id.id
                 leads.write(values)
-        else:
+        else: # convert
             leads = self.env['crm.lead'].browse(self._context.get('active_ids', []))
             values.update({'lead_ids': leads.ids, 'user_ids': [self.user_id.id]})
             self._convert_opportunity(values)
 
         return leads[0].redirect_lead_opportunity_view()
-
-    def _create_partner(self, lead_id, action, partner_id):
-        """ Create partner based on action.
-            :return dict: dictionary organized as followed: {lead_id: partner_assigned_id}
-        """
-        #TODO this method in only called by Lead2OpportunityPartner
-        #wizard and would probably diserve to be refactored or at least
-        #moved to a better place
-        if action == 'each_exist_or_create':
-            partner_id = self.with_context(active_id=lead_id)._find_matching_partner()
-            action = 'create'
-        result = self.env['crm.lead'].browse(lead_id).handle_partner_assignation(action, partner_id)
-        return result.get(lead_id)
