@@ -255,9 +255,8 @@
                             <button class="btn btn-sm d-md-none bg-white border" type="button" data-toggle="collapse" data-target="#o_wprofile_sidebar_collapse" aria-expanded="false" aria-controls="o_wprofile_sidebar_collapse">More info</button>
                         </div>
                         <div class="collapse d-md-block" id="o_wprofile_sidebar_collapse">
-                            <t t-set="next_rank_id" t-value="user._get_next_rank()"/>
-                            <small t-if="next_rank_id" class="font-weight-bold mt-1">Next rank:</small>
-                            <t t-if="next_rank_id or user.rank_id" t-call="website_profile.profile_next_rank_card">
+                            <small t-if="user.next_rank_id" class="font-weight-bold mt-1">Next rank:</small>
+                            <t t-if="user.next_rank_id or user.rank_id" t-call="website_profile.profile_next_rank_card">
                                 <t t-set="img_max_width" t-valuef="40%"/>
                             </t>
 
@@ -311,7 +310,7 @@
     <template id="profile_next_rank_card" name="Profile Next Rank Card">
         <div class="o_wprofile_progress_circle">
             <svg viewBox="0 0 36 36" class="o_pc_circular_chart">
-                <t t-set="next_rank_id" t-value="next_rank_id or user._get_next_rank()"/>
+                <t t-set="next_rank_id" t-value="next_rank_id or user.next_rank_id"/>
                 <t t-if="next_rank_id and user.rank_id">
                     <t t-if="(next_rank_id.karma_min - user.rank_id.karma_min) > 0">
                         <t t-set="user_points" t-value="int(100*(user.karma - user.rank_id.karma_min)/(next_rank_id.karma_min - user.rank_id.karma_min))"/>

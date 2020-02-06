@@ -812,7 +812,7 @@ class WebsiteSlides(WebsiteProfile):
             rank_progress['new_rank'] = self._get_rank_values(request.env.user)
             rank_progress.update({
                 'description': request.env.user.rank_id.description,
-                'last_rank': not request.env.user._get_next_rank(),
+                'last_rank': not request.env.user.next_rank_id,
                 'level_up': rank_progress['previous_rank']['lower_bound'] != rank_progress['new_rank']['lower_bound']
             })
         return {
@@ -832,7 +832,7 @@ class WebsiteSlides(WebsiteProfile):
 
     def _get_rank_values(self, user):
         lower_bound = user.rank_id.karma_min or 0
-        next_rank = user._get_next_rank()
+        next_rank = user.next_rank_id
         upper_bound = next_rank.karma_min
         progress = 100
         if next_rank and (upper_bound - lower_bound) != 0:
