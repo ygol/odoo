@@ -28,7 +28,6 @@ class Lead2OpportunityMassConvert(models.TransientModel):
     deduplicate = fields.Boolean('Apply deduplication', default=True, help='Merge with existing leads/opportunities of each partner')
     action = fields.Selection(selection_add=[
         ('each_exist_or_create', 'Use existing partner or create'),
-        ('nothing', 'Do not link to a customer')
     ], string='Related Customer', required=True)
     force_assignation = fields.Boolean('Force assignation', help='If unchecked, this will leave the salesman of duplicated opportunities')
 
@@ -61,10 +60,8 @@ class Lead2OpportunityMassConvert(models.TransientModel):
             the values before calling super.
         """
         self.ensure_one()
-        salesteam_id = self.team_id.id if self.team_id else False
-        salesmen_ids = []
-        if self.user_ids:
-            salesmen_ids = self.user_ids.ids
+        salesteam_id = self.team_id.id
+        salesmen_ids = self.user_ids.ids
         vals.update({'user_ids': salesmen_ids, 'team_id': salesteam_id})
         return super(Lead2OpportunityMassConvert, self)._convert_opportunity(vals)
 
