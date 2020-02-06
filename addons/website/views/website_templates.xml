@@ -65,6 +65,9 @@
         </t>
         <t t-set="x_icon" t-value="website.image_url(website, 'favicon')"/>
     </xpath>
+    <xpath expr="//head" position="inside">
+        <t t-raw="website.custom_code_head"/>
+    </xpath>
     <xpath expr="//head/meta[last()]" position="after">
         <meta name="generator" content="Odoo"/>
         <t t-set="website_meta" t-value="seo_object and seo_object.get_website_meta() or {}"/>
@@ -148,6 +151,11 @@
     <xpath expr="//footer" position="attributes">
         <attribute name="data-name">Footer</attribute>
     </xpath>
+
+    <xpath expr="//footer" position="inside">
+        <t t-raw="website.custom_code_footer"/>
+    </xpath>
+
     <xpath expr="//div[hasclass('o_footer_copyright')]//span[@t-field='res_company.name']" position="after">
         <t t-call="website.language_selector"/>
     </xpath>
