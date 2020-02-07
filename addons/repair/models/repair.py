@@ -190,10 +190,6 @@ class Repair(models.Model):
         else:
             self.location_id = False
 
-    def button_dummy(self):
-        # TDE FIXME: this button is very interesting
-        return True
-
     def action_repair_cancel_draft(self):
         if self.filtered(lambda repair: repair.state != 'cancel'):
             raise UserError(_("Repair must be canceled in order to reset it to draft."))
