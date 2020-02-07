@@ -91,6 +91,18 @@ class BaseAutomation(models.Model):
                 }
             }}
 
+        mail_states = {'email', 'followers', 'next_activity'}
+        if self.trigger == 'on_unlink' and self.state in mail_states:
+            ff = self.fields_get(['trigger', 'state'])
+            return {'warning': {
+                'title': _("Warning"),
+                'message': _("The \"%(trigger_value)s\" %(trigger_label)s can not be used with the \"%(state_value)s\" action type") % {
+                    'trigger_value': dict(ff['trigger']['selection'])['on_unlink'],
+                    'trigger_label': ff['trigger']['string'],
+                    'state_value': dict(ff['state']['selection'])[self.state],
+                }
+            }}
+
     @api.model
     def create(self, vals):
         vals['usage'] = 'base_automation'
