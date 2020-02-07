@@ -213,9 +213,7 @@ options.Class.include({
     }),
     jsLibs: [
         '/web/static/lib/ace/ace.js',
-        [
-            '/web/static/lib/ace/mode-xml.js',
-        ]
+        '/web/static/lib/ace/mode-xml.js',
     ],
 
     //--------------------------------------------------------------------------
