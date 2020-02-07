@@ -211,10 +211,7 @@ options.Class.include({
     custom_events: _.extend({}, options.Class.prototype.custom_events || {}, {
         'google_fonts_custo_request': '_onGoogleFontsCustoRequest',
     }),
-    jsLibs: [
-        '/web/static/lib/ace/ace.js',
-        '/web/static/lib/ace/mode-xml.js',
-    ],
+    assetLibs: ['website.ace_editor_assets'],
 
     //--------------------------------------------------------------------------
     // Options

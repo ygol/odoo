@@ -152,4 +152,9 @@
     <script type="text/javascript" src="/website/static/src/js/widgets/ace.js"/>
 </template>
 
+<template id="website.ace_editor_assets">
+    <script type="text/javascript" src="/web/static/lib/ace/ace.js"/>
+    <script type="text/javascript" src="/web/static/lib/ace/mode-xml.js"/>
+</template>
+
 </odoo>
