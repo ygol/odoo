@@ -13,13 +13,16 @@ ReferralWidget.include({
     }),
 
     onclick_submit: function(ev) {
-        var self = this;
-        this.onclick_common(ev, function(data)
+        if(this.check_form_validity(ev.target.closest('button')))
         {
-            var params = self.get_params(ev);
-            self.empty_form();
-            self.inject_tracking(params);
-        });
+            var self = this;
+            this.onclick_common(ev, function(data)
+            {
+                var params = self.get_params(ev);
+                self.empty_form();
+                self.inject_tracking(params);
+            });
+        }
     },
 
     empty_form:function() {
@@ -45,10 +48,15 @@ ReferralWidget.include({
             var referrals = {};
             referrals[params.email] = {'name': params.name, 'company': params.company, 'state': 'new'};
             this.render_tracking(referrals);
+            this.is_demo_data = false;
         }
         else {
             var rendered_html = QWeb.render('referral_tracking_single_sub_template', {'r':{'name': params.name, 'company': params.company, 'state': 'new'}});
             $("div[id='referral_tracking_sub_template']").append(rendered_html);
+
+            var potential_reward = $("div[id='potential_reward']");
+            potential_reward.html(this.reward_value_to_text(++this.referrals_count));
+
         }
     },
 

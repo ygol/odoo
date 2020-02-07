@@ -40,7 +40,7 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
             referrals = this.get_example_referral_statuses();
             this.is_demo_data = true;
         }
-        var referrals_count = Object.keys(referrals).length;
+        this.referrals_count = Object.keys(referrals).length;
         var referrals_won = 0;
         var r;
         for(r in referrals) {
@@ -50,8 +50,9 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
         }
         var context = {
             'my_referrals': referrals,
-            'total_reward': this.reward_value_to_text(referrals_won, this.currency_symbol, this.currency_position, this.reward_value),
-            'potential_reward': this.reward_value_to_text(referrals_count, this.currency_symbol, this.currency_position, this.reward_value)
+            'reward_value': this.reward_value,
+            'total_reward': this.reward_value_to_text(referrals_won),
+            'potential_reward': this.reward_value_to_text(this.referrals_count)
         };
         var rendered_html = QWeb.render('referral_tracking_sub_template', context);
         if(this.is_demo_data) {
@@ -60,12 +61,12 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
         $("div[id='referral_tracking_sub_template']").html(rendered_html);
     },
 
-    reward_value_to_text: function(quantity, currency_symbol, currency_position, reward_value) {
-        if(currency_position == 'after') {
-            return (quantity * reward_value).toString().concat(currency_symbol);
+    reward_value_to_text: function(quantity) {
+        if(this.currency_position == 'after') {
+            return (quantity * this.reward_value).toString().concat(this.currency_symbol);
         }
         else {
-            return currency_symbol.concat((quantity * reward_value).toString());
+            return this.currency_symbol.concat((quantity * this.reward_value).toString());
         }
     },
 
@@ -108,13 +109,10 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
     },
 
     onclick_common: function(ev, then_func) {
-        if(this.check_form_validity(ev.target.closest('button')))
-        {
-            ajax.jsonRpc('/referral/send', 'call', this.get_params(ev))
-            .then(function (data) {
-                then_func(data);
-            });
-        } else {}
+        ajax.jsonRpc('/referral/send', 'call', this.get_params(ev))
+        .then(function (data) {
+            then_func(data);
+        });
     },
 
     check_form_validity: function(submit_button) {

@@ -9,10 +9,12 @@ class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
     group_referral_reward_on_lead = fields.Boolean(compute='_compute_group_referral_reward_on_lead', implied_group="website_crm_referral.group_lead_referral", readonly=False, store=True)
-    referral_reward_on_lead = fields.Selection([
-        ('sale_order', 'Reward based on paid Sales Order'),
-        ('lead', 'Reward based on Leads won')
-    ], string='Rewards based on', required=True, default='sale_order')
+    referral_reward_on_lead = fields.Selection(
+        [('sale_order', 'Reward based on paid Sales Order'), ('lead', 'Reward based on Leads won')],
+        string='Rewards based on',
+        required=True,
+        default='sale_order',
+        help=' If "reward based on paid Sales Order", the status is changed to "won" once all invoices linked to the SO are paid. If "reward based on Leads won", the status is changed to "won" once the lead reaches a stage flagged in as "won stage"')
 
     lead_tag_ids = fields.Many2many('crm.lead.tag', string="Lead tags")
 

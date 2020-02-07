@@ -10,7 +10,11 @@ class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
     reward_value = fields.Monetary(string="Reward Value", currency_field='company_currency_id', readonly=False)
-    company_currency_id = fields.Many2one('res.currency', related='company_id.currency_id', string="Company Currency", readonly=True,
+    company_currency_id = fields.Many2one(
+        'res.currency',
+        related='company_id.currency_id',
+        string="Company Currency",
+        readonly=True,
         help='Utility field to express amount currency')
 
     redirect_page = fields.Char(
