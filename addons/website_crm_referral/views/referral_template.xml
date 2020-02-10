@@ -10,6 +10,7 @@
     <template id="referral_controller_template_extended" name="Referrals" inherit_id="website_sale_referral.referral_controller_template">
         <xpath expr="//div[@id='sharer']" position="after">
             <div id="lead_generator">
+                <hr class="py-2"/>
                 <h2 class="h5">Or refer someone to us</h2>
                 <p class="text-muted">Know someone who might be interested? Send us their details and we’ll get in touch with them soon.</p>
                 <div class="row">
