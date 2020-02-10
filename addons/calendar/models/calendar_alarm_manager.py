@@ -5,6 +5,7 @@ import logging
 from datetime import timedelta
 
 from odoo import api, fields, models
+from odoo.tools import plaintext2html
 
 _logger = logging.getLogger(__name__)
 
@@ -217,7 +218,7 @@ class AlarmManager(models.AbstractModel):
 
         result = False
         if alarm.alarm_type == 'email':
-            result = meeting.attendee_ids.filtered(lambda r: r.state != 'declined')._send_mail_to_attendees('calendar.calendar_template_meeting_reminder', force_send=True, ignore_recurrence=True)
+            result = meeting.attendee_ids.filtered(lambda r: r.state != 'declined')._send_mail_to_attendees(alarm.mail_template_id, force_send=True, ignore_recurrence=True)
         return result
 
     def do_notif_reminder(self, alert):
@@ -226,6 +227,9 @@ class AlarmManager(models.AbstractModel):
 
         if alarm.alarm_type == 'notification':
             message = meeting.display_time
+            if alarm.body:
+                formatted_body = plaintext2html(alarm.body)
+                message += '<p>%s</p>' % formatted_body
 
             delta = alert['notify_at'] - fields.Datetime.now()
             delta = delta.seconds + delta.days * 3600 * 24

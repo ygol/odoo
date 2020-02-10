@@ -17,11 +17,11 @@ class CalendarEvent(models.Model):
         """
         return self.mapped('attendee_ids').filtered(lambda att: att.state != 'declined').mapped('partner_id')
 
-    def _do_sms_reminder(self):
+    def _do_sms_reminder(self, alert):
         """ Send an SMS text reminder to attendees that haven't declined the event """
         for event in self:
             event._message_sms_with_template(
-                template_xmlid='calendar_sms.sms_template_data_calendar_reminder',
+                template=self.env['calendar.alarm'].browse(alert['alarm_id']).sms_template_id,
                 template_fallback=_("Event reminder: %(name)s, %(time)s.", name=event.name, time=event.display_time),
                 partner_ids=self._sms_get_default_partners().ids,
                 put_in_queue=False
@@ -34,6 +34,9 @@ class CalendarAlarm(models.Model):
     alarm_type = fields.Selection(selection_add=[
         ('sms', 'SMS Text Message')
     ], ondelete={'sms': 'set default'})
+    sms_template_id = fields.Many2one('sms.template', string="SMS Template", domain=[('model', 'in', ['calendar.event', 'calendar.attendee'])],
+        default=lambda self: self.env.ref('calendar_sms.sms_template_data_calendar_reminder', False),
+        help="Template that would be used to send the reminder.")
 
 
 class AlarmManager(models.AbstractModel):
@@ -68,13 +71,13 @@ class AlarmManager(models.AbstractModel):
                     event_start = event_start.replace(tzinfo=None)
                     last_found = self.do_check_alarm_for_one_date(event_start, event, max_delta, 0, 'sms', after=last_sms_cron, missing=True)
                     for alert in last_found:
-                        event.browse(alert['event_id'])._do_sms_reminder()
+                        event.browse(alert['event_id'])._do_sms_reminder(alert)
                         found = True
                     if found and not last_found:  # if the precedent event had an alarm but not this one, we can stop the search for this event
                         break
             else:
                 event_start = fields.Datetime.from_string(event.start)
                 for alert in self.do_check_alarm_for_one_date(event_start, event, max_delta, 0, 'sms', after=last_sms_cron, missing=True):
-                    event.browse(alert['event_id'])._do_sms_reminder()
+                    event.browse(alert['event_id'])._do_sms_reminder(alert)
         self.env['ir.config_parameter'].set_param('calendar_sms.last_sms_cron', now)
         return result

@@ -535,7 +535,7 @@ class Meeting(models.Model):
         email = self.env.user.email
         if email:
             for meeting in self:
-                meeting.attendee_ids._send_mail_to_attendees('calendar.calendar_template_meeting_invitation')
+                meeting.attendee_ids._send_mail_to_attendees(self.env.ref('calendar.calendar_template_meeting_invitation', raise_if_not_found=False))
         return True
 
     def _apply_recurrence_values(self, values, future=True):
@@ -661,9 +661,9 @@ class Meeting(models.Model):
 
         current_attendees = self.filtered('active').attendee_ids
         if 'partner_ids' in values:
-            (current_attendees - previous_attendees)._send_mail_to_attendees('calendar.calendar_template_meeting_invitation')
+            (current_attendees - previous_attendees)._send_mail_to_attendees(self.env.ref('calendar.calendar_template_meeting_invitation', raise_if_not_found=False))
         if 'start' in values:
-            (current_attendees & previous_attendees)._send_mail_to_attendees('calendar.calendar_template_meeting_changedate', ignore_recurrence=not update_recurrence)
+            (current_attendees & previous_attendees)._send_mail_to_attendees(self.env.ref('calendar.calendar_template_meeting_invitation', raise_if_not_found=False), ignore_recurrence=not update_recurrence)
 
         return True
 
@@ -711,7 +711,7 @@ class Meeting(models.Model):
                 detached_events = event._apply_recurrence_values(recurrence_values)
                 detached_events.active = False
 
-        events.attendee_ids._send_mail_to_attendees('calendar.calendar_template_meeting_invitation')
+        events.attendee_ids._send_mail_to_attendees(self.env.ref('calendar.calendar_template_meeting_invitation', raise_if_not_found=False))
         events._sync_activities(fields={f for vals in vals_list for f in vals.keys() })
 
         # Notify attendees if there is an alarm on the created event, as it might have changed their
