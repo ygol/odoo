@@ -87,6 +87,16 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
                 'state': 'in_progress',
                 'name': 'Colleen Diaz',
                 'company': 'Azure Interior',
+            },
+            'kevin@example.com': {
+                'state': 'done',
+                'name': 'Kevin Leblanc',
+                'company': 'Azure Interior',
+            },
+            'lucille@example.com': {
+                'state': 'cancel',
+                'name': 'Lucille Camarero',
+                'company': 'Ready Mat',
             }
         };
     },
@@ -101,7 +111,10 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
 
     onclick_get_link: function(ev) {
         this.onclick_common(ev, function(data) {
-            var input = $("input[id='copy_link_input']")[0];
+            var input = $("input[id='copy_link_input']")[0], btn = $("#copy-link");
+            btn.html("<i class='fa fa-lg fa-check pr-2' role='img'/>Link Copied");
+            btn.addClass("bg-primary");
+            btn.removeClass("bg-700");
             input.value = data.link;
             input.select();
             document.execCommand("copy");
