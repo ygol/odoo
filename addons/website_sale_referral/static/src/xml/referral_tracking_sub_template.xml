@@ -28,39 +28,24 @@
 
 
     <t t-name="referral_tracking_single_sub_template">
-            <div class="row pt-3">
-                <div class="col-8">
-                    <div class="row">
-                        <div class="col-sm-8">
-                                <p class="font-weight-bolder text-600 m-0"><t t-esc="r['name']" /></p>
-                                <p class="text-muted m-0"><t t-esc="r['company']" /></p>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <t t-if="r['state'] == 'new'">
-                                <span class="badge badge-primary px-2">Referred</span>
-                            </t>
-                            <t t-else="">
-                                <span class="badge badge-secondary px-2">Referred</span>
-                            </t>
-                            <span><i class="text-muted fa fa-chevron-right"/></span>
-                            <t t-if="r['state'] == 'in_progress'">
-                                <span class="badge badge-primary px-2">In Progress</span>
-                            </t>
-                            <t t-else="">
-                                <span class="badge badge-secondary px-2">In Progress</span>
-                            </t>
-                            <span><i class="text-muted fa fa-chevron-right"/></span>
-                            <t t-if="r['state'] == 'done'">
-                                <span class="badge badge-primary px-2">Won</span>
-                            </t>
-                            <t t-else="">
-                                <span class="badge badge-secondary px-2">Won</span>
-                            </t>
-                        </div>
-                    </div>
-                </div>
+        <div class="pt-3">
+            <p class="font-weight-bolder text-600 m-0"><t t-esc="r['name']" /></p>
+            <p class="text-muted m-0"><t t-esc="r['company']" /></p>
+            <div>
+                <t t-if="r['state'] == 'new' || r['state'] == 'in_progress' ">
+                    <span t-attf-class="badge #{r['state'] == 'new' ? 'badge-primary' : 'bg-400'} px-2">Referred</span>
+                    <span><i class="text-muted fa fa-chevron-right"/></span>
+                    <span t-attf-class="badge #{r['state'] == 'in_progress' ? 'badge-primary' : 'bg-400'} px-2">In Progress</span>
+                    <span><i class="text-muted fa fa-chevron-right"/></span>
+                    <span t-attf-class="badge #{r['state'] == 'done' ? 'badge-primary' : 'bg-400'} px-2">Won</span>
+                </t>
+                <t t-if="r['state'] == 'done'">
+                    <span t-attf-class="badge badge-success px-2">Won</span>
+                </t>
+                <t t-if="r['state'] == 'cancel'">
+                    <span t-attf-class="badge badge-danger px-2">Lost</span>
+                </t>
             </div>
+        </div>
     </t>
 </templates>
