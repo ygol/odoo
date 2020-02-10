@@ -10,8 +10,8 @@
             <div class="col-12 col-lg-6">
                 <div class="o_setting_box">
                     <div class="o_setting_right_pane">
-                        <div id="referral_sale_setting">
-                            <label class="o_form_label">Reward</label>
+                        <div id="referral_sale_setting" class="container">
+                            <span class="o_form_label">Reward</span>
                             <div class="row">
                                 <label for="reward_value" class="col-lg-5 o_light_label"/>
                                 <field name="company_currency_id" invisible='1' />
@@ -26,18 +26,20 @@
                 </div>
                 <div class="o_setting_box mt-3">
                     <div class="o_setting_right_pane">
-                        <label class="o_form_label">Follow-up</label>
-                        <div class="row">
-                            <label for="redirect_page" class="col-lg-5 o_light_label"/>
-                            <field name="redirect_page"/>
-                        </div>
-                        <div class="row">
-                            <label for="salesteam_id" class="col-lg-5 o_light_label"/>
-                            <field name="salesteam_id"/>
-                        </div>
-                        <div class="row">
-                            <label for="salesperson_id" class="col-lg-5 o_light_label"/>
-                            <field name="salesperson_id"/>
+                        <div class="container">
+                            <span class="o_form_label">Follow-up</span>
+                            <div class="row">
+                                <label for="redirect_page" class="col-lg-5 o_light_label"/>
+                                <field name="redirect_page"/>
+                            </div>
+                            <div class="row">
+                                <label for="salesteam_id" class="col-lg-5 o_light_label"/>
+                                <field name="salesteam_id"/>
+                            </div>
+                            <div class="row">
+                                <label for="salesperson_id" class="col-lg-5 o_light_label"/>
+                                <field name="salesperson_id"/>
+                            </div>
                         </div>
                     </div>
                 </div>

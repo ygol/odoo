@@ -11,7 +11,7 @@
 
     <template id="portal_my_home_menu_referral" name="Portal layout : referral menu entries" inherit_id="portal.portal_breadcrumbs" priority="90">
         <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
-            <li t-if="page_name == 'referral'" t-attf-class="breadcrumb-item #{'active ' if not referral else ''}">
+            <li t-if="page_name == 'referral'" t-attf-class="breadcrumb-item #{'active' if not referral else ''}">
                 <a t-if="referral" t-attf-href="/referral">Referrals</a>
                 <t t-else="">Referral</t>
             </li>
@@ -24,15 +24,15 @@
     <template id="portal_my_home_referral" name="Portal My Home : Referrals" inherit_id="portal.portal_my_home" priority="90">
         <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
             <t t-call="portal.portal_docs_entry">
-                <t t-set="title">Referrals</t>
+                <t t-set="title">Referral</t>
                 <t t-set="url" t-value="'/referral'"/>
             </t>
         </xpath>
     </template>
 
-    <template id="referral_title_sub_template" inherit_id="res.config.settings">
+    <template id="referral_title_sub_template">
         <section class="text-center o_referral_cover_container pt48 pb48">
-            <h1>Get 200€ per referral</h1><!-- There should be a <t t-esc="reward_value"/> here-->
+            <h1>Get 200€ per referral</h1>
             <h3 class="lead">Get a 200€ Amazon Gift card every time one of your referrals signs up to a paid plan with Odoo</h3>
         </section>
     </template>
