@@ -8,7 +8,12 @@ class SaleOrder(models.Model):
 
     referred_email = fields.Char(string="Referral email", related='partner_id.email', description="The email used to identify the referred")
     referred_name = fields.Char(string="Referral name", related='partner_id.name', description="The name of the referred")
-    referred_company = fields.Char(string="Referral company", related='partner_id.company_id.name', description="The company of the referred")
+    referred_company = fields.Char(string="Referral company", compute='_compute_referred_company', store=False, description="The company of the referred")
+
+    @api.depends('partner_id', 'partner_id.company_id', 'partner_id.company_id.name')
+    def _compute_referred_company(self):
+        for r in self:
+            r.referred_company = r.partner_id.company_id.name if r.partner_id.company_id else ''
 
     def is_fully_paid(self):
         self.ensure_one()
@@ -33,20 +38,19 @@ class SaleOrder(models.Model):
         return r
 
     def write(self, vals):
-        return super().write(vals)
-        # if not self.env.user.has_group('website_crm_referral.group_lead_referral') and \
-        #    not self.to_reward and \
-        #    any([elem in vals for elem in ['state', 'invoice_status', 'amount_total']]):
-        #     old_state = self.get_referral_statuses(self.source_id, self.partner_id.email)
-        #     old_state = old_state['state']
-        #     r = super().write(vals)
-        #     new_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
+        if not self.env.user.has_group('website_crm_referral.group_lead_referral') and \
+           not self.to_reward and \
+           any([elem in vals for elem in ['state', 'invoice_status', 'amount_total']]):
+            old_state = self.get_referral_statuses(self.source_id, self.partner_id.email)
+            old_state = old_state['state'] if old_state else 'None'
+            r = super().write(vals)
+            new_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
 
-        #     self.check_referral_progress(old_state, new_state)
+            self.check_referral_progress(old_state, new_state)
 
-        #     return r
-        # else:
-        #     return super().write(vals)
+            return r
+        else:
+            return super().write(vals)
 
     @api.model
     def create(self, vals):

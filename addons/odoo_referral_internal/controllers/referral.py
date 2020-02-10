@@ -9,7 +9,7 @@ class Referral(http.Controller):
         referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
         if(referral_tracking):
             num_notif = referral_tracking.updates_count
-            referral_tracking.updates_count = 0
-            return {'updates_count': referral_tracking.updates_count}
+            referral_tracking.sudo().updates_count = 0
+            return {'updates_count': num_notif}
         else:
             return {}

@@ -55,7 +55,7 @@ class ReferralMixin(models.AbstractModel):
             elif new_state == 'cancel':
                 self._send_mail('referral_cancelled_email_template', 'Referral lost...', {'referred_name': self.referred_name})
             else:
-                self._send_mail('referral_state_changed_email_template', 'Referral progressed !', {'referred_name': self.referred_name, 'state': _(REFERRAL_STAGES[new_state])})
+                self._send_mail('referral_state_changed_email_template', 'Referral progressed !', {'referred_name': self.referred_name, 'state': _(self.REFERRAL_STAGES[new_state])})
 
     def find_others(self, utm_source_id, referred_email=None, extra_criteria=[]):
         criteria = [

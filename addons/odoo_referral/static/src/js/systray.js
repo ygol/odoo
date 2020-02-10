@@ -12,8 +12,8 @@ odoo.define('systray.systray_odoo_referral', function(require) {
         start:function(parent) {
             this._super.apply(this, arguments);
             ajax.jsonRpc('/referral/notifications_internal').then(function (data) {
-                if('result' in data && 'updates_count' in data.result) {
-                    self.$('.o_notification_counter').text(data.result.updates_count);
+                if('updates_count' in data) {
+                    self.$('.o_notification_counter').text(data.updates_count);
                 }
             });
         },

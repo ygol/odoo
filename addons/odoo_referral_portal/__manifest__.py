@@ -11,5 +11,5 @@
     'data': [
         'views/referral_template.xml',
     ],
-    'auto_install': False,  # TODO
+    'auto_install': True,
 }

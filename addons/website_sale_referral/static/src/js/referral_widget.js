@@ -38,6 +38,9 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
         this.is_demo_data = false;
         if(Object.keys(referrals).length == 0) {
             referrals = this.get_example_referral_statuses();
+            this.currency_symbol = '$';
+            this.currency_position = 'before';
+            this.reward_value = 200;
             this.is_demo_data = true;
         }
         this.referrals_count = Object.keys(referrals).length;

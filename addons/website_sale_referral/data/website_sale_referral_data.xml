@@ -18,7 +18,7 @@
             <field name="subject">Referral created !</field>
             <field name="body_html"><![CDATA[
          <p>Dear,<br/><br/>
-         Your referral has been created successfully, you can track its status here : ${object.get_link()}<br/></p>
+         Your referral has been created successfully, you can track its status here : ${object.get_tracking_link()}<br/></p>
               Regards.<br/> ]]></field>
               <field name="user_signature" eval="False"/>
         </record>
