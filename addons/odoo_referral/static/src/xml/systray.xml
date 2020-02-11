@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <templates>
    <t t-name="systray_odoo_referral.gift_icon">
-       <li class="gift_icon">
+       <li class="o_mail_systray_item">
            <a role="button" href="javascript:void(0)" class="gift_icon">
              <i class="fa fa-gift" /> <span class="o_notification_counter badge badge-pill"/>
            </a>
