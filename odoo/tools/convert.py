@@ -278,14 +278,14 @@ form: module.record_id""" % (xml_id,)
                             ('parser', 'parser'),
                             ('print_report_name', 'print_report_name'),
                             ):
-            if rec.get(field):
-                res[dest] = rec.get(field)
+            res[dest] = rec.get(field)
         if rec.get('auto'):
             res['auto'] = safe_eval(rec.get('auto','False'))
-        if rec.get('header'):
-            res['header'] = safe_eval(rec.get('header','False'))
+        else:
+            res["auto"] = False
 
-        res['multi'] = rec.get('multi') and safe_eval(rec.get('multi','False'))
+        res["header"] = rec.get("header") and safe_eval(rec.get("header", "False"))
+        res["multi"] = rec.get("multi") and safe_eval(rec.get("multi", "False"))
 
         xml_id = rec.get('id','')
         self._test_xml_id(xml_id)
@@ -296,10 +296,11 @@ form: module.record_id""" % (xml_id,)
             _logger.warning("bad `groups` for %s: %r", xid, rec.get("groups"))
         res["groups_id"] = [(6, 0, [self.id_get(g) for g in groups if g])]
 
+        pf_id = False
         if rec.get('paperformat'):
             pf_name = rec.get('paperformat')
             pf_id = self.id_get(pf_name)
-            res['paperformat_id'] = pf_id
+        res["paperformat_id"] = pf_id
 
         data = dict(xml_id=xid, values=res, noupdate=self.noupdate)
         report = self.env['ir.actions.report']._load_records([data], self.mode == 'update')
@@ -393,14 +394,15 @@ form: module.record_id""" % (xml_id,)
             _logger.warning("bad `groups` for %s: %r", xid, rec.get("groups"))
         res["groups_id"] = [(6, 0, [self.id_get(g) for g in groups if g])]
 
-        if rec.get('target'):
-            res['target'] = rec.get('target','')
+        res["target"] = rec.get("target", False)
         if binding_model:
             res['binding_model_id'] = self.env['ir.model']._get(binding_model).id
             res['binding_type'] = rec.get('binding_type') or 'action'
             views = rec.get('binding_views')
             if views is not None:
                 res['binding_view_types'] = views
+        else:
+            res["binding_model_id"] = res["binding_type"] = res["binding_view_types"] = False
         data = dict(xml_id=xid, values=res, noupdate=self.noupdate)
         self.env['ir.actions.act_window']._load_records([data], self.mode == 'update')
 
@@ -414,17 +416,18 @@ form: module.record_id""" % (xml_id,)
         values = {
             'parent_id': False,
             'active': nodeattr2bool(rec, 'active', default=True),
+            "web_icon": False,
+            "name": False,
+            "action": False,
         }
 
-        if rec.get('sequence'):
-            values['sequence'] = int(rec.get('sequence'))
+        values['sequence'] = int(rec.get('sequence', 16))
 
         if rec.get('parent'):
             values['parent_id'] = self.id_get(rec.attrib['parent'])
         else:
             if rec.get('web_icon'):
                 values['web_icon'] = rec.attrib['web_icon']
-
 
         if rec.get('name'):
             values['name'] = rec.attrib['name']
@@ -589,22 +592,32 @@ form: module.record_id""" % (xml_id,)
         record.append(Field(name, name='name'))
         record.append(Field(full_tpl_id, name='key'))
         record.append(Field("qweb", name='type'))
+
+        set_false = lambda field: record.append(Field(name=field, eval="False"))
+
         if 'track' in el.attrib:
             record.append(Field(el.get('track'), name='track'))
+        else: set_false("track")
         if 'priority' in el.attrib:
             record.append(Field(el.get('priority'), name='priority'))
+        else: set_false("priority")
         if 'inherit_id' in el.attrib:
             record.append(Field(name='inherit_id', ref=el.get('inherit_id')))
+        else: set_false("inherit_id")
         if 'website_id' in el.attrib:
             record.append(Field(name='website_id', ref=el.get('website_id')))
+        else: set_false("website_id")
         if 'key' in el.attrib:
             record.append(Field(el.get('key'), name='key'))
+        else: set_false("key")
         if el.get('active') in ("True", "False"):
             view_id = self.id_get(tpl_id, raise_if_not_found=False)
             if self.mode != "update" or not view_id:
                 record.append(Field(name='active', eval=el.get('active')))
+        elif self.mode != "update": set_false("active")
         if el.get('customize_show') in ("True", "False"):
             record.append(Field(name='customize_show', eval=el.get('customize_show')))
+        else: set_false("customize_show")
         groups = el.attrib.pop('groups', None)
         if groups:
             grp_lst = [("ref('%s')" % x) for x in groups.split(',')]
@@ -619,6 +632,8 @@ form: module.record_id""" % (xml_id,)
                 )
             )
             record.append(Field('primary', name='mode'))
+        else:
+            record.append(Field("extension", name="mode"))
         # inject complete <template> element (after changing node name) into
         # the ``arch`` field
         record.append(Field(el, name="arch", type="xml"))
