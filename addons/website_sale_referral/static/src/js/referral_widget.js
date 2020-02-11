@@ -44,18 +44,18 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
             this.is_demo_data = true;
         }
         this.referrals_count = Object.keys(referrals).length;
-        var referrals_won = 0;
+        this.referrals_won = 0;
         var r;
         for(r in referrals) {
             if(referrals[r].state == 'done') {
-                referrals_won++;
+                this.referrals_won++;
             }
         }
         var context = {
             'my_referrals': referrals,
             'reward_value': this.reward_value,
-            'total_reward': this.reward_value_to_text(referrals_won),
-            'potential_reward': this.reward_value_to_text(this.referrals_count)
+            'total_reward': this.reward_value_to_text(this.referrals_won),
+            'potential_reward': this.reward_value_to_text(this.referrals_count - this.referrals_won)
         };
         var rendered_html = QWeb.render('referral_tracking_sub_template', context);
         if(this.is_demo_data) {

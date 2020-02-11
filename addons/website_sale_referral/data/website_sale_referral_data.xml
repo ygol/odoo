@@ -17,37 +17,40 @@
             <field name="email_to">${object.referrer_email}</field>
             <field name="subject">Referral created !</field>
             <field name="body_html"><![CDATA[
-         <p>Dear,<br/><br/>
-         Your referral has been created successfully, you can track its status here : ${object.get_tracking_link()}<br/></p>
-              Regards.<br/> ]]></field>
-              <field name="user_signature" eval="False"/>
+                Dear ${ctx.get('referrer_name')}, <br/> <br/>
+                Your referral ${ctx.get('referred_name')} is registered and we hope you will be rewarded soon thanks to him/her. <br/>
+                You can track the status of the referral via this link: ${object.get_tracking_link()} <br/> ]]>
+            </field>
+            <field name="user_signature" eval="False"/>
         </record>
 
         <template id="referral_state_changed_email_template">
             <div>
                 <p>
-                    Dear,<br/><br/>
-                    Your referral for <t t-esc='referred_name'/> has reached a new state (<t t-esc='state'/>)<br/>
+                    Dear <t t-esc='referrer_name' />,<br/><br/>
+                    The status of your referral <t t-esc='referred_name'/> has moved forward and you are closer to being rewarded.<br />
+                    You can track the status of the referral via this link: <t t-esc="tracking_link" /><br/>
                 </p>
-                Regards.<br/>
             </div>
          </template>
 
         <template id="referral_cancelled_email_template">
             <div>
                 <p>
-                    Dear,<br/><br/>
+                    Dear <t t-esc='referrer_name' />,<br/><br/>
                     Your referral for <t t-esc='referred_name'/> did not succeed. Don't hesitate to invite more people to have a chance to get more rewards.<br/>
                 </p>
-                Regards.<br/></div>
+            </div>
          </template>
 
         <template id="referral_won_email_template">
             <div>
-                <p>Dear,<br/><br/>
-                    Your referral for <t t-esc='referred_name'/> was a success. Thanks a lot ! A salesperson will soon contact you to send you your reward !<br/>
+                <p>
+                    Dear <t t-esc='referrer_name' />,<br/><br/>
+                    Good news, your referral <t t-esc='referred_name' /> subscribed to our product/service. <br/>
+                    You will be contacted soon on this mail address to get your reward. <br />
+                    Have a nice day!
                 </p>
-                Regards.<br/>
             </div>
          </template>
 

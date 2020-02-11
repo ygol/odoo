@@ -16,6 +16,6 @@ class ReferralTracking(models.Model):
     ]
 
     def get_tracking_link(self):
-        tracking_url_relative = '/referral/track?access_token=%s' % (self.token)
+        tracking_url_relative = '/referral/%s' % (self.token)
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         return base_url + tracking_url_relative

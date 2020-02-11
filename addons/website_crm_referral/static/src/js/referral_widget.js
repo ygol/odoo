@@ -55,7 +55,7 @@ ReferralWidget.include({
             $("div[id='referral_tracking_sub_template']").append(rendered_html);
 
             var potential_reward = $("div[id='potential_reward']");
-            potential_reward.html(this.reward_value_to_text(++this.referrals_count));
+            potential_reward.html(this.reward_value_to_text(++this.referrals_count - this.referrals_won));
 
         }
     },

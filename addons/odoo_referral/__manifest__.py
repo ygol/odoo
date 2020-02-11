@@ -14,5 +14,5 @@
     'qweb': [
         "static/src/xml/systray.xml",
     ],
-    'auto_install': False,  # TODO
+    'auto_install': True,
 }

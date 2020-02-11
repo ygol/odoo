@@ -12,7 +12,7 @@ class Lead(models.Model):
 
     def _get_state_for_referral(self):
         self.ensure_one()
-        first_stage = self.env['crm.stage'].search([], limit=1).id  # ordered automatically by orm
+        first_stage = self.env['crm.stage'].search([], limit=1).id
         r = 'in_progress'
         if not self.active and self.probability == 0:
             r = 'cancel'
@@ -23,12 +23,13 @@ class Lead(models.Model):
         return r
 
     def write(self, vals):
-        if self.env.user.has_group('website_crm_referral.group_lead_referral') and \
+        if self.campaign_id == self.env.ref('website_sale_referral.utm_campaign_referral') and \
+           self.env.user.has_group('website_crm_referral.group_lead_referral') and \
            not self.to_reward and \
            any([elem in vals for elem in ['stage_id', 'type', 'active', 'probability']]):
-            old_state = self.get_referral_statuses(self.source_id, self.email_from)['state']
+            old_state = self.get_referral_statuses(self.source_id, self.referred_email)['state']
             r = super().write(vals)
-            new_state = self.get_referral_statuses(self.source_id, self.email_from)['state']
+            new_state = self.get_referral_statuses(self.source_id, self.referred_email)['state']
 
             self.check_referral_progress(old_state, new_state)
 
@@ -36,25 +37,22 @@ class Lead(models.Model):
         else:
             return super().write(vals)
 
-    def create(self, vals_list):
-        if(isinstance(vals_list, dict)):
-            vals_list = [vals_list]
-        for vals in vals_list:
-            if(vals.get('campaign_id', None) == self.env.ref('website_sale_referral.utm_campaign_referral').id):
-                if('user_id' not in vals):
-                    salesperson = literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesperson') or 'None')
-                    if(salesperson):
-                        vals['user_id'] = salesperson
-                if('team_id' not in vals):
-                    salesteam = literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesteam') or 'None')
-                    if(salesteam):
-                        vals['team_id'] = salesteam
+    @api.model
+    def create(self, vals):
+        if(vals.get('campaign_id', None) == self.env.ref('website_sale_referral.utm_campaign_referral').id):
+            if('user_id' not in vals):
+                salesperson = literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesperson') or 'None')
+                if(salesperson):
+                    vals['user_id'] = salesperson
+            if('team_id' not in vals):
+                salesteam = literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesteam') or 'None')
+                if(salesteam):
+                    vals['team_id'] = salesteam
 
-                tags = [(6, 0, literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.lead_tag_ids') or '[]'))]
-                if(tags):
-                    if('tag_ids' in vals):
-                        vals['tag_ids'].extend(tags)
-                    else:
-                        vals['tag_ids'] = tags
-
+            tags = [(6, 0, literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.lead_tag_ids') or '[]'))]
+            if(tags):
+                if('tag_ids' in vals):
+                    vals['tag_ids'].extend(tags)
+                else:
+                    vals['tag_ids'] = tags
         return super(Lead, self).create(vals)

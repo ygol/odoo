@@ -29,10 +29,10 @@ class Referral(http.Controller):
                 else:
                     return request.redirect('/referral/' + referral_tracking.token)
         else:
-            referral_tracking = True
-            while(referral_tracking):  # check that this token doesn't already exists
+            existing_token = True
+            while(existing_token):  # check that this token doesn't already exists
                 token = uuid.uuid4().hex[:-1]  # to avoid conflict with saas token
-                referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
+                existing_token = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
 
         utm_name = ('%s-%s') % (referrer_email, str(uuid.uuid4())[:6])
         utm_source_id = request.env['utm.source'].sudo().create({'name': utm_name})

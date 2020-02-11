@@ -13,7 +13,7 @@ class CrmReferral(Referral):
         if(post.get('channel') == 'direct' and post.get('name') and post.get('email')):
             lead_type = 'lead' if request.env['res.users'].with_user(SUPERUSER_ID).has_group('crm.group_use_lead') else 'opportunity'
 
-            request.env['crm.lead'].sudo().create({
+            lead = request.env['crm.lead'].sudo().create({
                 'name': 'Referral for ' + post.get('name'),
                 'type': lead_type,
                 'contact_name': post.get('name'),
@@ -25,6 +25,14 @@ class CrmReferral(Referral):
                 'campaign_id': request.env.ref('website_sale_referral.utm_campaign_referral').id,
                 'medium_id': request.env.ref('utm.utm_medium_direct').id
             })
+
+            referral_tracking = lead.get_referral_tracking()
+            partner_id = request.env['res.partner'].search([('referral_tracking_id', '=', referral_tracking.id)])
+            referrer_name = partner_id.name if partner_id else referral_tracking.referrer_email
+            template = request.env.ref('website_sale_referral.referral_tracker_email_template', False)
+            ctx = {'referrer_name': referrer_name, 'referred_name': post.get('name')}
+            print(ctx)
+            template.sudo().with_context(ctx).send_mail(referral_tracking.id, force_send=True)
 
         return r
 

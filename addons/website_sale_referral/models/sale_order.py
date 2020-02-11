@@ -38,11 +38,11 @@ class SaleOrder(models.Model):
         return r
 
     def write(self, vals):
-        if not self.env.user.has_group('website_crm_referral.group_lead_referral') and \
+        if self.campaign_id == self.env.ref('website_sale_referral.utm_campaign_referral') and \
+           not self.env.user.has_group('website_crm_referral.group_lead_referral') and \
            not self.to_reward and \
            any([elem in vals for elem in ['state', 'invoice_status', 'amount_total']]):
-            old_state = self.get_referral_statuses(self.source_id, self.partner_id.email)
-            old_state = old_state['state'] if old_state else 'None'
+            old_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
             r = super().write(vals)
             new_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
 
