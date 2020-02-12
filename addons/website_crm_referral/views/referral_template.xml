@@ -50,7 +50,7 @@
                     <textarea rows="3" style="min-height:100px" name="comment" class="form-control" placeholder="Tell us something about your referral..."></textarea>
                     </div>
                 </div>
-                <button type="button" id='create_lead' name="channel" value="direct" class="btn btn-primary float-right">Send</button>
+                <button type="button" id='create_lead' name="channel" value="direct" class="btn btn-primary float-right">Refer to Odoo</button>
             </div>
         </xpath>
     </template>
