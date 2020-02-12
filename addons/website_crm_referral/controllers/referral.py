@@ -1,13 +1,14 @@
-from odoo import http, tools, SUPERUSER_ID
-from odoo.http import request
-from ast import literal_eval
+# -*- coding: utf-8 -*-
+# Part of Odoo. See LICENSE file for full copyright and licensing details.
+from odoo import SUPERUSER_ID
+from odoo.http import request, route
 import uuid
 from odoo.addons.website_sale_referral.controllers.referral import Referral
 
 
 class CrmReferral(Referral):
 
-    @http.route(['/referral/send'], type='json', auth='public', method='POST')
+    @route(['/referral/send'], type='json', auth='public', method='POST')
     def referral_send(self, **post):
         r = super(CrmReferral, self).referral_send(**post)
         if(post.get('channel') == 'direct' and post.get('name') and post.get('email')):
@@ -31,7 +32,6 @@ class CrmReferral(Referral):
             referrer_name = partner_id.name if partner_id else referral_tracking.referrer_email
             template = request.env.ref('website_sale_referral.referral_tracker_email_template', False)
             ctx = {'referrer_name': referrer_name, 'referred_name': post.get('name')}
-            print(ctx)
             template.sudo().with_context(ctx).send_mail(referral_tracking.id, force_send=True)
 
         return r

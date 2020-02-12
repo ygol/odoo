@@ -1,28 +1,27 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
-
 from odoo import fields, models, api
-from odoo.tools import float_repr
 from ast import literal_eval
 
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
-    reward_value = fields.Monetary(string="Reward Value", currency_field='company_currency_id', readonly=False)
-    company_currency_id = fields.Many2one(
-        'res.currency',
-        related='company_id.currency_id',
-        string="Company Currency",
-        readonly=True,
-        help='Utility field to express amount currency')
+    reward_value = fields.Monetary(string="Reward Value", currency_field='currency_id', readonly=False)
 
     redirect_page = fields.Char(
         string="Page to promote",
         config_parameter='website_sale_referral.redirect_page',
-        help='Choose the page where referees are redirected when they click on the link sent by the referer',
+        help="Choose the page where referees are redirected when they click on the link sent by the referer",
         required=True,
-        default=lambda self: self.env["ir.config_parameter"].get_param("web.base.url"))
+        default=lambda self: self.env['ir.config_parameter'].get_param('web.base.url'))
+
+    twitter_message = fields.Char(
+        string="Twitter message",
+        config_parameter='website_sale_referral.twitter_message',
+        help="The default post message when users share on twitter",
+        default="Hi, I'm using this product/service and it's amazing! I'm sure you'll like it too. Test it by clicking here:"
+    )
 
     responsible_id = fields.Many2one(
         'res.users',

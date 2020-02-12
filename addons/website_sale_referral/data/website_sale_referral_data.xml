@@ -24,25 +24,6 @@
             <field name="user_signature" eval="False"/>
         </record>
 
-        <template id="referral_state_changed_email_template">
-            <div>
-                <p>
-                    Dear <t t-esc='referrer_name' />,<br/><br/>
-                    The status of your referral <t t-esc='referred_name'/> has moved forward and you are closer to being rewarded.<br />
-                    You can track the status of the referral via this link: <t t-esc="tracking_link" /><br/>
-                </p>
-            </div>
-         </template>
-
-        <template id="referral_cancelled_email_template">
-            <div>
-                <p>
-                    Dear <t t-esc='referrer_name' />,<br/><br/>
-                    Your referral for <t t-esc='referred_name'/> did not succeed. Don't hesitate to invite more people to have a chance to get more rewards.<br/>
-                </p>
-            </div>
-         </template>
-
         <template id="referral_won_email_template">
             <div>
                 <p>

@@ -14,7 +14,7 @@
                             <span class="o_form_label">Reward</span>
                             <div class="row">
                                 <label for="reward_value" class="col-lg-5 o_light_label"/>
-                                <field name="company_currency_id" invisible='1' />
+                                <field name="currency_id" invisible='1' />
                                 <field name="reward_value"/>
                             </div>
                             <div class="row" id="responsible_id">
@@ -31,6 +31,10 @@
                             <div class="row">
                                 <label for="redirect_page" class="col-lg-5 o_light_label"/>
                                 <field name="redirect_page"/>
+                            </div>
+                            <div class="row">
+                                <label for="twitter_message" class="col-lg-5 o_light_label"/>
+                                <field name="twitter_message"/>
                             </div>
                             <div class="row">
                                 <label for="salesteam_id" class="col-lg-5 o_light_label"/>

@@ -1,4 +1,6 @@
-from odoo import models, fields, api, _, SUPERUSER_ID
+# -*- coding: utf-8 -*-
+# Part of Odoo. See LICENSE file for full copyright and licensing details.
+from odoo import models, fields, api
 from ast import literal_eval
 
 
@@ -8,12 +10,12 @@ class SaleOrder(models.Model):
 
     referred_email = fields.Char(string="Referral email", related='partner_id.email', description="The email used to identify the referred")
     referred_name = fields.Char(string="Referral name", related='partner_id.name', description="The name of the referred")
-    referred_company = fields.Char(string="Referral company", compute='_compute_referred_company', store=False, description="The company of the referred")
+    referred_company_name = fields.Char(string="Referral company", compute='_compute_referred_company_name', store=False, description="The company of the referred")
 
     @api.depends('partner_id', 'partner_id.company_id', 'partner_id.company_id.name')
-    def _compute_referred_company(self):
-        for r in self:
-            r.referred_company = r.partner_id.company_id.name if r.partner_id.company_id else ''
+    def _compute_referred_company_name(self):
+        for order in self:
+            order.referred_company_name = order.partner_id.company_id.name if order.partner_id.company_id else ''
 
     def is_fully_paid(self):
         self.ensure_one()
@@ -28,26 +30,25 @@ class SaleOrder(models.Model):
 
     def _get_state_for_referral(self):
         self.ensure_one()
-        r = 'in_progress'
         if self.state == 'draft':
-            r = 'new'
+            return 'new'
         elif self.is_fully_paid():
-            r = 'done'
+            return 'done'
         elif self.state == 'cancel':
-            r = 'cancel'
-        return r
+            return 'cancel'
+        return 'in_progress'
 
     def write(self, vals):
-        if self.campaign_id == self.env.ref('website_sale_referral.utm_campaign_referral') and \
-           not self.env.user.has_group('website_crm_referral.group_lead_referral') and \
-           not self.to_reward and \
+        if not self.env.user.has_group('website_crm_referral.group_lead_referral') and \
            any([elem in vals for elem in ['state', 'invoice_status', 'amount_total']]):
-            old_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
-            r = super().write(vals)
-            new_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
-
-            self.check_referral_progress(old_state, new_state)
-
+            orders = list(filter(lambda o: o.campaign_id == self.env.ref('website_sale_referral.utm_campaign_referral') and not o.deserve_reward, self))
+            old_states = {}
+            for order in orders:
+                old_state[order] = order.get_referral_statuses(self.source_id, self.partner_id.email)['state']
+            r = super.write(vals)
+            for order in orders:
+                new_state = order.get_referral_statuses(self.source_id, self.partner_id.email)['state']
+                order.check_referral_progress(old_states[order], new_state)
             return r
         else:
             return super().write(vals)

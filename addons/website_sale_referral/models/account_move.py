@@ -1,4 +1,6 @@
-from odoo import models, fields, api
+# -*- coding: utf-8 -*-
+# Part of Odoo. See LICENSE file for full copyright and licensing details.
+from odoo import models
 
 
 class AccountMove(models.Model):
@@ -6,8 +8,9 @@ class AccountMove(models.Model):
 
     def action_invoice_paid(self):
         # OVERRIDE
-        sos = self.env['sale.order'].search([('invoice_ids', '=', self.id)])
-        for so in sos:
-            if(not so.to_reward and so.is_fully_paid()):
-                new_state = self.get_referral_statuses(self.source_id, self.partner_id.email)['state']
-                self.check_referral_progress('in_progress', new_state)
+        for invoice in self:
+            sos = self.env['sale.order'].search([('invoice_ids', '=', invoice.id)])
+            for so in sos:
+                if(not so.deserve_reward and so.is_fully_paid()):
+                    new_state = so.get_referral_statuses(so.source_id, so.partner_id.email)['state']
+                    so.check_referral_progress('in_progress', new_state)

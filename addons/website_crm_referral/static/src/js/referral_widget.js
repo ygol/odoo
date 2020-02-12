@@ -7,17 +7,16 @@ var ReferralWidget = require('website_sale_referral.referral_widget');
 var core = require('web.core');
 var QWeb = core.qweb;
 
+
 ReferralWidget.include({
     events: _.extend({}, ReferralWidget.prototype.events, {
         'click #create_lead' : 'onclick_submit'
     }),
 
     onclick_submit: function(ev) {
-        if(this.check_form_validity(ev.target.closest('button')))
-        {
+        if(this.check_form_validity(ev.target.closest('button'))) {
             var self = this;
-            this.onclick_common(ev, function(data)
-            {
+            this.onclick_common(ev, function(data) {
                 var params = self.get_params(ev);
                 self.empty_form();
                 self.inject_tracking(params);
@@ -51,7 +50,13 @@ ReferralWidget.include({
             this.is_demo_data = false;
         }
         else {
-            var rendered_html = QWeb.render('referral_tracking_single_sub_template', {'r':{'name': params.name, 'company': params.company, 'state': 'new'}});
+            var rendered_html = QWeb.render('referral_tracking_single_sub_template', {'r':{
+                'name': params.name,
+                'company': params.company,
+                'state': 'new',
+                'date': moment.utc().format("YYYY-MM-DD HH:mm:ss"),
+                'dateFromNow':this.timeFromNow(moment.utc().format("YYYY-MM-DD HH:mm:ss"))
+            }});
             $("div[id='referral_tracking_sub_template']").append(rendered_html);
 
             var potential_reward = $("div[id='potential_reward']");

@@ -1,14 +1,15 @@
-from odoo import http
-from odoo.http import request
+# -*- coding: utf-8 -*-
+# Part of Odoo. See LICENSE file for full copyright and licensing details.
+from odoo.http import Controller, route, request
 import uuid
 import json
 
 from werkzeug.exceptions import Forbidden, BadRequest
 
 
-class Referral(http.Controller):
+class Referral(Controller):
 
-    @http.route(['/referral'], type='http', auth='public', website=True)
+    @route(['/referral'], type='http', auth='public', website=True)
     def referral_unauth(self, force=False, **kwargs):
         if(not force and not request.website.is_public_user()):
             if(request.env.user.partner_id.referral_tracking_id):
@@ -19,7 +20,7 @@ class Referral(http.Controller):
         else:
             return request.render('website_sale_referral.referral_controller_template_register')
 
-    @http.route(['/referral/register'], type='http', auth='public', method='POST', website=True)
+    @route(['/referral/register'], type='http', auth='public', method='POST', website=True)
     def referral_register(self, referrer_email, token=None, **post):
         if(token):
             referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
@@ -45,7 +46,7 @@ class Referral(http.Controller):
             request.env.user.partner_id.update({'referral_tracking_id': referral_tracking.id})
         return request.redirect('/referral/' + referral_tracking.token)
 
-    @http.route(['/referral/<string:token>'], type='http', auth='public', website=True)
+    @route(['/referral/<string:token>'], type='http', auth='public', website=True)
     def referral(self, token, **post):
         referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
         if(not referral_tracking):
@@ -56,7 +57,7 @@ class Referral(http.Controller):
             'referrer_email': referral_tracking.referrer_email,
         })
 
-    @http.route(['/referral/tracking/<string:token>', '/referral/tracking'], type='json', auth='public', website=True)
+    @route(['/referral/tracking/<string:token>', '/referral/tracking'], type='json', auth='public', website=True)
     def referral_tracking(self, token=None, **kwargs):
         reward_value = request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.reward_value')
         currency_id = request.env.user.company_id.currency_id
@@ -80,7 +81,7 @@ class Referral(http.Controller):
             'my_referrals': my_referrals,
         }
 
-    @http.route(['/referral/send'], type='json', auth='public', method='POST', website=True)
+    @route(['/referral/send'], type='json', auth='public', method='POST', website=True)
     def referral_send(self, token, **post):
         referral_tracking = request.env['referral.tracking'].search([('token', '=', token)], limit=1)
         if(not referral_tracking):
@@ -105,6 +106,7 @@ class Referral(http.Controller):
         if channel == 'facebook':
             return 'https://www.facebook.com/sharer/sharer.php?u=%s' % link_tracker.short_url
         elif channel == 'twitter':
-            return 'https://twitter.com/intent/tweet?tw_p=tweetbutton&text=You have been refered Check here: %s' % link_tracker.short_url
+            twitter = request.env['ir.config_parameter'].sudo().get_param('website_sale_referral.twitter_message') or ''
+            return 'https://twitter.com/intent/tweet?tw_p=tweetbutton&text=%s %s' % (twitter, link_tracker.short_url)
         elif channel == 'linkedin':
             return 'https://www.linkedin.com/shareArticle?mini=true&url=%s' % link_tracker.short_url
