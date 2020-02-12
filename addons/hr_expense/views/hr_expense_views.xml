@@ -410,9 +410,7 @@
             <field name="act_window_id" ref="hr_expense_product"/>
         </record>
 
-
-
-        <record id="action_approved_expense" model="ir.actions.act_window">
+        <!-- <record id="action_approved_expense" model="ir.actions.act_window">
             <field name="name">Employee Expenses</field>
             <field name="res_model">hr.expense</field>
             <field name="view_mode">tree,kanban,form,pivot,graph</field>
@@ -426,9 +424,9 @@
                 From here the accountant will be able to approve as well as refuse the expenses which are verified by the HR Manager.
               </p>
             </field>
-        </record>
+        </record> -->
 
-        <record id="action_unsubmitted_expense" model="ir.actions.act_window">
+        <!-- <record id="action_unsubmitted_expense" model="ir.actions.act_window">
             <field name="name">Unreported Expenses</field>
             <field name="res_model">hr.expense</field>
             <field name="view_mode">tree,kanban,form,pivot,graph</field>
@@ -442,9 +440,9 @@
                 From here the accountant will be able to approve as well as refuse the expenses which are verified by the HR Manager.
               </p>
             </field>
-        </record>
+        </record> -->
 
-        <record id="hr_expense_action" model="ir.actions.act_window">
+        <!-- <record id="hr_expense_action" model="ir.actions.act_window">
             <field name="name">Expenses Analysis</field>
             <field name="res_model">hr.expense</field>
             <field name="view_mode">graph,pivot</field>
@@ -452,7 +450,7 @@
                 'search_default_approved': 1,
                 }
             </field>
-        </record>
+        </record> -->
 
         <record id="view_hr_expense_sheet_tree" model="ir.ui.view">
             <field name="name">hr.expense.sheet.tree</field>
@@ -807,7 +805,7 @@
             </field>
         </record>
 
-        <record id="action_request_approve_expense_sheet" model="ir.actions.act_window">
+        <!-- <record id="action_request_approve_expense_sheet" model="ir.actions.act_window">
             <field name="name">Reports to Approve</field>
             <field name="res_model">hr.expense.sheet</field>
             <field name="view_mode">tree,kanban,form,pivot,graph</field>
@@ -821,7 +819,7 @@
                 Once you have created your expense, submit it to your manager who will validate it.
               </p>
             </field>
-        </record>
+        </record> -->
 
         <record id="action_request_to_post_expense_sheet" model="ir.actions.act_window">
             <field name="name">Reports to Post</field>
@@ -839,7 +837,7 @@
             </field>
         </record>
 
-        <record id="action_request_to_pay_expense_sheet" model="ir.actions.act_window">
+        <!-- <record id="action_request_to_pay_expense_sheet" model="ir.actions.act_window">
             <field name="name">Reports to Pay</field>
             <field name="res_model">hr.expense.sheet</field>
             <field name="view_mode">tree,kanban,form,pivot,graph</field>
@@ -853,7 +851,7 @@
                 Once you have created your expense, submit it to your manager who will validate it.
               </p>
             </field>
-        </record>
+        </record> -->
 
         <record id="action_hr_expense_sheet_department_to_approve" model="ir.actions.act_window">
             <field name="name">Expense Reports to Approve</field>
