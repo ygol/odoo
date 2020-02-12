@@ -32,8 +32,8 @@
 
     <template id="referral_title_sub_template">
         <section class="text-center o_referral_cover_container pt48 pb48">
-            <h1>Get 200€ per referral</h1>
-            <h3 class="lead">Get a 200€ Amazon Gift card every time one of your referrals signs up to a paid plan with Odoo</h3>
+            <h1>Get $250 per referral</h1>
+            <h3 class="lead">Get a $250 Amazon Gift card when your referral signs up to a paid plan with Odoo</h3>
         </section>
     </template>
 
@@ -41,9 +41,9 @@
         <t t-call="website.layout">
             <div id="wrap" class="website_referral bg-light oe_structure">
                 <t t-call="website_sale_referral.referral_title_sub_template" />
-                <div class="container">
+                <div class="container pb-3">
                     <div class="row">
-                        <section class="col-12 col-lg-8 py-3">
+                        <section class="col-12 col-lg-8 pt-3">
                             <form t-attf-action="/referral/register" method="POST">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <div>
@@ -72,11 +72,12 @@
         <t t-call="website.layout">
             <div id="wrap" class="website_referral bg-light oe_structure">
                 <t t-call="website_sale_referral.referral_title_sub_template" />
-                <div class="container">
+                <div class="container pb96">
                     <div class="row referral_widget">
-                        <section class="col-12 col-lg-8 py-3">
-                                <div class="alert alert-primary d-lg-none d-block" role="alert">
-                                    You're connected as <b><t t-esc="referrer_email"/></b> <a href="/referral?force=true">Click here to change</a>
+                        <section class="col-12 col-lg-8 pt-3">
+                                <div class="alert alert-primary d-lg-none d-flex justify-content-between" role="alert">
+                                    <span>Connected as <b><t t-esc="referrer_email"/></b></span>
+                                    <a class="align-self-center" href="/referral?force=true">Change</a>
                                 </div>
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <input type="hidden" name="referral_token" id="referral_token" t-att-value="token" />
@@ -99,9 +100,10 @@
                                     </div>
                                 </div>
                         </section>
-                        <section class="col-12 col-lg-4 pt-3 pb-5 bg-white border">
-                            <div class="alert alert-primary d-none d-lg-block" role="alert">
-                                You're connected as <b><t t-esc="referrer_email"/></b> <br/><a href="/referral?force=true">Click here to change</a>
+                        <section class="col-12 col-lg-4 pt-3 pb-3 bg-white border">
+                            <div class="alert alert-primary pl-2 pr-2 d-none d-lg-flex justify-content-between" role="alert">
+                                <span>Connected as <b><t t-esc="referrer_email"/></b></span>
+                                <a href="/referral?force=true">Change</a>
                             </div>
                             <div id="referral_tracking_sub_template">
                                 <!-- Here will be the tracking infos, which are generated client-side by js-->
