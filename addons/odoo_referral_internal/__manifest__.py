@@ -11,6 +11,7 @@
     'version': '0.1',
     'depends': ['website', 'website_sale_referral'],
     'data': [
+        'views/referral_template.xml',
     ],
     'auto_install': False,
 }
