@@ -549,6 +549,9 @@
             Free Shipping in U.S.<br/>
             Buy now, get in 2 days
         </p>
+        <section class="container">
+            <div class="s_wsale_products_inner_content_accessible"/>
+        </section>
     </template>
 
     <template inherit_id='website_sale.product' id="product_picture_magnify" customize_show="True" name="Image Zoom">
