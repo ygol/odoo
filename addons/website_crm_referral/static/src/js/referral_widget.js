@@ -14,7 +14,7 @@ ReferralWidget.include({
     }),
 
     onclick_submit: function(ev) {
-        if(this.check_form_validity(ev.target.closest('button'))) {
+        if(this.check_form_validity()) {
             var self = this;
             this.onclick_common(ev, function(data) {
                 var params = self.get_params(ev);
@@ -22,6 +22,37 @@ ReferralWidget.include({
                 self.inject_tracking(params);
             });
         }
+    },
+
+    check_form_validity: function() {
+        var required_empty_input = false;
+        $("input:required").each( function(index, item) {
+            if(item.value === '') {
+                $(item).addClass('is-invalid');
+                required_empty_input = true;
+            }
+            else {
+                $(item).removeClass('is-invalid');
+            }
+        });
+
+        var invalid_email = false;
+        $("input[type='email']:required").each(function(index, item) {
+            var email = item.value;
+            if(email != '') {
+                var atpos = email.indexOf("@");
+                var dotpos = email.lastIndexOf(".");
+                if (atpos<1 || dotpos<atpos+2 || dotpos+2>=email.length) { //invalid
+                    $(item).addClass('is-invalid');
+                    invalid_email = true;
+                }
+                else {
+                    $(item).removeClass('is-invalid');
+                }
+            }
+        });
+
+        return !invalid_email && !required_empty_input;
     },
 
     empty_form:function() {
@@ -57,8 +88,9 @@ ReferralWidget.include({
                 'date': moment.utc().format("YYYY-MM-DD HH:mm:ss"),
                 'dateFromNow':this.timeFromNow(moment.utc().format("YYYY-MM-DD HH:mm:ss"))
             }});
-            $("div[id='referral_tracking_sub_template']").append(rendered_html);
-
+            var old_html = $("div[id='referral_tracking_single_sub_template']").html();
+            $("div[id='referral_tracking_single_sub_template']").html(rendered_html.concat(old_html));
+            
             var potential_reward = $("div[id='potential_reward']");
             potential_reward.html(this.reward_value_to_text(++this.referrals_count - this.referrals_won));
 

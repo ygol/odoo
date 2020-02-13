@@ -6,11 +6,11 @@ from ast import literal_eval
 
 class SaleOrder(models.Model):
     _name = 'sale.order'
-    _inherit = ['sale.order', 'referral.mixin']
+    _inherit = ['sale.order', 'referral.abstract']
 
-    referred_email = fields.Char(string="Referral email", related='partner_id.email', description="The email used to identify the referred")
-    referred_name = fields.Char(string="Referral name", related='partner_id.name', description="The name of the referred")
-    referred_company_name = fields.Char(string="Referral company", compute='_compute_referred_company_name', store=False, description="The company of the referred")
+    referred_email = fields.Char(related='partner_id.email')
+    referred_name = fields.Char(related='partner_id.name')
+    referred_company_name = fields.Char(compute='_compute_referred_company_name', store=False)
 
     @api.depends('partner_id', 'partner_id.company_id', 'partner_id.company_id.name')
     def _compute_referred_company_name(self):
@@ -44,24 +44,21 @@ class SaleOrder(models.Model):
             orders = list(filter(lambda o: o.campaign_id == self.env.ref('website_sale_referral.utm_campaign_referral') and not o.deserve_reward, self))
             old_states = {}
             for order in orders:
-                old_state[order] = order.get_referral_statuses(self.source_id, self.partner_id.email)['state']
-            r = super.write(vals)
+                old_states[order] = order._get_referral_statuses(self.source_id, self.partner_id.email)
+            r = super().write(vals)
             for order in orders:
-                new_state = order.get_referral_statuses(self.source_id, self.partner_id.email)['state']
-                order.check_referral_progress(old_states[order], new_state)
+                new_state = order._get_referral_statuses(self.source_id, self.partner_id.email)
+                order._check_referral_progress(old_states[order], new_state)
             return r
         else:
             return super().write(vals)
 
-    @api.model
-    def create(self, vals):
-        if(vals.get('campaign_id', None) == self.env.ref('website_sale_referral.utm_campaign_referral').id):
-            if('user_id' not in vals):
-                salesperson = literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesperson') or 'None')
-                if(salesperson):
-                    vals['user_id'] = salesperson
-            if('team_id' not in vals):
-                salesteam = literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.salesteam') or 'None')
-                if(salesteam):
-                    vals['team_id'] = salesteam
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('campaign_id', None) == self.env.ref('website_sale_referral.utm_campaign_referral').id:
+                if 'user_id' not in vals:
+                    vals['user_id'] = self.env.company.salesperson_id.id
+                if 'team_id' not in vals:
+                    vals['team_id'] = self.env.company.salesteam_id.id
         return super(SaleOrder, self).create(vals)

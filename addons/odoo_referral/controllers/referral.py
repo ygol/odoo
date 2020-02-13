@@ -8,4 +8,4 @@ class Referral(Controller):
     @route(['/referral/go'], type='json', auth='user', method='POST', website=True)
     def referral_go(self, **kwargs):
         request.env.user.referral_updates_count = 0
-        return {'link': request.env.user.get_referral_link()}
+        return {'link': request.env.user._get_referral_link()}

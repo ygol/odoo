@@ -54,11 +54,10 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
         }
 
         for(r in referrals) {
-            referrals[r].dateFromNow = this.timeFromNow(referrals[r].date);
+            referrals[r].dateFromNow = this.timeFromNow(referrals[r].iso_date);
         }
         var context = {
             'my_referrals': referrals,
-            'reward_value': this.reward_value,
             'total_reward': this.reward_value_to_text(this.referrals_won),
             'potential_reward': this.reward_value_to_text(this.referrals_count - this.referrals_won)
         };
@@ -70,7 +69,7 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
     },
 
     timeFromNow:function (date) {
-        var dateMoment = moment.utc(date, "YYYY-MM-DD HH:mm:ss");
+        var dateMoment = moment.utc(date); //iso8601 parsing
         if (moment().diff(dateMoment, 'seconds') < 45) {
             return _t("now");
         }
@@ -93,31 +92,31 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
                 'state': 'in_progress',
                 'name': 'Julie Richards',
                 'company': 'Ready Mat',
-                'date': moment.utc().add('hours', -1).format("YYYY-MM-DD HH:mm:ss")
+                'iso_date': moment.utc().add(-1, 'hours').format()
             },
             'brandon@example.com': {
                 'state': 'new',
                 'name': 'Brandon Freeman',
                 'company': 'Azure Interior',
-                'date': moment.utc().add('days', -1).format("YYYY-MM-DD HH:mm:ss")
+                'iso_date': moment.utc().add(-1, 'days').format()
             },
             'collen@example.com': {
                 'state': 'in_progress',
                 'name': 'Colleen Diaz',
                 'company': 'Azure Interior',
-                'date': moment.utc().add('days', -1).format("YYYY-MM-DD HH:mm:ss")
+                'iso_date': moment.utc().add(-1, 'days').format()
             },
             'kevin@example.com': {
                 'state': 'done',
                 'name': 'Kevin Leblanc',
                 'company': 'Azure Interior',
-                'date': moment.utc().add('days', -2).format("YYYY-MM-DD HH:mm:ss")
+                'iso_date': moment.utc().add(-2, 'days').format()
             },
             'lucille@example.com': {
                 'state': 'cancel',
                 'name': 'Lucille Camarero',
                 'company': 'Ready Mat',
-                'date': moment.utc().add('days', -2).format("YYYY-MM-DD HH:mm:ss")
+                'iso_date': moment.utc().add(-2, 'days').format()
             }
         };
     },
@@ -148,35 +147,6 @@ publicWidget.registry.ReferralWidget = publicWidget.Widget.extend({
         }).then(function (data) {
             then_func(data);
         });
-    },
-
-    check_form_validity: function(submit_button) {
-        var required_empty_input = $("input:required").filter(function(index, item) { return item.value === ''; });
-        if(required_empty_input) {
-            required_empty_input.each(function(index, item) { $(item).addClass('is-invalid'); });
-        }
-        var required_filled_input = $("input:required").filter(function(index, item) { return item.value != ''; });
-        if(required_filled_input) {
-            required_filled_input.each(function(index, item) { $(item).removeClass('is-invalid'); });
-        }
-
-        var invalid_email = false;
-        $("input[type='email']:required").each(function(index, item) {
-            var email = item.value;
-            if(email != '') {
-                var atpos = email.indexOf("@");
-                var dotpos = email.lastIndexOf(".");
-                if (atpos<1 || dotpos<atpos+2 || dotpos+2>=email.length) { //invalid
-                    $(item).addClass('is-invalid');
-                    invalid_email = true;
-                }
-                else {
-                    $(item).removeClass('is-invalid');
-                }
-            }
-        });
-
-        return !invalid_email && !required_empty_input.length;
     },
 
     get_params:function(ev) {

@@ -39,6 +39,6 @@ class Users(models.Model):
         dbuuid = self.env['ir.config_parameter'].sudo().get_param('database.uuid')
         return md5((mail + dbuuid).encode('utf-8')).hexdigest()
 
-    def get_referral_link(self):
+    def _get_referral_link(self):
         self.ensure_one()
         return DEST_SERVER_URL + '/referral/register?token=' + self._get_referral_token() + '&referrer_email=' + self.partner_id.email

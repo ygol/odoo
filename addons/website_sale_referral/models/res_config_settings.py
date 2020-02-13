@@ -8,11 +8,17 @@ class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
     reward_value = fields.Monetary(string="Reward Value", currency_field='currency_id', readonly=False)
+    currency_id = fields.Many2one(
+        'res.currency',
+        related='company_id.currency_id',
+        string='Company Currency',
+        readonly=True,
+        help='Utility field to express amount currency')
 
     redirect_page = fields.Char(
         string="Page to promote",
         config_parameter='website_sale_referral.redirect_page',
-        help="Choose the page where referees are redirected when they click on the link sent by the referer",
+        help="Choose the page where referrals are redirected when they click on the link sent by the referrer",
         required=True,
         default=lambda self: self.env['ir.config_parameter'].get_param('web.base.url'))
 
@@ -26,11 +32,12 @@ class ResConfigSettings(models.TransientModel):
     responsible_id = fields.Many2one(
         'res.users',
         string='Reward manager',
-        config_parameter='website_sale_referral.responsible_id',
+        related='company_id.responsible_id',
+        readonly=False,
         help='This person will get a new activity once a referral reaches the stage "won". Then he can take contact with the referrer to send him a reward')
 
-    salesteam_id = fields.Many2one('crm.team', string="Salesteam", config_parameter='website_sale_referral.salesteam')
-    salesperson_id = fields.Many2one('res.users', string="Salesperson", config_parameter='website_sale_referral.salesperson')
+    salesteam_id = fields.Many2one('crm.team', string="Salesteam", readonly=False, related='company_id.salesteam_id')
+    salesperson_id = fields.Many2one('res.users', string="Salesperson", readonly=False, related='company_id.salesperson_id')
 
     @api.model
     def get_values(self):
