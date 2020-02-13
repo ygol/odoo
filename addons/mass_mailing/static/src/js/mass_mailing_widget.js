@@ -43,18 +43,14 @@ var MassMailingFieldHtml = FieldHtml.extend({
      */
     commitChanges: function () {
         var self = this;
-        if (config.isDebug() && this.mode === 'edit') {
-            var layoutInfo = $.summernote.core.dom.makeLayoutInfo(this.wysiwyg.$editor);
-            $.summernote.pluginEvents.codeview(undefined, undefined, layoutInfo, false);
-        }
-        if (this.mode === 'readonly' || !this.isRendered) {
+        if (this.mode === 'readonly') {
             return this._super();
         }
         var fieldName = this.nodeOptions['inline-field'];
 
-        if (this.$content.find('.o_basic_theme').length) {
-            this.$content.find('*').css('font-family', '');
-        }
+        // if (this.$content.find('.o_basic_theme').length) {
+        //     this.$content.find('*').css('font-family', '');
+        // }
 
         var $editable = this.wysiwyg.getEditable();
 

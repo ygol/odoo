@@ -2,11 +2,36 @@ odoo.define('website.editMenu', function (require) {
 'use strict';
 
 var core = require('web.core');
-var EditorMenu = require('website.editor.menu');
 var websiteNavbarData = require('website.navbar');
 
 var _t = core._t;
 
+/**
+ * Todo in this file:
+ * - rename file to something like "PageManager" or "PageWidget"
+ *
+ * The role of this file:
+ *
+ * - auto-start the editor if configured
+ * - show a tooltip
+ * - start the widgets
+ *
+ * - handle welcome message
+ *   - render welcome message if the page is empty
+ *   - remove render message when editing
+ *
+ * \-- to move in the editor? --\
+ *
+ *
+ * \-- to export --\
+ * - show the building block message
+ *
+ *
+ * \-- to delete --\
+ *
+ * - start edit mode by loading the editorMenu
+ *
+ */
 /**
  * Adds the behavior when clicking on the 'edit' button (+ editor interaction)
  */
@@ -26,6 +51,7 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
         snippet_dropped: '_onSnippetDropped',
         edition_will_stopped: '_onEditionWillStop',
         edition_was_stopped: '_onEditionWasStopped',
+        request_save: '_onSnippetRequestSave',
     }),
 
     /**
@@ -49,7 +75,7 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
      *
      * @override
      */
-    start: function () {
+    start: async function () {
         var def = this._super.apply(this, arguments);
 
         // If we auto start the editor, do not show a welcome message
@@ -73,6 +99,13 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
                 $('.o_tooltip_container').addClass('show');
             }
         }, 1000); // ugly hack to wait that tooltip is loaded
+
+        self.wysiwyg = await self._createWysiwyg();
+        await this.wysiwyg.attachTo($('#wrapwrap'));
+
+        // todo: refactor
+        // Add class in navbar and hide the navbar.
+        self.trigger_up('edit_mode');
 
         return def;
     },
@@ -113,6 +146,31 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
         // which is required for Summernote to activate.
         this.$editorMessageElements.mousedown();
         return res;
+    },
+
+    saveToServer: async function() {
+        // this.trigger_up('edition_will_stopped');
+        await this.wysiwyg.saveToServer(false);
+    },
+
+    _createWysiwyg: async function () {
+        var context;
+        this.trigger_up('context_get', {
+            callback: function (ctx) {
+                context = ctx;
+            },
+        });
+
+        const Wysiwyg = await wysiwygLoader.loadWysiwyg();
+
+        return new Wysiwyg(this, {
+            snippets: 'website.snippets',
+            recordInfo: {
+                context: context,
+                data_res_model: 'website',
+                data_res_id: context.website_id,
+            }, value: $('#wrapwrap')[0].outerHTML,
+        });
     },
     /**
      * On save, the editor will ask to parent widgets if something needs to be
@@ -256,6 +314,19 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
             $target: ev.data.$target,
         });
         this._addEditorMessages();
+    },
+
+    /**
+     * Snippet (menu_data) can request to save the document to leave the page
+     *
+     * @private
+     * @param {OdooEvent} ev
+     * @param {object} ev.data
+     * @param {function} ev.data.onSuccess
+     * @param {function} ev.data.onFailure
+     */
+    _onSnippetRequestSave: function (ev) {
+        this.save(false).then(ev.data.onSuccess, ev.data.onFailure);
     },
 });
 
