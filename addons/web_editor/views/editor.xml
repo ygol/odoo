@@ -14,7 +14,9 @@
 <template id="assets_wysiwyg" name="Wysiwyg Editor Assets">
     <!-- lib -->
 
-    <t t-call-assets="web_editor.assets_summernote"/>
+    <!-- <t t-call-assets="web_editor.assets_summernote"/> -->
+    <!-- <t t-call-assets="web_editor.summernote"/> -->
+    <script type="text/javascript" src="/web_editor/static/lib/jabberwock/jabberwock.js"/>
 
     <link rel="stylesheet" type="text/css" href="/web_editor/static/lib/cropperjs/cropper.css"/>
     <script type="text/javascript" src="/web_editor/static/lib/cropperjs/cropper.js"/>
@@ -36,9 +38,10 @@
 
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/fonts.js"/>
     <script type="text/javascript" src="/web_editor/static/src/js/base.js"/>
-    <script type="text/javascript" src="/web_editor/static/src/js/editor/editor.js"/>
+    <script type="text/javascript" src="/web_editor/static/src/js/editor/summernote_custom_color.js"/>
+    <!-- <script type="text/javascript" src="/web_editor/static/src/js/editor/editor.js"/>
     <script type="text/javascript" src="/web_editor/static/src/js/editor/rte.js"/>
-    <script type="text/javascript" src="/web_editor/static/src/js/editor/rte.summernote.js"/>
+    <script type="text/javascript" src="/web_editor/static/src/js/editor/rte.summernote.js"/> -->
 
     <!-- widgets & plugins -->
 
@@ -58,12 +61,12 @@
     <!-- Launcher -->
 
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/wysiwyg.js"/>
-    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/wysiwyg_snippets.js"/>
-    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/wysiwyg_iframe.js"/>
+    <!-- <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/wysiwyg_snippets.js"/>
+    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/wysiwyg_iframe.js"/> -->
 </template>
 
 <template id="assets_summernote" name="Summernote">
-    <script type="text/javascript">
+    <!-- <script type="text/javascript">
         (function () {
             "use strict";
             odoo.define('jquery', function () {return $;});
@@ -111,7 +114,7 @@
         delete odoo.__define__;
         delete odoo.website_next_define;
     </script>
-    <link rel="stylesheet" type="text/css" href="/web_editor/static/lib/summernote/src/css/summernote.css"/>
+    <link rel="stylesheet" type="text/css" href="/web_editor/static/lib/summernote/src/css/summernote.css"/> -->
 </template>
 
 <template id="_assets_primary_variables" inherit_id="web._assets_primary_variables">
@@ -131,7 +134,8 @@
         <script type="text/javascript" src="/web_editor/static/lib/vkbeautify/vkbeautify.0.99.00.beta.js"/>
         <script type="text/javascript" src="/web_editor/static/src/js/common/ace.js"/>
         <script type="text/javascript" src="/web_editor/static/src/js/common/utils.js"/>
-        <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/root.js"/>
+        <script type="text/javascript" src="/web_editor/static/src/js/frontend/assetLoaderWidget.js"/>
+        <!-- <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/root.js"/> -->
     </xpath>
 </template>
 
@@ -148,6 +152,8 @@
         <link rel="stylesheet" type="text/scss" href="/web_editor/static/src/scss/web_editor.backend.scss"/>
     </xpath>
     <xpath expr="script[last()]" position="after">
+        <script type="text/javascript" src="/web_editor/static/lib/jabberwock/jabberwock.js"/>
+        <script type="text/javascript" src="/web_editor/static/src/js/frontend/loader.js" />
         <script type="text/javascript" src="/web_editor/static/src/js/backend/field_html.js" />
         <script type="text/javascript" src="/web_editor/static/src/js/backend/convert_inline.js" />
     </xpath>
@@ -172,6 +178,7 @@
     </xpath>
     <xpath expr="//script[last()]" position="after">
         <script type="text/javascript" src="/web_editor/static/src/js/frontend/loader.js"/>
+        <script type="text/javascript" src="/web_editor/static/src/js/frontend/default_options.js"/>
     </xpath>
 </template>
 

@@ -2,38 +2,10 @@ odoo.define('web_editor.wysiwyg.multizone.translate', function (require) {
 'use strict';
 
 var core = require('web.core');
-var webDialog = require('web.Dialog');
-var WysiwygMultizone = require('web_editor.wysiwyg.multizone');
-var rte = require('web_editor.rte');
 var Dialog = require('wysiwyg.widgets.Dialog');
-var websiteNavbarData = require('website.navbar');
 
 var _t = core._t;
 
-
-var RTETranslatorWidget = rte.Class.extend({
-    /**
-     * If the element holds a translation, saves it. Otherwise, fallback to the
-     * standard saving but with the lang kept.
-     *
-     * @override
-     */
-    _saveElement: function ($el, context, withLang) {
-        var self = this;
-        if ($el.data('oe-translation-id')) {
-            return this._rpc({
-                model: 'ir.translation',
-                method: 'save_html',
-                args: [
-                    [+$el.data('oe-translation-id')],
-                    this._getEscapedElement($el).html()
-                ],
-                context: context,
-            });
-        }
-        return this._super($el, context, withLang === undefined ? true : withLang);
-    },
-});
 
 var AttributeTranslateDialog = Dialog.extend({
     /**

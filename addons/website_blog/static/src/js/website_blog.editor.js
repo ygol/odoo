@@ -72,16 +72,6 @@ if (!$('.website_blog').length) {
     return Promise.reject("DOM doesn't contain '.website_blog'");
 }
 
-WysiwygMultizone.include({
-    /**
-     * @override
-     */
-    start: function () {
-        $('.js_tweet, .js_comment').off('mouseup').trigger('mousedown');
-        return this._super.apply(this, arguments);
-    },
-});
-
 options.registry.many2one.include({
 
     //--------------------------------------------------------------------------

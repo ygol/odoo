@@ -5,7 +5,8 @@ var ajax = require('web.ajax');
 var basic_fields = require('web.basic_fields');
 var config = require('web.config');
 var core = require('web.core');
-var Wysiwyg = require('web_editor.wysiwyg.root');
+// var Wysiwyg = reequire('web_editor.wysiwyg.root');
+var wysiwygLoader = require('web_editor.loader');
 var field_registry = require('web.field_registry');
 // must wait for web/ to add the default html widget, otherwise it would override the web_editor one
 require('web._field_registry');
@@ -13,7 +14,6 @@ require('web._field_registry');
 var _lt = core._lt;
 var TranslatableFieldMixin = basic_fields.TranslatableFieldMixin;
 var QWeb = core.qweb;
-var assetsLoaded;
 
 var jinjaRegex = /(^|\n)\s*%\s(end|set\s)/;
 
@@ -46,25 +46,13 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      * @override
      */
     willStart: function () {
-        var self = this;
-        this.isRendered = false;
         this._onUpdateIframeId = 'onLoad_' + _.uniqueId('FieldHtml');
         var defAsset;
         if (this.nodeOptions.cssReadonly) {
             defAsset = ajax.loadAsset(this.nodeOptions.cssReadonly);
         }
 
-        if (!assetsLoaded) { // avoid flickering when begin to edit
-            assetsLoaded = new Promise(function (resolve) {
-                var wysiwyg = new Wysiwyg(self, {});
-                wysiwyg.attachTo($('<textarea>')).then(function () {
-                    wysiwyg.destroy();
-                    resolve();
-                });
-            });
-        }
-
-        return Promise.all([this._super(), assetsLoaded, defAsset]);
+        return Promise.all([this._super(), defAsset]);
     },
     /**
      * @override
@@ -98,10 +86,8 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      * @override
      */
     commitChanges: function () {
-        var self = this;
-        if (config.isDebug() && this.mode === 'edit') {
-            var layoutInfo = $.summernote.core.dom.makeLayoutInfo(this.wysiwyg.$editor);
-            $.summernote.pluginEvents.codeview(undefined, undefined, layoutInfo, false);
+        if (this.mode == "edit") {
+            this._isDirty = this.wysiwyg.isDirty();
         }
         if (this.mode == "readonly" || !this.isRendered) {
             return this._super();
@@ -125,7 +111,7 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      * @override
      */
     getFocusableElement: function () {
-        return this.$target || $();
+        return this.$el;
     },
     /**
      * Do not re-render this field if it was the origin of the onchange call.
@@ -143,7 +129,7 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
             if (this.mode === 'edit') {
                 this.wysiwyg.setValue(value);
             } else {
-                this.$content.html(value);
+                this.$readOnlyContainer.html(value);
             }
         }
         return Promise.resolve();
@@ -157,29 +143,24 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      * @override
      */
     _getValue: function () {
-        var value = this.$target.val();
-        if (this.nodeOptions.wrapper) {
-            return this._unWrap(value);
-        }
-        return value;
+        return (this.mode === "edit" ? this.wysiwyg.getValue() : this.value);
     },
     /**
-     * Create the wysiwyg instance with the target (this.$target)
-     * then add the editable content (this.$content).
+     * Create the wysiwyg instance with the target (this.$editorContainer)
+     * then add the editable content (this.$readOnlyContainer).
      *
      * @private
      * @returns {$.Promise}
      */
-    _createWysiwygIntance: function () {
-        var self = this;
-        this.wysiwyg = new Wysiwyg(this, this._getWysiwygOptions());
+    _createWysiwygIntance: async function () {
+        const Wysiwyg = await wysiwygLoader.loadWysiwyg();
 
-        // by default this is synchronous because the assets are already loaded in willStart
-        // but it can be async in the case of options such as iframe, snippets...
-        return this.wysiwyg.attachTo(this.$target).then(function () {
-            self.$content = self.wysiwyg.$editor.closest('body, odoo-wysiwyg-container');
-            self._onLoadWysiwyg();
-            self.isRendered = true;
+        this.wysiwyg = new Wysiwyg(this, this._getWysiwygOptions());
+        // const $wysiwygContainer = $('<div class="wysiwyg-container"></div>');
+        // this.$el.append($wysiwygContainer)
+
+        return this.wysiwyg.attachTo(this).then( () => {
+            this._appendTemplateButton()
         });
     },
     /**
@@ -191,45 +172,19 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
     _getWysiwygOptions: function () {
         var self = this;
         return Object.assign({}, this.nodeOptions, {
+            // widget media to add in db, the informations
             recordInfo: {
                 context: this.record.getContext(this.recordParams),
                 res_model: this.model,
                 res_id: this.res_id,
             },
             noAttachment: this.nodeOptions['no-attachment'],
+            // inject js or css in iframe
             inIframe: !!this.nodeOptions.cssEdit,
             iframeCssAssets: this.nodeOptions.cssEdit,
             snippets: this.nodeOptions.snippets,
-
-            tabsize: 0,
-            height: 180,
-            generateOptions: function (options) {
-                var toolbar = options.toolbar || options.airPopover || {};
-                var para = _.find(toolbar, function (item) {
-                    return item[0] === 'para';
-                });
-                if (para && para[1] && para[1].indexOf('checklist') === -1) {
-                    para[1].splice(2, 0, 'checklist');
-                }
-                if (config.isDebug()) {
-                    options.codeview = true;
-                    var view = _.find(toolbar, function (item) {
-                        return item[0] === 'view';
-                    });
-                    if (view) {
-                        if (!view[1].includes('codeview')) {
-                            view[1].splice(-1, 0, 'codeview');
-                        }
-                    } else {
-                        toolbar.splice(-1, 0, ['view', ['codeview']]);
-                    }
-                }
-                if ("mailing.mailing" === self.model) {
-                    options.noVideos = true;
-                }
-                options.prettifyHtml = false;
-                return options;
-            },
+            value: this.value,
+            
         });
     },
     /**
@@ -264,8 +219,8 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
         if (this.nodeOptions.wrapper) {
             value = this._wrap(value);
         }
-        this.$target = $('<textarea>').val(value).hide();
-        this.$target.appendTo(this.$el);
+        // this.$editorContainer = $('div').val(value).hide();
+        // this.$editorContainer.appendTo(this.$el);
 
         var fieldNameAttachment = _.chain(this.recordData)
             .pairs()
@@ -314,7 +269,7 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
                     console.warn('Wysiwyg iframe double load detected');
                     return;
                 }
-                self.$content = $('#iframe_target', self.$iframe[0].contentWindow.document.body);
+                self.$readOnlyContainer = $('#iframe_target', self.$iframe[0].contentWindow.document.body);
                 resolver();
             };
 
@@ -354,14 +309,14 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
                 });
             });
         } else {
-            this.$content = $('<div class="o_readonly"/>').html(value);
-            this.$content.appendTo(this.$el);
+            this.$readOnlyContainer = $('<div class="o_readonly"/>').html(value);
+            this.$readOnlyContainer.appendTo(this.$el);
             resolver();
         }
 
-        def.then(function () {
-            self.$content.on('click', 'ul.o_checklist > li', self._onReadonlyClickChecklist.bind(self));
-        });
+        // def.then(function () {
+        //     self.$readOnlyContainer.on('click', 'ul.o_checklist > li', self._onReadonlyClickChecklist.bind(self));
+        // });
     },
     /**
      * @private
@@ -427,64 +382,44 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      * @param {OdooEvent} ev
      */
     _onChange: function (ev) {
+        // todo: why?
         this._doDebouncedAction.apply(this, arguments);
-
-        var $lis = this.$content.find('.note-editable ul.o_checklist > li:not(:has(> ul.o_checklist))');
-        if (!$lis.length) {
-            return;
-        }
-        var max = 0;
-        var ids = [];
-        $lis.map(function () {
-            var checklistId = parseInt(($(this).attr('id') || '0').replace(/^checklist-id-/, ''));
-            if (ids.indexOf(checklistId) === -1) {
-                if (checklistId > max) {
-                    max = checklistId;
-                }
-                ids.push(checklistId);
-            } else {
-                $(this).removeAttr('id');
-            }
-        });
-        $lis.not('[id]').each(function () {
-            $(this).attr('id', 'checklist-id-' + (++max));
-        });
     },
-    /**
-     * Method called when wysiwyg triggers a change.
-     *
-     * @private
-     * @param {OdooEvent} ev
-     */
-    _onReadonlyClickChecklist: function (ev) {
-        var self = this;
-        if (ev.offsetX > 0) {
-            return;
-        }
-        ev.stopPropagation();
-        ev.preventDefault();
-        var checked = $(ev.target).hasClass('o_checked');
-        var checklistId = parseInt(($(ev.target).attr('id') || '0').replace(/^checklist-id-/, ''));
+    // /**
+    //  * Method called when wysiwyg triggers a change.
+    //  *
+    //  * @private
+    //  * @param {OdooEvent} ev
+    //  */
+    // _onReadonlyClickChecklist: function (ev) {
+    //     var self = this;
+    //     if (ev.offsetX > 0) {
+    //         return;
+    //     }
+    //     ev.stopPropagation();
+    //     ev.preventDefault();
+    //     var checked = $(ev.target).hasClass('o_checked');
+    //     var checklistId = parseInt(($(ev.target).attr('id') || '0').replace(/^checklist-id-/, ''));
 
-        this._rpc({
-            route: '/web_editor/checklist',
-            params: {
-                res_model: this.model,
-                res_id: this.res_id,
-                filename: this.name,
-                checklistId: checklistId,
-                checked: !checked,
-            },
-        }).then(function (value) {
-            self._setValue(value);
-        });
-    },
+    //     this._rpc({
+    //         route: '/web_editor/checklist',
+    //         params: {
+    //             res_model: this.model,
+    //             res_id: this.res_id,
+    //             filename: this.name,
+    //             checklistId: checklistId,
+    //             checked: !checked,
+    //         },
+    //     }).then(function (value) {
+    //         self._setValue(value);
+    //     });
+    // },
     /**
      * Method called when the wysiwyg instance is loaded.
      *
      * @private
      */
-    _onLoadWysiwyg: function () {
+    _appendTemplateButton: function () {
         var $button = this._renderTranslateButton();
         $button.css({
             'font-size': '15px',

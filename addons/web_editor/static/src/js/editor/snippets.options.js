@@ -3077,6 +3077,7 @@ registry.many2one = SnippetOptionWidget.extend({
                 .each(function () {
                     var $node = $(this);
                     var options = $node.data('oe-contact-options');
+                    // todo: look at me
                     self._rpc({
                         model: 'ir.qweb.field.contact',
                         method: 'get_record_to_html',

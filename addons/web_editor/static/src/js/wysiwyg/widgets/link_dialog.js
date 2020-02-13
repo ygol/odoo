@@ -4,8 +4,8 @@ odoo.define('wysiwyg.widgets.LinkDialog', function (require) {
 var core = require('web.core');
 var Dialog = require('wysiwyg.widgets.Dialog');
 
-var dom = $.summernote.core.dom;
-var range = $.summernote.core.range;
+// var dom = $.summernote.core.dom;
+// var range = $.summernote.core.range;
 
 var _t = core._t;
 
@@ -27,160 +27,160 @@ var LinkDialog = Dialog.extend({
      * @constructor
      */
     init: function (parent, options, editable, linkInfo) {
-        var self = this;
-        this.options = options || {};
+        // var self = this;
+        // this.options = options || {};
 
         this._super(parent, _.extend({
             title: _t("Link to"),
         }, this.options));
 
-        this.trigger_up('getRecordInfo', {
-            recordInfo: this.options,
-            callback: function (recordInfo) {
-                _.defaults(self.options, recordInfo);
-            },
-        });
+        // this.trigger_up('getRecordInfo', {
+        //     recordInfo: this.options,
+        //     callback: function (recordInfo) {
+        //         _.defaults(self.options, recordInfo);
+        //     },
+        // });
 
-        this.editable = editable;
-        this.data = linkInfo || {};
+        // this.editable = editable;
+        // this.data = linkInfo || {};
 
-        this.data.className = "";
-        this.data.iniClassName = "";
+        // this.data.className = "";
+        // this.data.iniClassName = "";
 
-        var r = this.data.range;
-        this.needLabel = !r || (r.sc === r.ec && r.so === r.eo);
+        // var r = this.data.range;
+        // this.needLabel = !r || (r.sc === r.ec && r.so === r.eo);
 
-        if (this.data.range) {
-            this.data.iniClassName = $(this.data.range.sc).filter("a").attr("class") || "";
-            this.data.className = this.data.iniClassName.replace(/(^|\s+)btn(-[a-z0-9_-]*)?/gi, ' ');
+        // if (this.data.range) {
+        //     this.data.iniClassName = $(this.data.range.sc).filter("a").attr("class") || "";
+        //     this.data.className = this.data.iniClassName.replace(/(^|\s+)btn(-[a-z0-9_-]*)?/gi, ' ');
 
-            var is_link = this.data.range.isOnAnchor();
+        //     var is_link = this.data.range.isOnAnchor();
 
-            var sc = r.sc;
-            var so = r.so;
-            var ec = r.ec;
-            var eo = r.eo;
+        //     var sc = r.sc;
+        //     var so = r.so;
+        //     var ec = r.ec;
+        //     var eo = r.eo;
 
-            var nodes;
-            if (!is_link) {
-                if (sc.tagName) {
-                    sc = dom.firstChild(so ? sc.childNodes[so] : sc);
-                    so = 0;
-                } else if (so !== sc.textContent.length) {
-                    if (sc === ec) {
-                        ec = sc = sc.splitText(so);
-                        eo -= so;
-                    } else {
-                        sc = sc.splitText(so);
-                    }
-                    so = 0;
-                }
-                if (ec.tagName) {
-                    ec = dom.lastChild(eo ? ec.childNodes[eo-1] : ec);
-                    eo = ec.textContent.length;
-                } else if (eo !== ec.textContent.length) {
-                    ec.splitText(eo);
-                }
+        //     var nodes;
+        //     if (!is_link) {
+        //         if (sc.tagName) {
+        //             sc = dom.firstChild(so ? sc.childNodes[so] : sc);
+        //             so = 0;
+        //         } else if (so !== sc.textContent.length) {
+        //             if (sc === ec) {
+        //                 ec = sc = sc.splitText(so);
+        //                 eo -= so;
+        //             } else {
+        //                 sc = sc.splitText(so);
+        //             }
+        //             so = 0;
+        //         }
+        //         if (ec.tagName) {
+        //             ec = dom.lastChild(eo ? ec.childNodes[eo-1] : ec);
+        //             eo = ec.textContent.length;
+        //         } else if (eo !== ec.textContent.length) {
+        //             ec.splitText(eo);
+        //         }
 
-                nodes = dom.listBetween(sc, ec);
+        //         nodes = dom.listBetween(sc, ec);
 
-                // browsers can't target a picture or void node
-                if (dom.isVoid(sc) || dom.isImg(sc)) {
-                    so = dom.listPrev(sc).length-1;
-                    sc = sc.parentNode;
-                }
-                if (dom.isBR(ec)) {
-                    eo = dom.listPrev(ec).length-1;
-                    ec = ec.parentNode;
-                } else if (dom.isVoid(ec) || dom.isImg(sc)) {
-                    eo = dom.listPrev(ec).length;
-                    ec = ec.parentNode;
-                }
+        //         // browsers can't target a picture or void node
+        //         if (dom.isVoid(sc) || dom.isImg(sc)) {
+        //             so = dom.listPrev(sc).length-1;
+        //             sc = sc.parentNode;
+        //         }
+        //         if (dom.isBR(ec)) {
+        //             eo = dom.listPrev(ec).length-1;
+        //             ec = ec.parentNode;
+        //         } else if (dom.isVoid(ec) || dom.isImg(sc)) {
+        //             eo = dom.listPrev(ec).length;
+        //             ec = ec.parentNode;
+        //         }
 
-                this.data.range = range.create(sc, so, ec, eo);
-                $(editable).data("range", this.data.range);
-                this.data.range.select();
-            } else {
-                nodes = dom.ancestor(sc, dom.isAnchor).childNodes;
-            }
+        //         this.data.range = range.create(sc, so, ec, eo);
+        //         $(editable).data("range", this.data.range);
+        //         this.data.range.select();
+        //     } else {
+        //         nodes = dom.ancestor(sc, dom.isAnchor).childNodes;
+        //     }
 
-            if (dom.isImg(sc) && nodes.indexOf(sc) === -1) {
-                nodes.push(sc);
-            }
-            if (nodes.length > 1 || dom.ancestor(nodes[0], dom.isImg)) {
-                var text = "";
-                this.data.images = [];
-                for (var i=0; i<nodes.length; i++) {
-                    if (dom.ancestor(nodes[i], dom.isImg)) {
-                        this.data.images.push(dom.ancestor(nodes[i], dom.isImg));
-                        text += '[IMG]';
-                    } else if (!is_link && nodes[i].nodeType === 1) {
-                        // just use text nodes from listBetween
-                    } else if (!is_link && i===0) {
-                        text += nodes[i].textContent.slice(so, Infinity);
-                    } else if (!is_link && i===nodes.length-1) {
-                        text += nodes[i].textContent.slice(0, eo);
-                    } else {
-                        text += nodes[i].textContent;
-                    }
-                }
-                this.data.text = text;
-            }
-        }
+        //     if (dom.isImg(sc) && nodes.indexOf(sc) === -1) {
+        //         nodes.push(sc);
+        //     }
+        //     if (nodes.length > 1 || dom.ancestor(nodes[0], dom.isImg)) {
+        //         var text = "";
+        //         this.data.images = [];
+        //         for (var i=0; i<nodes.length; i++) {
+        //             if (dom.ancestor(nodes[i], dom.isImg)) {
+        //                 this.data.images.push(dom.ancestor(nodes[i], dom.isImg));
+        //                 text += '[IMG]';
+        //             } else if (!is_link && nodes[i].nodeType === 1) {
+        //                 // just use text nodes from listBetween
+        //             } else if (!is_link && i===0) {
+        //                 text += nodes[i].textContent.slice(so, Infinity);
+        //             } else if (!is_link && i===nodes.length-1) {
+        //                 text += nodes[i].textContent.slice(0, eo);
+        //             } else {
+        //                 text += nodes[i].textContent;
+        //             }
+        //         }
+        //         this.data.text = text;
+        //     }
+        // }
 
-        this.data.text = this.data.text.replace(/[ \t\r\n]+/g, ' ');
+        // this.data.text = this.data.text.replace(/[ \t\r\n]+/g, ' ');
 
-        var allBtnClassSuffixes = /(^|\s+)btn(-[a-z0-9_-]*)?/gi;
-        var allBtnShapes = /\s*(rounded-circle|flat)\s*/gi;
-        this.data.className = this.data.iniClassName
-            .replace(allBtnClassSuffixes, ' ')
-            .replace(allBtnShapes, ' ');
+        // var allBtnClassSuffixes = /(^|\s+)btn(-[a-z0-9_-]*)?/gi;
+        // var allBtnShapes = /\s*(rounded-circle|flat)\s*/gi;
+        // this.data.className = this.data.iniClassName
+        //     .replace(allBtnClassSuffixes, ' ')
+        //     .replace(allBtnShapes, ' ');
     },
     /**
      * @override
      */
     start: function () {
-        var self = this;
+        // var self = this;
 
-        this.$('input.link-style').prop('checked', false).first().prop('checked', true);
-        if (this.data.iniClassName) {
-            this.$('input[name="link_style_color"], select[name="link_style_size"] > option, select[name="link_style_shape"] > option').each(function () {
-                var $option = $(this);
-                if ($option.val() && self.data.iniClassName.match(new RegExp('(^|btn-| |btn-outline-)' + $option.val()))) {
-                    if ($option.is("input")) {
-                        $option.prop("checked", true);
-                    } else {
-                        $option.parent().find('option').removeAttr('selected').removeProp('selected');
-                        $option.parent().val($option.val());
-                        $option.attr('selected', 'selected').prop('selected', 'selected');
-                    }
-                }
-            });
-        }
-        if (this.data.url) {
-            var match = /mailto:(.+)/.exec(this.data.url);
-            this.$('input[name="url"]').val(match ? match[1] : this.data.url);
-            this._onURLInput();
-        }
+        // this.$('input.link-style').prop('checked', false).first().prop('checked', true);
+        // if (this.data.iniClassName) {
+        //     this.$('input[name="link_style_color"], select[name="link_style_size"] > option, select[name="link_style_shape"] > option').each(function () {
+        //         var $option = $(this);
+        //         if ($option.val() && self.data.iniClassName.match(new RegExp('(^|btn-| |btn-outline-)' + $option.val()))) {
+        //             if ($option.is("input")) {
+        //                 $option.prop("checked", true);
+        //             } else {
+        //                 $option.parent().find('option').removeAttr('selected').removeProp('selected');
+        //                 $option.parent().val($option.val());
+        //                 $option.attr('selected', 'selected').prop('selected', 'selected');
+        //             }
+        //         }
+        //     });
+        // }
+        // if (this.data.url) {
+        //     var match = /mailto:(.+)/.exec(this.data.url);
+        //     this.$('input[name="url"]').val(match ? match[1] : this.data.url);
+        //     this._onURLInput();
+        // }
 
-        // Hide the duplicate color buttons (most of the times, primary = alpha
-        // and secondary = beta for example but this may depend on the theme)
-        this.opened().then(function () {
-            var colors = [];
-            _.each(self.$('.o_link_dialog_color .o_btn_preview'), function (btn) {
-                var $btn = $(btn);
-                var color = $btn.css('background-color');
-                if (_.contains(colors, color)) {
-                    $btn.hide(); // Not remove to be able to edit buttons with those styles
-                } else {
-                    colors.push(color);
-                }
-            });
-        });
+        // // Hide the duplicate color buttons (most of the times, primary = alpha
+        // // and secondary = beta for example but this may depend on the theme)
+        // this.opened().then(function () {
+        //     var colors = [];
+        //     _.each(self.$('.o_link_dialog_color .o_btn_preview'), function (btn) {
+        //         var $btn = $(btn);
+        //         var color = $btn.css('background-color');
+        //         if (_.contains(colors, color)) {
+        //             $btn.hide(); // Not remove to be able to edit buttons with those styles
+        //         } else {
+        //             colors.push(color);
+        //         }
+        //     });
+        // });
 
-        this._adaptPreview();
+        // this._adaptPreview();
 
-        this.$('input:visible:first').focus();
+        // this.$('input:visible:first').focus();
 
         return this._super.apply(this, arguments);
     },
