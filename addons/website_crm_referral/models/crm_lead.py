@@ -2,6 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 from odoo import models, fields, api
 from ast import literal_eval
+from odoo.osv import expression
 
 
 class Lead(models.Model):
@@ -38,19 +39,32 @@ class Lead(models.Model):
         else:
             return super().write(vals)
 
+    @api.model
+    def is_email_known(self, email):
+        leads = self.search([('email_from', '=', email)], limit=1)
+        partner = self.env['res.partner'].search([('email', '=', email)], limit=1)
+        return len(leads) > 0 or len(partner) > 0
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('campaign_id', None) == self.env.ref('website_sale_referral.utm_campaign_referral').id:
-                if 'user_id' not in vals:
-                    vals['user_id'] = self.env.company.salesperson_id.id
-                if 'team_id' not in vals:
-                    vals['team_id'] = self.env.company.salesteam_id.id
+                email = vals.get('email_from')
+                if(not email and 'partner_id' in vals):
+                    email = self.env['res.partner'].browse(vals['partner_id']).email
+                if self.search([('referred_email', '=', email)], limit=1):
+                    vals.remove('campaign_id')
+                    vals.remove('utm_source_id')
+                else:
+                    if 'user_id' not in vals:
+                        vals['user_id'] = self.env.company.salesperson_id.id
+                    if 'team_id' not in vals:
+                        vals['team_id'] = self.env.company.salesteam_id.id
 
-                tags = [(6, 0, literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.lead_tag_ids') or '[]'))]
-                if tags:
-                    if 'tag_ids' in vals:
-                        vals['tag_ids'].extend(tags)
-                    else:
-                        vals['tag_ids'] = tags
+                    tags = [(6, 0, literal_eval(self.env['ir.config_parameter'].sudo().get_param('website_sale_referral.lead_tag_ids') or '[]'))]
+                    if tags:
+                        if 'tag_ids' in vals:
+                            vals['tag_ids'].extend(tags)
+                        else:
+                            vals['tag_ids'] = tags
         return super(Lead, self).create(vals)

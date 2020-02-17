@@ -57,8 +57,13 @@ class SaleOrder(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('campaign_id', None) == self.env.ref('website_sale_referral.utm_campaign_referral').id:
-                if 'user_id' not in vals:
-                    vals['user_id'] = self.env.company.salesperson_id.id
-                if 'team_id' not in vals:
-                    vals['team_id'] = self.env.company.salesteam_id.id
+                email = self.env['res.partner'].browse(vals['partner_id']).email
+                if self.search([('referred_email', '=', email)], limit=1):
+                    vals.remove('campaign_id')
+                    vals.remove('utm_source_id')
+                else:
+                    if 'user_id' not in vals:
+                        vals['user_id'] = self.env.company.salesperson_id.id
+                    if 'team_id' not in vals:
+                        vals['team_id'] = self.env.company.salesteam_id.id
         return super(SaleOrder, self).create(vals)

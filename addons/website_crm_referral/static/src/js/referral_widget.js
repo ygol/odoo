@@ -16,10 +16,22 @@ ReferralWidget.include({
     onclick_submit: function(ev) {
         if(this.check_form_validity()) {
             var self = this;
-            this.onclick_common(ev, function(data) {
-                var params = self.get_params(ev);
-                self.empty_form();
-                self.inject_tracking(params);
+            this._rpc({
+                model:'crm.lead',
+                method:'is_email_known',
+                args: [$("input[name='email']")[0].value]
+            }).then(function(data) {
+                if(data) {
+                    $("div[id='is_already_know_error']").removeClass("d-none");
+                }
+                else {
+                    $("div[id='is_already_know_error']").addClass("d-none");
+                    self.onclick_common(ev, function(data) {
+                        var params = self.get_params(ev);
+                        self.empty_form();
+                        self.inject_tracking(params);
+                    });
+                }
             });
         }
     },

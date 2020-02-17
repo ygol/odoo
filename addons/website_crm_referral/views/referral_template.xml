@@ -46,9 +46,12 @@
                 </div>
                 <div class="row">
                     <div class="form-group col-12">
-                    <label class="text-900 font-weight-normal">Comments</label>
-                    <textarea rows="3" style="min-height:100px" name="comment" class="form-control" placeholder="Tell us something about your referral..."></textarea>
+                        <label class="text-900 font-weight-normal">Comments</label>
+                        <textarea rows="3" style="min-height:100px" name="comment" class="form-control" placeholder="Tell us something about your referral..."></textarea>
                     </div>
+                </div>
+                <div role="alert" class="col-12 d-none alert alert-danger" id="is_already_know_error">
+                    This email address is already known by our services.
                 </div>
                 <button type="button" id='create_lead' name="channel" value="direct" class="btn btn-primary float-right">
                     <div id="create_referral_lead_button_text">
