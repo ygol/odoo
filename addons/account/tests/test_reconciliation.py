@@ -1619,7 +1619,7 @@ class TestReconciliationExec(TestAccountReconciliationCommon):
         })
         purchase_move.post()
 
-        reverse_date = fields.Date.today() + timedelta(days=+7)
+        reverse_date = fields.Date.context_today(self.env.user) + timedelta(days=+7)
         revertWidget = self.env['account.move.reversal'].create({
             'move_ids': [(6, 0, [purchase_move.id])],
             'date': reverse_date,

@@ -773,10 +773,12 @@ class ReportSaleDetails(models.AbstractModel):
         total = 0.0
         products_sold = {}
         taxes = {}
+        today = fields.Date.context_today(self)
         for order in orders:
             if user_currency != order.pricelist_id.currency_id:
                 total += order.pricelist_id.currency_id._convert(
-                    order.amount_total, user_currency, order.company_id, order.date_order or fields.Date.today())
+                    order.amount_total, user_currency,
+                    order.company_id, order.date_order or today)
             else:
                 total += order.amount_total
             currency = order.session_id.currency_id

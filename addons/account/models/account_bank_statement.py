@@ -892,7 +892,7 @@ class AccountBankStatementLine(models.Model):
 
             # Complete dicts to create both counterpart move lines and write-offs
             to_create = (counterpart_aml_dicts + new_aml_dicts)
-            date = self.date or fields.Date.today()
+            date = self.date or fields.Date.context_today(self)
             for aml_dict in to_create:
                 aml_dict['move_id'] = move.id
                 aml_dict['partner_id'] = self.partner_id.id

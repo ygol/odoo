@@ -41,7 +41,7 @@ class TimesheetCustomerPortal(CustomerPortal):
             'project': {'input': 'project', 'label': _('Project')},
         }
 
-        today = fields.Date.today()
+        today = fields.Date.context_today(request.env.user)
         quarter_start, quarter_end = date_utils.get_quarter(today)
         last_week = today + relativedelta(weeks=-1)
         last_month = today + relativedelta(months=-1)

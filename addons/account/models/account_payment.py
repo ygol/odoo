@@ -122,7 +122,11 @@ class account_payment(models.Model):
                         (dtype == 'out_invoice' and inv.move_type == 'out_refund')):
                     raise UserError(_("You cannot register payments for customer invoices and credit notes at the same time."))
 
-        amount = self._compute_payment_amount(invoices, invoices[0].currency_id, invoices[0].journal_id, rec.get('payment_date') or fields.Date.today())
+        amount = self._compute_payment_amount(
+            invoices, invoices[0].currency_id,
+            invoices[0].journal_id,
+            rec.get('payment_date') or fields.Date.context_today(self)
+        )
         rec.update({
             'currency_id': invoices[0].currency_id.id,
             'amount': abs(amount),
@@ -320,7 +324,7 @@ class account_payment(models.Model):
         '''
         company = journal.company_id
         currency = currency or journal.currency_id or company.currency_id
-        date = date or fields.Date.today()
+        date = date or fields.Date.context_today(self)
 
         if not invoices:
             return 0.0

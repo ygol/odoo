@@ -530,7 +530,7 @@ class ProductTemplate(models.Model):
             templates = self.with_company(company).sudo()
         if not company:
             company = self.env.company
-        date = self.env.context.get('date') or fields.Date.today()
+        date = self.env.context.get('date') or fields.Date.context_today(self)
 
         prices = dict.fromkeys(self.ids, 0.0)
         for template in templates:

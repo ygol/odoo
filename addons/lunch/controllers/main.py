@@ -122,7 +122,10 @@ class LunchController(http.Controller):
             raise AccessError(_('You are trying to impersonate another user, but this can only be done by a lunch manager'))
 
     def _get_current_lines(self, user_id):
-        return request.env['lunch.order'].search([('user_id', '=', user_id), ('date', '=', fields.Date.today()), ('state', '!=', 'cancelled')])
+        return request.env['lunch.order'].search([
+            ('user_id', '=', user_id),
+            ('date', '=', fields.Date.context_today(request.env.user)),
+            ('state', '!=', 'cancelled')])
 
     def _get_state(self, lines):
         """

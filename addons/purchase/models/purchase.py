@@ -368,6 +368,7 @@ class PurchaseOrder(models.Model):
         # Add the partner in the supplier list of the product if the supplier is not registered for
         # this product. We limit to 10 the number of suppliers for a product to avoid the mess that
         # could be caused for some generic products ("Miscellaneous").
+        self = self.with_company(self.company_id)
         for line in self.order_line:
             # Do not add a contact as a supplier
             partner = self.partner_id if not self.partner_id.parent_id else self.partner_id.parent_id

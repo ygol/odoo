@@ -70,9 +70,9 @@ class FleetVehicleLogContract(models.Model):
         if contract is in a closed state, return -1
         otherwise return the number of days before the contract expires
         """
+        today = fields.Date.context_today(record)
         for record in self:
             if record.expiration_date and record.state in ['open', 'expired']:
-                today = fields.Date.from_string(fields.Date.today())
                 renew_date = fields.Date.from_string(record.expiration_date)
                 diff_time = (renew_date - today).days
                 record.days_left = diff_time > 0 and diff_time or 0
@@ -103,7 +103,7 @@ class FleetVehicleLogContract(models.Model):
         # It manages the state of a contract, possibly by posting a message on the vehicle concerned and updating its status
         params = self.env['ir.config_parameter'].sudo()
         delay_alert_contract = int(params.get_param('hr_fleet.delay_alert_contract', default=30))
-        date_today = fields.Date.from_string(fields.Date.today())
+        date_today = fields.Date.today()
         outdated_days = fields.Date.to_string(date_today + relativedelta(days=+delay_alert_contract))
         nearly_expired_contracts = self.search([('state', '=', 'open'), ('expiration_date', '<', outdated_days)])
 
@@ -112,13 +112,13 @@ class FleetVehicleLogContract(models.Model):
                 'fleet.mail_act_fleet_contract_to_renew', contract.expiration_date,
                 user_id=contract.user_id.id)
 
-        expired_contracts = self.search([('state', 'not in', ['expired', 'closed']), ('expiration_date', '<',fields.Date.today() )])
+        expired_contracts = self.search([('state', 'not in', ['expired', 'closed']), ('expiration_date', '<', date_today)])
         expired_contracts.write({'state': 'expired'})
 
-        futur_contracts = self.search([('state', 'not in', ['futur', 'closed']), ('start_date', '>', fields.Date.today())])
+        futur_contracts = self.search([('state', 'not in', ['futur', 'closed']), ('start_date', '>', date_today)])
         futur_contracts.write({'state': 'futur'})
 
-        now_running_contracts = self.search([('state', '=', 'futur'), ('start_date', '<=', fields.Date.today())])
+        now_running_contracts = self.search([('state', '=', 'futur'), ('start_date', '<=', date_today)])
         now_running_contracts.write({'state': 'open'})
 
     def run_scheduler(self):

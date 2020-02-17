@@ -159,7 +159,7 @@ class HolidaysAllocation(models.Model):
             Method called by the cron task in order to increment the number_of_days when
             necessary.
         """
-        today = fields.Date.from_string(fields.Date.today())
+        today = fields.Date.today()
 
         holidays = self.search([('allocation_type', '=', 'accrual'), ('employee_id.active', '=', True), ('state', '=', 'validate'), ('holiday_type', '=', 'employee'),
                                 '|', ('date_to', '=', False), ('date_to', '>', fields.Datetime.now()),
@@ -391,7 +391,7 @@ class HolidaysAllocation(models.Model):
         for allocation in self:
             if allocation.holiday_status_id.validity_stop:
                 vstop = allocation.holiday_status_id.validity_stop
-                today = fields.Date.today()
+                today = fields.Date.context_today(self)
 
                 if vstop < today:
                     raise ValidationError(_('You can allocate %s only before %s.') % (allocation.holiday_status_id.display_name, allocation.holiday_status_id.validity_stop))

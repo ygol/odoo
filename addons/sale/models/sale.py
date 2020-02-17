@@ -282,7 +282,7 @@ class SaleOrder(models.Model):
             order.access_url = '/my/orders/%s' % (order.id)
 
     def _compute_is_expired(self):
-        today = fields.Date.today()
+        today = fields.Date.context_today(self)
         for order in self:
             order.is_expired = order.state == 'sent' and order.validity_date and order.validity_date < today
 

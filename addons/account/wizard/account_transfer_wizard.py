@@ -16,7 +16,7 @@ class AccountTransferWizard(models.TransientModel):
     move_line_ids = fields.One2many(string="Journal Items", comodel_name='account.move.line', compute="_retrieve_fields_from_context", help="Journal entries to transfer accounts from.")
     destination_account_id = fields.Many2one(string="To", comodel_name='account.account', help="Account to transfer to.")
     journal_id = fields.Many2one(string="Journal", comodel_name='account.journal', help="Journal where to create the transfer entry.")
-    date = fields.Date(string="Date", help="Date to be set on the transfer entry.", default=fields.Date.today)
+    date = fields.Date(string="Date", help="Date to be set on the transfer entry.", default=fields.Date.context_today)
     company_id = fields.Many2one(string="Company", comodel_name='res.company', compute='_retrieve_fields_from_context')
     display_currency_helper = fields.Boolean(string="Currency Conversion Helper", compute='_compute_display_currency_helper', help="Technical field used to indicate whether or not to display the tooltip informing a currency conversion will be performed with the transfer")
     aml_preview_data = fields.Text(string="AML Preview Data", compute='_compute_aml_preview_data', help="Preview JSON data for aml preview widget")

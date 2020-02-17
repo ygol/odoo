@@ -106,6 +106,7 @@ class AccountMove(models.Model):
                         price_unit, move.currency_id,
                         move.company_id, fields.Date.today(), round=False
                     )
+                    # VFE why not move.date instead of today ???
 
                 invoice_cur_prec = move.currency_id.decimal_places
 

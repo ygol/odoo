@@ -45,6 +45,7 @@ class AccountMoveLine(models.Model):
     def write(self, vals):
         # OVERRIDE
         res = super(AccountMoveLine, self).write(vals)
+        today = fields.Date.context_today(self)
 
         to_process = self.filtered(lambda line: line.move_id.move_type == 'out_invoice' and line.product_id.membership)
 
@@ -70,7 +71,7 @@ class AccountMoveLine(models.Model):
                 'partner': line.move_id.partner_id.id,
                 'membership_id': line.product_id.id,
                 'member_price': line.price_unit,
-                'date': fields.Date.today(),
+                'date': today,
                 'date_from': date_from,
                 'date_to': date_to,
                 'account_invoice_line': line.id,
@@ -96,6 +97,7 @@ class AccountMoveLine(models.Model):
         if not to_process:
             return lines
 
+        today = fields.Date.context_today(self)
         memberships_vals = []
         for line in to_process:
             date_from = line.product_id.membership_date_from
@@ -106,7 +108,7 @@ class AccountMoveLine(models.Model):
                 'partner': line.move_id.partner_id.id,
                 'membership_id': line.product_id.id,
                 'member_price': line.price_unit,
-                'date': fields.Date.today(),
+                'date': today,
                 'date_from': date_from,
                 'date_to': date_to,
                 'account_invoice_line': line.id,

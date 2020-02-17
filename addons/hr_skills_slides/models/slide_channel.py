@@ -17,8 +17,8 @@ class SlideChannelPartner(models.Model):
             self.env['hr.resume.line'].create({
                 'employee_id': employee.id,
                 'name': channel.name,
-                'date_start': fields.Date.today(),
-                'date_end': fields.Date.today(),
+                'date_start': fields.Date.context_today(employee),
+                'date_end': fields.Date.context_today(employee),
                 'description': channel.description,
                 'line_type_id': line_type and line_type.id,
                 'display_type': 'course',

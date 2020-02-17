@@ -159,7 +159,7 @@ class LunchOrder(models.Model):
         domain = [
             ('user_id', '=', values.get('user_id', self.default_get(['user_id'])['user_id'])),
             ('product_id', '=', values.get('product_id', False)),
-            ('date', '=', fields.Date.today()),
+            ('date', '=', fields.Date.context_today(self)),
             ('note', '=', values.get('note', False)),
         ]
         toppings = values.get('toppings', [])

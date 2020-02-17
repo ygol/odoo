@@ -26,7 +26,7 @@ class ResCompany(models.Model):
         fiscalyear_lock_date = vals.get('fiscalyear_lock_date') and fields.Date.from_string(vals['fiscalyear_lock_date'])
         tax_lock_date = vals.get('tax_lock_date') and fields.Date.from_string(vals['tax_lock_date'])
 
-        previous_month = fields.Date.today() + relativedelta(months=-1)
+        previous_month = fields.Date.context_today(self) + relativedelta(months=-1)
         days_previous_month = calendar.monthrange(previous_month.year, previous_month.month)
         previous_month = previous_month.replace(day=days_previous_month[1])
         for company in self:
