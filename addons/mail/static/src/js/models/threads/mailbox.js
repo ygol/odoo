@@ -114,26 +114,6 @@ var Mailbox = SearchableThread.extend({
         num = _.isNumber(num) ? num : 1;
         this._mailboxCounter = Math.max(this._mailboxCounter + num, 0);
     },
-    /**
-     * Marks all messages from the mailbox as read. At the moment, this method
-     * makes only sense for 'Inbox'.
-     *
-     * @param  {Array} domain
-     * @return {Promise} resolved when all messages have been marked as read
-     *   on the server
-     */
-    markAllMessagesAsRead: function (domain) {
-        if (this._id === 'mailbox_inbox' && this.getMailboxCounter() > 0) {
-            return this._rpc({
-                model: 'mail.message',
-                method: 'mark_all_as_read',
-                kwargs: {
-                    domain: domain,
-                },
-            });
-        }
-        return Promise.resolve();
-    },
 
     //--------------------------------------------------------------------------
     // Private
