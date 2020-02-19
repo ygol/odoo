@@ -41,7 +41,9 @@ State Data/省份数据
         'data/l10n_cn_chart_post_data.xml',
         'data/account_tax_template_data.xml',
         'data/account_chart_template_data.xml',
-        'views/account_move_view.xml'
+        'views/account_move_view.xml',
+        'views/account_report.xml',
+        'views/report_voucher.xml',
     ],
     'post_init_hook': 'load_translations',
 }

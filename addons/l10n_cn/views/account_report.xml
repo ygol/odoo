@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- QWeb Reports -->
+        <report
+            id="account_voucher_cn"
+            model="account.move"
+            string="Voucher"
+            report_type="qweb-pdf"
+            name="l10n_cn.report_voucher"
+            file="l10n_cn.report_voucher"
+            print_report_name="'Voucher_%s' % (object.name)"
+        />
+    </data>
+</odoo>
