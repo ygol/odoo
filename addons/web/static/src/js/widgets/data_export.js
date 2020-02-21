@@ -160,7 +160,7 @@ var DataExport = Dialog.extend({
         if (this.isCompatibleMode) {
             exportedFields.unshift({ name: 'id', label: _t('External ID') });
         }
-        this._rpc({
+        this.call('async_job', 'asyncRpc', {
             route: '/web/async_export/' + exportFormat,
             params: {
                 data: JSON.stringify({

@@ -1938,10 +1938,11 @@ class CSVExport(ExportFormat, http.Controller):
     @http.route('/web/async_export/csv', type='json', auth="user")
     def index_async(self, data, token):
         model_desc = request.env[json.loads(data)['model']]._description
-        request.env['ir.async'].call(
+        job = request.env['ir.async'].call(
             target=request.env['ir.async']._export_csv,
             args=(json.loads(data),),
             description=_("%s CSV export") % model_desc)
+        return {'asyncJobId': job.id}
 
     @property
     def content_type(self):
@@ -1981,10 +1982,11 @@ class ExcelExport(ExportFormat, http.Controller):
     @http.route('/web/async_export/xlsx', type='json', auth="user")
     def index_async(self, data, token):
         model_desc = request.env[json.loads(data)['model']]._description
-        request.env['ir.async'].call(
+        job = request.env['ir.async'].call(
             target=request.env['ir.async']._export_xlsx,
             args=(json.loads(data),),
             description=_("%s XLSX export") % model_desc)
+        return {'asyncJobId': job.id}
 
     @property
     def content_type(self):

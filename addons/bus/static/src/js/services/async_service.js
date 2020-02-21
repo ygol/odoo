@@ -3,6 +3,7 @@ odoo.define('bus.AsyncJobService', function (require) {
 
 const AbstractService = require('web.AbstractService');
 const { serviceRegistry, bus, _lt, _t } = require('web.core');
+const { blockUI, unblockUI } = require("web.framework");
 const session = require('web.session');
 
 /**
@@ -19,6 +20,7 @@ const FAILED = 'failed';          // the task failed with an error
 const TASK_CREATED_TITLE = _lt("Background task created");
 const TASK_CREATED_CONTENT = _lt("The task %s has been scheduled for processing and will start shortly.");
 const TASK_DONE_TITLE = _lt("Background task completed");
+const TASK_PROCESSING_CONTENT = _lt("The task %s has been moved to the background.");
 const TASK_SUCCEEDED_CONTENT = _lt("The task %s is ready, you can resume its execution via the task list.");
 const TASK_FAILED_CONTENT = _lt("The task %s failed, you can show the error via the task list.");
 const TASK_DONE_CONTENT = _lt("The task %s has been completed by the server.");
@@ -34,9 +36,14 @@ const AsyncJobService = AbstractService.extend({
 
     /**
      * @override
+     *
+     * _jobs is a map jobid -> job object
+     * _watchedJobs is a set containing all jobids we should automatically
+     *     run when the job succeed or fail
      */
     init() {
         this._jobs = {};
+        this._watchedJobs = {};
         return this._super(...arguments);
     },
 
@@ -55,10 +62,30 @@ const AsyncJobService = AbstractService.extend({
     //--------------------------------------------------------------------------
 
     /**
-     * @return {object} job map id -> job
+     * Call an asynchronous capable endpoint, waiting up to 5 seconds
+     * for the asynchronous task completes to automomatically execute
+     * its action (if any).
+     * 
+     * @param {object} params ajax rpc params
+     * @param {object} options ajac rpc options
+     * @return {promise} original rpc response
      */
-    getJobs() {
-        return this._jobs;
+    asyncRpc(params, options) {
+        options = options || {}
+        options.shadow = true;
+        blockUI();
+        return this._rpc(params).then(({asyncJobId}) => {
+            if (asyncJobId) {
+                this._fakeSyncRegister(asyncJobId, 5000);
+            } else {
+                if (asyncJobId === undefined) {
+                    console.warn("The called endpoint is not asynchronous or the asyncJobId key was not set.");
+                };
+                unblockUI();
+            }
+        }, () => {
+            unblockUI()
+        });
     },
 
 
@@ -123,6 +150,39 @@ const AsyncJobService = AbstractService.extend({
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
+
+    /**
+     * Register a jobId returned by the HTTP response of an asynchronous
+     * capable endpoint to be automatically executed
+     * 
+     * @param {integer} jobId
+     * @param {integer} [unregisterDelai]
+     */
+    _fakeSyncRegister(jobId, unregisterDelai) {
+        this._watchedJobs[jobId] = true;
+        if (unregisterDelai) {
+            setTimeout(() => {this._fakeSyncResume(jobId)}, unregisterDelai)
+        }
+    },
+
+    /**
+     * Resume a job registered by _fakeSyncRegister
+     * 
+     * @param {integer} jobId
+     */
+    _fakeSyncResume(jobId) {
+        if (!(jobId in this._watchedJobs)) return;
+        delete this._watchedJobs[jobId];
+        const defaultJob = {state: CREATED, name: _t("Unknown")};
+        const job = this._jobs[jobId] || defaultJob;
+
+        unblockUI();
+        if (job.state === CREATED || job.state === PROCESSING) {
+            this.do_notify(TASK_CREATED_TITLE, _.str.sprintf(TASK_PROCESSING_CONTENT.toString(), job.name));
+        } else {
+            this.resume(job.id);
+        }
+    },
 
     /**
      * Shows a notification for newly created jobs and when jobs are done
@@ -194,9 +254,15 @@ const AsyncJobService = AbstractService.extend({
             if (order.indexOf(job.state) < order.indexOf(oldJob.state))
                 continue;
 
-            this._notify(job, oldJob.state)
-
             this._jobs[job.id] = job;
+
+            // Notify non watched jobs, auto execute terminated watched ones
+            if (!(job.id in this._watchedJobs)) {
+                this._notify(job, oldJob.state)
+            } else if (order.indexOf(job.state) > order.indexOf(PROCESSING)) {
+                this._fakeSyncResume(job.id);
+            }
+
             bus.trigger('async_job', job);
         }
     },
