@@ -41,7 +41,7 @@
         <t t-call="website.layout">
             <div id="wrap" class="website_referral bg-light oe_structure">
                 <t t-call="website_sale_referral.referral_title_sub_template" />
-                <div class="container pb-3">
+                <div class="container pb96">
                     <div class="row">
                         <section class="col-12 col-lg-8 pt-3">
                             <form t-attf-action="/referral/register" method="POST">
