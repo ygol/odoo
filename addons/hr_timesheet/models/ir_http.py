@@ -13,9 +13,10 @@ class Http(models.AbstractModel):
         """
         result = super(Http, self).session_info()
         if self.env.user.has_group('base.group_user'):
-            company = self.env.company
-            encoding_uom = company.timesheet_encode_uom_id
-
+            encoding_uom = self.env['uom.uom']._get_uom_by_config_parameter('hr_timesheet.timesheet_encode_uom_id')
+            # self.env['uom.uom'].browse(int(self.env['ir.config_parameter'].sudo().get_param('hr_timesheet.timesheet_encode_uom_id')))
+            project_time_mode = self.env['uom.uom']._get_uom_by_config_parameter('hr_timesheet.project_time_mode_id')
+            # self.env['uom.uom'].browse(int(self.env['ir.config_parameter'].sudo().get_param('hr_timesheet.project_time_mode_id')))
             result['timesheet_uom'] = encoding_uom.read(['name', 'rounding', 'timesheet_widget'])[0]
-            result['timesheet_uom_factor'] = company.project_time_mode_id._compute_quantity(1.0, encoding_uom, round=False)  # convert encoding uom into stored uom to get conversion factor
+            result['timesheet_uom_factor'] = project_time_mode._compute_quantity(1.0, encoding_uom, round=False)  # convert encoding uom into stored uom to get conversion factor
         return result
