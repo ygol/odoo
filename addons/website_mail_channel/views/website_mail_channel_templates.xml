@@ -4,61 +4,63 @@
 <template id="mail_channels" name="Mailing Lists">
     <t t-call="website.layout">
         <div id="wrap" class="oe_structure oe_empty">
-            <section class="bg-primary jumbotron mt0 mb0">
+            <t t-set="menu_inverted" t-value="True"/>
+            <section class="o_gradient jumbotron mt0 mb0">
                 <div class="container">
-                    <h1>Stay in touch with our Community</h1>
-                    <p>Alone we can do so little, together we can do so much</p>
+                    <h1 class="text-white">Stay in touch with our Community</h1>
+                    <p class="text-white">Alone we can do so little, together we can do so much</p>
                 </div>
             </section>
         </div>
         <div class="container mt32">
             <div t-if="'unsubscribe' in request.params" class="offset-lg-9 col-lg-3 alert alert-info" role="status">
-               <h3>Need to unsubscribe? It's right here! <span class="fa fa-2x fa-arrow-down float-right" role="img" aria-label="" title="Read this !"></span></h3>
+               <h3>Need to unsubscribe? It's right here! <span class="fa fa-2x fa-arrow-down float-right" role="img" aria-label="" title="Read this !"/></h3>
             </div>
             <div class="row mt8" t-foreach="groups" t-as="group">
-                <div class="col-lg-3">
-                    <img t-att-src="website.image_url(group, 'image_128')" class="o_image_64_cover float-left" alt="Group"/>
-                    <strong><a t-attf-href="/groups/#{ slug(group) }" t-esc="group.name"/></strong><br />
-                    <t t-if="group.alias_id and group.alias_id.alias_name and group.alias_id.alias_domain">
-                        <i class='fa fa-envelope-o' role="img" aria-label="Alias" title="Alias"/>
-                        <a t-attf-href="mailto:#{group.alias_id.alias_name}@#{group.alias_id.alias_domain}"><span t-field="group.alias_id"/></a>
-                    </t>
+                <div class="col-lg-1">
+                    <img t-att-src="website.image_url(group, 'image_small')" class="img img-fluid rounded-circle" alt="Group"/>
                 </div>
-                <div class="col-lg-4">
-                    <div t-esc="group.description" class="text-muted"/>
-                </div>
-                <div class="col-lg-2">
-                    <i class='fa fa-fw fa-user' role="img" aria-label="Recipients" title="Recipients"/> <t t-esc="group_data[group.id]['members_count']"/> members<br />
-                    <i class='fa fa-fw fa-envelope-o' role="img" aria-label="Traffic" title="Traffic"/> <t t-raw="group_data[group.id]['monthly_message_nbr']"/> messages / month
-                </div>
-                <div class="col-lg-3">
-                    <!--<t t-call="website_mail.follow"><t t-set="object" t-value="group"/></t>-->
-
-                    <div class="s_channel"
-                              t-att-data-id="group.id"
-                              data-object="mail.channel"
-                              t-att-data-follow="'on' if 'unsubscribe' in request.params else 'off'">
-                        <div class="input-group js_mg_follow_form">
-                            <input
-                                  type="email"
-                                  name="email"
-                                  class="js_follow_email form-control"
-                                  placeholder="your email..."/>
-                            <div t-if="'unsubscribe' not in request.params" class="input-group-append">
-                               <button href="#" class="btn btn-primary js_follow_btn">Subscribe</button>
-                            </div>
-                            <div t-if="'unsubscribe' in request.params" class="input-group-append">
-                               <button href="#" class="btn btn-primary js_follow_btn">Unsubscribe</button>
+                <div class="col-lg-11">
+                    <div class="row pb-2  border-bottom">
+                        <div class="col-8">
+                            <strong><a t-attf-href="/groups/#{ slug(group) }" t-esc="group.name"/></strong>
+                        </div>
+                        <div class="col-4 text-right">
+                            <span class="small">
+                                <i class="fa fa-fw fa-user" role="img" aria-label="Recipients" title="Recipients"/> <t t-esc="group_data[group.id]['members_count']"/> members<br/>
+                                <i class="fa fa-fw fa-envelope-o" role="img" aria-label="Traffic" title="Traffic"/> <t t-raw="group_data[group.id]['monthly_message_nbr']"/> messages / month
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6 text-muted">
+                            <div t-esc="group.description" class="text-muted"/>
+                        </div>
+                        <div class="col-lg-3">
+                            <t t-if="group.alias_id and group.alias_id.alias_name and group.alias_id.alias_domain">
+                                    <i class="fa fa-envelope-o" role="img" aria-label="Alias" title="Alias"/>
+                                    <a t-attf-href="mailto:#{group.alias_id.alias_name}@#{group.alias_id.alias_domain}"><span t-field="group.alias_id"/></a>
+                                </t>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="js_follow_alias" t-att-data-id="group.id" data-object="mail.channel" t-att-data-follow="'on' if 'unsubscribe' in request.params else 'off'">
+                                <div class="input-group js_mg_follow_form">
+                                    <input type="email" name="email" class="js_follow_email form-control" placeholder="your email..."/>
+                                    <div t-if="'unsubscribe' not in request.params" class="input-group-append">
+                                       <button href="#" class="btn btn-primary js_follow_btn">Subscribe</button>
+                                    </div>
+                                    <div t-if="'unsubscribe' in request.params" class="input-group-append">
+                                        <button href="#" class="btn btn-primary js_follow_btn">Unsubscribe</button>
+                                    </div>
+                                </div>
+                                <p class="js_mg_details d-none">
+                                    <span class="js_mg_email d-none"><a href="#" class="js_mg_email"><i class="fa fa-envelope-o"/> send mail</a> - </span>
+                                    <a href="#" class="js_mg_link"><i class="fa fa-file-o"/> archives</a> -
+                                    <a role="button" href="#" class="js_unfollow_btn"><i class="fa fa-times"/> unsubscribe</a>
+                                </p>
                             </div>
                         </div>
-                        <p class="js_mg_details d-none">
-                            <span class="js_mg_email d-none"><a href="#" class="js_mg_email"><i class="fa fa-envelope-o"/> send mail</a> - </span>
-                            <a href="#" class="js_mg_link"><i class="fa fa-file-o"/> archives</a> -
-                            <a role="button" href="#" class="js_unfollow_btn"><i class="fa fa-times"/> unsubscribe</a>
-                        </p>
                     </div>
-
-
                 </div>
             </div>
         </div>
