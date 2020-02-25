@@ -96,6 +96,28 @@ var CalendarPopover = Widget.extend(WidgetAdapterMixin, StandaloneFieldManagerMi
     //--------------------------------------------------------------------------
 
     /**
+     * Returns the AbstractField specialization that should be used for the
+     * given field informations. If there is no mentioned specific widget to
+     * use, determines one according the field type.
+     *
+     * @private
+     * @param {string} viewType
+     * @param {Object} field
+     * @param {Object} attrs
+     * @returns {function|null} AbstractField specialization Class
+     */
+    _getFieldWidgetClass(field, attrs) {
+        let FieldWidget;
+        if (attrs.widget) {
+            FieldWidget = fieldRegistry.getAny(['form' + "." + attrs.widget, attrs.widget]);
+            if (!FieldWidget) {
+                console.warn("Missing widget: ", attrs.widget, " for field", attrs.name, "of type", field.type);
+            }
+        }
+        return FieldWidget || fieldRegistry.getAny(['form' + "." + field.type, field.type, "abstract"]);
+    },
+
+    /**
      * Generate fields to render into popover
      *
      * @private
@@ -104,11 +126,15 @@ var CalendarPopover = Widget.extend(WidgetAdapterMixin, StandaloneFieldManagerMi
     _processFields: function () {
         var self = this;
         var fieldsToGenerate = [];
+        const fieldInformation = {};
         var fields = _.keys(this.displayFields);
         for (var i=0; i<fields.length; i++) {
             var fieldName = fields[i];
             var displayFieldInfo = self.displayFields[fieldName] || {attrs: {invisible: 1}};
             var fieldInfo = self.fields[fieldName];
+            fieldInformation[fieldName] = {
+                Widget: self._getFieldWidgetClass(fieldInfo, displayFieldInfo.attrs),
+            };
             var field = {
                 name: fieldName,
                 string: displayFieldInfo.attrs.string || fieldInfo.string,
@@ -145,10 +171,12 @@ var CalendarPopover = Widget.extend(WidgetAdapterMixin, StandaloneFieldManagerMi
         };
 
         this.$fieldsList = [];
-        return this.model.makeRecord(this.modelName, fieldsToGenerate).then(function (recordID) {
+        return this.model.makeRecord(this.modelName, fieldsToGenerate, fieldInformation).then(async function (recordID) {
             var defs = [];
 
             var record = self.model.get(recordID);
+            record.res_id = self.event.extendedProps.record.id;
+            await self.model._fetchSpecialData(record);
             _.each(fieldsToGenerate, function (field) {
                 if (field.invisible) return;
                 let isLegacy = true;

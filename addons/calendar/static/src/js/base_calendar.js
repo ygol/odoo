@@ -8,7 +8,7 @@ var relationalFields = require('web.relational_fields');
 var session = require('web.session');
 var WebClient = require('web.WebClient');
 
-var FieldMany2ManyTags = relationalFields.FieldMany2ManyTags;
+const FieldMany2ManyTagsAvatar = relationalFields.FieldMany2ManyTagsAvatar;
 
 var CalendarNotification = Notification.extend({
     template: "CalendarNotification",
@@ -122,7 +122,18 @@ BasicModel.include({
      */
     _fetchSpecialAttendeeStatus: function (record, fieldName) {
         var context = record.getContext({fieldName: fieldName});
-        var attendeeIDs = record.data[fieldName] ? this.localData[record.data[fieldName]].res_ids : [];
+        let attendeeIDs = [];
+        if (record.data[fieldName]) {
+            // Note: this widget used in calendar popover and calendar popover
+            // use makeRecord which creates relational datapoint so we already
+            // have res_ids in record.data[fieldName]
+            if (_.isObject(record.data[fieldName])) {
+                attendeeIDs = record.data[fieldName].res_ids;
+            } else {
+                attendeeIDs = this.localData[record.data[fieldName]].res_ids;
+            }
+        }
+
         var meetingID = _.isNumber(record.res_id) ? record.res_id : false;
         return this._rpc({
             model: 'res.partner',
@@ -137,7 +148,7 @@ BasicModel.include({
     },
 });
 
-var Many2ManyAttendee = FieldMany2ManyTags.extend({
+const Many2ManyAttendee = FieldMany2ManyTagsAvatar.extend({
     // as this widget is model dependant (rpc on res.partner), use it in another
     // context probably won't work
     // supportedFieldTypes: ['many2many'],

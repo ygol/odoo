@@ -34,7 +34,7 @@ QUnit.module('calendar', {
     },
 }, function () {
     QUnit.test("many2manyattendee widget: basic rendering", async function (assert) {
-        assert.expect(9);
+        assert.expect(12);
 
         var form = await createView({
             View: FormView,
@@ -73,6 +73,12 @@ QUnit.module('calendar', {
             "the tag should be correctly named");
         assert.hasClass(form.$('.o_field_widget[name="partner_ids"] .badge[data-id="2"] .o_calendar_invitation'),'needsAction',
             "Mohamet should still confirm his attendance to the meeting");
+        assert.hasClass(form.$('.o_field_many2manytags'), 'avatar',
+            "should have avatar class");
+        assert.containsOnce(form, '.o_field_many2manytags.avatar.o_field_widget .badge:first img',
+            "should have img tag");
+        assert.strictEqual(form.$('.o_field_many2manytags.avatar.o_field_widget .badge:first img').data('src'), '/web/image/partner/1/image_128',
+            "should have correct avatar image");
 
         form.destroy();
     });
