@@ -140,7 +140,7 @@
                                 <t t-call="portal_rating.rating_stars_static_popup_composer">
                                     <t t-set="btn_classes" t-value="'btn-warning'"/>
                                     <t t-set="rating_avg" t-value="rating_avg"/>
-                                    <t t-set="rating_total" t-value="rating_count"/>
+                                    <t t-set="rating_count" t-value="rating_count"/>
                                     <t t-set="object" t-value="channel"/>
                                     <t t-set="token" t-value="channel.access_token"/>
                                     <t t-set="hash" t-value="message_post_hash"/>
