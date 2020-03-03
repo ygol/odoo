@@ -17,6 +17,7 @@
                 <link rel="stylesheet" type="text/scss" href="/mail_bot/static/src/scss/odoobot_style.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail_bot/static/src/bugfix/bugfix.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail_bot/static/src/components/notification_request/notification_request.scss"/>
+                <link rel="stylesheet" type="text/scss" href="/mail_bot/static/src/components/notification_alert/notification_alert.scss"/>
             </xpath>
         </template>
 
