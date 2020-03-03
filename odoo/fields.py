@@ -249,6 +249,8 @@ class Field(MetaField('DummyField', (object,), {})):
         kwargs['string'] = string
         self._sequence = kwargs['_sequence'] = next(_global_seq)
         self.args = {key: val for key, val in kwargs.items() if val is not Default}
+        self.name = type(self).__name__
+        self.model_name = '_unknown'
 
     def new(self, **kwargs):
         """ Return a field of the same type as ``self``, with its own parameters. """
