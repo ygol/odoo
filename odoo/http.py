@@ -604,6 +604,10 @@ class JsonRequest(WebRequest):
 
         self.params = dict(self.jsonrequest.get("params", {}))
         self.context = self.params.pop('context', dict(self.session.context))
+        param_kwargs = self.params.get('kwargs', {})
+        if 'context' in param_kwargs and param_kwargs['context'] != self.context:
+            # If a call_kw route, this would lead to request.env.context != self.env.context -_-
+            _logger.error("Inconsistent contexts given to json request %s:%s" % (self.context, param_kwargs['context']))
 
     def _json_response(self, result=None, error=None):
         response = {
