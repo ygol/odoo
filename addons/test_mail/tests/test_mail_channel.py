@@ -210,6 +210,27 @@ class TestChannelFeatures(common.BaseFunctionalTest, common.MockEmails):
         infos = test_chat.with_user(self.user_admin).channel_info()
         self.assertEqual(infos[0]['direct_partner'][0]['out_of_office_message'], 'Out')
 
+    def test_multi_company_chat(self):
+        company_A = self.env['res.company'].create({'name': 'Company A'})
+
+        test_user = self.env['res.users'].create({
+            'login': 'nomail',
+            'name': 'No Mail',
+            'company_ids': [(6, 0, company_A.ids)],
+            'company_id': company_A.id
+        })
+        test_chat = self.env['mail.channel'].with_context(self._test_context).create({
+            'channel_partner_ids': [(4, test_user.partner_id.id), (4, self.user_admin.partner_id.id)],
+            'public': 'private',
+            'channel_type': 'chat',
+            'name': 'test'
+        })
+        try:
+            notification = test_chat.with_context(allowed_company_ids=self.user_admin.company_ids.ids)._channel_channel_notifications(test_user.partner_id.ids)
+        except AccessError:
+            notification = False
+        self.assertTrue(notification, 'Should generate a channel notifiation for multi company user')
+
 
 @tagged('moderation')
 class TestChannelModeration(common.Moderation):
