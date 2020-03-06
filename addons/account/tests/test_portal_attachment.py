@@ -16,6 +16,8 @@ class TestPortalAttachment(AccountTestInvoicingHttpCommon):
     def setUpClass(cls, chart_template_ref=None):
         super().setUpClass(chart_template_ref=chart_template_ref)
 
+        cls.authenticate(None, None)
+
         cls.out_invoice = cls.env['account.move'].with_context(tracking_disable=True).create({
             'move_type': 'out_invoice',
             'partner_id': cls.partner_a.id,
@@ -31,6 +33,8 @@ class TestPortalAttachment(AccountTestInvoicingHttpCommon):
     @mute_logger('odoo.addons.http_routing.models.ir_http', 'odoo.http')
     def test_01_portal_attachment(self):
         """Test the portal chatter attachment route."""
+
+        self.authenticate(None, None)
 
         # Test public user can't create attachment without token of document
         res = self.url_open(
