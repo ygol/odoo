@@ -217,6 +217,7 @@ class PosConfig(models.Model):
     rounding_method = fields.Many2one('account.cash.rounding', string="Cash rounding")
     cash_rounding = fields.Boolean(string="Cash Rounding")
     only_round_cash_method = fields.Boolean(string="Only apply rounding on cash")
+    report_sequence_number = fields.Integer(default=1)
 
     @api.depends('use_pricelist', 'available_pricelist_ids')
     def _compute_allowed_pricelist_ids(self):
@@ -462,7 +463,7 @@ class PosConfig(models.Model):
 
     def write(self, vals):
         opened_session = self.mapped('session_ids').filtered(lambda s: s.state != 'closed')
-        if opened_session:
+        if opened_session and not self.env.context.get('allow_modify'):
             raise UserError(_('Unable to modify this PoS Configuration because there is an open PoS Session based on it.'))
         result = super(PosConfig, self).write(vals)
 
@@ -579,6 +580,12 @@ class PosConfig(models.Model):
             'view_id': False,
             'type': 'ir.actions.act_window',
         }
+
+    def get_next_report_sequence_number(self):
+        to_return = self.report_sequence_number
+        self = self.with_context(allow_modify=True)
+        self.report_sequence_number += 1
+        return to_return
 
     # All following methods are made to create data needed in POS, when a localisation
     # is installed, or if POS is installed on database having companies that already have

@@ -254,7 +254,7 @@ class PosOrder(models.Model):
     session_move_id = fields.Many2one('account.move', string='Session Journal Entry', related='session_id.move_id', readonly=True, copy=False)
     to_invoice = fields.Boolean('To invoice')
     is_invoiced = fields.Boolean('Is Invoiced', compute='_compute_is_invoiced')
-
+    is_refund = fields.Boolean('Is Refund', readonly=True)
 
     @api.depends('account_move')
     def _compute_is_invoiced(self):
@@ -491,6 +491,7 @@ class PosOrder(models.Model):
                 'amount_total': -order.amount_total,
                 'amount_paid': 0,
             })
+            refund_order.is_refund = True
             for line in order.lines:
                 PosOrderLineLot = self.env['pos.pack.operation.lot']
                 for pack_lot in line.pack_lot_ids:
