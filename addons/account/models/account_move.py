@@ -1836,7 +1836,7 @@ class AccountFullReconcile(models.Model):
                 # (reversing will cause a nested attempt to drop the full reconciliation)
                 to_reverse = rec.exchange_move_id
                 rec.exchange_move_id = False
-                to_reverse.reverse_moves()
+                to_reverse.reverse_moves(date=to_reverse.date)
         return super(AccountFullReconcile, self).unlink()
 
     @api.model
