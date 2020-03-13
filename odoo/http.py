@@ -900,8 +900,8 @@ class ControllerType(type):
         if not "Controller" in globals() or not Controller in bases:
             return
         controllers_per_module[module].append(name_class)
-
-Controller = ControllerType('Controller', (object,), {})
+class Controller(metaclass=ControllerType):
+    ...
 
 class EndPoint(object):
     def __init__(self, method, routing):

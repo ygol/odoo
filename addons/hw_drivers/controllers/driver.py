@@ -128,22 +128,18 @@ bt_devices = {}
 socket_devices = {}
 iot_devices = {}
 
-class DriverMetaClass(type):
-    def __new__(cls, clsname, bases, attrs):
-        newclass = super(DriverMetaClass, cls).__new__(cls, clsname, bases, attrs)
-        # Some drivers must be tried only when all the others have been ruled out. These are kept at the bottom of the list.
-        if newclass.is_tested_last:
-            drivers.append(newclass)
-        else:
-            drivers.insert(0, newclass)
-        return newclass
-
-class Driver(Thread, metaclass=DriverMetaClass):
+class Driver(Thread):
     """
     Hook to register the driver into the drivers list
     """
     connection_type = ""
     is_tested_last = False
+
+    def __init_subclass__(cls):
+        if cls.is_tested_last:
+            drivers.append(cls)
+        else:
+            drivers.insert(0, cls)
 
     def __init__(self, device):
         super(Driver, self).__init__()

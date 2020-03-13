@@ -9,15 +9,14 @@ from odoo.modules import get_modules, get_module_path
 
 commands = {}
 
-class CommandType(type):
-    def __init__(cls, name, bases, attrs):
-        super(CommandType, cls).__init__(name, bases, attrs)
-        name = getattr(cls, name, cls.__name__.lower())
-        cls.name = name
-        if name != 'command':
-            commands[name] = cls
+class Command:
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        cls.name = cls.__name__.lower()
+        commands[cls.name] = cls
 
-Command = CommandType('Command', (object,), {'run': lambda self, args: None})
+    def run(self, args):
+        ...
 
 class Help(Command):
     """Display the list of available commands"""

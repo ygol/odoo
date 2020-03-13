@@ -236,7 +236,7 @@ VALID_AGGREGATE_FUNCTIONS = {
 }
 
 
-class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
+class BaseModel(metaclass=MetaModel):
     """Base class for Odoo models.
 
     Odoo models are created by inheriting one of the following:

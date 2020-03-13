@@ -21,27 +21,9 @@ _logger = logging.getLogger(__name__)
 def status_response(status):
     return int(str(status)[0]) == 2
 
-
-class Meta(type):
-    """ This Meta class allow to define class as a structure, and so instancied variable
-        in __init__ to avoid to have side effect alike 'static' variable """
-    def __new__(typ, name, parents, attrs):
-        methods = {k: v for k, v in attrs.items() if callable(v)}
-        attrs = {k: v for k, v in attrs.items() if not callable(v)}
-
-        def init(self, **kw):
-            for key, val in attrs.items():
-                setattr(self, key, val)
-            for key, val in kw.items():
-                assert key in attrs
-                setattr(self, key, val)
-
-        methods['__init__'] = init
-        methods['__getitem__'] = getattr
-        return type.__new__(typ, name, parents, methods)
-
-
-Struct = Meta('Struct', (object,), {})
+class Struct:
+    def __getitem__(self, item):
+        return getattr(self, item)
 
 class OdooEvent(Struct):
     event = False
@@ -131,9 +113,6 @@ class SyncEvent(object):
                 else:
                     self.OP = Create(tmpSrc, 'New EVENT CREATE from GMAIL')
 
-    def __str__(self):
-        return self.__repr__()
-
     def __repr__(self):
         event_str = "\n\n---- A SYNC EVENT ---"
         event_str += "\n    ID          OE: %s " % (self.OE.event and self.OE.event.id)
@@ -162,9 +141,6 @@ class SyncOperation(object):
         self.info = info
         for key, val in kw.items():
             setattr(self, key, val)
-
-    def __str__(self):
-        return 'in__STR__'
 
 
 class Create(SyncOperation):
