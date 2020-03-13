@@ -1,119 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+<!-- Name should be identical to xml id with dots replacing underscores. Actions should have a real naming as it is used as display name. -->
+<!-- id then model for records, name then value for fields
+name widget options class groups on_change attrs domain context readonly required nolabel placeholder mode (for one2many) help filename password kanban_view_ref
+-->
+<!--<menuitem
+    id="model_name_menu_action"
+    name="Sub Menu 1"
+    parent="module_name.module_name_menu_root"
+    action="model_name_action"
+    sequence="10"
+/>-->
 
-        <!-- Top menu item -->
-        <menuitem name="Project"
-            id="menu_main_pm"
-            groups="group_project_manager,group_project_user"
-            web_icon="project,static/description/icon.png"
-            sequence="50"/>
 
-        <menuitem id="menu_project_config" name="Configuration" parent="menu_main_pm"
-            sequence="100" groups="project.group_project_manager"/>
+    <!-- Views --> <!-- <model_name>_view_<view_type>,-->
+    <record id="project_task_view_search" model="ir.ui.view">
+        <field name="name">project.task.view.search</field>
+        <field name="model">project.task</field>
+        <field name="arch" type="xml">
+            <search string="Tasks">
+                <field name="name" string="Task"/>
+                <field name="tag_ids"/>
+                <field name="user_id"/>
+                <field name="partner_id" operator="child_of"/>
+                <field name="stage_id"/>
+                <field name="project_id"/>
+                <field name="parent_id" groups="project.group_subtask_project"/>
+                <filter name="my_tasks" string="My Tasks" domain="[('user_id', '=', uid)]"/>
+                <filter name="my_followed_tasks" string="Followed Tasks" domain="[('message_is_follower', '=', True)]" />
+                <filter name="unassigned" string="Unassigned" domain="[('user_id', '=', False)]"/>
+                <separator/>
+                <filter name="starred" string="Starred" domain="[('priority', 'in', [1, 2])]"/>
+                <filter name="late" string="Late Tasks" domain="[('date_deadline', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="message_needaction" string="Unread Messages" domain="[('message_needaction', '=', True)]"/>
+                <separator/>
+                <filter name="inactive" string="Archived" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter name="activities_overdue" string="Late Activities"
+                    domain="[('activity_ids.date_deadline', '&lt;', context_today().strftime('%Y-%m-%d'))]"
+                    help="Show all records which has next action date is before today"
+                    invisible="1" />
+                <filter name="activities_today" string="Today Activities"
+                    domain="[('activity_ids.date_deadline', '=', context_today().strftime('%Y-%m-%d'))]" invisible="1" />
+                <filter name="activities_upcoming_all" string="Future Activities"
+                    domain="[('activity_ids.date_deadline', '&gt;', context_today().strftime('%Y-%m-%d'))]" invisible="1" />
+                <separator/>
+                <filter name="rating_task" string="Rated tasks" domain="[('rating_last_value', '!=', 0.0)]" groups="project.group_project_rating"/>
+                <group expand="0" string="Group By">
+                    <filter name="stage" string="Stage" context="{'group_by': 'stage_id'}"/>
+                    <filter name="user" string="Assigned to" context="{'group_by': 'user_id'}"/>
+                    <filter name="project" string="Project" context="{'group_by': 'project_id'}"/>
+                    <filter name="group_create_date" string="Creation Date" context="{'group_by': 'create_date'}"/>
+                    <filter name="company" string="Company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
 
-        <record id="view_task_search_form" model="ir.ui.view">
-            <field name="name">project.task.search.form</field>
-            <field name="model">project.task</field>
-            <field name="arch" type="xml">
-               <search string="Tasks">
-                    <field name="name" string="Task"/>
-                    <field name="tag_ids"/>
-                    <field name="user_id"/>
-                    <field name="partner_id" operator="child_of"/>
-                    <field name="stage_id"/>
-                    <field name="project_id"/>
-                    <field name="parent_id" groups="project.group_subtask_project"/>
-                    <filter string="My Tasks" name="my_tasks" domain="[('user_id', '=', uid)]"/>
-                    <filter string="Followed Tasks" name="my_followed_tasks" domain="[('message_is_follower', '=', True)]" />
-                    <filter string="Unassigned" name="unassigned" domain="[('user_id', '=', False)]"/>
-                    <separator/>
-                    <filter string="Starred" name="starred" domain="[('priority', 'in', [1, 2])]"/>
-                    <filter string="Late Tasks" name="late" domain="[('date_deadline', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
-                    <separator/>
-                    <filter string="Unread Messages" name="message_needaction" domain="[('message_needaction', '=', True)]"/>
-                    <separator/>
-                    <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
-                    <separator/>
-                    <filter invisible="1" string="Late Activities" name="activities_overdue"
-                        domain="[('activity_ids.date_deadline', '&lt;', context_today().strftime('%Y-%m-%d'))]"
-                        help="Show all records which has next action date is before today"/>
-                    <filter invisible="1" string="Today Activities" name="activities_today"
-                        domain="[('activity_ids.date_deadline', '=', context_today().strftime('%Y-%m-%d'))]"/>
-                    <filter invisible="1" string="Future Activities" name="activities_upcoming_all"
-                        domain="[('activity_ids.date_deadline', '&gt;', context_today().strftime('%Y-%m-%d'))]"/>
-                    <separator/>
-                    <filter string="Rated tasks" name="rating_task" domain="[('rating_last_value', '!=', 0.0)]" groups="project.group_project_rating"/>
-                    <group expand="0" string="Group By">
-                        <filter string="Stage" name="stage" context="{'group_by': 'stage_id'}"/>
-                        <filter string="Assigned to" name="user" context="{'group_by': 'user_id'}"/>
-                        <filter string="Project" name="project" context="{'group_by': 'project_id'}"/>
-                        <filter string="Creation Date" name="group_create_date" context="{'group_by': 'create_date'}"/>
-                        <filter string="Company" name="company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
-                    </group>
-                </search>
-            </field>
-        </record>
+            <record id="project_task_action_view_all_project_tasks" model="ir.actions.act_window">
+        <field name="name">Tasks</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">kanban,tree,form,calendar,pivot,graph,activity</field>
+        <field name="domain">[('project_id', '=', active_id)]</field>
+        <field name="context">{
+            'pivot_row_groupby': ['user_id'],
+            'default_project_id': active_id,
+        }</field>
+        <field name="search_view_id" ref="project_task_view_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Click <i>Create</i> to start a new task.
+            </p><p>
+                To get things done, use activities and status on tasks.<br/>
+                Chat in real time or by email to collaborate efficiently.
+            </p>
+        </field>
+    </record>
 
-        <record id="act_project_project_2_project_task_all" model="ir.actions.act_window">
-            <field name="name">Tasks</field>
-            <field name="res_model">project.task</field>
-            <field name="view_mode">kanban,tree,form,calendar,pivot,graph,activity</field>
-            <field name="domain">[('project_id', '=', active_id)]</field>
-            <field name="context">{
-                'pivot_row_groupby': ['user_id'],
-                'default_project_id': active_id,
-            }</field>
-            <field name="search_view_id" ref="view_task_search_form"/>
-            <field name="help" type="html">
-                <p class="o_view_nocontent_smiling_face">
-                    Click <i>Create</i> to start a new task.
-                </p><p>
-                    To get things done, use activities and status on tasks.<br/>
-                    Chat in real time or by email to collaborate efficiently.
-                </p>
-            </field>
-        </record>
-
-        <record id="project_task_action_sub_task" model="ir.actions.act_window">
-            <field name="name">Sub-tasks</field>
-            <field name="res_model">project.task</field>
-            <field name="view_mode">tree,kanban,form,calendar,pivot,graph,activity</field>
-            <field name="search_view_id" ref="project.view_task_search_form"/>
-            <field name="help" type="html">
-                <p class="o_view_nocontent_smiling_face">
-                    Click <i>Create</i> to start a new task.
-                </p><p>
-                    To get things done, use activities and status on tasks.<br/>
-                    Chat in real time or by email to collaborate efficiently.
-                </p>
-            </field>
-        </record>
-
-        <!-- Project -->
-        <record id="edit_project" model="ir.ui.view">
-            <field name="name">project.project.form</field>
-            <field name="model">project.project</field>
-            <field name="arch" type="xml">
-                <form string="Project">
-                    <header>
-                        <button name="%(portal.portal_share_action)d" string="Share" type="action" class="oe_highlight oe_read_only"/>
-                    </header>
+    <record id="project_project_view_form" model="ir.ui.view">
+        <field name="name">project.project.view.form</field>
+        <field name="model">project.project</field>
+        <field name="arch" type="xml">
+            <form string="Project">
+                <header>
+                    <button name="%(portal.portal_share_action)d" string="Share" type="action" class="oe_highlight oe_read_only"/>
+                </header>
                 <sheet string="Project">
-                    <div class="oe_button_box" name="button_box" groups="base.group_user">
-                        <button  class="oe_stat_button" name="attachment_tree_view" type="object" icon="fa-file-text-o">
-                            <field string="Documents" name="doc_count" widget="statinfo"/>
+                    <div name="button_box" class="oe_button_box" groups="base.group_user">
+                        <button name="attachment_tree_view" class="oe_stat_button" type="object" icon="fa-file-text-o">
+                            <field name="doc_count" widget="statinfo" string="Documents"/>
                         </button>
-                        <button class="oe_stat_button" type="action"
-                            name="%(act_project_project_2_project_task_all)d" icon="fa-tasks">
-                            <field string="Tasks" name="task_count" widget="statinfo" options="{'label_field': 'label_tasks'}"/>
-                        </button>
-                        <button name="action_view_all_rating" type="object" attrs="{'invisible': ['|', ('rating_status', '=', 'no'), ('rating_percentage_satisfaction', '=', -1)]}" class="oe_stat_button oe_percent" icon="fa-smile-o" groups="project.group_project_rating">
+                        <!-- <button name="%(project_task_action_view_all_project_tasks)d" class="oe_stat_button" type="action" icon="fa-tasks">
+                            <field name="task_count" string="Tasks" widget="statinfo" options="{'label_field': 'label_tasks'}"/>
+                        </button> -->
+                        <button name="action_view_all_rating" class="oe_stat_button oe_percent" type="object" 
+                                icon="fa-smile-o" groups="project.group_project_rating" attrs="{'invisible': ['|', ('rating_status', '=', 'no'), ('rating_percentage_satisfaction', '=', -1)]}">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_value">
                                     <field name="rating_percentage_satisfaction" nolabel="1"/>
                                 </span>
                                 <span class="o_stat_text">
-                                    % On <field readonly="1" name="label_tasks" options="{'label_field': 'label_tasks'}" />
+                                    % On <field name="label_tasks" options="{'label_field': 'label_tasks'}" readonly="1"/>
                                 </span>
                             </div>
                         </button>
@@ -143,7 +131,6 @@
                                     <field name="privacy_visibility" widget="radio"/>
                                     <field name="allowed_internal_user_ids" widget="many2many_tags" attrs="{'invisible': [('privacy_visibility', '!=', 'followers')]}"/>
                                     <field name="allowed_portal_user_ids" widget="many2many_tags" attrs="{'invisible': [('privacy_visibility', '!=', 'portal')]}"/>
-
                                     <field name="company_id" groups="base.group_multi_company"/>
                                 </group>
                                 <group name="extra_settings">
@@ -158,12 +145,12 @@
                                         </div>
                                         <div class="mt16">
                                             <field name="rating_status" widget="radio"/>
-                                            <p attrs="{'invisible': [('rating_status','not in',('periodic','stage'))]}" class="text-muted oe_edit_only">
+                                            <p class="text-muted oe_edit_only" attrs="{'invisible': [('rating_status','not in',('periodic','stage'))]}">
                                                 Edit project's stages and set an email template on the stages on which you want to activate the rating.
                                             </p>
-                                            <div  attrs="{'required': [('rating_status','=','periodic')], 'invisible': [('rating_status','!=','periodic')]}">
+                                            <div attrs="{'required': [('rating_status','=','periodic')], 'invisible': [('rating_status','!=','periodic')]}">
                                                 <label for="rating_status_period"/>
-                                                <field name="rating_status_period"  class="oe_inline"/>
+                                                <field name="rating_status_period" class="oe_inline"/>
                                             </div>
                                             <div attrs="{'invisible': [('rating_status','==','no')]}">
                                                 <label for="portal_show_rating"/>
@@ -172,9 +159,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-6 o_setting_box"  id="subtask_settings" groups="project.group_subtask_project">
+                                <div id="subtask_settings" class="col-lg-6 o_setting_box" groups="project.group_subtask_project">
                                     <div class="o_setting_left_pane">
-                                        <field name="allow_subtasks" />
+                                        <field name="allow_subtasks"/>
                                     </div>
                                     <div class="o_setting_right_pane">
                                         <label for="allow_subtasks" />
@@ -200,12 +187,11 @@
                                 <div name="alias_def">
                                     <field name="alias_id" class="oe_read_only oe_inline"
                                         string="Email Alias" required="0"/>
-                                    <div class="oe_edit_only oe_inline" name="edit_alias" style="display: inline;" >
+                                    <div name="edit_alias" class="oe_edit_only oe_inline" style="display: inline;">
                                         <field name="alias_name" class="oe_inline"/>@<field name="alias_domain" class="oe_inline" readonly="1"/>
                                     </div>
                                 </div>
-                                <field name="alias_contact" class="oe_inline oe_edit_only"
-                                        string="Accept Emails From"/>
+                                <field name="alias_contact" class="oe_inline oe_edit_only" string="Accept Emails From"/>
                             </group>
                         </page>
                     </notebook>
@@ -213,124 +199,172 @@
                         <field name="message_follower_ids" widget="mail_followers" help="Follow this project to automatically track the events associated to tasks and issues of this project." groups="base.group_user"/>
                     </div>
                 </sheet>
-                </form>
-            </field>
-        </record>
+            </form>
+        </field>
+    </record>
 
-        <record id="view_project_project_filter" model="ir.ui.view">
-            <field name="name">project.project.select</field>
-            <field name="model">project.project</field>
-            <field name="arch" type="xml">
-                <search string="Search Project">
-                    <field name="name" string="Project"/>
-                    <field name="user_id" string="Project Manager"/>
-                    <field name="partner_id" string="Customer" filter_domain="[('partner_id', 'child_of', self)]"/>
-                    <filter string="My Favorites" name="my_projects" domain="[('favorite_user_ids', 'in', uid)]"/>
-                    <separator/>
-                    <filter string="Followed" name="followed_by_me" domain="[('message_is_follower', '=', True)]"/>
-                    <separator/>
-                    <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
-                    <group expand="0" string="Group By">
-                        <filter string="Project Manager" name="Manager" context="{'group_by': 'user_id'}"/>
-                        <filter string="Customer" name="Partner" context="{'group_by': 'partner_id'}"/>
-                    </group>
-                </search>
-            </field>
-        </record>
+    <record id="project_project_view_search" model="ir.ui.view">
+        <field name="name">project.project.view.search</field>
+        <field name="model">project.project</field>
+        <field name="arch" type="xml">
+            <search string="Search Project">
+                <field name="name" string="Project"/>
+                <field name="user_id" string="Project Manager"/>
+                <field name="partner_id" string="Customer" filter_domain="[('partner_id', 'child_of', self)]"/>
+                <filter name="my_projects" string="My Favorites" domain="[('favorite_user_ids', 'in', uid)]"/>
+                <separator/>
+                <filter name="followed_by_me" string="Followed" domain="[('message_is_follower', '=', True)]"/>
+                <separator/>
+                <filter name="inactive" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="Manager" string="Project Manager" context="{'group_by': 'user_id'}"/>
+                    <filter name="Partner" string="Customer" context="{'group_by': 'partner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
 
-        <record id="view_project" model="ir.ui.view">
-            <field name="name">project.project.tree</field>
-            <field name="model">project.project</field>
-            <field name="arch" type="xml">
-                <tree decoration-bf="message_needaction==True" decoration-muted="active == False" string="Projects">
-                    <field name="sequence" optional="show" widget="handle"/>
-                    <field name="message_needaction" invisible="1"/>
-                    <field name="active" invisible="1"/>
-                    <field name="name" string="Project Name"/>
-                    <field name="user_id" optional="show" string="Project Manager"/>
-                    <field name="partner_id" optional="show" string="Contact"/>
-                    <field name="analytic_account_id" optional="hide"/>
-                    <field name="privacy_visibility" optional="hide"/>
-                    <field name="subtask_project_id" optional="hide"/>
-                    <field name="resource_calendar_id" optional="hide"/>
-                    <field name="label_tasks" optional="hide"/>
-                    <field name="company_id" optional="show"  groups="base.group_multi_company"/>
-                </tree>
-            </field>
-        </record>
+    <record id="project_project_view_tree" model="ir.ui.view">
+        <field name="name">project.project.view.tree</field>
+        <field name="model">project.project</field>
+        <field name="arch" type="xml">
+            <tree decoration-bf="message_needaction==True" decoration-muted="active == False" string="Projects">
+                <field name="sequence" optional="show" widget="handle"/>
+                <field name="message_needaction" invisible="1"/>
+                <field name="active" invisible="1"/>
+                <field name="name" string="Project Name"/>
+                <field name="user_id" optional="show" string="Project Manager"/>
+                <field name="partner_id" optional="show" string="Contact"/>
+                <field name="analytic_account_id" optional="hide"/>
+                <field name="privacy_visibility" optional="hide"/>
+                <field name="subtask_project_id" optional="hide"/>
+                <field name="resource_calendar_id" optional="hide"/>
+                <field name="label_tasks" optional="hide"/>
+                <field name="company_id" optional="show"  groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
 
-        <record id="project_view_kanban" model="ir.ui.view">
-            <field name="name">project.project.kanban</field>
-            <field name="model">project.project</field>
-            <field name="arch" type="xml">
-                <kanban class="o_kanban_mobile">
-                    <field name="user_id" string="Project Manager"/>
-                    <templates>
-                        <t t-name="kanban-box">
-                            <div t-attf-class="oe_kanban_content oe_kanban_global_click o_kanban_get_form">
-                                <div class="row">
-                                    <div class="col-12">
-                                        <strong><field name="name" string="Project Name"/></strong>
-                                    </div>
+    <record id="project_project_view_kanban" model="ir.ui.view">
+        <field name="name">project.project.view.kanban</field>
+        <field name="model">project.project</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="user_id" string="Project Manager"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_content oe_kanban_global_click o_kanban_get_form">
+                            <div class="row">
+                                <div class="col-12">
+                                    <strong><field name="name" string="Project Name"/></strong>
                                 </div>
-                                <div class="row">
-                                    <div class="col-8">
-                                        <field name="partner_id" string="Contact"/>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="oe_kanban_bottom_right">
-                                            <t t-set="unassigned"><t t-esc="_t('Unassigned')"/></t>
-                                            <img t-att-src="kanban_image('res.users', 'image_128', record.user_id.raw_value)" t-att-title="record.user_id.value || unassigned" t-att-alt="record.user_id.value" class="oe_kanban_avatar o_image_24_cover float-right"/>
-                                        </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-8">
+                                    <field name="partner_id" string="Contact"/>
+                                </div>
+                                <div class="col-4">
+                                    <div class="oe_kanban_bottom_right">
+                                        <t t-set="unassigned"><t t-esc="_t('Unassigned')"/></t>
+                                        <img t-att-src="kanban_image('res.users', 'image_128', record.user_id.raw_value)" t-att-title="record.user_id.value || unassigned" t-att-alt="record.user_id.value" class="oe_kanban_avatar o_image_24_cover float-right"/>
                                     </div>
                                 </div>
                             </div>
-                        </t>
-                    </templates>
-                </kanban>
-            </field>
-        </record>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
 
-        <record id="project_project_view_form_simplified" model="ir.ui.view">
-            <field name="name">project.project.view.form.simplified</field>
-            <field name="model">project.project</field>
-            <field name="arch" type="xml">
-                <form string="Project">
+    <record id="project_project_view_form_simplified" model="ir.ui.view">
+        <field name="name">project.project.view.form.simplified</field>
+        <field name="model">project.project</field>
+        <field name="arch" type="xml">
+            <form string="Project">
+                <group>
                     <group>
-                        <group>
-                            <field name="name" class="o_project_name oe_inline"
-                                string="Project Name" placeholder="e.g. Office Party"/>
-                            <field name="user_id" invisible="1"/>
-                            <label for="alias_name" string="Choose a Project Email" attrs="{'invisible': [('alias_domain', '=', False)]}"/>
-                            <div name="alias_def" attrs="{'invisible': [('alias_domain', '=', False)]}">
-                                <field name="alias_name" class="oe_inline"/>@<field name="alias_domain" class="oe_inline" readonly="1"/>
-                            </div>
-                        </group>
+                        <field name="name" class="o_project_name oe_inline"
+                            string="Project Name" placeholder="e.g. Office Party"/>
+                        <field name="user_id" invisible="1"/>
+                        <label for="alias_name" string="Choose a Project Email" attrs="{'invisible': [('alias_domain', '=', False)]}"/>
+                        <div name="alias_def" attrs="{'invisible': [('alias_domain', '=', False)]}">
+                            <field name="alias_name" class="oe_inline"/>@<field name="alias_domain" class="oe_inline" readonly="1"/>
+                        </div>
                     </group>
-                </form>
-            </field>
-        </record>
+                </group>
+                <footer>
+                    <button name="action_view_tasks" string="Create" type="object" class="btn-primary o_open_tasks"/>
+                    <button string="Discard" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
 
-        <record id="project_project_view_form_simplified_footer" model="ir.ui.view">
-            <field name="name">project.project.view.form.simplified</field>
-            <field name="model">project.project</field>
-            <field name="inherit_id" ref="project.project_project_view_form_simplified"/>
-            <field name="mode">primary</field>
-            <field name="arch" type="xml">
-                <xpath expr="//group" position="after">
-                    <footer>
-                        <button string="Create" name="action_view_tasks" type="object" class="btn-primary o_open_tasks"/>
-                        <button string="Discard" class="btn-secondary" special="cancel"/>
-                    </footer>
-                </xpath>
-            </field>
-        </record>
+    <!-- <record id="project_project_view_form_simplified_footer" model="ir.ui.view">
+        <field name="name">project.project.view.form.simplified</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.project_project_view_form_simplified"/>
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+            <xpath expr="//group" position="after">
+                <footer>
+                    <button string="Create" name="action_view_tasks" type="object" class="btn-primary o_open_tasks"/>
+                    <button string="Discard" class="btn-secondary" special="cancel"/>
+                </footer>
+            </xpath>
+        </field>
+    </record> -->
+
+        
+
+    <!-- Actions --> <!-- main action respects <model_name>_action Others are suffixed with _<detail> For window actions: suffix the action name by the specific view information like <model_name>_action_view_<view_type>-->
+
+
+    <record id="project_task_action_sub_task" model="ir.actions.act_window">
+        <field name="name">Sub-tasks</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">tree,kanban,form,calendar,pivot,graph,activity</field>
+        <field name="search_view_id" ref="project.project_task_view_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Click <i>Create</i> to start a new task.
+            </p><p>
+                To get things done, use activities and status on tasks.<br/>
+                Chat in real time or by email to collaborate efficiently.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu and Sub-menus--> <!--<model_name>_menu  or <model_name>_menu_do_stuff for submenus-->
+    <menuitem
+        id="menu_main_pm"
+        name="Project"
+        groups="group_project_manager,group_project_user"
+        web_icon="project,static/description/icon.png"
+        sequence="50"/>
+    
+    <menuitem 
+        id="menu_project_config" 
+        name="Configuration" 
+        parent="menu_main_pm"
+        sequence="100"
+        groups="project.group_project_manager"/>
+
+    <!-- Security -->
+<!--For a group: <model_name>_group_<group_name> where group_name is the name of the group, generally ‘user’, ‘manager’, …
+For a rule: <model_name>_rule_<concerned_group> where concerned_group is the short name of the concerned group (‘user’ for the ‘model_name_group_user’, ‘public’ for public user, ‘company’ for multi-company rules, …).-->
+
+
+
+        <!-- Project -->
+
 
         <record id="open_create_project" model="ir.actions.act_window">
             <field name="name">Create a Project</field>
             <field name="res_model">project.project</field>
             <field name="view_mode">form</field>
-            <field name="view_id" ref="project_project_view_form_simplified_footer"/>
+            <field name="view_id" ref="project_project_view_form_simplified"/>
             <field name="target">new</field>
         </record>
 
@@ -433,7 +467,7 @@
             <field name="domain">[]</field>
             <field name="view_mode">kanban,form</field>
             <field name="view_id" ref="view_project_kanban"/>
-            <field name="search_view_id" ref="view_project_project_filter"/>
+            <field name="search_view_id" ref="project_project_view_search"/>
             <field name="target">main</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
@@ -450,9 +484,9 @@
             <field name="domain">[]</field>
             <field name="view_mode">tree,kanban,form</field>
             <field name="view_ids" eval="[(5, 0, 0),
-                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_project')}),
-                (0, 0, {'view_mode': 'kanban', 'view_id': ref('project_view_kanban')})]"/>
-            <field name="search_view_id" ref="view_project_project_filter"/>
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('project_project_view_tree')}),
+                (0, 0, {'view_mode': 'kanban', 'view_id': ref('project_project_view_kanban')})]"/>
+            <field name="search_view_id" ref="project_project_view_search"/>
             <field name="context">{}</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_empty_folder">
@@ -782,7 +816,7 @@
             <field name="res_model">project.task</field>
             <field name="view_mode">kanban,tree,form,calendar,pivot,graph,activity</field>
             <field name="context">{'search_default_my_tasks': 1}</field>
-            <field name="search_view_id" ref="view_task_search_form"/>
+            <field name="search_view_id" ref="project_task_view_search"/>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
                     Create a new task
@@ -798,7 +832,7 @@
             <field name="res_model">project.task</field>
             <field name="view_mode">kanban,tree,form,calendar,pivot,graph,activity</field>
             <field name="context">{'search_default_my_tasks': 1, 'all_task': 0}</field>
-            <field name="search_view_id" ref="view_task_search_form"/>
+            <field name="search_view_id" ref="project_task_view_search"/>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
                     Create a new task
@@ -827,7 +861,7 @@
             <field name="name">Tasks</field>
             <field name="res_model">project.task</field>
             <field name="view_mode">kanban,tree,form</field>
-            <field name="search_view_id" ref="view_task_search_form"/>
+            <field name="search_view_id" ref="project_task_view_search"/>
         </record>
 
         <!-- Task types -->
