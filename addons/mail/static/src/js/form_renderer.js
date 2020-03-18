@@ -88,7 +88,7 @@ FormRenderer.include({
         }
     },
     /**
-     * Determine whether the form renderer has a chatter to display or not.
+     * Returns whether the form renderer has a chatter to display or not.
      * This is based on arch, which should have `div.oe_chatter`.
      *
      * @private
@@ -96,6 +96,35 @@ FormRenderer.include({
      */
     _hasChatter() {
         return !!this._chatterContainerTarget;
+    },
+    /**
+     * Returns whether the chatter of the form renderer should display
+     * activities.
+     *
+     * @private
+     * @returns {boolean}
+     */
+    _hasChatterActivities() {
+        return !!this.mailFields.mail_activity;
+    },
+    /**
+     * Returns whether the chatter of the form renderer should display
+     * followers.
+     *
+     * @private
+     * @returns {boolean}
+     */
+    _hasChatterFollowers() {
+        return !!this.mailFields.mail_followers;
+    },
+    /**
+     * Determine whether the chatter of the form renderer should display thread.
+     *
+     * @private
+     * @returns {boolean}
+     */
+    _hasChatterThread() {
+        return !!this.mailFields.mail_thread;
     },
     /**
      * @private
@@ -151,10 +180,16 @@ FormRenderer.include({
             const activityIds = this.state.data.activity_ids
                 ? this.state.data.activity_ids.res_ids
                 : [];
+            const hasActivities = this._hasChatterActivities();
+            const hasFollowers = this._hasChatterFollowers();
+            const hasThread = this._hasChatterThread();
             if (!this._chatterLocalId) {
                 this._chatterLocalId = this.env.store.dispatch('createChatter', {
                     activityIds,
                     context,
+                    hasActivities,
+                    hasFollowers,
+                    hasThread,
                     initialThreadId: this.state.res_id,
                     initialThreadModel: this.state.model,
                 });
@@ -162,6 +197,9 @@ FormRenderer.include({
                 this.env.store.dispatch('updateChatter', this._chatterLocalId, {
                     activityIds,
                     context,
+                    hasActivities,
+                    hasFollowers,
+                    hasThread,
                     threadId: this.state.res_id,
                     threadModel: this.state.model
                 });
