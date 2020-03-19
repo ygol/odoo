@@ -108,6 +108,22 @@ class SequenceMixin(models.AbstractModel):
         self.env.cr.execute(query, param)
         return (self.env.cr.fetchone() or [None])[0]
 
+    def _get_next_sequence(self):
+        """ Determines and returns the next sequence. Could be useful to get the
+        next sequence without alterer the record.
+
+        :return: next sequence name
+        :rtype: str
+        """
+        last_sequence = self._get_last_sequence() or self._get_starting_sequence()
+        sequence = re.match(self._sequence_fixed_regex, last_sequence)
+        value = ("{prefix}{seq:0%sd}{suffix}" % len(sequence.group('seq'))).format(
+            prefix=sequence.group('prefix1'),
+            seq=int(sequence.group('seq') or 0) + 1,
+            suffix=sequence.group('suffix'),
+        )
+        return value
+
     def _set_next_sequence(self):
         """Set the next sequence.
 
@@ -118,13 +134,5 @@ class SequenceMixin(models.AbstractModel):
         :param field_name: the field that contains the sequence.
         """
         self.ensure_one()
-        last_sequence = self._get_last_sequence() or self._get_starting_sequence()
-
-        sequence = re.match(self._sequence_fixed_regex, last_sequence)
-        value = ("{prefix}{seq:0%sd}{suffix}" % len(sequence.group('seq'))).format(
-            prefix=sequence.group('prefix1'),
-            seq=int(sequence.group('seq') or 0) + 1,
-            suffix=sequence.group('suffix'),
-        )
-        self[self._sequence_field] = value
+        self[self._sequence_field] = self._get_next_sequence()
         self.flush([self._sequence_field])
