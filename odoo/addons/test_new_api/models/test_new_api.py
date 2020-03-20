@@ -800,8 +800,8 @@ class ModelChildM2o(models.Model):
     @api.depends('parent_id.name')
     def _compute_sizes(self):
         for record in self:
-            record.size1 = len(self.parent_id.name or "")
-            record.size2 = len(self.parent_id.name or "")
+            record.size1 = len(record.parent_id.name or "")
+            record.size2 = len(record.parent_id.name or "")
 
     def write(self, vals):
         res = super(ModelChildM2o, self).write(vals)
@@ -838,6 +838,7 @@ class City(models.Model):
 class ModelAdvancedComputes(models.Model):
     _name = 'test_new_api.model_advanced_computes'
     _description = 'model with advanced computes'
+    _pre_compute = True
 
     name1 = fields.Char('First Name')
     name2 = fields.Char('Last Name')
