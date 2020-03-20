@@ -12,13 +12,18 @@ odoo.define('point_of_sale.OrderReceipt', function(require) {
         constructor() {
             super(...arguments);
             this.order = this.props.order;
-            const _receiptEnv = this.order.getOrderReceiptEnv();
+            const _receiptEnv = this.receiptEnv;
             this.receipt = _receiptEnv.receipt;
             this.orderlines = _receiptEnv.orderlines;
             this.paymentlines = _receiptEnv.paymentlines;
             this.isTaxIncluded =
                 Math.abs(this.receipt.subtotal - this.receipt.total_with_tax) <= 0.000001;
         }
+
+        get receiptEnv () {
+          return this.order.getOrderReceiptEnv();
+        }
+
         isSimple(line) {
             return (
                 line.discount === 0 &&

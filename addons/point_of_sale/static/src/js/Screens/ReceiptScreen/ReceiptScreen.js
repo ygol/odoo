@@ -132,7 +132,6 @@ odoo.define('point_of_sale.ReceiptScreen', function(require) {
             }
         }
     }
-    ReceiptScreen.components = { OrderReceipt };
 
     // register screen component
     addComponents(Chrome, [ReceiptScreen]);
