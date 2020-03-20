@@ -254,8 +254,9 @@ class Property(models.Model):
         if not ids:
             return {}
 
+        # VFE Temporary fix, see https://github.com/odoo/odoo/pull/47834
         field = self.env[model]._fields[name]
-        field_id = self.env['ir.model.fields']._get(model, name).id
+        field_id = self.env['ir.model.fields']._get(model, name).id or None
         company_id = self.env.company.id
 
         if field.type == 'many2one':
