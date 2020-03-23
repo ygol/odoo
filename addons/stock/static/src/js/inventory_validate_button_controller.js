@@ -37,7 +37,7 @@ var InventoryValidationController = ListController.extend({
         } else {
             // If the buttons are already set, it means the method renderButton
             // was called for the second time because of the target new
-            // wich means the inventory was triggered by a zqc.
+            // which means the inventory was triggered by a zqc.
             this.validateMethod = 'action_validate_zqc';
         }
     },
