@@ -41,6 +41,8 @@ publicWidget.registry.SurveySessionManage = publicWidget.Widget.extend({
             self.attendeesCount = self.$el.data('attendeesCount');
             self.showBarChart = self.$el.data('showBarChart');
             self.showTextAnswers = self.$el.data('showTextAnswers');
+            // Question props
+            self.currentQuestionId = self.$el.data('currentQuestionId');
 
             var isRpcCall = self.$el.data('isRpcCall');
             if (!isRpcCall) {
@@ -298,47 +300,71 @@ publicWidget.registry.SurveySessionManage = publicWidget.Widget.extend({
     _nextQuestion: function () {
         var self = this;
 
-        this.isStartScreen = false;
-        if (this.surveyTimerWidget) {
-            this.surveyTimerWidget.destroy();
-        }
-
-        var resolveFadeOut;
-        var fadeOutPromise = new Promise(function (resolve, reject) { resolveFadeOut = resolve; });
-        this.$el.fadeOut(this.fadeInOutTime, function () {
-            resolveFadeOut();
-        });
-
-        var nextQuestionPromise = this._rpc({
-            route: _.str.sprintf('/survey/session/next_question/%s', self.surveyAccessToken)
-        });
-
-        // avoid refreshing results while transitioning
-        if (this.resultsRefreshInterval) {
-            clearInterval(this.resultsRefreshInterval);
-            delete this.resultsRefreshInterval;
-        }
-
-        Promise.all([fadeOutPromise, nextQuestionPromise]).then(function (results) {
-            if (results[1]) {
-                var $renderedTemplate = $(results[1]);
-                self.$el.replaceWith($renderedTemplate);
-                self.attachTo($renderedTemplate);
-                self.$el.fadeIn(self.fadeInOutTime, function () {
-                    self._startTimer();
-                });
-            } else if (self.sessionShowLeaderboard) {
-                // Display last screen if leaderboard activated
-                self.isLastQuestion = true;
-                self._setupLeaderboard().then(function () {
-                    self.$('.o_survey_session_leaderboard_title').text(_('Final Leaderboard'));
-                    self.$('.o_survey_session_navigation_next').addClass('d-none');
-                    self.$('.o_survey_leaderboard_buttons').removeClass('d-none');
-                    self.leaderBoard.showLeaderboard(false, false);
-                });
-            } else {
-                self.$('.o_survey_session_close').click();
+        this._rpc({
+            // Background management
+            route: "/survey/session/survey_get_next_section_id",
+            params: {
+                'survey_token': this.surveyAccessToken,
+                'current_question_id': this.currentQuestionId ? this.currentQuestionId : 0
             }
+        }).then(function (nextSection) {
+            var refreshBackgroundPromise = Promise.resolve(false);
+            // Do we need to fade out the background ? Needed here before switching questions to get fade in/out
+            // effect at the same time.
+            if (nextSection.id >= 0) {
+                $('div#wrapwrap').css("box-shadow", "inset 0 0 0 10000px rgba(255,255,255,1)");
+                refreshBackgroundPromise = self._refreshBackground(nextSection.id)
+            }
+
+            self.isStartScreen = false;
+            if (self.surveyTimerWidget) {
+                self.surveyTimerWidget.destroy();
+            }
+
+            var resolveFadeOut;
+            var fadeOutPromise = new Promise(function (resolve, reject) { resolveFadeOut = resolve; });
+            self.$el.fadeOut(self.fadeInOutTime, function () {
+                resolveFadeOut();
+            });
+
+            var nextQuestionPromise = self._rpc({
+                route: _.str.sprintf('/survey/session/next_question/%s', self.surveyAccessToken)
+            });
+
+            // avoid refreshing results while transitioning
+            if (self.resultsRefreshInterval) {
+                clearInterval(self.resultsRefreshInterval);
+                delete self.resultsRefreshInterval;
+            }
+
+            Promise.all([fadeOutPromise, nextQuestionPromise, refreshBackgroundPromise]).then(function (results) {
+                if (results[1]) {
+                    var $renderedTemplate = $(results[1]);
+                    self.$el.replaceWith($renderedTemplate);
+                    self.attachTo($renderedTemplate);
+                    self.$el.fadeIn(self.fadeInOutTime, function () {
+                        self._startTimer();
+                    });
+                } else if (self.sessionShowLeaderboard) {
+                    // Display last screen if leaderboard activated
+                    self.isLastQuestion = true;
+                    self._setupLeaderboard().then(function () {
+                        self.$('.o_survey_session_leaderboard_title').text(_('Final Leaderboard'));
+                        self.$('.o_survey_session_navigation_next').addClass('d-none');
+                        self.$('.o_survey_leaderboard_buttons').removeClass('d-none');
+                        self.leaderBoard.showLeaderboard(false, false);
+                    });
+                } else {
+                    self.$('.o_survey_session_close').click();
+                }
+
+                if (results[2]) {
+                    $('div#wrapwrap').css("background-image", "url(" + results[2] + ")");
+                    if (nextSection.has_background) {
+                        $('div#wrapwrap').css("box-shadow", "inset 0 0 0 10000px rgba(255,255,255,0.7)");
+                    }
+                }
+            });
         });
     },
 
@@ -431,6 +457,24 @@ publicWidget.registry.SurveySessionManage = publicWidget.Widget.extend({
             // on failure, stop refreshing
             clearInterval(self.attendeesRefreshInterval);
         });
+    },
+
+    _refreshBackground: function (nextSectionId) {
+        var resolveRefresh;
+        var refreshPromise = new Promise(function (resolve, reject) {resolveRefresh = resolve;});
+
+        var targetModel = nextSectionId === 0 ? 'survey.survey' : 'survey.question';
+        var targetId = nextSectionId === 0 ? this.surveyId : nextSectionId;
+        var imageUrl = _.str.sprintf("/web/image/%s/%s/background_image", targetModel, targetId);
+
+        // Wait until new background is loaded before changing the background
+        var background = new Image();
+        background.onload = function() {
+            resolveRefresh(imageUrl);
+        };
+        background.src = imageUrl;
+
+        return refreshPromise;
     },
 
     /**

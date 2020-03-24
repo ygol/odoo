@@ -679,6 +679,44 @@ class Survey(models.Model):
         return triggering_answer_by_question, triggered_questions_by_answer
 
     # ------------------------------------------------------------
+    # BACKGROUND MANAGEMENT
+    # ------------------------------------------------------------
+    def _get_section_info_by_question(self):
+        """
+        Prepares a dict that will be used to handle background transitions
+        For each survey question, we return
+            survey_question_id : {
+                - section_id : section of the current question
+                - next_question_id : the question that follow the current one (no conditional check here)
+                - has_background : if the question's section as has background image
+                - has_description : if the section has a description (only if the question is a section)
+            }
+
+        """
+        if not self.page_ids:
+            return {}
+        section_info_by_question = dict.fromkeys([0] + self.question_and_page_ids.ids)
+        # Add a fake 'start survey' section.
+        section_info_by_question[0] = {
+            'section_id': 0,
+            'has_background': bool(self.background_image),
+            'next_question_id': self.page_ids.ids[0],
+            'has_description': False
+        }
+        for question in self.question_and_page_ids:
+            section = question if question.is_page else next(page for page in self.page_ids if question in page.question_ids)
+            current_question_index = self.question_and_page_ids.ids.index(question.id)
+            next_question_id = self.question_and_page_ids.ids[current_question_index + 1] \
+                if current_question_index + 1 < len(self.question_and_page_ids) else 0
+            section_info_by_question[question.id] = {
+                'section_id': section.id,
+                'has_background': bool(section.background_image),
+                'next_question_id': next_question_id,
+                'has_description': not is_html_empty(question.description) if question.is_page else False
+            }
+        return section_info_by_question
+
+    # ------------------------------------------------------------
     # SESSIONS MANAGEMENT
     # ------------------------------------------------------------
 
