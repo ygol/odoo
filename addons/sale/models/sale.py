@@ -185,21 +185,12 @@ class SaleOrder(models.Model):
         'Terms and conditions', compute="_compute_note",
         store=True, readonly=False)
 
-    amount_untaxed = fields.Monetary(string='Untaxed Amount', store=True, compute='_amount_all', tracking=5)
-    amount_by_group = fields.Binary(string="Tax amount by group", compute='_amount_by_group',
-        help="type: [(name, amount, base, formated amount, formated base)]")
-    amount_tax = fields.Monetary(string='Taxes', store=True, compute='_amount_all')
-    amount_total = fields.Monetary(string='Total', store=True, compute='_amount_all', tracking=4)
-    currency_rate = fields.Float(
-        "Currency Rate", compute='_compute_currency_rate', compute_sudo=True, store=True, digits=(12, 6),
-        help='The rate of the currency to the currency of rate 1 applicable at the date of the order')
-
     payment_term_id = fields.Many2one(
         'account.payment.term', string='Payment Terms', check_company=True,
         compute="_compute_partner_properties", store=True, readonly=False,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",)
     fiscal_position_id = fields.Many2one(
-        'account.fiscal.position', string='Fiscal Position',
+        'account.fiscal.position', string='Fiscal Position', cache_compute=True,
         compute="_compute_fiscal_position_id", store=True, readonly=False,
         domain="[('company_id', '=', company_id)]", check_company=True,
         help="Fiscal positions are used to adapt taxes and accounts for particular customers or sales orders/invoices."
@@ -207,9 +198,19 @@ class SaleOrder(models.Model):
     company_id = fields.Many2one(
         'res.company', 'Company', required=True, index=True, default=lambda self: self.env.company)
     team_id = fields.Many2one(
-        'crm.team', 'Sales Team', check_company=True,
+        'crm.team', 'Sales Team', check_company=True, cache_compute=True,
         compute="_compute_team_id", store=True, readonly=False,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
+
+    amount_untaxed = fields.Monetary(string='Untaxed Amount', store=True, compute='_amount_all', tracking=5)
+    amount_by_group = fields.Binary(string="Tax amount by group", compute='_amount_by_group',
+        help="type: [(name, amount, base, formated amount, formated base)]")
+    amount_tax = fields.Monetary(string='Taxes', store=True, compute='_amount_all')
+    amount_total = fields.Monetary(string='Total', store=True, compute='_amount_all', tracking=4)
+    currency_rate = fields.Float(
+        "Currency Rate", compute='_compute_currency_rate', compute_sudo=True, store=True, digits=(12, 6),
+        cache_compute=True,
+        help='The rate of the currency to the currency of rate 1 applicable at the date of the order')
 
     signature = fields.Image('Signature', help='Signature received through the portal.', copy=False, attachment=True, max_width=1024, max_height=1024)
     signed_by = fields.Char('Signed By', help='Name of the person that signed the SO.', copy=False)

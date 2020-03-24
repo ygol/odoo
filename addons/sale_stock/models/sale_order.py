@@ -28,7 +28,7 @@ class SaleOrder(models.Model):
         "product lead time. Otherwise, it will be based on the shortest.")
     warehouse_id = fields.Many2one(
         'stock.warehouse', string='Warehouse', compute="_compute_warehouse_id", store=True,
-        required=True, readonly=True, check_company=True,
+        required=True, readonly=True, check_company=True, cache_compute=True, copy=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)]})
     picking_ids = fields.One2many('stock.picking', 'sale_id', string='Transfers')
     delivery_count = fields.Integer(string='Delivery Orders', compute='_compute_picking_ids')
@@ -67,18 +67,6 @@ class SaleOrder(models.Model):
             if dates_list:
                 expected_date = min(dates_list) if order.picking_policy == 'direct' else max(dates_list)
                 order.expected_date = fields.Datetime.to_string(expected_date)
-
-    # @api.model_create_multi
-    # def create(self, vals_list):
-    #     # VFE TODO remove this create override, it can be managed by the compute now.
-    #     user_company_warehouse = dict()
-    #     for vals in vals_list:
-    #         if 'warehouse_id' not in vals:
-    #             user = self.env['res.users'].browse(vals['user_id']) if "user_id" in vals else self.env.user
-    #             company_id = vals.get("company_id", self.env.company.id)
-    #             user_company_warehouse.setdefault((user.id, company_id), user.with_company(company_id)._get_default_warehouse_id().id)
-    #             vals['warehouse_id'] = user_company_warehouse.get((user.id, company_id))
-    #     return super().create(vals_list)
 
     def write(self, values):
         if values.get('order_line') and self.state == 'sale':

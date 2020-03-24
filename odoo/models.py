@@ -1767,6 +1767,8 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
             and not field.compute
         ]
 
+        compute_cache = collections.defaultdict(dict)
+
         for values in vals_list:
             # avoid overriding inherited values when parent is set
             avoid_models = {
@@ -1801,7 +1803,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                     defaults[name] = [(0, 0, x) for x in value]
 
             # Pre compute computed fields (and x2m computed).
-            self._add_missing_computes(defaults, stored_computed_fields, x2m_stored_fields)
+            self._add_missing_computes(defaults, stored_computed_fields, x2m_stored_fields, compute_cache)
 
             new_vals.append(defaults)
 
@@ -2551,6 +2553,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                 def mark_fields_to_compute():
                     recs = self.with_context(active_test=False).search([])
                     for field in fields_to_compute:
+                        # consider cache_compute here?
                         _logger.info("Storing computed values of %s", field)
                         self.env.add_to_compute(recs._fields[field], recs)
 
@@ -3692,7 +3695,7 @@ Record ids: %(records)s
 
         return True
 
-    def _add_missing_computes(self, vals, stored_computed_fields, x2m_stored_fields):
+    def _add_missing_computes(self, vals, stored_computed_fields, x2m_stored_fields, compute_cache):
         """ Adds missing computed fields to data_list values.
 
         Only applies for pre_compute=True fields.
@@ -3736,7 +3739,23 @@ Record ids: %(records)s
                 # computed stored fields with a column
                 # have to be computed before create
                 # s.t. required and constraints can be applied on those fields.
-                field_value = field.convert_to_write(new_obj[field.name], self)
+                if field.cache_compute:
+                    # TODO add a context key to disable this feature ?
+                    # TODO enforce the depends for cache_computed fields are all on same model...
+                    # And all stored ?
+                    key = tuple([
+                        self._fields.get(fname).convert_to_write(new_obj[fname], self)
+                        for fname in field.depends
+                    ])
+                    if key in compute_cache[field]:
+                        field_value = compute_cache[field][key]
+                        # assign value to enforce no recomputation.
+                        # even if other computed fields depends on this field
+                        new_obj[field.name] = field_value
+                    else:
+                        field_value = compute_cache[field][key] = field.convert_to_write(new_obj[field.name], self)
+                else:
+                    field_value = field.convert_to_write(new_obj[field.name], self)
                 vals[field.name] = field_value
 
         return vals
