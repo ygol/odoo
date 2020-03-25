@@ -85,7 +85,7 @@ var InventoryValidationController = ListController.extend({
                     // The presence of 'button_validate_picking_ids' in the context means the call
                     // was made from a Zero Quantity Count, wich means there's no need to redirect
                     // to that inventory.
-                    if (!(self.context.button_validate_picking_ids)) {
+                    if (self.context && !self.context.button_validate_picking_ids) {
                         self.do_action({
                             type: 'ir.actions.act_window',
                             res_model: 'stock.inventory',
