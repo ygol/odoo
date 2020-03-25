@@ -132,7 +132,6 @@ var PaymentAdyen = PaymentInterface.extend({
                     'AbortReason': 'MerchantAbort',
                     'MessageReference': {
                         'MessageCategory': 'Payment',
-                        'SaleID': header.SaleID,
                         'ServiceID': previous_service_id,
                     }
                 },
@@ -143,7 +142,7 @@ var PaymentAdyen = PaymentInterface.extend({
 
             // Only valid response is a 200 OK HTTP response which is
             // represented by true.
-            if (! ignore_error && data !== true) {
+            if (! ignore_error && data !== "ok") {
                 self._show_error(_('Cancelling the payment failed. Please cancel it manually on the payment terminal.'));
             }
         });
@@ -227,7 +226,7 @@ var PaymentAdyen = PaymentInterface.extend({
                     if (message.startsWith('108 ')) {
                         resolve(false);
                     } else {
-                        line.set_payment_status('force_done');
+                        line.set_payment_status('retry');
                         reject();
                     }
                 }
