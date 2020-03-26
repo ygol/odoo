@@ -223,7 +223,7 @@ class Lead(models.Model):
             if not lead.user_id:
                 continue
             user = lead.user_id
-            if lead.team_id and user in lead.team_id.member_ids | lead.team_id.user_id:
+            if lead.team_id and user in (lead.team_id.member_ids | lead.team_id.user_id):
                 continue
             team_domain = [('use_leads', '=', True)] if lead.type == 'lead' else [('use_opportunities', '=', True)]
             team = self.env['crm.team']._get_default_team_id(user_id=user.id, domain=team_domain)
