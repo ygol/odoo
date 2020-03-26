@@ -2369,7 +2369,7 @@ QUnit.module('Views', {
                 if (route === '/web/dataset/search_read') {
                     assert.step('search_read');
                     const domain = args.domain;
-                    assert.deepEqual(domain, [['customer', '=', 1], ['foo', '=', 12]],
+                    assert.deepEqual(domain, ['&', ['customer', '=', 1], ['foo', '=', 12]],
                         'list domain is correct');
                 }
                 return this._super.apply(this, arguments);

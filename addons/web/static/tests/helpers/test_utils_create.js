@@ -15,11 +15,11 @@ odoo.define('web.test_utils_create', function (require) {
     const concurrency = require('web.concurrency');
     const config = require('web.config');
     const ControlPanel = require('web.ControlPanel');
-    const ControlPanelModel = require('web.ControlPanelModel');
     const customHooks = require('web.custom_hooks');
     const DebugManager = require('web.DebugManager.Backend');
     const dom = require('web.dom');
     const makeTestEnvironment = require('web.test_env');
+    const ActionModel = require('web.ActionModel');
     const Registry = require('web.Registry');
     const testUtilsMock = require('web.test_utils_mock');
     const Widget = require('web.Widget');
@@ -173,7 +173,7 @@ odoo.define('web.test_utils_create', function (require) {
      * available event handlers respectively.
      * @param {Object} [params={}]
      * @param {Object} [params.cpProps]
-     * @param {Object} [params.cpStoreConfig]
+     * @param {Object} [params.cpModelConfig]
      * @param {boolean} [params.debug]
      * @param {Object} [params.env]
      * @returns {Object} useful control panel testing elements:
@@ -183,42 +183,50 @@ odoo.define('web.test_utils_create', function (require) {
      *    available helpers)
      */
     async function createControlPanel(params = {}) {
-        const config = params.cpStoreConfig || {};
         const debug = params.debug || false;
-        const env = params.env || {};
+        const env = makeTestEnvironment(params.env || {});
         const props = Object.assign({
             action: {},
             fields: {},
         }, params.cpProps);
 
+
+        const globalConfig = params.cpModelConfig || {};
+        globalConfig.env = env;
+        const archs = (globalConfig.arch && { search: globalConfig.arch, }) || {};
+        const { 'control-panel': controlPanelInfo, } = ActionModel.extractArchInfo(archs);
+        const extensions = {
+            'search': {},
+            'control-panel': { archNodes: controlPanelInfo.children, },
+        };
+
         class Parent extends Component {
             constructor() {
                 super();
-                config.env = this.env;
-                this._controlPanelModel = new ControlPanelModel(config);
+                this._searchModel = new ActionModel(extensions, globalConfig);
                 this.state = useState(props);
                 this.controlPanel = useRef("controlPanel");
             }
             async willStart() {
-                await this._controlPanelModel.isReady;
+                await this._searchModel.load();
             }
             mounted() {
                 if (params['get-controller-query-params']) {
-                    this._controlPanelModel.on('get-controller-query-params', this,
+                    this._searchModel.on('get-controller-query-params', this,
                         params['get-controller-query-params']);
                 }
                 if (params.search) {
-                    this._controlPanelModel.on('search', this, params.search);
+                    this._searchModel.on('search', this, params.search);
                 }
             }
         }
         Parent.components = { ControlPanel };
-        Parent.env = makeTestEnvironment(env);
+        Parent.env = env;
         Parent.template = xml`
             <ControlPanel
                 t-ref="controlPanel"
                 t-props="state"
-                controlPanelModel="_controlPanelModel"
+                searchModel="_searchModel"
             />`;
 
         const parent = new Parent();
@@ -230,7 +238,7 @@ odoo.define('web.test_utils_create', function (require) {
             controlPanel.destroy = destroy;
             parent.destroy();
         };
-        controlPanel.getQuery = () => parent._controlPanelModel.getQuery();
+        controlPanel.getQuery = () => parent._searchModel.get('query');
 
         return controlPanel;
     }

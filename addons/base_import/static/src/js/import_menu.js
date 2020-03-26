@@ -15,7 +15,7 @@ odoo.define('base_import.ImportMenu', function (require) {
     class ImportMenu extends DropdownMenuItem {
         constructor() {
             super(...arguments);
-            this.model = useModel('controlPanelModel');
+            this.model = useModel('searchModel');
         }
 
         //---------------------------------------------------------------------
@@ -30,8 +30,8 @@ odoo.define('base_import.ImportMenu', function (require) {
                 type: 'ir.actions.client',
                 tag: 'import',
                 params: {
-                    model: this.model.modelName,
-                    context: this.model.actionContext,
+                    model: this.model.config.modelName,
+                    context: this.model.config.actionContext,
                 }
             };
             this.trigger('do-action', {action: action});

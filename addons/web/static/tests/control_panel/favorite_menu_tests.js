@@ -28,7 +28,7 @@ odoo.define('web.favorite_menu_tests', function (require) {
             assert.expect(8);
 
             const params = {
-                cpStoreConfig: { searchMenuTypes },
+                cpModelConfig: { searchMenuTypes },
                 cpProps: { fields: this.fields, searchMenuTypes, action: { name: "Action Name" } },
             };
             const controlPanel = await createControlPanel(params);
@@ -61,7 +61,7 @@ odoo.define('web.favorite_menu_tests', function (require) {
             assert.expect(11);
 
             const params = {
-                cpStoreConfig: {
+                cpModelConfig: {
                     viewInfo: { fields: this.fields },
                     searchMenuTypes
                 },
@@ -109,8 +109,8 @@ odoo.define('web.favorite_menu_tests', function (require) {
             assert.expect(1);
 
             const params = {
-                cpStoreConfig: {
-                    viewInfo: { fields: this.fields },
+                cpModelConfig: {
+                    fields: this.fields,
                     searchMenuTypes
                 },
                 cpProps: {
@@ -156,8 +156,9 @@ odoo.define('web.favorite_menu_tests', function (require) {
             </search>
         `;
             const params = {
-                cpStoreConfig: {
-                    viewInfo: { fields: {}, arch },
+                cpModelConfig: {
+                    fields: {},
+                    arch ,
                     searchMenuTypes,
                     actionContext: {
                         search_default_positive: true,
@@ -202,8 +203,9 @@ odoo.define('web.favorite_menu_tests', function (require) {
 
             const arch = `<search><field name="foo"/></search>`;
             const params = {
-                cpStoreConfig: {
-                    viewInfo: { fields: this.fields, arch },
+                cpModelConfig: {
+                    fields: this.fields,
+                    arch ,
                     searchMenuTypes,
                 },
                 cpProps: {
@@ -258,7 +260,7 @@ odoo.define('web.favorite_menu_tests', function (require) {
                 user_id: [2, "Mitchell Admin"],
             }];
             const params = {
-                cpStoreConfig: { viewInfo: { favoriteFilters }, searchMenuTypes },
+                cpModelConfig: { favoriteFilters, searchMenuTypes },
                 cpProps: { searchMenuTypes, action: {} },
                 search: function (searchQuery) {
                     const { domain } = searchQuery;
@@ -305,8 +307,8 @@ odoo.define('web.favorite_menu_tests', function (require) {
                 user_id: [2, "Mitchell Admin"],
             }];
             const params = {
-                cpStoreConfig: {
-                    viewInfo: { favoriteFilters },
+                cpModelConfig: {
+                    favoriteFilters,
                     searchMenuTypes,
                     actionContext: { search_disable_custom_filters: true }
                 },
@@ -354,8 +356,10 @@ odoo.define('web.favorite_menu_tests', function (require) {
         `;
             const searchMenuTypes = ['filter', 'groupBy', 'comparison', 'favorite'];
             const params = {
-                cpStoreConfig: {
-                    viewInfo: { favoriteFilters, arch, fields: this.fields },
+                cpModelConfig: {
+                    favoriteFilters,
+                    arch,
+                    fields: this.fields,
                     searchMenuTypes,
                     actionContext: {
                         search_default_positive: true,
@@ -442,7 +446,7 @@ odoo.define('web.favorite_menu_tests', function (require) {
                 user_id: [2, "Mitchell Admin"],
             }];
             const params = {
-                cpStoreConfig: { viewInfo: { favoriteFilters }, searchMenuTypes },
+                cpModelConfig: { favoriteFilters, searchMenuTypes },
                 cpProps: { searchMenuTypes, action: {} },
                 'get-controller-query-params': function (callback) {
                     callback();

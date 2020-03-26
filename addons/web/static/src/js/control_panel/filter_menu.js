@@ -20,7 +20,7 @@ odoo.define('web.FilterMenu', function (require) {
         constructor() {
             super(...arguments);
 
-            this.model = useModel('controlPanelModel');
+            this.model = useModel('searchModel');
         }
 
         //---------------------------------------------------------------------
@@ -38,7 +38,7 @@ odoo.define('web.FilterMenu', function (require) {
          * @override
          */
         get items() {
-            return this.model.getFiltersOfType('filter');
+            return this.model.get('filters', f => f.type === 'filter');
         }
 
         /**

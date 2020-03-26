@@ -149,7 +149,7 @@ QUnit.module('Views', {
                 if (args.method === 'web_read_group') {
                     assert.deepEqual(args.kwargs, {
                         context: {},
-                        domain: [["display_name", "like", "a"], "&", ["display_name", "ilike", "piou"], ["foo", "ilike", "piou"]],
+                        domain: ["&", ["display_name", "like", "a"], "&", ["display_name", "ilike", "piou"], ["foo", "ilike", "piou"]],
                         fields: ["display_name", "foo", "bar"],
                         groupby: ["bar"],
                         orderby: '',
@@ -161,7 +161,7 @@ QUnit.module('Views', {
                     search++;
                     assert.deepEqual(args, {
                         context: {'bin_size': true},  // not part of the test, may change
-                        domain: [["display_name", "like", "a"], "&", ["display_name", "ilike", "piou"], ["foo", "ilike", "piou"]],
+                        domain: ["&", ["display_name", "like", "a"], "&", ["display_name", "ilike", "piou"], ["foo", "ilike", "piou"]],
                         fields: ["display_name", "foo"],
                         model: "partner",
                         limit: 80,

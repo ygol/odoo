@@ -24,7 +24,7 @@ odoo.define('web.GroupByMenu', function (require) {
                 .filter(field => this._validateField(field))
                 .sort(({ string: a }, { string: b }) => a > b ? 1 : a < b ? -1 : 0);
 
-            this.model = useModel('controlPanelModel');
+            this.model = useModel('searchModel');
         }
 
         //---------------------------------------------------------------------
@@ -42,7 +42,7 @@ odoo.define('web.GroupByMenu', function (require) {
          * @override
          */
         get items() {
-            return this.model.getFiltersOfType('groupBy');
+            return this.model.get('filters', f => f.type === 'groupBy');
         }
 
         /**

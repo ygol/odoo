@@ -62,7 +62,7 @@
                             class="o_group_by_menu"
                             fields="fields"
                         />
-                        <ComparisonMenu t-if="props.searchMenuTypes.includes('comparison') and model.getFiltersOfType('comparison').length"
+                        <ComparisonMenu t-if="props.searchMenuTypes.includes('comparison') and model.get('filters', f => f.type === 'comparison').length"
                             class="o_comparison_menu"
                         />
                         <FavoriteMenu t-if="props.searchMenuTypes.includes('favorite')"
@@ -554,7 +554,7 @@
 
 <t t-name="web.SearchBar" owl="1">
     <div class="o_searchview_input_container">
-        <div t-foreach="model.getFacets()" t-as="facet" t-key="facet_index"
+        <div t-foreach="model.get('facets')" t-as="facet" t-key="facet_index"
             tabindex="0"
             class="o_searchview_facet"
             role="img"

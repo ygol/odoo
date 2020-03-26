@@ -24,12 +24,11 @@ odoo.define('web.control_panel_tests', function (require) {
             assert.expect(2);
 
             const params = {
-                cpStoreConfig: {
-                    viewInfo: {
-                        arch: `<search> <field name="foo"/></search>`,
-                        fields: this.fields,
-                    },
+                cpModelConfig: {
+                    arch: `<search> <field name="foo"/></search>`,
+                    fields: this.fields,
                     actionContext: { search_default_foo: "a" },
+                    searchMenuTypes: ['filter'],
                 },
                 cpProps: { fields: this.fields },
             };
@@ -66,8 +65,9 @@ odoo.define('web.control_panel_tests', function (require) {
                 </search>`;
             const searchMenuTypes = ['filter', 'groupBy'];
             const params = {
-                cpStoreConfig: {
-                    viewInfo: { arch, fields: this.fields },
+                cpModelConfig: {
+                    arch,
+                    fields: this.fields,
                     actionContext: {
                         search_default_display_name: 'value',
                         search_default_filterB: true,

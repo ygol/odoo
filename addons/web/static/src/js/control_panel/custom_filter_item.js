@@ -46,7 +46,7 @@ odoo.define('web.CustomFilterItem', function (require) {
         constructor() {
             super(...arguments);
 
-            this.model = useModel('controlPanelModel');
+            this.model = useModel('searchModel');
 
             this.canBeOpened = true;
             this.state.conditions = [];

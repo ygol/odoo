@@ -60,28 +60,15 @@ var LunchControllerCommon = {
             },
         });
     },
-    _fetchWidgetData: function () {
-        var self = this;
-
-        return this._rpc({
+    _fetchWidgetData: async function () {
+        const lunchInfos = await this._rpc({
             route: '/lunch/infos',
             params: {
                 user_id: this.userId,
                 context: this.context,
             },
-        }).then(function (data) {
-            self.widgetData = data;
-            return self.model._updateLocation(data.user_location[0]);
         });
-    },
-    /**
-     * Override to add the location domain (coming from the LunchWidget)
-     * to the searchDomain (coming from the controlPanel).
-     *
-     * @override
-     */
-    _getViewDomain: async function () {
-        return this.model.getLocationDomain();
+        this.widgetData = lunchInfos;
     },
     /**
      * Renders and appends the lunch banner widget.
@@ -140,22 +127,8 @@ var LunchControllerCommon = {
         });
     },
     _onLocationChanged: function (ev) {
-        var self = this;
-
         ev.stopPropagation();
-
-        this._rpc({
-            route: '/lunch/user_location_set',
-            params: {
-                user_id: this.userId,
-                location_id: ev.data.locationId,
-                context: this.context,
-            },
-        }).then(function () {
-            self.model._updateLocation(ev.data.locationId).then(function () {
-                self.reload();
-            });
-        });
+        this._searchModel.dispatch('updateLocationId', ev.data.locationId);
     },
     _onOpenWizard: function (ev) {
         var self = this;
@@ -224,13 +197,7 @@ var LunchControllerCommon = {
     },
     _onUserChanged: function (ev) {
         ev.stopPropagation();
-
-        var self = this;
-
-        this.userId = ev.data.userId;
-        this.model._updateUser(ev.data.userId).then(function () {
-            self.reload();
-        });
+        this._searchModel.dispatch('updateUserId', ev.data.userId);
     },
     _onUnlinkOrder: function (ev) {
         var self = this;

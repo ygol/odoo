@@ -15,7 +15,7 @@ odoo.define("web.ComparisonMenu", function (require) {
     class ComparisonMenu extends DropdownMenu {
         constructor() {
             super(...arguments);
-            this.model = useModel("controlPanelModel");
+            this.model = useModel('searchModel');
         }
 
         //---------------------------------------------------------------------
@@ -33,7 +33,7 @@ odoo.define("web.ComparisonMenu", function (require) {
          * @override
          */
         get items() {
-            return this.model.getFiltersOfType("comparison");
+            return this.model.get('filters', f => f.type === 'comparison');
         }
 
         /**

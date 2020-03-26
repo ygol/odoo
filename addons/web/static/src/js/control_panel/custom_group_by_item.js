@@ -20,7 +20,7 @@ odoo.define('web.CustomGroupByItem', function (require) {
             this.canBeOpened = true;
             this.state.fieldName = this.props.fields[0].name;
 
-            this.model = useModel('controlPanelModel');
+            this.model = useModel('searchModel');
         }
 
         //---------------------------------------------------------------------

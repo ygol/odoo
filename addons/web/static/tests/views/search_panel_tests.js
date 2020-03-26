@@ -412,8 +412,8 @@ QUnit.module('Views', {
 
         assert.verifySteps([
             '[["bar","=",true]]',
-            '[["bar","=",true],["company_id","child_of",3]]',
-            '[["bar","=",true],["company_id","child_of",5]]',
+            '["&",["bar","=",true],["company_id","child_of",3]]',
+            '["&",["bar","=",true],["company_id","child_of",5]]',
             '[["bar","=",true]]',
         ]);
 
@@ -521,11 +521,11 @@ QUnit.module('Views', {
                 </kanban>`,
             archs: {
                 'partner,false,search': `
-                    <seasrch>
+                    <search>
                         <searchpanel>
                             <field name="company_id" enable_counters="1"/>
                         </searchpanel>
-                    </seasrch>`,
+                    </search>`,
             },
             mockRPC: function (route, args) {
                 if (route === '/web/dataset/search_read') {
@@ -733,10 +733,10 @@ QUnit.module('Views', {
 
         assert.verifySteps([
             '[["bar","=",true]]',
-            '[["bar","=",true],["company_id","child_of",3]]',
-            '[["bar","=",true],["company_id","child_of",3],["state","=","abc"]]',
-            '[["bar","=",true],["company_id","child_of",3],["state","=","ghi"]]',
-            '[["bar","=",true],["state","=","ghi"]]',
+            '["&",["bar","=",true],["company_id","child_of",3]]',
+            '["&",["bar","=",true],"&",["company_id","child_of",3],["state","=","abc"]]',
+            '["&",["bar","=",true],"&",["company_id","child_of",3],["state","=","ghi"]]',
+            '["&",["bar","=",true],["state","=","ghi"]]',
             '[["bar","=",true]]',
         ]);
 
@@ -1079,8 +1079,8 @@ QUnit.module('Views', {
 
         assert.verifySteps([
             '[["bar","=",true]]',
-            '[["bar","=",true],["company_id","child_of",3]]',
-            '[["bar","=",true],["company_id","child_of",5]]',
+            '["&",["bar","=",true],["company_id","child_of",3]]',
+            '["&",["bar","=",true],["company_id","child_of",5]]',
         ]);
 
         kanban.destroy();
@@ -1310,13 +1310,13 @@ QUnit.module('Views', {
             '[["bar","=",true]]',
             // 'asustek' checked
             '[]',
-            '[["bar","=",true],["company_id","in",[3]]]',
+            '["&",["bar","=",true],["company_id","in",[3]]]',
             // 'asustek' and 'agrolait' checked
             '[]',
-            '[["bar","=",true],["company_id","in",[3,5]]]',
+            '["&",["bar","=",true],["company_id","in",[3,5]]]',
             // 'agrolait' checked
             '[]',
-            '[["bar","=",true],["company_id","in",[5]]]',
+            '["&",["bar","=",true],["company_id","in",[5]]]',
             // nothing checked
             '[]',
             '[["bar","=",true]]',
@@ -1417,13 +1417,13 @@ QUnit.module('Views', {
             '[["bar","=",true]]',
             // 'asustek' checked
             '[]',
-            '[["bar","=",true],["state","in",["abc"]]]',
+            '["&",["bar","=",true],["state","in",["abc"]]]',
             // 'asustek' and 'agrolait' checked
             '[]',
-            '[["bar","=",true],["state","in",["abc","def"]]]',
+            '["&",["bar","=",true],["state","in",["abc","def"]]]',
             // 'agrolait' checked
             '[]',
-            '[["bar","=",true],["state","in",["def"]]]',
+            '["&",["bar","=",true],["state","in",["def"]]]',
             // nothing checked
             '[]',
             '[["bar","=",true]]',
@@ -1931,16 +1931,16 @@ QUnit.module('Views', {
             '[["bar","=",true]]',
             // 'asustek' checked
             '[]',
-            '[["bar","=",true],["company_id","in",[3]]]',
+            '["&",["bar","=",true],["company_id","in",[3]]]',
             // 'asustek' and 'agrolait' checked
             '[]',
-            '[["bar","=",true],["company_id","in",[3]],["company_id","in",[5]]]',
+            '["&",["bar","=",true],"&",["company_id","in",[3]],["company_id","in",[5]]]',
             // 'asustek', 'agrolait' and 'camptocamp' checked
             '[]',
-            '[["bar","=",true],["company_id","in",[3]],["company_id","in",[5,11]]]',
+            '["&",["bar","=",true],"&",["company_id","in",[3]],["company_id","in",[5,11]]]',
             // 'asustek' checked
             '[]',
-            '[["bar","=",true],["company_id","in",[3]]]',
+            '["&",["bar","=",true],["company_id","in",[3]]]',
         ]);
 
         kanban.destroy();

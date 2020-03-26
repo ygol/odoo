@@ -546,7 +546,7 @@ ActionManager.include({
                     return Promise.resolve(controller.widget.willRestore()).then(function () {
                         viewOptions = _.extend({}, viewOptions, {
                             breadcrumbs: self._getBreadcrumbs(self.controllerStack.slice(0, index)),
-                            shouldUpdateControlPanel: true,
+                            shouldUpdateSearchComponents: true,
                         });
                         return controller.widget.reload(viewOptions).then(function () {
                             return controller;

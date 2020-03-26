@@ -1,17 +1,28 @@
-odoo.define('web.control_panel_model_tests', function (require) {
+odoo.define('web.control_panel_model_extension_tests', function (require) {
     "use strict";
 
-    const ControlPanelModel = require('web.ControlPanelModel');
+    const ActionModel = require('web.ActionModel');
     const makeTestEnvironment = require('web.test_env');
 
-    function createControlPanelModel(config = {}) {
-        return new ControlPanelModel(Object.assign(
-            { env: makeTestEnvironment() },
-            config
-        ));
+    function createModel(params = {}) {
+        const archs = (params.arch && { search: params.arch, }) || {};
+        const { 'control-panel': controlPanelInfo, } = ActionModel.extractArchInfo(archs);
+        const extensions = {
+            'control-panel': {
+                actionContext: params.actionContext,
+                archNodes: controlPanelInfo.children,
+                dynamicFilters: params.dynamicFilters,
+                favoriteFilters: params.favoriteFilters,
+                env: makeTestEnvironment(),
+                fields: params.fields,
+            },
+        };
+        const model = new ActionModel(extensions);
+        return model;
     }
     function sanitizeFilters(model) {
-        return Object.values(model.state.filters).map(filter => {
+        const filters = Object.values(model.extensions[0].state.filters);
+        return filters.map(filter => {
             const copy = Object.assign({}, filter);
             delete copy.groupId;
             delete copy.groupNumber;
@@ -20,7 +31,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
         });
     }
 
-    QUnit.module('ControlPanelModel', {
+    QUnit.module('ControlPanelModelExtension', {
         beforeEach() {
             this.fields = {
                 display_name: { string: "Displayed name", type: 'char' },
@@ -35,8 +46,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
 
         QUnit.test('empty arch', function (assert) {
             assert.expect(1);
-
-            const model = createControlPanelModel();
+            const model = createModel();
             assert.deepEqual(sanitizeFilters(model), []);
         });
 
@@ -47,7 +57,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
                     <field name="bar"/>
                 </search>`;
             const fields = this.fields;
-            const model = createControlPanelModel({ viewInfo: { arch, fields } });
+            const model = createModel({ arch, fields, });
             assert.deepEqual(sanitizeFilters(model), [
                 {
                     description: "Bar",
@@ -65,7 +75,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
                 <separator/>
             </search>`;
             const fields = this.fields;
-            const model = createControlPanelModel({ viewInfo: { arch, fields } });
+            const model = createModel({ arch, fields, });
             assert.deepEqual(sanitizeFilters(model), []);
         });
 
@@ -77,7 +87,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
                     <field name="bar"/>
                 </search>`;
             const fields = this.fields;
-            const model = createControlPanelModel({ viewInfo: { arch, fields } });
+            const model = createModel({ arch, fields, });
             assert.deepEqual(sanitizeFilters(model), [
                 {
                     description: "Bar",
@@ -95,7 +105,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
                     <filter name="filter" string="Hello" domain="[]"/>
                 </search>`;
             const fields = this.fields;
-            const model = createControlPanelModel({ viewInfo: { arch, fields } });
+            const model = createModel({ arch, fields, });
             assert.deepEqual(sanitizeFilters(model), [
                 {
                     description: "Hello",
@@ -112,8 +122,8 @@ odoo.define('web.control_panel_model_tests', function (require) {
                     <filter name="date_filter" string="Date" date="date_field"/>
                 </search>`;
             const fields = this.fields;
-            const model = createControlPanelModel({ viewInfo: { arch, fields } });
-            const dateFilterId = Object.values(model.state.filters)[0].id;
+            const model = createModel({ arch, fields, });
+            const dateFilterId = Object.values(model.get('filters'))[0].id;
             assert.deepEqual(sanitizeFilters(model), [
                 {
                     defaultOptionId: "this_month",
@@ -146,7 +156,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
                     <filter name="groupby" string="Hi" context="{ 'group_by': 'date_field:day'}"/>
                 </search>`;
             const fields = this.fields;
-            const model = createControlPanelModel({ viewInfo: { arch, fields } });
+            const model = createModel({ arch, fields, });
             assert.deepEqual(sanitizeFilters(model), [
                 {
                     defaultOptionId: "day",
@@ -167,7 +177,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
                     <filter name="filter_2" string="Hello Two" domain="[('bar', '=', 3)]"/>
                 </search>`;
             const fields = this.fields;
-            const model = createControlPanelModel({ viewInfo: { arch, fields } });
+            const model = createModel({ arch, fields, });
             assert.deepEqual(sanitizeFilters(model), [
                 {
                     description: "Hello One",
@@ -191,7 +201,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
                     <filter name="filter_2" string="Hello Two" domain="[('bar', '=', 3)]"/>
                 </search>`;
             const fields = this.fields;
-            const model = createControlPanelModel({ viewInfo: { arch, fields } });
+            const model = createModel({ arch, fields, });
             assert.deepEqual(sanitizeFilters(model), [
                 {
                     description: "Hello One",
@@ -214,7 +224,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
                     <field name="bar"/>
                 </search>`;
             const fields = this.fields;
-            const model = createControlPanelModel({ viewInfo: { arch, fields } });
+            const model = createModel({ arch, fields, });
             assert.deepEqual(sanitizeFilters(model), [
                 {
                     description: "Hello",
@@ -238,7 +248,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
                     <field name="bar"/>
                 </search>`;
             const fields = this.fields;
-            const model = createControlPanelModel({ viewInfo: { arch, fields } });
+            const model = createModel({ arch, fields, });
             assert.deepEqual(sanitizeFilters(model), [
                 {
                     description: "Foo",
@@ -270,7 +280,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
                 domain: "[('user_id', '=', uid)]",
             }];
 
-            const model = createControlPanelModel({ viewInfo: { favoriteFilters } });
+            const model = createModel({ favoriteFilters });
             assert.deepEqual(sanitizeFilters(model), [
                 {
                     context: {},
@@ -303,7 +313,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
                 domain: [['id', 'in', [1, 3, 4]]]
             }];
 
-            const model = createControlPanelModel({ dynamicFilters });
+            const model = createModel({ dynamicFilters });
             assert.deepEqual(sanitizeFilters(model), [
                 {
                     description: 'Quick search',
@@ -330,7 +340,7 @@ odoo.define('web.control_panel_model_tests', function (require) {
                     <field name="bar"/>
                 </search>`;
             const fields = this.fields;
-            const model = createControlPanelModel({ viewInfo: { arch, fields }, actionContext });
+            const model = createModel({ arch, fields, actionContext });
             // only the truthy filter 'groupby' has isDefault true
             assert.deepEqual(sanitizeFilters(model), [
                 {
