@@ -13,10 +13,26 @@
 <div>
     % set colors = ctx.get('colors', {})
     % set recurrent = object.recurrence_id and not ctx['ignore_recurrence']
+    % set isOnline = ctx.get('website_id') and object.event_id.appointment_type_id
+    % set isForResponsible = object.partner_id.id == object.event_id.partner_id.id
     <p>
-        Hello ${object.common_name},<br/><br/>
-        ${object.event_id.user_id.partner_id.name} invited you for the ${object.event_id.name} meeting of ${object.event_id.user_id.company_id.name}.
+        Hello ${object.common_name},<br/><br/>${attendeeCustomer}
+        % if isOnline:
+            % if isForResponsible:
+                % for attendee in object.event_id.attendee_ids:
+                    % if attendee.common_name != object.common_name:
+                        ${attendee.common_name} scheduled the following meeting with you.
+                    % endif
+                % endfor
+            % else :
+                This email is to confirm that your appointment has been booked.
+            % endif
+        % else:
+            ${object.event_id.user_id.partner_id.name} invited you for the ${object.event_id.name} meeting of ${object.event_id.user_id.company_id.name}.
+        % endif
+
     </p>
+    %if not isOnline or isOnline and isForResponsible:
     <div style="text-align: center; margin: 16px 0px 16px 0px;">
         % set target = 'recurrence' if recurrent else 'meeting'
         <a href="/calendar/${target}/accept?token=${object.access_token}&amp;id=${object.event_id.id}"
@@ -29,6 +45,7 @@
             style="padding: 5px 10px; color: #FFFFFF; text-decoration: none; background-color: #875A7B; border: 1px solid #875A7B; border-radius: 3px">
             View</a>
     </div>
+    % endif
     <table border="0" cellpadding="0" cellspacing="0"><tr>
         % if not recurrent:
         <td width="130px;">
@@ -50,6 +67,9 @@
         <td style="padding-top: 5px;">
             <p><strong>Details of the event</strong></p>
             <ul>
+                % if isOnline:
+                    <li>Appointment Type: ${object.event_id.appointment_type_id.name}</li>
+                % endif
                 % if object.event_id.location:
                     <li>Location: ${object.event_id.location}
                         (<a target="_blank" href="http://maps.google.com/maps?oi=map&amp;q=${object.event_id.location}">View Map</a>)
