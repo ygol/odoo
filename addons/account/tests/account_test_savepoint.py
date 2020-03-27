@@ -12,10 +12,12 @@ class AccountingSavepointCase(SavepointCase):
     # -------------------------------------------------------------------------
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls, chart_template_ref=None):
         super(AccountingSavepointCase, cls).setUpClass()
 
-        chart_template = cls.env.user.company_id.chart_template_id
+        chart_template = chart_template_ref
+        if not chart_template:
+            chart_template = cls.env.user.company_id.chart_template_id
         if not chart_template:
             chart_template = cls.env.ref('l10n_generic_coa.configurable_chart_template', raise_if_not_found=False)
         if not chart_template:
