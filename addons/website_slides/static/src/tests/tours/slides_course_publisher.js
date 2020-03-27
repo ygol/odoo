@@ -18,8 +18,8 @@ tour.register('course_publisher', {
     content: 'eLearning: click on New (top-menu)',
     trigger: 'li.o_new_content_menu a'
 }, {
-    content: 'eLearning: click on New Course',
-    trigger: 'a:contains("New Course")'
+    content: 'eLearning: click on Course',
+    trigger: 'a:contains("Course")'
 }, {
     content: 'eLearning: set name',
     trigger: 'input[name="name"]',
@@ -51,9 +51,6 @@ tour.register('course_publisher', {
 }, {
     content: 'eLearning: click pâtissière',
     trigger: 'img[title="s_company_team_image_4.png"]',
-}, {
-    content: 'eLearning: validate pâtissière',
-    trigger: 'footer.modal-footer button:contains("Add")',
 }, {
     content: 'eLearning: is the pâtissière set ?',
     trigger: 'img.o_wslides_course_pict',
