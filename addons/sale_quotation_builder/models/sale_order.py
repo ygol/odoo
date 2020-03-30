@@ -24,7 +24,7 @@ class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
 
     website_description = fields.Html(
-        'Website Description', sanitize=False, readonly=False,
+        'Website Description', sanitize=False, readonly=False, pre_compute=True,
         compute="_compute_website_description", store=True, copy=True,
     )
 

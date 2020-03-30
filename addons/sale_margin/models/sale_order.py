@@ -7,12 +7,13 @@ class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
 
     margin = fields.Float(
-        "Margin", compute='_compute_margin',
+        "Margin", compute='_compute_margin', pre_compute=True,
         digits='Product Price', store=True, groups="base.group_user")
     margin_percent = fields.Float(
-        "Margin (%)", compute='_compute_margin', store=True, groups="base.group_user")
+        "Margin (%)", groups="base.group_user",
+        compute='_compute_margin', store=True, pre_compute=True)
     purchase_price = fields.Float(
-        string='Cost', compute="_compute_purchase_price",
+        string='Cost', compute="_compute_purchase_price", pre_compute=True,
         digits='Product Price', store=True, readonly=False,
         groups="base.group_user")
 
@@ -52,8 +53,8 @@ class SaleOrderLine(models.Model):
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
-    margin = fields.Monetary("Margin", compute='_compute_margin', store=True)
-    margin_percent = fields.Float("Margin (%)", compute='_compute_margin', store=True)
+    margin = fields.Monetary("Margin", compute='_compute_margin', store=True, pre_compute=True)
+    margin_percent = fields.Float("Margin (%)", compute='_compute_margin', store=True, pre_compute=True)
 
     @api.depends('order_line.margin', 'amount_untaxed')
     def _compute_margin(self):
