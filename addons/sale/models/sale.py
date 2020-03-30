@@ -1273,7 +1273,6 @@ class SaleOrderLine(models.Model):
              "  - Timesheet: the quantity is the sum of hours recorded on tasks linked to this sale line\n"
              "  - Stock Moves: the quantity comes from confirmed pickings\n")
     qty_delivered = fields.Float('Delivered Quantity', copy=False, compute='_compute_qty_delivered', inverse='_inverse_qty_delivered', compute_sudo=True, store=True, digits='Product Unit of Measure')
-    qty_delivered_manual = fields.Float('Delivered Manually', copy=False, digits='Product Unit of Measure')
     qty_to_invoice = fields.Float(
         compute='_get_to_invoice_qty', string='To Invoice Quantity', store=True,
         digits='Product Unit of Measure')
@@ -1424,7 +1423,7 @@ class SaleOrderLine(models.Model):
         # compute for manual lines
         for line in (self-lines_by_analytic):
             if line.qty_delivered_method == 'manual':
-                line.qty_delivered = line.qty_delivered_manual or 0.0
+                line.qty_delivered = line.qty_delivered or 0.0
             else:
                 line.qty_delivered = 0.0
 
@@ -1466,18 +1465,6 @@ class SaleOrderLine(models.Model):
             result[so_line_id] += qty
 
         return result
-
-    @api.onchange('qty_delivered')
-    def _inverse_qty_delivered(self):
-        """ When writing on qty_delivered, if the value should be modify manually (`qty_delivered_method` = 'manual' only),
-            then we put the value in `qty_delivered_manual`. Otherwise, `qty_delivered_manual` should be False since the
-            delivered qty is automatically compute by other mecanisms.
-        """
-        for line in self:
-            if line.qty_delivered_method == 'manual':
-                line.qty_delivered_manual = line.qty_delivered
-            else:
-                line.qty_delivered_manual = 0.0
 
     @api.depends('invoice_lines', 'invoice_lines.price_total', 'invoice_lines.move_id.state', 'invoice_lines.move_id.move_type')
     def _compute_untaxed_amount_invoiced(self):
