@@ -123,46 +123,48 @@ class SaleOrder(models.Model):
     date_order = fields.Datetime(string='Order Date', required=True, readonly=True, index=True, states={'draft': [('readonly', False)], 'sent': [('readonly', False)]}, copy=False, default=fields.Datetime.now, help="Creation date of draft/sent orders,\nConfirmation date of confirmed orders.")
     validity_date = fields.Date(
         string='Expiration', readonly=True, copy=False, store=True, compute="_compute_company_defaults",
-        states={'draft': [('readonly', False)], 'sent': [('readonly', False)]})
+        states={'draft': [('readonly', False)], 'sent': [('readonly', False)]}, pre_compute=True)
     is_expired = fields.Boolean(compute='_compute_is_expired', string="Is expired")
     require_signature = fields.Boolean(
         'Online Signature', compute="_compute_company_defaults", store=True, readonly=True,
-        states={'draft': [('readonly', False)], 'sent': [('readonly', False)]}, copy=True,
+        states={'draft': [('readonly', False)], 'sent': [('readonly', False)]}, pre_compute=True,
         help='Request a online signature to the customer in order to confirm orders automatically.')
     require_payment = fields.Boolean(
         'Online Payment', compute="_compute_company_defaults", store=True, readonly=True,
-        states={'draft': [('readonly', False)], 'sent': [('readonly', False)]}, copy=True,
+        states={'draft': [('readonly', False)], 'sent': [('readonly', False)]}, pre_compute=True,
         help='Request an online payment to the customer in order to confirm orders automatically.')
     create_date = fields.Datetime(string='Creation Date', readonly=True, index=True, help="Date on which sales order is created.")
 
     user_id = fields.Many2one(
         'res.users', string='Salesperson', index=True, tracking=2, required=True,
-        compute="_compute_user_id", store=True, readonly=False, copy=True,
+        compute="_compute_user_id", store=True, readonly=False, pre_compute=True,
         domain=lambda self: [('groups_id', 'in', self.env.ref('sales_team.group_sale_salesman').id)])
     partner_id = fields.Many2one(
-        'res.partner', string='Customer', readonly=True, copy=True,
+        'res.partner', string='Customer', readonly=True, pre_compute=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
         required=True, change_default=True, index=True, tracking=1,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",)
     partner_invoice_id = fields.Many2one(
-        'res.partner', string='Invoice Address', copy=True,
+        'res.partner', string='Invoice Address', copy=True, pre_compute=True,
         compute="_compute_partner_adress_info", store=True, required=True,
         readonly=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)], 'sale': [('readonly', False)]},
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",)
     partner_shipping_id = fields.Many2one(
         'res.partner', string='Delivery Address', readonly=True, required=True,
-        compute="_compute_partner_adress_info", store=True, copy=True,
+        compute="_compute_partner_adress_info", store=True, copy=True, pre_compute=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)], 'sale': [('readonly', False)]},
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",)
 
     pricelist_id = fields.Many2one(
         'product.pricelist', string='Pricelist', check_company=True, required=True,
-        compute="_compute_partner_properties", store=True, readonly=False, copy=True,
+        compute="_compute_partner_properties", store=True, readonly=False, pre_compute=True,
         states={'draft': [('readonly', False)], 'sent': [('readonly', False)]},
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]", tracking=1,
         help="If you change the pricelist, only newly added lines will be affected.")
-    currency_id = fields.Many2one(related='pricelist_id.currency_id', depends=["pricelist_id"], store=True)
+    currency_id = fields.Many2one(
+        related='pricelist_id.currency_id', depends=["pricelist_id"],
+        store=True, pre_compute=True)
     analytic_account_id = fields.Many2one(
         'account.analytic.account', 'Analytic Account',
         readonly=True, copy=False, check_company=True,  # Unrequired company
@@ -179,38 +181,43 @@ class SaleOrder(models.Model):
         ('invoiced', 'Fully Invoiced'),
         ('to invoice', 'To Invoice'),
         ('no', 'Nothing to Invoice')
-        ], string='Invoice Status', compute='_get_invoice_status', store=True)
+        ], string='Invoice Status', compute='_get_invoice_status', store=True, pre_compute=True)
 
     note = fields.Text(
-        'Terms and conditions', compute="_compute_note",
+        'Terms and conditions', compute="_compute_note", pre_compute=True,
         store=True, readonly=False)
 
     payment_term_id = fields.Many2one(
         'account.payment.term', string='Payment Terms', check_company=True,
-        compute="_compute_partner_properties", store=True, readonly=False,
+        compute="_compute_partner_properties", store=True, readonly=False, pre_compute=True,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",)
     fiscal_position_id = fields.Many2one(
         'account.fiscal.position', string='Fiscal Position',
         compute="_compute_fiscal_position_id", store=True, readonly=False,
-        domain="[('company_id', '=', company_id)]", check_company=True,
+        domain="[('company_id', '=', company_id)]", check_company=True, pre_compute=True,
         help="Fiscal positions are used to adapt taxes and accounts for particular customers or sales orders/invoices."
         "The default value comes from the customer.")
     company_id = fields.Many2one(
         'res.company', 'Company', required=True, index=True, default=lambda self: self.env.company)
     team_id = fields.Many2one(
         'crm.team', 'Sales Team', check_company=True,
-        compute="_compute_team_id", store=True, readonly=False,
+        compute="_compute_team_id", store=True, readonly=False, pre_compute=True,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
 
-    amount_untaxed = fields.Monetary(string='Untaxed Amount', store=True, compute='_amount_all', tracking=5)
-    amount_by_group = fields.Binary(string="Tax amount by group", compute='_amount_by_group',
-        help="type: [(name, amount, base, formated amount, formated base)]")
-    amount_tax = fields.Monetary(string='Taxes', store=True, compute='_amount_all')
-    amount_total = fields.Monetary(string='Total', store=True, compute='_amount_all', tracking=4)
+    amount_untaxed = fields.Monetary(
+        string='Untaxed Amount', store=True, compute='_amount_all',
+        tracking=5, pre_compute=True)
+    amount_tax = fields.Monetary(
+        string='Taxes', store=True, compute='_amount_all', pre_compute=True)
+    amount_total = fields.Monetary(
+        string='Total', store=True, compute='_amount_all', tracking=4, pre_compute=True)
     currency_rate = fields.Float(
-        "Currency Rate", compute='_compute_currency_rate', compute_sudo=True, store=True, digits=(12, 6),
-        cache_compute=True,
+        "Currency Rate", digits=(12, 6), compute='_compute_currency_rate', compute_sudo=True,
+        store=True, pre_compute=True, cache_compute=True,
         help='The rate of the currency to the currency of rate 1 applicable at the date of the order')
+    amount_by_group = fields.Binary(
+        string="Tax amount by group", compute='_amount_by_group',
+        help="type: [(name, amount, base, formated amount, formated base)]")
 
     signature = fields.Image('Signature', help='Signature received through the portal.', copy=False, attachment=True, max_width=1024, max_height=1024)
     signed_by = fields.Char('Signed By', help='Name of the person that signed the SO.', copy=False)
@@ -1208,7 +1215,7 @@ class SaleOrderLine(models.Model):
 
     order_id = fields.Many2one('sale.order', string='Order Reference', required=True, ondelete='cascade', index=True, copy=False)
     name = fields.Text(
-        string='Description', copy=True,
+        string='Description', copy=True, pre_compute=True,
         compute="_compute_name", store=True, readonly=False)
     sequence = fields.Integer(string='Sequence', default=10)
 
@@ -1218,26 +1225,32 @@ class SaleOrderLine(models.Model):
         ('invoiced', 'Fully Invoiced'),
         ('to invoice', 'To Invoice'),
         ('no', 'Nothing to Invoice')
-        ], string='Invoice Status', compute='_compute_invoice_status', store=True)
+        ], string='Invoice Status', compute='_compute_invoice_status', store=True, pre_compute=True)
 
     price_unit = fields.Float(
-        'Unit Price', digits='Product Price', copy=True,
+        'Unit Price', digits='Product Price', copy=True, pre_compute=True,
         compute="_compute_price_unit", store=True, readonly=False)
     discount = fields.Float(
-        string='Discount (%)', digits='Discount', copy=True,
+        string='Discount (%)', digits='Discount', copy=True, pre_compute=True,
         compute="_compute_price_unit", store=True, readonly=False)
 
-    price_subtotal = fields.Monetary(compute='_compute_amount', string='Subtotal', store=True)
-    price_tax = fields.Float(compute='_compute_amount', string='Total Tax', store=True)
-    price_total = fields.Monetary(compute='_compute_amount', string='Total', store=True)
+    price_subtotal = fields.Monetary(compute='_compute_amount', string='Subtotal', store=True, pre_compute=True)
+    price_tax = fields.Float(compute='_compute_amount', string='Total Tax', store=True, pre_compute=True)
+    price_total = fields.Monetary(compute='_compute_amount', string='Total', store=True, pre_compute=True)
 
-    price_reduce = fields.Float(compute='_get_price_reduce', string='Price Reduce', digits='Product Price', store=True)
+    price_reduce = fields.Float(
+        compute='_get_price_reduce', string='Price Reduce', digits='Product Price',
+        store=True, pre_compute=True)
     tax_id = fields.Many2many(
-        'account.tax', string='Taxes', copy=True,
+        'account.tax', string='Taxes', pre_compute=True,
         domain=['|', ('active', '=', False), ('active', '=', True)],
         compute="_compute_tax_id", store=True, readonly=False)
-    price_reduce_taxinc = fields.Monetary(compute='_get_price_reduce_tax', string='Price Reduce Tax inc', store=True)
-    price_reduce_taxexcl = fields.Monetary(compute='_get_price_reduce_notax', string='Price Reduce Tax excl', store=True)
+    price_reduce_taxinc = fields.Monetary(
+        compute='_get_price_reduce_tax', string='Price Reduce Tax inc',
+        store=True, pre_compute=True)
+    price_reduce_taxexcl = fields.Monetary(
+        compute='_get_price_reduce_notax', string='Price Reduce Tax excl',
+        store=True, pre_compute=True)
 
     product_id = fields.Many2one(
         'product.product', string='Product',
@@ -1249,10 +1262,10 @@ class SaleOrderLine(models.Model):
     product_updatable = fields.Boolean(compute='_compute_product_updatable', string='Can Edit Product')
     product_uom_qty = fields.Float(
         string='Quantity', digits='Product Unit of Measure',
-        compute="_compute_product_uom_qty",
+        compute="_compute_product_uom_qty", pre_compute=True,
         store=True, readonly=False)
     product_uom = fields.Many2one(
-        'uom.uom', string='Unit of Measure', copy=True,
+        'uom.uom', string='Unit of Measure', copy=True, pre_compute=True,
         compute="_compute_product_uom", store=True, readonly=False,
         domain="[('category_id', '=', product_uom_category_id)]")
     product_uom_category_id = fields.Many2one(related='product_id.uom_id.category_id')
@@ -1263,30 +1276,46 @@ class SaleOrderLine(models.Model):
     # It allows keeping track of the extra_price associated to those attribute values and add them to the SO line description
     product_no_variant_attribute_value_ids = fields.Many2many('product.template.attribute.value', string="Extra Values", ondelete='restrict')
 
-    qty_delivered_method = fields.Selection([
-        ('manual', 'Manual'),
-        ('analytic', 'Analytic From Expenses')
-    ], string="Method to update delivered qty", compute='_compute_qty_delivered_method', compute_sudo=True, store=True,
+    qty_delivered_method = fields.Selection(
+        selection=[
+            ('manual', 'Manual'),
+            ('analytic', 'Analytic From Expenses')
+        ], string="Method to update delivered qty",
+        compute='_compute_qty_delivered_method', compute_sudo=True, store=True, pre_compute=True,
         help="According to product configuration, the delivered quantity can be automatically computed by mechanism :\n"
              "  - Manual: the quantity is set manually on the line\n"
              "  - Analytic From expenses: the quantity is the quantity sum from posted expenses\n"
              "  - Timesheet: the quantity is the sum of hours recorded on tasks linked to this sale line\n"
              "  - Stock Moves: the quantity comes from confirmed pickings\n")
-    qty_delivered = fields.Float('Delivered Quantity', copy=False, compute='_compute_qty_delivered', inverse='_inverse_qty_delivered', compute_sudo=True, store=True, digits='Product Unit of Measure')
+    qty_delivered = fields.Float(
+        'Delivered Quantity', digits='Product Unit of Measure',
+        compute='_compute_qty_delivered', compute_sudo=True, store=True,
+        readonly=False, copy=False, pre_compute=True)
     qty_to_invoice = fields.Float(
-        compute='_get_to_invoice_qty', string='To Invoice Quantity', store=True,
-        digits='Product Unit of Measure')
+        string='To Invoice Quantity', digits='Product Unit of Measure',
+        compute='_get_to_invoice_qty', store=True, pre_compute=True,
+    )
     qty_invoiced = fields.Float(
-        compute='_get_invoice_qty', string='Invoiced Quantity', store=True,
-        digits='Product Unit of Measure')
+        string='Invoiced Quantity', digits='Product Unit of Measure',
+        compute='_get_invoice_qty',  store=True, pre_compute=True,
+    )
 
-    untaxed_amount_invoiced = fields.Monetary("Untaxed Invoiced Amount", compute='_compute_untaxed_amount_invoiced', compute_sudo=True, store=True)
-    untaxed_amount_to_invoice = fields.Monetary("Untaxed Amount To Invoice", compute='_compute_untaxed_amount_to_invoice', compute_sudo=True, store=True)
+    untaxed_amount_invoiced = fields.Monetary(
+        "Untaxed Invoiced Amount", compute='_compute_untaxed_amount_invoiced',
+        pre_compute=True, compute_sudo=True, store=True)
+    untaxed_amount_to_invoice = fields.Monetary(
+        "Untaxed Amount To Invoice", compute='_compute_untaxed_amount_to_invoice',
+        pre_compute=True, compute_sudo=True, store=True)
 
-    salesman_id = fields.Many2one(related='order_id.user_id', store=True, string='Salesperson')
-    currency_id = fields.Many2one(related='order_id.currency_id', store=True, string='Currency')
-    company_id = fields.Many2one(related='order_id.company_id', string='Company', store=True, index=True)
-    order_partner_id = fields.Many2one(related='order_id.partner_id', store=True, string='Customer')
+    # VFE TODO check those are pre_computed...
+    salesman_id = fields.Many2one(
+        string='Salesperson', related='order_id.user_id', store=True, pre_compute=True)
+    currency_id = fields.Many2one(
+        string='Currency', related='order_id.currency_id', store=True, pre_compute=True)
+    company_id = fields.Many2one(
+        string='Company', related='order_id.company_id', store=True, index=True, pre_compute=True)
+    order_partner_id = fields.Many2one(
+        string='Customer', related='order_id.partner_id', store=True, pre_compute=True)
     analytic_tag_ids = fields.Many2many(
         'account.analytic.tag', string='Analytic Tags',
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
@@ -1297,10 +1326,10 @@ class SaleOrderLine(models.Model):
         " They are not copied when duplicating a sales order.")
 
     state = fields.Selection(
-        related='order_id.state', string='Order Status', store=True)
+        related='order_id.state', string='Order Status', store=True, pre_compute=True)
 
     customer_lead = fields.Float(
-        string="Lead Time", compute="_compute_customer_lead", store=True, readonly=False,
+        string="Lead Time", compute="_compute_customer_lead", store=True, readonly=False, pre_compute=True,
         help="Number of days between the order confirmation and the shipping of the products to the customer")
 
     display_type = fields.Selection([
@@ -1407,7 +1436,7 @@ class SaleOrderLine(models.Model):
             else:  # service and consu
                 line.qty_delivered_method = 'manual'
 
-    @api.depends('qty_delivered_method', 'qty_delivered_manual', 'analytic_line_ids.so_line', 'analytic_line_ids.unit_amount', 'analytic_line_ids.product_uom_id')
+    @api.depends('qty_delivered_method', 'analytic_line_ids', 'analytic_line_ids.unit_amount', 'analytic_line_ids.product_uom_id')
     def _compute_qty_delivered(self):
         """ This method compute the delivered quantity of the SO lines: it covers the case provide by sale module, aka
             expense/vendor bills (sum of unit_amount of AAL), and manual case.
