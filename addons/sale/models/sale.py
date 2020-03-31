@@ -868,8 +868,7 @@ Reason(s) of this behavior could be:
             fmt = partial(formatLang, self.with_context(lang=order.partner_id.lang).env, currency_obj=currency)
             res = {}
             for line in order.order_line:
-                price_reduce = line.price_unit * (1.0 - line.discount / 100.0)
-                taxes = line.tax_id.compute_all(price_reduce, quantity=line.product_uom_qty, product=line.product_id, partner=order.partner_shipping_id)['taxes']
+                taxes = line.tax_id.compute_all(line.price_reduce, quantity=line.product_uom_qty, product=line.product_id, partner=order.partner_shipping_id)['taxes']
                 for tax in line.tax_id:
                     group = tax.tax_group_id
                     res.setdefault(group, {'amount': 0.0, 'base': 0.0})
@@ -1081,14 +1080,16 @@ class SaleOrderLine(models.Model):
             else:
                 line.invoice_status = 'no'
 
-    @api.depends('product_uom_qty', 'discount', 'price_unit', 'tax_id')
+    @api.depends('price_unit', 'discount', 'product_uom_qty', 'tax_id', 'currency_id')
     def _compute_amount(self):
         """
         Compute the amounts of the SO line.
         """
         for line in self:
-            price = line.price_unit * (1 - (line.discount or 0.0) / 100.0)
-            taxes = line.tax_id.compute_all(price, line.currency_id, line.product_uom_qty, product=line.product_id, partner=line.order_id.partner_shipping_id)
+            taxes = line.tax_id.compute_all(
+                line.price_reduce, line.currency_id,
+                line.product_uom_qty,
+                product=line.product_id, partner=line.order_id.partner_shipping_id)
             line.update({
                 'price_tax': sum(t.get('amount', 0.0) for t in taxes.get('taxes', [])),
                 'price_total': taxes['total_included'],
@@ -1376,6 +1377,12 @@ class SaleOrderLine(models.Model):
         # And to not use the groups inside the code anymore.
         discount_enabled = self.user_has_groups("product.group_discount_per_so_line")
         for line in self:
+            if line.env.context.get('create_pre_compute') and line.price_unit:
+                # VFE TODO finetuning: check if price_unit is in line._cache
+                # instead of checking if falsy to ensure create with price_unit = 0 remains 0
+                line.price_unit = line.price_unit
+                line.discount = 0.0
+                continue
             if line.order_id.pricelist_id and line.product_id and line.product_uom:
                 if line.is_downpayment:
                     line.price_unit = line.price_unit
