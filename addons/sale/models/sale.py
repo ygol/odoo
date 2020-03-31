@@ -192,7 +192,7 @@ class SaleOrder(models.Model):
         compute="_compute_partner_properties", store=True, readonly=False, pre_compute=True,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",)
     fiscal_position_id = fields.Many2one(
-        'account.fiscal.position', string='Fiscal Position',
+        'account.fiscal.position', string='Fiscal Position', cache_compute=True,
         compute="_compute_fiscal_position_id", store=True, readonly=False,
         domain="[('company_id', '=', company_id)]", check_company=True, pre_compute=True,
         help="Fiscal positions are used to adapt taxes and accounts for particular customers or sales orders/invoices."
@@ -200,7 +200,7 @@ class SaleOrder(models.Model):
     company_id = fields.Many2one(
         'res.company', 'Company', required=True, index=True, default=lambda self: self.env.company)
     team_id = fields.Many2one(
-        'crm.team', 'Sales Team', check_company=True,
+        'crm.team', 'Sales Team', check_company=True, cache_compute=True,
         compute="_compute_team_id", store=True, readonly=False, pre_compute=True,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
 

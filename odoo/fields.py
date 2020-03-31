@@ -232,6 +232,7 @@ class Field(MetaField('DummyField', (object,), {})):
     compute = None                      # compute(recs) computes field on recs
     compute_sudo = False                # whether field should be recomputed as superuser
     pre_compute = True                  # whether field has to be computed before creation
+    cache_compute = False               # whether computed field value should be cached for creates in batch
     inverse = None                      # inverse(recs) inverses field on recs
     search = None                       # search(recs, operator, value) searches on self
     related = None                      # sequence of field names, for related fields
