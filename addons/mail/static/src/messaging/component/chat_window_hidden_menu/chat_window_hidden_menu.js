@@ -6,7 +6,7 @@ const components = {
 };
 const useStore = require('mail.messaging.component_hook.useStore');
 
-const { Component, useState } = owl;
+const { Component } = owl;
 const { useRef } = owl.hooks;
 
 class ChatWindowHiddenMenu extends Component {
@@ -16,17 +16,12 @@ class ChatWindowHiddenMenu extends Component {
      */
     constructor(...args) {
         super(...args);
-        this.state = useState({ isOpen: false });
-        this.storeProps = useStore((state, props) => {
+        useStore(props => {
             return {
-                threads: props.chatWindowLocalIds
-                    .filter(chatWindowLocalId => chatWindowLocalId !== 'new_message')
-                    .map(chatWindowLocalId => state.threads[chatWindowLocalId]),
+                chatWindowVisual: this.env.entities.ChatWindow.visual,
+                device: this.env.messaging.device,
+                localeTextDirection: this.env.messaging.locale.textDirection,
             };
-        }, {
-            compareDepth: {
-                threads: 1,
-            },
         });
         this._onClickCaptureGlobal = this._onClickCaptureGlobal.bind(this);
         /**
@@ -50,20 +45,6 @@ class ChatWindowHiddenMenu extends Component {
     }
 
     //--------------------------------------------------------------------------
-    // Public
-    //--------------------------------------------------------------------------
-
-    /**
-     * @returns {integer}
-     */
-    get unreadCounter() {
-        return this.storeProps.threads.reduce((count, thread) => {
-            count += thread.message_unread_counter > 0 ? 1 : 0;
-            return count;
-        }, 0);
-    }
-
-    //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
 
@@ -79,16 +60,20 @@ class ChatWindowHiddenMenu extends Component {
      * @private
      */
     _applyListHeight() {
-        this._listRef.el.style['max-height'] = `${this.props.GLOBAL_HEIGHT / 2}px`;
+        const device = this.env.messaging.device;
+        const height = device.globalWindowInnerHeight / 2;
+        this._listRef.el.style['max-height'] = `${height}px`;
     }
 
     /**
      * @private
      */
     _applyOffset() {
-        const offsetFrom = this.props.direction === 'rtl' ? 'right' : 'left';
+        const textDirection = this.env.messaging.locale.textDirection;
+        const offsetFrom = textDirection === 'rtl' ? 'left' : 'right';
         const oppositeFrom = offsetFrom === 'right' ? 'left' : 'right';
-        this.el.style[offsetFrom] = `${this.props.offset}px`;
+        const offset = this.env.entities.ChatWindow.visual.hidden.offset;
+        this.el.style[offsetFrom] = `${offset}px`;
         this.el.style[oppositeFrom] = 'auto';
     }
 
@@ -107,7 +92,7 @@ class ChatWindowHiddenMenu extends Component {
         if (this.el.contains(ev.target)) {
             return;
         }
-        this.state.isOpen = false;
+        this.env.entities.ChatWindow.closeHiddenMenu();
     }
 
     /**
@@ -116,53 +101,25 @@ class ChatWindowHiddenMenu extends Component {
      */
     _onClickToggle(ev) {
         ev.stopPropagation();
-        this.state.isOpen = !this.state.isOpen;
+        this.env.entities.ChatWindow.toggleHiddenMenu();
     }
 
     /**
      * @private
      * @param {CustomEvent} ev
      * @param {Object} ev.detail
-     * @param {string} ev.detail.chatWindowLocalId
-     */
-    _onCloseChatWindow(ev) {
-        ev.stopPropagation();
-        this.trigger('o-close-chat-window', {
-            chatWindowLocalId: ev.detail.chatWindowLocalId,
-        });
-    }
-
-    /**
-     * @private
-     * @param {CustomEvent} ev
-     * @param {Object} ev.detail
-     * @param {string} ev.detail.chatWindowLocalId
+     * @param {mail.messaging.entity.ChatWindow} ev.detail.chatWindow
      */
     _onClickedChatWindow(ev) {
-        this.trigger('o-select-chat-window', {
-            chatWindowLocalId: ev.detail.chatWindowLocalId,
-        });
-        this.state.isOpen = false;
+        ev.detail.chatWindow.makeVisible();
+        this.env.entities.ChatWindow.closeHiddenMenu();
     }
 
 }
 
 Object.assign(ChatWindowHiddenMenu, {
     components,
-    defaultProps: {
-        direction: 'rtl',
-    },
-    props: {
-        chatWindowLocalIds: {
-            type: Array,
-            element: String,
-        },
-        direction: {
-            // TODO FIXME add validation
-            type: String,
-        },
-        offset: Number,
-    },
+    props: {},
     template: 'mail.messaging.component.ChatWindowHiddenMenu',
 });
 

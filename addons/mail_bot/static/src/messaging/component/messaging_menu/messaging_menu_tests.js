@@ -5,14 +5,9 @@ const {
     afterEach: utilsAfterEach,
     afterNextRender,
     beforeEach: utilsBeforeEach,
-    getServices,
     pause,
     start: utilsStart,
 } = require('mail.messaging.testUtils');
-
-const MailBotService = require('mail_bot.MailBotService');
-
-const { makeTestPromise } = require('web.test_utils');
 
 QUnit.module('mail_bot', {}, function () {
 QUnit.module('messaging', {}, function () {
@@ -21,19 +16,10 @@ QUnit.module('MessagingMenu', {
     beforeEach: function () {
         utilsBeforeEach(this);
         this.start = async params => {
-            const services = Object.assign({}, getServices(), {
-                mailbot_service: MailBotService,
-            });
-
-            if (this.widget) {
-                this.widget.destroy();
-            }
-            let { discussWidget, widget } = await utilsStart(Object.assign({}, params, {
+            let { widget } = await utilsStart(Object.assign({}, params, {
                 data: this.data,
                 hasMessagingMenu: true,
-                services,
             }));
-            this.discussWidget = discussWidget;
             this.widget = widget;
         };
     },
@@ -48,14 +34,15 @@ QUnit.module('MessagingMenu', {
 QUnit.test('rendering with OdooBot has a request (default)', async function (assert) {
     assert.expect(4);
 
-    window.Notification.permission = 'default';
-
     await this.start({
         async mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return [];
             }
             return this._super(...arguments);
+        },
+        'window.Notification': {
+            permission: 'default',
         },
     });
 
@@ -86,14 +73,15 @@ QUnit.test('rendering with OdooBot has a request (default)', async function (ass
 QUnit.test('rendering without OdooBot has a request (denied)', async function (assert) {
     assert.expect(2);
 
-    window.Notification.permission = 'denied';
-
     await this.start({
         async mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return [];
             }
             return this._super(...arguments);
+        },
+        'window.Notification': {
+            permission: 'denied',
         },
     });
 
@@ -115,14 +103,15 @@ QUnit.test('rendering without OdooBot has a request (denied)', async function (a
 QUnit.test('rendering without OdooBot has a request (accepted)', async function (assert) {
     assert.expect(2);
 
-    window.Notification.permission = 'granted';
-
     await this.start({
         async mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return [];
             }
             return this._super(...arguments);
+        },
+        'window.Notification': {
+            permission: 'granted',
         },
     });
 
@@ -144,18 +133,19 @@ QUnit.test('rendering without OdooBot has a request (accepted)', async function 
 QUnit.test('respond to notification prompt (denied)', async function (assert) {
     assert.expect(3);
 
-    window.Notification.permission = 'default';
-    window.Notification.requestPermission = () => {
-        window.Notification.permission = 'denied';
-        return makeTestPromise().resolve(window.Notification.permission);
-    };
-
     await this.start({
         async mockRPC(route, args) {
             if (args.method === 'channel_fetch_preview') {
                 return [];
             }
             return this._super(...arguments);
+        },
+        'window.Notification': {
+            permission: 'default',
+            async requestPermission() {
+                this.permission = 'denied';
+                return this.permission;
+            },
         },
     });
 

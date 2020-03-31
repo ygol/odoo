@@ -429,7 +429,6 @@ function beforeEach(self) {
         '_.debounce': _.debounce,
         '_.throttle': _.throttle,
         'window.fetch': window.fetch,
-        'window.Notification': window.Notification,
     };
 
     (function patch() {
@@ -458,16 +457,12 @@ function beforeEach(self) {
                 }
             };
         };
-        window.Notification = {
-            permission: "denied",
-        };
     })();
 
     function unpatch() {
         _.debounce = originals['_.debounce'];
         _.throttle = originals['_.throttle'];
         window.fetch = originals['window.fetch'];
-        window.Notification = originals['window.Notification'];
     }
 
     Object.assign(self, { data, unpatch });
@@ -489,7 +484,7 @@ async function pause() {
 /**
  * Main function used to make a mocked environment with mocked messaging env.
  *
- * @param {Object} param0
+ * @param {Object} [param0={}]
  * @param {string} [param0.arch] makes only sense when `param0.hasView` is set:
  *   the arch to use in createView.
  * @param {Object} [param0.archs]
@@ -510,6 +505,7 @@ async function pause() {
  *   menu.
  * @param {boolean} [param0.hasView=false] if set, use createView to create a
  *   view instead of a generic widget.
+ * @param {Object} [param0.messagingEnvExtension]
  * @param {string} [param0.model] makes only sense when `param0.hasView` is set:
  *   the model to use in createView.
  * @param {integer} [param0.res_id] makes only sense when `param0.hasView` is set:
@@ -524,10 +520,14 @@ async function pause() {
  *   the View class to use in createView.
  * @param {Object} [param0.viewOptions] makes only sense when `param0.hasView`
  *   is set: the view options to use in createView.
+ * @param {boolean} [param0.waitUntilMessagingInitialized=true]
+ * @param {integer} [param0.'window.innerHeight']
+ * @param {integer} [param0.'window.innerWidth']
+ * @param {Object} [param0.'window.Notification']
  * @param {...Object} [param0.kwargs]
  * @returns {Object}
  */
-async function start(param0) {
+async function start(param0 = {}) {
     let callbacks = {
         init: [],
         mount: [],
@@ -539,6 +539,7 @@ async function start(param0) {
         hasDiscuss = false,
         hasMessagingMenu = false,
         hasView = false,
+        waitUntilMessagingInitialized = true,
     } = param0;
     delete param0.hasChatWindow;
     delete param0.hasDiscuss;
@@ -561,8 +562,12 @@ async function start(param0) {
     } = callbacks;
     const { debug = false } = param0;
     const {
+        messagingEnvExtension,
         services = getServices({ hasChatWindow, debug }),
         session = {},
+        'window.innerHeight': windowInnerHeight,
+        'window.innerWidth': windowInnerWidth,
+        'window.Notification': windowNotification,
     } = param0;
     initCallbacks.forEach(callback => callback(param0));
     const kwargs = Object.assign({
@@ -577,7 +582,17 @@ async function start(param0) {
         partner_display_name: "Your Company, Admin",
         uid: 2,
     });
-    patchMessagingService(services.messaging, session);
+    const {
+        messagingCreatedPromise,
+        messagingInitializedPromise,
+        unpatch: unpatchMessagingService,
+    } = patchMessagingService(services.messaging, {
+        messagingEnvExtension,
+        session,
+        'window.innerHeight': windowInnerHeight,
+        'window.innerWidth': windowInnerWidth,
+        'window.Notification': windowNotification,
+    });
 
     let widget;
     const selector = debug ? 'body' : '#qunit-fixture';
@@ -587,7 +602,7 @@ async function start(param0) {
             destroy() {
                 this._super(...arguments);
                 destroyCallbacks.forEach(callback => callback({ widget }));
-                legacyUnpatch(services.messaging);
+                unpatchMessagingService();
                 legacyUnpatch(widget);
             }
         });
@@ -602,10 +617,15 @@ async function start(param0) {
                 delete widget.destroy;
                 destroyCallbacks.forEach(callback => callback({ widget }));
                 parent.destroy();
-                legacyUnpatch(services.messaging);
+                unpatchMessagingService();
             },
         });
     }
+    await messagingCreatedPromise;
+    if (waitUntilMessagingInitialized) {
+        await messagingInitializedPromise;
+    }
+
     await Promise.all(mountCallbacks.map(callback => callback({ selector, widget })));
     if (hasChatWindow || hasDiscuss || hasMessagingMenu) {
         await afterNextRender();
@@ -692,44 +712,77 @@ function pasteFiles(el, files) {
 }
 
 /**
- * @param {mail.messaging.service.Messaging} messaging_service
+ * @param {mail.messaging.service.Messaging} MessagingService
  * @param {Object} [param1={}]
+ * @param {Object} [param1.messagingEnvExtension]
  * @param {Object} [param1.session={}]
+ * @param {integer} [param1.'window.innerHeight'=1080]
+ * @param {integer} [param1.'window.innerWidth'=1920]
+ * @param {Object} [param1.'window.Notification']
+ * @returns {Object}
+ *   - `messagingCreatedPromise`, a promise that is resolved just after
+ *     messaging has been created.
+ *   - `messagingInitializedPromise`, a promise that is resolved just after
+ *     messaging has been initialized.
+ *   - `unpatch`, to unpatch messaging service.
  */
-function patchMessagingService(messaging_service, session = {}) {
+function patchMessagingService(MessagingService, {
+    messagingEnvExtension,
+    session = {},
+    'window.innerHeight': windowInnerHeight,
+    'window.innerWidth': windowInnerWidth,
+    'window.Notification': windowNotification,
+} = {}) {
     const _t = s => s;
     _t.database = {
         parameters: { direction: 'ltr' },
     };
-    legacyPatch(messaging_service, {
-        registry: {
-            initialEnv: makeTestEnvironment({
-                _t,
-                session: Object.assign({
-                    is_bound: Promise.resolve(),
-                    name: 'Admin',
-                    partner_display_name: 'Mitchell Admin',
-                    partner_id: 3,
-                    url: s => s,
-                    userId: 2,
-                }, session),
-            }),
-            onMessagingEnvCreated: messagingEnv => {
-                Object.assign(messagingEnv.store.state, {
-                    globalWindow: {
-                        innerHeight: 1080,
-                        innerWidth: 1920,
-                    },
-                    isMobile: false,
-                });
-                messagingEnv.store.actions._fetchPartnerImStatus = () => {};
-                messagingEnv.store.actions._loopFetchPartnerImStatus = () => {};
-                // TODO FIXME `mail_bot` should not have an impact on `mail` tests
-                messagingEnv.store.actions.checkOdoobotRequest = state => state.mailbotHasRequest = false;
-                messagingEnv.store.env.disableAnimation = true;
-            },
+    const messagingCreatedPromise = makeTestPromise();
+    const messagingInitializedPromise = makeTestPromise();
+    const env = {
+        _t,
+        session: Object.assign({
+            is_bound: Promise.resolve(),
+            name: 'Admin',
+            partner_display_name: 'Mitchell Admin',
+            partner_id: 3,
+            url: s => s,
+            userId: 2,
+        }, session),
+        window: {},
+    };
+    if (windowInnerHeight) {
+        env.window.innerHeight = windowInnerHeight;
+    }
+    if (windowInnerWidth) {
+        env.window.innerWidth = windowInnerWidth;
+    }
+    if (windowNotification) {
+        env.window.Notification = windowNotification;
+    }
+    legacyPatch(MessagingService, {
+        env: makeTestEnvironment(env),
+        messagingEnvExtension: Object.assign({
+            autofetchPartnerImStatus: false,
+            disableAnimation: true,
+        }, messagingEnvExtension),
+        start(...args) {
+            this._super(...args);
+            // simulate all JS resources have been loaded
+            const {
+                messagingCreatedPromise: createdPromise,
+                messagingInitializedPromise: initializedPromise,
+            } = this._onGlobalLoad();
+            createdPromise.then(() => messagingCreatedPromise.resolve());
+            initializedPromise.then(() => messagingInitializedPromise.resolve());
         },
     });
+    const unpatchMessagingService = () => legacyUnpatch(MessagingService);
+    return {
+        messagingCreatedPromise,
+        messagingInitializedPromise,
+        unpatch: unpatchMessagingService,
+    };
 }
 
 //------------------------------------------------------------------------------

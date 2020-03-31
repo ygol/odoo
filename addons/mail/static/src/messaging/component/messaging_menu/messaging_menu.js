@@ -9,7 +9,7 @@ const components = {
 const useStore = require('mail.messaging.component_hook.useStore');
 
 const { Component } = owl;
-const { useDispatch, useGetters, useRef } = owl.hooks;
+const { useRef } = owl.hooks;
 
 class MessagingMenu extends Component {
 
@@ -24,9 +24,7 @@ class MessagingMenu extends Component {
          * item is not considered as a click away from messaging menu in mobile.
          */
         this.id = _.uniqueId('o_messagingMenu_');
-        this.storeDispatch = useDispatch();
-        this.storeGetters = useGetters();
-        this.storeProps = useStore((...args) => this._useStoreSelector(...args));
+        useStore((...args) => this._useStoreSelector(...args));
 
         /**
          * Reference of the new message input in mobile. Useful to include it
@@ -55,10 +53,17 @@ class MessagingMenu extends Component {
     //--------------------------------------------------------------------------
 
     /**
+     * @returns {mail.messaging.entity.Discuss}
+     */
+    get discuss() {
+        return this.env.messaging && this.env.messaging.discuss;
+    }
+
+    /**
      * @returns {mail.messaging.entity.MessagingMenu}
      */
     get messagingMenu() {
-        return this.storeProps.messagingMenu;
+        return this.env.messaging.messagingMenu;
     }
 
     /**
@@ -94,23 +99,12 @@ class MessagingMenu extends Component {
     /**
      * @private
      */
-    _useStoreSelector(state, props) {
-        const unreadMailChannelCounter = this.storeGetters.allOrderedAndPinnedChannels()
-            .reduce((acc, mailChannel) => {
-                if (mailChannel.message_unread_counter > 0) {
-                    acc++;
-                }
-                return acc;
-            }, 0);
-        const mailboxInboxCounter = state.threads['mail.box_inbox'].counter;
-        const counter = unreadMailChannelCounter + mailboxInboxCounter;
-
+    _useStoreSelector(props) {
         return {
-            counter,
-            isDiscussOpen: state.discuss.isOpen,
-            isMessagingInitialized: state.isMessagingInitialized,
-            isMobile: state.isMobile,
-            messagingMenu: state.messagingMenu,
+            messagingMenu: this.env.messaging.messagingMenu,
+            isDeviceMobile: this.env.messaging.device.isMobile,
+            isDiscussOpen: this.env.messaging.discuss.isOpen,
+            isMessagingInitialized: this.env.messaging.isInitialized,
         };
     }
 
@@ -126,8 +120,8 @@ class MessagingMenu extends Component {
         // in mobile: keeps the messaging menu open in background
         // TODO SEB maybe need to move this to a mobile component?
         if (
-            this.storeProps.isMobile &&
-            this.storeGetters.haveVisibleChatWindows()
+            this.env.messaging.device.isMobile &&
+            this.env.entities.ChatWindow.hasVisibleChatWindows
         ) {
             return;
         }
@@ -139,7 +133,7 @@ class MessagingMenu extends Component {
         if (input && input.contains(ev.target)) {
             return;
         }
-        this.storeDispatch('closeMessagingMenu');
+        this.messagingMenu.close();
     }
 
     /**
@@ -148,9 +142,7 @@ class MessagingMenu extends Component {
      */
     _onClickDesktopTabButton(ev) {
         ev.stopPropagation();
-        this.storeDispatch('updateMessagingMenu', {
-            activeTabId: ev.currentTarget.dataset.tabId,
-        });
+        this.messagingMenu.setActiveTabId(ev.currentTarget.dataset.tabId);
     }
 
     /**
@@ -159,11 +151,11 @@ class MessagingMenu extends Component {
      */
     _onClickNewMessage(ev) {
         ev.stopPropagation();
-        if (!this.storeProps.isMobile) {
-            this.storeDispatch('openThread', 'new_message');
-            this.storeDispatch('closeMessagingMenu');
+        if (!this.env.messaging.device.isMobile) {
+            this.env.entities.Thread.openNewMessage();
+            this.messagingMenu.close();
         } else {
-            this.storeDispatch('toggleMessagingMenuMobileNewMessage');
+            this.messagingMenu.toggleMobileNewMessage();
         }
     }
 
@@ -174,7 +166,7 @@ class MessagingMenu extends Component {
     _onClickToggler(ev) {
         ev.stopPropagation();
         ev.preventDefault();
-        this.storeDispatch('toggleMessagingMenuOpen');
+        this.messagingMenu.toggleOpen();
     }
 
     /**
@@ -183,7 +175,7 @@ class MessagingMenu extends Component {
      */
     _onHideMobileNewMessage(ev) {
         ev.stopPropagation();
-        this.storeDispatch('toggleMessagingMenuMobileNewMessage');
+        this.messagingMenu.toggleMobileNewMessage();
     }
 
     /**
@@ -194,20 +186,20 @@ class MessagingMenu extends Component {
      * @param {integer} ui.item.id
      */
     _onMobileNewMessageInputSelect(ev, ui) {
-        // TODO SEB this should probably be done in autocomplete component
         const partnerId = ui.item.id;
-        const chat = this.storeGetters.chatFromPartner(`res.partner_${partnerId}`);
+        const partner = this.env.entities.Partner.fromId(partnerId);
+        const chat = partner.directPartnerThread;
         if (chat) {
-            this.storeDispatch('openThread', chat.localId);
+            chat.open();
         } else {
-            this.storeDispatch('createChannel', {
+            this.env.entities.Thread.createChannel({
                 autoselect: true,
                 partnerId,
-                type: 'chat'
+                type: 'chat',
             });
         }
-        if (!this.storeProps.isMobile) {
-            this.storeDispatch('closeMessagingMenu');
+        if (!this.env.messaging.device.isMobile) {
+            this.messagingMenu.close();
         }
     }
 
@@ -218,15 +210,14 @@ class MessagingMenu extends Component {
      * @param {function} res
      */
     _onMobileNewMessageInputSource(req, res) {
-        // TODO SEB this should probably be done in autocomplete component
         const value = _.escape(req.term);
-        this.storeDispatch('searchPartners', {
+        this.env.entities.Partner.imSearch({
             callback: partners => {
                 const suggestions = partners.map(partner => {
                     return {
                         id: partner.id,
-                        value: this.storeGetters.partnerName(partner.localId),
-                        label: this.storeGetters.partnerName(partner.localId),
+                        value: partner.nameOrDisplayName,
+                        label: partner.nameOrDisplayName,
                     };
                 });
                 res(_.sortBy(suggestions, 'label'));
@@ -244,22 +235,20 @@ class MessagingMenu extends Component {
      */
     _onSelectMobileNavbarTab(ev) {
         ev.stopPropagation();
-        this.storeDispatch('updateMessagingMenu', {
-            activeTabId: ev.detail.tabId,
-        });
+        this.messagingMenu.setActiveTabId(ev.detail.tabId);
     }
 
     /**
      * @private
      * @param {CustomEvent} ev
      * @param {Object} ev.detail
-     * @param {string} ev.detail.threadLocalId
+     * @param {string} ev.detail.thread
      */
     _onSelectThread(ev) {
         ev.stopPropagation();
-        this.storeDispatch('openThread', ev.detail.threadLocalId);
-        if (!this.storeProps.isMobile) {
-            this.storeDispatch('closeMessagingMenu');
+        this.env.entities.Thread.get(ev.detail.thread).open();
+        if (!this.env.messaging.device.isMobile) {
+            this.messagingMenu.close();
         }
     }
 
