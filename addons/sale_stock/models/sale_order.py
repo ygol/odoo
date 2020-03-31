@@ -327,7 +327,7 @@ class SaleOrderLine(models.Model):
             if not line.is_expense and line.product_id.type in ['consu', 'product']:
                 line.qty_delivered_method = 'stock_move'
 
-    @api.depends('move_ids.state', 'move_ids.scrapped', 'move_ids.product_uom_qty', 'move_ids.product_uom')
+    @api.depends('move_ids.state', 'move_ids.location_dest_id', 'move_ids.product_uom_qty', 'move_ids.product_uom')
     def _compute_qty_delivered(self):
         super(SaleOrderLine, self)._compute_qty_delivered()
 
