@@ -80,7 +80,8 @@ class Rating(models.Model):
                 rating_for_img = 1
             try:
                 image_path = get_resource_path('rating', 'static/src/img', 'rating_%s.png' % rating_for_img)
-                rating.rating_image = base64.b64encode(open(image_path, 'rb').read())
+                with open(image_path, 'rb'):
+                    rating.rating_image = base64.b64encode(fd.read())
             except (IOError, OSError):
                 rating.rating_image = False
 

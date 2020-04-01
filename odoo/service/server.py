@@ -219,7 +219,8 @@ class FSWatcherBase(object):
     def handle_file(self, path):
         if path.endswith('.py') and not os.path.basename(path).startswith('.~'):
             try:
-                source = open(path, 'rb').read() + b'\n'
+                with open(path, 'rb') as fd:
+                    source = fd.read() + b'\n'
                 compile(source, path, 'exec')
             except IOError:
                 _logger.error('autoreload: python code change detected, IOError for %s', path)

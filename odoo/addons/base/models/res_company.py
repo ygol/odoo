@@ -26,7 +26,9 @@ class Company(models.Model):
         raise UserError(_('Duplicating a company is not allowed. Please create a new company instead.'))
 
     def _get_logo(self):
-        return base64.b64encode(open(os.path.join(tools.config['root_path'], 'addons', 'base', 'static', 'img', 'res_company_logo.png'), 'rb') .read())
+        path = get_resource_path('base', 'static/img/res_company_logo.png')
+        with open(path, 'rb') as fd:
+            return base64.b64encode(fd.read())
 
     def _default_currency_id(self):
         return self.env.user.company_id.currency_id

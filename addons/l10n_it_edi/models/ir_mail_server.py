@@ -159,7 +159,8 @@ class FetchmailServer(models.Model):
                     # invoice already exist
                     _logger.info('E-invoice in zip file (%s) already exist: %s', attachment_zip.fname, att_name)
                     continue
-                att_content = z.open(att_name).read()
+                with z.open(att_name) as zf:
+                    att_content = zf.read()
 
                 self._create_invoice_from_mail(att_content, att_name, from_address)
 
@@ -173,7 +174,8 @@ class FetchmailServer(models.Model):
                 if len(split_underscore) < 2:
                     continue
                 if split_underscore[1] == 'AT':
-                    attachment = z.open(attachment_name).read()
+                    with z.open(attachment_name) as zf:
+                        attachment = zf.read()
                     _logger.info('New AT receipt for: %s', split_underscore[0])
                     try:
                         tree = etree.fromstring(attachment)

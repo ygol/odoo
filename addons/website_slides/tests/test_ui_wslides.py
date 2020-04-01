@@ -15,9 +15,11 @@ class TestUICommon(HttpCaseWithUserDemo, HttpCaseWithUserPortal):
         super(TestUICommon, self).setUp()
         # Load pdf and img contents
         pdf_path = get_module_resource('website_slides', 'static', 'src', 'img', 'presentation.pdf')
-        pdf_content = base64.b64encode(open(pdf_path, "rb").read())
+        with open(pdf_path, "rb") as fd:
+            pdf_content = base64.b64encode(fd.read())
         img_path = get_module_resource('website_slides', 'static', 'src', 'img', 'slide_demo_gardening_1.jpg')
-        img_content = base64.b64encode(open(img_path, "rb").read())
+        with open(img_path, "rb") as fd:
+            img_content = base64.b64encode(fd.read())
 
         self.env['slide.channel'].create({
             'name': 'Basics of Gardening - Test',

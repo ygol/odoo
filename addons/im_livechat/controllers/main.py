@@ -38,7 +38,12 @@ class LivechatController(http.Controller):
             'mail/static/src/xml/thread.xml',
             'im_livechat/static/src/xml/im_livechat.xml',
         ]
-        return [tools.file_open(tmpl, 'rb').read() for tmpl in templates]
+
+        tmpl_contents = []
+        for template in templates:
+            with tools.file_open(tmpl, 'rb') as fd:
+                tmpl_contents.append(fd.read())
+        return tmpl_contents
 
     @http.route('/im_livechat/support/<int:channel_id>', type='http', auth='public')
     def support_page(self, channel_id, **kwargs):

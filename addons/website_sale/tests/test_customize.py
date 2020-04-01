@@ -119,7 +119,8 @@ class TestUi(HttpCaseWithUserDemo, HttpCaseWithUserPortal):
         self.product_product_4_product_template.attribute_line_ids[0].write({'value_ids': [(4, product_attribute_value_7.id)]})
 
         img_path = get_module_resource('product', 'static', 'img', 'product_product_11-image.png')
-        img_content = base64.b64encode(open(img_path, "rb").read())
+        with open(img_path, "rb") as fd:
+            img_content = base64.b64encode(fd.read())
         self.product_product_11_product_template = self.env['product.template'].create({
             'name': 'Conference Chair (TEST)',
             'website_sequence': 9999, # laule

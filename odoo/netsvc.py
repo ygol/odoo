@@ -139,6 +139,9 @@ def init_logger():
     ]:
         warnings.filterwarnings('ignore', category=DeprecationWarning, module=module)
 
+    # enable resource warnings (unclosed files)
+    warnings.filterwarnings('once', category=ResourceWarning)
+
     from .tools.translate import resetlocale
     resetlocale()
 

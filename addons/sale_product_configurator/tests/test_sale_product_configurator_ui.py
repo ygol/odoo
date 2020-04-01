@@ -80,7 +80,8 @@ class TestUi(odoo.tests.HttpCase):
 
         # Setup a first optional product
         img_path = get_module_resource('product', 'static', 'img', 'product_product_11-image.png')
-        img_content = base64.b64encode(open(img_path, "rb").read())
+        with open(img_path, "rb") as fd:
+            img_content = base64.b64encode(fd.read())
         self.product_product_11_product_template = self.env['product.template'].create({
             'name': 'Conference Chair (TEST)',
             'image_1920': img_content,

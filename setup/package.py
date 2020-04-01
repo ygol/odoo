@@ -23,7 +23,8 @@ from glob import glob
 
 ROOTDIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 TSTAMP = time.strftime("%Y%m%d", time.gmtime())
-exec(open(os.path.join(ROOTDIR, 'odoo', 'release.py'), 'rb').read())
+with open(os.path.join(ROOTDIR, 'odoo', 'release.py'), 'rb') as fd:
+    exec(fd.read())
 VERSION = version.split('-')[0].replace('saas~', '')
 GPGPASSPHRASE = os.getenv('GPGPASSPHRASE')
 GPGID = os.getenv('GPGID')

@@ -28,7 +28,8 @@ class HrEmployeePrivate(models.Model):
     @api.model
     def _default_image(self):
         image_path = get_module_resource('hr', 'static/src/img', 'default_image.png')
-        return base64.b64encode(open(image_path, 'rb').read())
+        with open(image_path, 'rb') as fd:
+            return base64.b64encode(fd.read())
 
     # resource and user
     # required on the resource, make sure required="True" set in the view
