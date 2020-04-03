@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+
 {
     'name': 'CRM',
-    'version': '1.1',
+    'version': '1.2',
     'category': 'Sales/CRM',
     'sequence': 5,
     'summary': 'Track leads and close opportunities',
