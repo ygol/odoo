@@ -4,7 +4,7 @@ odoo.define('mass_mailing.snippets.options', function (require) {
 var options = require('web_editor.snippets.options');
 
 // Snippet option for resizing  image and column width inline like excel
-options.registry.mass_mailing_sizing_x = options.Class.extend({
+options.registry.mass_mailing_sizing_x = options.SnippetOptionWidget.extend({
     /**
      * @override
      */
@@ -79,7 +79,7 @@ options.registry.mass_mailing_sizing_x = options.Class.extend({
     },
 });
 
-options.registry.mass_mailing_table_item = options.Class.extend({
+options.registry.mass_mailing_table_item = options.SnippetOptionWidget.extend({
     onClone: function (options) {
         this._super.apply(this, arguments);
 

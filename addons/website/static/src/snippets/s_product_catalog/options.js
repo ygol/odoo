@@ -7,7 +7,7 @@ const options = require('web_editor.snippets.options');
 
 const _t = core._t;
 
-options.registry.ProductCatalog = options.Class.extend({
+options.registry.ProductCatalog = options.SnippetOptionWidget.extend({
 
     //--------------------------------------------------------------------------
     // Options

@@ -6,8 +6,8 @@ const options = require('web_editor.snippets.options');
 
 const qweb = core.qweb;
 
-options.registry.countdown = options.Class.extend({
-    events: _.extend({}, options.Class.prototype.events || {}, {
+options.registry.countdown = options.SnippetOptionWidget.extend({
+    events: _.extend({}, options.SnippetOptionWidget.prototype.events || {}, {
         'click .toggle-edit-message': '_onToggleEndMessageClick',
     }),
 

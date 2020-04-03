@@ -1,6 +1,7 @@
 odoo.define('web_editor.AssetLoaderWidget', function (require) {
   'use strict';
 
+  // todo: Remove this.
   var Widget = require('web.Widget');
   var AssetLoaderWidget = Widget.extend({
       // assetLibs: ['web_editor.compiled_assets_wysiwyg'],

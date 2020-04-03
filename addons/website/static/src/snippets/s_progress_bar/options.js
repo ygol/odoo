@@ -7,7 +7,7 @@ const options = require('web_editor.snippets.options');
 
 const _t = core._t;
 
-options.registry.progress = options.Class.extend({
+options.registry.progress = options.SnippetOptionWidget.extend({
 
     //--------------------------------------------------------------------------
     // Options

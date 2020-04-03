@@ -7,27 +7,6 @@ var SnippetsMenu = require('web_editor.snippet.editor').SnippetsMenu;
 
 
 var Wysiwyg = Widget.extend({
-    defaultOptions: {
-        'focus': false,
-        'toolbar': [
-            ['style', ['style']],
-            ['font', ['bold', 'italic', 'underline', 'clear']],
-            ['fontsize', ['fontsize']],
-            ['color', ['color']],
-            ['para', ['ul', 'ol', 'paragraph']],
-            ['table', ['table']],
-            ['insert', ['link', 'picture']],
-            ['history', ['undo', 'redo']],
-        ],
-        'styleWithSpan': false,
-        'inlinemedia': ['p'],
-        'lang': 'odoo',
-        // 'colors': summernoteCustomColors,
-        recordInfo: {
-            context: {},
-        },
-    },
-
     // todo: theses tree keys currently comes from previous editor.js
     xmlDependencies: ['/web_editor/static/src/xml/editor.xml'],
     events: {

@@ -222,10 +222,10 @@ options.userValueWidgetsRegistry['we-fontfamilypicker'] = FontFamilyPickerUserVa
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-options.Class.include({
-    xmlDependencies: (options.Class.prototype.xmlDependencies || [])
+options.SnippetOptionWidget.include({
+    xmlDependencies: (options.SnippetOptionWidget.prototype.xmlDependencies || [])
         .concat(['/website/static/src/xml/website.editor.xml']),
-    custom_events: _.extend({}, options.Class.prototype.custom_events || {}, {
+    custom_events: _.extend({}, options.SnippetOptionWidget.prototype.custom_events || {}, {
         'google_fonts_custo_request': '_onGoogleFontsCustoRequest',
     }),
 
@@ -621,7 +621,7 @@ options.registry.background.include({
     },
 });
 
-options.registry.Theme = options.Class.extend({
+options.registry.Theme = options.SnippetOptionWidget.extend({
     jsLibs: [
         '/web/static/lib/ace/ace.js',
         '/web/static/lib/ace/mode-xml.js',
@@ -820,7 +820,7 @@ options.registry.Theme = options.Class.extend({
     },
 });
 
-options.registry.menu_data = options.Class.extend({
+options.registry.menu_data = options.SnippetOptionWidget.extend({
     /**
      * When the users selects a menu, a dialog is opened to ask him if he wants
      * to follow the link (and leave editor), edit the menu or do nothing.
@@ -863,7 +863,7 @@ options.registry.menu_data = options.Class.extend({
     },
 });
 
-options.registry.company_data = options.Class.extend({
+options.registry.company_data = options.SnippetOptionWidget.extend({
     /**
      * Fetches data to determine the URL where the user can edit its company
      * data. Saves the info in the prototype to do this only once.
@@ -910,7 +910,7 @@ options.registry.company_data = options.Class.extend({
     },
 });
 
-options.registry.Carousel = options.Class.extend({
+options.registry.Carousel = options.SnippetOptionWidget.extend({
     /**
      * @override
      */
@@ -999,7 +999,7 @@ options.registry.Carousel = options.Class.extend({
     },
 });
 
-options.registry.CarouselItem = options.Class.extend({
+options.registry.CarouselItem = options.SnippetOptionWidget.extend({
     isTopOption: true,
 
     /**
@@ -1165,7 +1165,7 @@ options.registry.sizing_x = options.registry.sizing.extend({
     },
 });
 
-options.registry.layout_column = options.Class.extend({
+options.registry.layout_column = options.SnippetOptionWidget.extend({
     /**
      * @override
      */
@@ -1275,7 +1275,7 @@ options.registry.layout_column = options.Class.extend({
     },
 });
 
-options.registry.parallax = options.Class.extend({
+options.registry.parallax = options.SnippetOptionWidget.extend({
     /**
      * @override
      */
@@ -1299,7 +1299,7 @@ options.registry.parallax = options.Class.extend({
     },
 });
 
-options.registry.ul = options.Class.extend({
+options.registry.ul = options.SnippetOptionWidget.extend({
     /**
      * @override
      */
@@ -1355,7 +1355,7 @@ options.registry.ul = options.Class.extend({
     },
 });
 
-options.registry.collapse = options.Class.extend({
+options.registry.collapse = options.SnippetOptionWidget.extend({
     /**
      * @override
      */
@@ -1433,7 +1433,7 @@ options.registry.collapse = options.Class.extend({
     },
 });
 
-options.registry.topMenuTransparency = options.Class.extend({
+options.registry.topMenuTransparency = options.SnippetOptionWidget.extend({
 
     //--------------------------------------------------------------------------
     // Options
@@ -1479,7 +1479,7 @@ options.registry.topMenuTransparency = options.Class.extend({
     },
 });
 
-options.registry.topMenuColor = options.Class.extend({
+options.registry.topMenuColor = options.SnippetOptionWidget.extend({
 
     //--------------------------------------------------------------------------
     // Options
@@ -1522,7 +1522,7 @@ options.registry.topMenuColor = options.Class.extend({
 /**
  * Handles the edition of snippet's anchor name.
  */
-options.registry.anchor = options.Class.extend({
+options.registry.anchor = options.SnippetOptionWidget.extend({
     isTopOption: true,
 
     //--------------------------------------------------------------------------
@@ -1658,7 +1658,7 @@ options.registry.anchor = options.Class.extend({
 /**
  * Controls box properties.
  */
-options.registry.Box = options.Class.extend({
+options.registry.Box = options.SnippetOptionWidget.extend({
 
     //--------------------------------------------------------------------------
     // Options
@@ -1757,7 +1757,7 @@ options.registry.CookiesBar = options.registry.SnippetPopup.extend({
  * Allows edition of 'cover_properties' in website models which have such
  * fields (blogs, posts, events, ...).
  */
-options.registry.CoverProperties = options.Class.extend({
+options.registry.CoverProperties = options.SnippetOptionWidget.extend({
     /**
      * @constructor
      */
@@ -1864,7 +1864,7 @@ options.registry.CoverProperties = options.Class.extend({
     },
 });
 
-options.registry.ContainerWidth = options.Class.extend({
+options.registry.ContainerWidth = options.SnippetOptionWidget.extend({
     /**
      * @override
      */
@@ -1892,7 +1892,7 @@ options.registry.ContainerWidth = options.Class.extend({
 /**
  * Allows snippets to be moved before the preceding element or after the following.
  */
-options.registry.SnippetMove = options.Class.extend({
+options.registry.SnippetMove = options.SnippetOptionWidget.extend({
     /**
      * @override
      */
@@ -1945,7 +1945,7 @@ options.registry.SnippetMove = options.Class.extend({
     },
 });
 
-options.registry.ScrollButton = options.Class.extend({
+options.registry.ScrollButton = options.SnippetOptionWidget.extend({
     /**
      * @override
      */

@@ -8,7 +8,7 @@ var wUtils = require('website.utils');
 var _t = core._t;
 
 
-options.registry.mailing_list_subscribe = options.Class.extend({
+options.registry.mailing_list_subscribe = options.SnippetOptionWidget.extend({
     popup_template_id: "editor_new_mailing_list_subscribe_button",
     popup_title: _t("Add a Newsletter Subscribe Button"),
 

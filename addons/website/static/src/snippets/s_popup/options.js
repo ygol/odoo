@@ -3,7 +3,7 @@ odoo.define('website.s_popup_options', function (require) {
 
 const options = require('web_editor.snippets.options');
 
-options.registry.SnippetPopup = options.Class.extend({
+options.registry.SnippetPopup = options.SnippetOptionWidget.extend({
     /**
      * @override
      */
@@ -101,7 +101,7 @@ options.registry.SnippetPopup = options.Class.extend({
     },
 });
 
-options.registry.PopupContent = options.Class.extend({
+options.registry.PopupContent = options.SnippetOptionWidget.extend({
 
     //--------------------------------------------------------------------------
     // Private
