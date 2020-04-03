@@ -10,6 +10,7 @@ class TestSalesCommon(SavepointCase):
     @classmethod
     def setUpClass(cls):
         super(TestSalesCommon, cls).setUpClass()
+        cls.env['ir.config_parameter'].set_param('sales_team.membership_multi', True)
 
         cls.company_main = cls.env.user.company_id
         cls.user_sales_manager = mail_new_test_user(
@@ -40,7 +41,14 @@ class TestSalesCommon(SavepointCase):
             'sequence': 5,
             'company_id': False,
             'user_id': cls.user_sales_manager.id,
-            'member_ids': [(4, cls.user_sales_leads.id), (4, cls.env.ref('base.user_admin').id)],
+        })
+        cls.sales_team_1_m1 = cls.env['crm.team.member'].create({
+            'user_id': cls.user_sales_leads.id,
+            'crm_team_id': cls.sales_team_1.id,
+        })
+        cls.sales_team_1_m2 = cls.env['crm.team.member'].create({
+            'user_id': cls.env.ref('base.user_admin').id,
+            'crm_team_id': cls.sales_team_1.id,
         })
 
 

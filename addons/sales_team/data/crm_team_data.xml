@@ -4,8 +4,11 @@
         <record id="team_sales_department" model="crm.team">
             <field name="name">Sales</field>
             <field name="sequence">0</field>
-            <field name="member_ids" eval="[(4, ref('base.user_admin'))]"/>
             <field name="company_id" eval="False"/>
+        </record>
+        <record id="team_sales_department_member_admin" model="crm.team.member">
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="crm_team_id" ref="sales_team.team_sales_department"/>
         </record>
 
         <record id="salesteam_website_sales" model="crm.team">

@@ -252,7 +252,10 @@ class TestLeadConvertCommon(TestCrmCommon):
             'use_opportunities': True,
             'company_id': False,
             'user_id': cls.user_sales_manager.id,
-            'member_ids': [(4, cls.user_sales_salesman.id)],
+        })
+        cls.sales_team_convert_m1 = cls.env['crm.team.member'].create({
+            'user_id': cls.user_sales_salesman.id,
+            'crm_team_id': cls.sales_team_convert.id,
         })
         cls.stage_team_convert_1 = cls.env['crm.stage'].create({
             'name': 'New',

@@ -11,8 +11,8 @@ class Team(models.Model):
     _inherit = 'crm.team.member'
 
     # assignment
-    team_user_domain = fields.Char('Domain', tracking=True)
-    maximum_user_leads = fields.Integer('Leads Per Month')
+    assignment_domain = fields.Char('Domain', tracking=True)
+    assignment_max = fields.Integer('Leads Per Month')
     lead_month_count = fields.Integer(
         'Assigned Leads', compute='_compute_lead_month_count',
         help='Lead assigned to this member those last 30 days')
@@ -28,11 +28,11 @@ class Team(models.Model):
             else:
                 member.lead_month_count = 0
 
-    @api.constrains('team_user_domain')
+    @api.constrains('assignment_domain')
     def _assert_valid_domain(self):
         for member in self:
             try:
-                domain = safe_eval(member.team_user_domain or '[]')
+                domain = safe_eval(member.assignment_domain or '[]')
                 self.env['crm.lead'].search(domain, limit=1)
             except Exception:
                 raise exceptions.UserError(_('The domain is incorrectly formatted'))

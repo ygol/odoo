@@ -25,7 +25,7 @@ class CrmTeam(models.Model):
 
         team = self.env['crm.team'].search([
             ('company_id', 'in', [False, self.env.company.id]),
-            '|', ('user_id', '=', user_id), ('member_ids', 'in', user_id),
+            '|', ('user_id', '=', user_id), ('member_ids', 'in', [user_id]),
         ], limit=1)
         if not team and 'default_team_id' in self.env.context:
             team = self.env['crm.team'].browse(self.env.context.get('default_team_id'))
@@ -50,8 +50,12 @@ class CrmTeam(models.Model):
     member_ids = fields.Many2many(
         'res.users', 'crm_team_member', 'crm_team_id', 'user_id', string='Channel Members',
         check_company=True, domain=[('share', '=', False)],
+        compute='_compute_member_ids', inverse='_inverse_member_ids', search='_search_member_ids',
         help="Add members to automatically assign their documents to this sales team.")
     crm_team_member_ids = fields.One2many('crm.team.member', 'crm_team_id', string='Sales Team Memberships')
+    crm_team_member_all_ids = fields.One2many(
+        'crm.team.member', 'crm_team_id', string='Sales Team Memberships (incl. inactive)',
+        context={'active_test': False})
     # UX options
     color = fields.Integer(string='Color Index', help="The color of the channel")
     favorite_user_ids = fields.Many2many(
@@ -62,6 +66,27 @@ class CrmTeam(models.Model):
         help="Favorite teams to display them in the dashboard and access them easily.")
     dashboard_button_name = fields.Char(string="Dashboard Button", compute='_compute_dashboard_button_name')
     dashboard_graph_data = fields.Text(compute='_compute_dashboard_graph')
+
+    @api.depends('crm_team_member_ids.active')
+    @api.depends_context('active_test')
+    def _compute_member_ids(self):
+        for team in self:
+            team.member_ids = team.crm_team_member_ids.user_id
+
+    def _inverse_member_ids(self):
+        for team in self:
+            memberships = team.crm_team_member_all_ids
+            # add missing memberships
+            memberships.create([
+                {'crm_team_id': team.id, 'user_id': user.id}
+                for user in team.member_ids - memberships.user_id
+            ])
+            # activate or deactivate other memberships depending on members
+            for membership in memberships:
+                membership.active = membership.user_id in team.member_ids
+
+    def _search_member_ids(self, operator, value):
+        return [('crm_team_member_ids.user_id', operator, value)]
 
     def _compute_is_favorite(self):
         for team in self:

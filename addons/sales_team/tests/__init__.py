@@ -2,4 +2,5 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from . import common
+from . import test_sales_team_internals
 from . import test_sales_team_membership
