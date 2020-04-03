@@ -82,7 +82,7 @@ function reload() {
     }
 }
 
-options.registry.WebsiteSaleGridLayout = options.Class.extend({
+options.registry.WebsiteSaleGridLayout = options.SnippetOptionWidget.extend({
 
     /**
      * @override
@@ -153,8 +153,8 @@ options.registry.WebsiteSaleGridLayout = options.Class.extend({
     },
 });
 
-options.registry.WebsiteSaleProductsItem = options.Class.extend({
-    events: _.extend({}, options.Class.prototype.events || {}, {
+options.registry.WebsiteSaleProductsItem = options.SnippetOptionWidget.extend({
+    events: _.extend({}, options.SnippetOptionWidget.prototype.events || {}, {
         'mouseenter .o_wsale_soptions_menu_sizes table': '_onTableMouseEnter',
         'mouseleave .o_wsale_soptions_menu_sizes table': '_onTableMouseLeave',
         'mouseover .o_wsale_soptions_menu_sizes td': '_onTableItemMouseEnter',

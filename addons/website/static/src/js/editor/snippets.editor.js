@@ -6,7 +6,7 @@ const wSnippetOptions = require('website.editor.snippets.options');
 
 const FontFamilyPickerUserValueWidget = wSnippetOptions.FontFamilyPickerUserValueWidget;
 
-weSnippetEditor.Class.include({
+weSnippetEditor.SnippetsMenu.include({
     events: _.extend({}, weSnippetEditor.SnippetsMenu.prototype.events, {
         'click .o_we_customize_theme_btn': '_onThemeTabClick',
     }),

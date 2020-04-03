@@ -178,7 +178,6 @@
     </xpath>
     <xpath expr="//script[last()]" position="after">
         <script type="text/javascript" src="/web_editor/static/src/js/frontend/loader.js"/>
-        <script type="text/javascript" src="/web_editor/static/src/js/frontend/default_options.js"/>
     </xpath>
 </template>
 

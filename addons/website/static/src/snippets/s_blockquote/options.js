@@ -3,7 +3,7 @@ odoo.define('website.s_blockquote_options', function (require) {
 
 const options = require('web_editor.snippets.options');
 
-options.registry.Blockquote = options.Class.extend({
+options.registry.Blockquote = options.SnippetOptionWidget.extend({
 
     //--------------------------------------------------------------------------
     // Options

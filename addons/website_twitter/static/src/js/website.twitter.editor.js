@@ -7,7 +7,7 @@ var sOptions = require('web_editor.snippets.options');
 
 var _t = core._t;
 
-sOptions.registry.twitter = sOptions.Class.extend({
+sOptions.registry.twitter = sOptions.SnippetOptionWidget.extend({
     /**
      * @override
      */

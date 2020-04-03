@@ -3225,6 +3225,9 @@ registry.SnippetSave = SnippetOptionWidget.extend({
 });
 
 
+// previously in "website" folder
+
+
 return {
     SnippetOptionWidget: SnippetOptionWidget,
     snippetOptionRegistry: registry,
@@ -3238,7 +3241,7 @@ return {
     buildRowElement: _buildRowElement,
 
     // Other names for convenience
-    Class: SnippetOptionWidget,
+    SnippetOptionWidget: SnippetOptionWidget,
     registry: registry,
 };
 });

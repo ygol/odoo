@@ -8,7 +8,7 @@ const options = require('web_editor.snippets.options');
 const qweb = core.qweb;
 const _t = core._t;
 
-const FormEditor = options.Class.extend({
+const FormEditor = options.SnippetOptionWidget.extend({
     xmlDependencies: ['/website_form/static/src/xml/website_form_editor.xml'],
 
     //----------------------------------------------------------------------
@@ -290,7 +290,7 @@ const FieldEditor = FormEditor.extend({
 });
 
 options.registry.WebsiteFormEditor = FormEditor.extend({
-    events: _.extend({}, options.Class.prototype.events || {}, {
+    events: _.extend({}, options.SnippetOptionWidget.prototype.events || {}, {
         'click .toggle-edit-message': '_onToggleEndMessageClick',
     }),
 
@@ -1250,7 +1250,7 @@ options.registry.AddField = FieldEditor.extend({
 });
 
 // Superclass for options that need to disable a button from the snippet overlay
-const DisableOverlayButtonOption = options.Class.extend({
+const DisableOverlayButtonOption = options.SnippetOptionWidget.extend({
     // Disable a button of the snippet overlay
     disableButton: function (buttonName, message) {
         // TODO refactor in master

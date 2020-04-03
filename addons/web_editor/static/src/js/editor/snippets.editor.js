@@ -480,7 +480,7 @@ var SnippetEditor = Widget.extend({
             }
 
             var optionName = val.option;
-            var option = new (options.registry[optionName] || options.Class)(
+            var option = new (options.registry[optionName] || options.SnippetOptionWidget)(
                 this,
                 val.$el.children(),
                 val.base_target ? this.$target.find(val.base_target).eq(0) : this.$target,
