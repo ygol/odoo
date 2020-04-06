@@ -51,6 +51,8 @@ class TestCrmCommon(TestSalesCommon, MailCase):
             'use_leads': True,
             'use_opportunities': True,
         })
+        cls.sales_team_1_m1.write({'assignment_max': 45})
+        cls.sales_team_1_m2.write({'assignment_max': 15})
 
         (cls.user_sales_manager | cls.user_sales_leads | cls.user_sales_salesman).write({
             'groups_id': [(4, cls.env.ref('crm.group_use_lead').id)]
@@ -150,7 +152,7 @@ class TestCrmCommon(TestSalesCommon, MailCase):
             'zip': '97648',
         })
 
-    def _create_leads_batch(self, lead_type='lead', count=10):
+    def _create_leads_batch(self, lead_type='lead', user_ids=None, partner_ids=None, count=10):
         """ Helper tool method creating a batch of leads, useful when dealing
         with batch processes. Please update me.
 
@@ -158,11 +160,13 @@ class TestCrmCommon(TestSalesCommon, MailCase):
           None (depends on configuration);
         """
         types = ['lead', 'opportunity']
-        partners = [self.contact_1.id, self.contact_2.id, False]
+        partner_ids = partner_ids or [self.contact_1.id, self.contact_2.id, False]
+        user_ids = user_ids or [False]
         leads_data = [{
             'name': 'TestLead_%02d' % (x),
+            'user_id': user_ids[x % len(user_ids)],
             'type': lead_type if lead_type else types[x % 2],
-            'partner_id': partners[x % 3],
+            'partner_id': partner_ids[x % len(partner_ids)],
             'priority': '%s' % (x % 3),
         } for x in range(count)]
 
@@ -256,6 +260,7 @@ class TestLeadConvertCommon(TestCrmCommon):
         cls.sales_team_convert_m1 = cls.env['crm.team.member'].create({
             'user_id': cls.user_sales_salesman.id,
             'crm_team_id': cls.sales_team_convert.id,
+            'assignment_max': 30,
         })
         cls.stage_team_convert_1 = cls.env['crm.stage'].create({
             'name': 'New',
