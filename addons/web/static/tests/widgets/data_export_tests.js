@@ -58,6 +58,7 @@ QUnit.module('widgets', {
             async user_has_group(g) { return g === 'base.group_allow_export'; }
         }
     }
+
 }, function () {
 
     QUnit.module('Data Export');
@@ -75,6 +76,12 @@ QUnit.module('widgets', {
                 hasActionMenus: true,
             },
             mockRPC: function (route) {
+                if (route.startsWith('/web/async_export')) {
+                    assert.step(route);
+                    return Promise.resolve({
+                        'asyncJobId': false
+                    });
+                }
                 if (route === '/web/export/formats') {
                     return Promise.resolve([
                         {tag: 'csv', label: 'CSV'},
@@ -103,10 +110,6 @@ QUnit.module('widgets', {
                         }
                     ]);
                 }
-                if (route.startsWith('/web/async_export')) {
-                    assert.step(route);
-                    return Promise.resolve();
-                }
                 return this._super.apply(this, arguments);
             },
             session: {
@@ -114,6 +117,12 @@ QUnit.module('widgets', {
                 get_file: function (params) {
                     assert.step(params.url);
                     params.complete();
+                },
+                async user_has_group(group) {
+                    if (group === 'base.group_allow_export') {
+                        return true;
+                    }
+                    return this._super(...arguments);
                 },
             },
             services: {
@@ -147,7 +156,7 @@ QUnit.module('widgets', {
     });
 
     QUnit.test('exporting data in list view (multi pages)', async function (assert) {
-        assert.expect(4);
+        assert.expect(2);
 
         let expectedData;
         const list = await createView({
@@ -159,13 +168,55 @@ QUnit.module('widgets', {
             viewOptions: {
                 hasActionMenus: true,
             },
-            mockRPC: this.mockDataExportRPCs,
+            mockRPC: function (route) {
+                if (route.startsWith('/web/async_export')) {
+                    assert.step(route);
+                    return Promise.resolve({
+                        'asyncJobId': false
+                    });
+                }
+                if (route === '/web/export/formats') {
+                    return Promise.resolve([
+                        {tag: 'csv', label: 'CSV'},
+                        {tag: 'xls', label: 'Excel'},
+                    ]);
+                }
+                if (route === '/web/export/get_fields') {
+                    return Promise.resolve([
+                        {
+                            field_type: "one2many",
+                            string: "Activities",
+                            required: false,
+                            value: "activity_ids/id",
+                            id: "activity_ids",
+                            params: {"model": "mail.activity", "prefix": "activity_ids", "name": "Activities"},
+                            relation_field: "res_id",
+                            children: true,
+                        }, {
+                            children: false,
+                            field_type: 'char',
+                            id: "foo",
+                            relation_field: null,
+                            required: false,
+                            string: 'Foo',
+                            value: "foo",
+                        }
+                    ]);
+                }
+                return this._super.apply(this, arguments);
+            },
             session: {
                 ...this.mockSession,
                 get_file: function (params) {
                     const data = JSON.parse(params.data.data);
                     assert.deepEqual({ids: data.ids, domain: data.domain}, expectedData);
                     params.complete();
+                },
+                async user_has_group(group) {
+                    if (group === 'base.group_allow_export') {
+                        return true;
+                    }
+                    return this._super(...arguments);
                 },
             },
         });
@@ -267,7 +318,6 @@ QUnit.module('widgets', {
         await testUtils.dom.click(list.$('thead th.o_list_record_selector input'));
         await cpHelpers.toggleActionMenu(list);
         await cpHelpers.toggleMenuItem(list, 'Export');
-
         assert.strictEqual($('.modal').length, 1,
             "a modal dialog should be open");
 
@@ -359,7 +409,7 @@ QUnit.module('widgets', {
     });
 
     QUnit.test('Direct export button invisible', async function (assert) {
-        assert.expect(1)
+        assert.expect(1);
 
         let list = await createView({
             View: ListView,
@@ -405,7 +455,9 @@ QUnit.module('widgets', {
                             label: 'Bar',
                         }]
                     }, "should be called with correct params");
-                    return Promise.resolve();
+                    return Promise.resolve({
+                        'asyncJobId': false
+                    });
                 }
                 return this._super(...arguments);
             },
@@ -428,7 +480,7 @@ QUnit.module('widgets', {
     });
 
     QUnit.test('Direct export grouped list ', async function (assert) {
-        assert.expect(3)
+        assert.expect(3);
 
         let list = await createView({
             View: ListView,
@@ -461,7 +513,9 @@ QUnit.module('widgets', {
                             label: 'Bar',
                         }]
                     }, "should be called with correct params")
-                    return Promise.resolve();
+                    return Promise.resolve({
+                        'asyncJobId': false
+                    });
                 }
                 return this._super(...arguments);
             },
