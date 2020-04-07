@@ -449,7 +449,7 @@ class ThreadedServer(CommonServer):
             notified_dbs = [
                 dbname
                 for dbname, registry
-                in odoo.modules.registry.Registry.registries.items()
+                in odoo.modules.registry.Registry.registries.d.items()
                 if registry.ready
             ]
 
@@ -1194,7 +1194,7 @@ class WorkerAsync(WorkerJobCommon):
         self.notified_dbs = [
             dbname
             for dbname, registry
-            in odoo.modules.registry.Registry.registries.items()
+            in odoo.modules.registry.Registry.registries.d.items()
             if registry.ready
         ]
 
