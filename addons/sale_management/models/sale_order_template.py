@@ -130,7 +130,7 @@ class SaleOrderTemplateLine(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        default = self.default_get(['display_type']).get('display_type', False))
+        default = self.default_get(['display_type']).get('display_type', False)
         for values in vals_list:
             if values.get('display_type', default):
                 values.update(product_id=False, product_uom_qty=0, product_uom_id=False)
