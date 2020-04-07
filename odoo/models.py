@@ -2551,7 +2551,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                 def mark_fields_to_compute():
                     recs = self.with_context(active_test=False).search([])
                     for field in fields_to_compute:
-                        _logger.info("Storing computed values of %s", field)
+                        _logger.info("Storing computed values of %s.%s", self._name, field)
                         self.env.add_to_compute(recs._fields[field], recs)
 
         if self._auto:
