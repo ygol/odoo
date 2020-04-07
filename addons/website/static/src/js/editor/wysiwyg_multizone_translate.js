@@ -158,24 +158,6 @@ var WysiwygTranslate = WysiwygMultizone.extend({
         return $editables.add(this.$editables_attribute);
     },
     /**
-     * Return an object describing the linked record.
-     *
-     * @override
-     * @param {Object} options
-     * @returns {Object} {res_id, res_model, xpath}
-     */
-    _getRecordInfo: function (options) {
-        options = options || {};
-        var recordInfo = this._super(options);
-        var $editable = $(options.target).closest(this._getEditableArea());
-        if (!$editable.length) {
-            $editable = $(this._getFocusedEditable());
-        }
-        recordInfo.context.lang = this.lang;
-        recordInfo.translation_id = $editable.data('oe-translation-id')|0;
-        return recordInfo;
-    },
-    /**
      * @override
      * @returns {Object} the summernote configuration
      */

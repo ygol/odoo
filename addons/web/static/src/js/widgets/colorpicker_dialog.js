@@ -37,13 +37,6 @@ var ColorpickerDialog = Dialog.extend({
             ],
         }, options));
 
-        this.trigger_up('getRecordInfo', {
-            recordInfo: options,
-            callback: function (recordInfo) {
-                _.defaults(options, recordInfo);
-            },
-        });
-
         this.pickerFlag = false;
         this.sliderFlag = false;
         this.opacitySliderFlag = false;

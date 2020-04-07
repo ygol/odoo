@@ -55,11 +55,6 @@ var CropImageDialog = Dialog.extend({
             }],
         }, options || {});
         this._super(parent, this.options);
-        this.trigger_up('getRecordInfo', _.extend(this.options, {
-            callback: function (recordInfo) {
-                _.defaults(self.options, recordInfo);
-            },
-        }));
     },
     /**
      * @override
