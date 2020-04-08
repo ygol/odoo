@@ -849,6 +849,51 @@ actual arch.
             del node.attrib['groups']
         return True
 
+    @api.multi
+    def _get_duplicated_views(self):
+        """ Given a view, return a record set containing all the other views
+            having the same key.
+        """
+        self.ensure_one()
+        domain = [('key', '=', self.key), ('id', '!=', self.id)]
+        return self.with_context(active_test=False).search(domain)
+
+    def _load_records_write(self, values):
+        # """ During module update, when updating a generic view, we should also
+        #     update its specific views (COW'd).
+        #     Note that we will only update unmodified fields. That will mimic the
+        #     noupdate behavior on views having an ir.model.data.
+        # """
+        # TODO: if a view has a website_id, we don't need to apply that to other views, how to do that in base?
+        #       if the view only exists once, no problem, but if eg we have one for website_id 1 and one for website_id 2,
+        #       none of the write on those view should impact other views
+        if self.type == 'qweb':
+            # Update also specific views
+            for dupliacated_view in self._get_duplicated_views():
+                authorized_vals = {}
+                for key in values:
+                    if dupliacated_view[key] == self[key]:
+                        authorized_vals[key] = values[key]
+                dupliacated_view.write(authorized_vals)
+        super(View, self)._load_records_write(values)
+
+    def _load_records_create(self, values):
+        # """ During module install, when creating a generic child view, we should
+        #     also create that view under specific view trees (COW'd).
+        #     Top level view (no inherit_id) do not need that behavior as they
+        #     will be shared between websites since there is no specific yet.
+        # """
+        records = super(View, self)._load_records_create(values)
+        for record, vals in zip(records, values):
+            if record.type == 'qweb' and record.inherit_id: # and not record.website_id and not record.inherit_id.website_id:
+                duplicated_parent_views = record.inherit_id._get_duplicated_views()
+                for specific_parent_view in duplicated_parent_views:
+                    # record.with_context(website_id=specific_parent_view.website_id.id).
+                    self.create(dict(vals, **{
+                        'inherit_id': specific_parent_view.id,
+                    }))
+        return records
+
     #------------------------------------------------------
     # Postprocessing: translation, groups and modifiers
     #------------------------------------------------------

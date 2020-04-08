@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="frontend_layout" name="Main Frontend Layout">
+    <template id="frontend_layout" name="Main Frontend Layout FIX">
         <t t-call="web.layout">
             <t t-set="head_website">
                 <script type="text/javascript">
@@ -131,7 +131,7 @@
         </t>
     </template>
 
-    <template id="portal_show_sign_in" inherit_id="portal.frontend_layout" name="Show Sign In">
+    <template id="portal_show_sign_in" inherit_id="portal.frontend_layout" name="Show Sign In FIXED">
         <xpath expr="//ul[@id='top_menu']" position="inside">
             <li class="nav-item divider" groups="base.group_public"/>
             <li groups="base.group_public" class="nav-item">
@@ -139,6 +139,12 @@
                     <b>Sign in</b>
                 </a>
             </li>
+        </xpath>
+    </template>
+
+    <template id="rde_new_view" inherit_id="portal.frontend_layout" name="RDE NEW VIEW">
+        <xpath expr="//ul[@id='top_menu']" position="inside">
+            <p>RDE NEW VIEW</p>
         </xpath>
     </template>
 
