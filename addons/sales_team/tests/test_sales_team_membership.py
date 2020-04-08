@@ -9,6 +9,34 @@ class TestMembership(TestSalesMC):
     """Tests to ensure membership behavior """
 
     @users('user_sales_manager')
+    def test_sales_team_mono(self):
+        """ Test mono mode: old memberships are archived to keep only a single one active """
+        self.env['ir.config_parameter'].sudo().set_param('sales_team.membership_multi', False)
+        # ensure initial data
+        sales_team_1 = self.sales_team_1.with_user(self.env.user)
+        self.assertEqual(sales_team_1.member_ids, self.user_sales_leads | self.user_admin)
+
+        new_team = self.env['crm.team'].create({
+            'name': 'Test Specific',
+        })
+        self.assertEqual(new_team.member_ids, self.env['res.users'])
+        new_team.write({'member_ids': [(4, self.env.uid)]})
+        self.assertEqual(new_team.member_ids, self.env.user)
+        new_team.write({'member_ids': [(4, self.user_sales_leads.id)]})
+        self.assertEqual(new_team.member_ids, self.env.user | self.user_sales_leads)
+        new_team.flush()
+
+        memberships = self.env['crm.team.member'].with_context(active_test=False).search([('user_id', '=', self.user_sales_leads.id)])
+        self.assertEqual(memberships.crm_team_id, sales_team_1 | new_team)
+        self.assertFalse(memberships.filtered(lambda m: m.crm_team_id == sales_team_1).active)
+        self.assertTrue(memberships.filtered(lambda m: m.crm_team_id == new_team).active)
+
+    @users('user_sales_manager')
+    def test_membership_multi(self):
+        self.assertTrue(self.sales_team_1.with_user(self.env.user).is_membership_multi)
+        self.assertTrue(self.team_c2.with_user(self.env.user).is_membership_multi)
+
+    @users('user_sales_manager')
     def test_membership_sync(self):
         new_team = self.env['crm.team'].create({
             'name': 'Test Specific',

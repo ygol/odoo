@@ -47,6 +47,9 @@ class CrmTeam(models.Model):
         related='company_id.currency_id', readonly=True)
     user_id = fields.Many2one('res.users', string='Team Leader', check_company=True)
     # memberships
+    is_membership_multi = fields.Boolean(
+        'Multiple Memberships Allowed', compute='_compute_is_membership_multi',
+        help='If True, users may belong to several sales teams. Otherwise membership is limited to a single sales team.')
     member_ids = fields.Many2many(
         'res.users', 'crm_team_member', 'crm_team_id', 'user_id', string='Channel Members',
         check_company=True, domain=[('share', '=', False)],
@@ -66,6 +69,11 @@ class CrmTeam(models.Model):
         help="Favorite teams to display them in the dashboard and access them easily.")
     dashboard_button_name = fields.Char(string="Dashboard Button", compute='_compute_dashboard_button_name')
     dashboard_graph_data = fields.Text(compute='_compute_dashboard_graph')
+
+    def _compute_is_membership_multi(self):
+        multi_enabled = self.env['ir.config_parameter'].sudo().get_param('sales_team.membership_multi', False)
+        for team in self:
+            team.is_membership_multi = multi_enabled
 
     @api.depends('crm_team_member_ids.active')
     @api.depends_context('active_test')

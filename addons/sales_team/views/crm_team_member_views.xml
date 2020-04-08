@@ -110,7 +110,15 @@
             <form string="Sales Men">
                 <field name="active" invisible="1"/>
                 <field name="user_in_teams_ids" invisible="1"/>
+                <field name="is_membership_multi" invisible="1"/>
+                <field name="is_in_another_team" invisible="1"/>
                 <sheet>
+                    <div class="alert alert-info" role="alert"
+                        attrs="{'invisible': ['|', ('is_membership_multi', '=', True), ('is_in_another_team', '=', False)]}">
+                        <p>This sales person is already in another team. Its other memberships
+                        will be archived as he may not belong to several sales team at the
+                        same time.</p>
+                    </div>
                     <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
                     <field name="image_1920" widget='image' class="oe_avatar" options='{"preview_image": "image_128"}'/>
                     <div class="oe_title">
