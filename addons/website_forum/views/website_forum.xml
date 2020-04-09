@@ -1322,14 +1322,15 @@
 
 <template id="website_forum.author_box">
     <t t-set="display_info" t-value="show_name or show_date or show_karma"/>
+    <t t-set="date" t-value="date or object.create_date"/>
+    <t t-set="obj_user" t-value="obj_user or object.create_uid"/>
     <t t-if="allow_biography and object.can_display_biography" t-set="bio_popover_data">
         <div class="d-flex o_wforum_bio_popover_wrap">
-            <img class="o_forum_avatar_big flex-shrink-0 mr-3" t-att-src="website.image_url(object.create_uid, 'image_128', '75x75')" alt="Avatar"/>
+            <img class="o_forum_avatar_big flex-shrink-0 mr-3" t-att-src="website.image_url(obj_user, 'image_128', '75x75')" alt="Avatar"/>
             <div>
-                <h5 class="o_wforum_bio_popover_name mb-0" t-field="object.create_uid" t-options='{"widget": "contact", "country_image": True, "fields": ["name", "country_id"]}'/>
-
-                <span class="o_wforum_bio_popover_info" t-field="object.create_uid" t-options='{"widget": "contact", "UserBio": True, "badges": True, "fields": ["karma"]}'/>
-                <div class="o_wforum_bio_popover_bio" t-field="object.create_uid" t-options='{"widget": "contact", "website_description": True, "fields": ["partner_id"]}'/>
+                <h5 class="o_wforum_bio_popover_name mb-0" t-field="obj_user" t-options='{"widget": "contact", "country_image": True, "fields": ["name", "country_id"]}'/>
+                <span class="o_wforum_bio_popover_info" t-field="obj_user" t-options='{"widget": "contact", "UserBio": True, "badges": True, "fields": ["karma"]}'/>
+                <div class="o_wforum_bio_popover_bio" t-field="obj_user" t-options='{"widget": "contact", "website_description": True, "fields": ["partner_id"]}'/>
             </div>
         </div>
     </t>
@@ -1337,25 +1338,25 @@
     <div t-attf-class="o_wforum_author_box d-inline-flex #{display_info and 'o_show_info'} #{compact and 'o_compact align-items-center'} #{bio_popover_data and 'o_wforum_bio_popover'}"
          t-att-data-content="bio_popover_data">
         <t t-set="user_profile_url" value="#"/>
-        <t t-if="object.create_uid.id == request.session.uid or object.create_uid.sudo().website_published">
-            <t t-set="user_profile_url" t-value="'/forum/%s/user/%s' % (slug(forum), object.create_uid.id) + '?forum_origin=' + request.httprequest.path"/>
+        <t t-if="obj_user.id == request.session.uid or obj_user.sudo().website_published">
+            <t t-set="user_profile_url" t-value="'/forum/%s/user/%s' % (slug(forum), obj_user.id) + '?forum_origin=' + request.httprequest.path"/>
         </t>
 
         <a t-att-href="user_profile_url" class="o_wforum_author_pic position-relative rounded-circle">
             <span t-if="object_validable" class="o_wforum_author_box_check rounded-circle bg-success position-absolute">
                 <i class="fa fa-check fa-fw small text-white"/>
             </span>
-            <img t-attf-class="rounded-circle o_forum_avatar #{not display_info and 'shadow'}" t-att-src="website.image_url(object.create_uid, 'image_128', '40x40')" alt="Avatar"/>
+            <img t-attf-class="rounded-circle o_forum_avatar #{not display_info and 'shadow'}" t-att-src="website.image_url(obj_user, 'image_128', '40x40')" alt="Avatar"/>
         </a>
 
         <div t-if="show_name or show_date or show_karma" t-attf-class="d-flex #{compact and 'align-items-baseline ml-1' or 'flex-column justify-content-around ml-2'}">
-            <a t-att-href="user_profile_url" class="h6 my-0 text-reset" t-field="object.create_uid" t-options='{"widget": "contact", "fields": ["name"]}'/>
-            <small t-if="show_karma and show_date" class="text-muted font-weight-bold"> - <t t-esc="object.create_uid.karma"/>xp</small>
+            <a t-att-href="user_profile_url" class="h6 my-0 text-reset" t-field="obj_user" t-options='{"widget": "contact", "fields": ["name"]}'/>
+            <small t-if="show_karma and show_date" class="text-muted font-weight-bold"> - <t t-esc="obj_user.karma"/>xp</small>
 
             <div t-attf-class="text-muted small font-weight-bold #{compact and 'd-flex align-items-baseline'}">
                 <span t-if="compact" class="mx-1"> - </span>
-                <time t-if="show_date" class="d-block text-muted font-weight-bold" t-field="object.create_date" t-options='{"format": "d MMMM y"}'/>
-                <span t-if="show_karma and not show_date" class="text-muted font-weight-bold"><t t-esc="object.create_uid.karma"/>xp</span>
+                <time t-if="show_date" class="d-block text-muted font-weight-bold" t-field="date" t-options='{"format": "d MMMM y"}'/>
+                <span t-if="show_karma and not show_date" class="text-muted font-weight-bold"><t t-esc="obj_user.karma"/>xp</span>
             </div>
         </div>
     </div>
@@ -1403,6 +1404,8 @@
                         <div class="d-flex">
                             <div class="mb-1" t-call="website_forum.author_box">
                                 <t t-set="object" t-value="message"/>
+                                <t t-set="date" t-value="message.date"/>
+                                <t t-set="obj_user" t-value="message.author_id.user_ids and message.author_id.user_ids[0]">
                                 <t t-set="compact" t-value="True"/>
                                 <t t-set="show_name" t-value="True"/>
                                 <t t-set="show_date" t-value="True"/>
