@@ -191,7 +191,7 @@ class TestIRRuleFeedback(Feedback):
         p = self.env['test_access_right.parent'].create({'obj_id': self.record.id})
         with self.assertRaisesRegex(
             AccessError,
-            r"Implicitly accessed through 'Object for testing related access rights' \(test_access_right.parent\)\.",
+            r"Implicitly accessed through \\'Object for testing related access rights\\' \(test_access_right\.parent\)\.",
         ):
             p.with_user(self.user).write({'val': 1})
 
@@ -310,7 +310,7 @@ Note: this might be a multi-company issue.
         p.invalidate_cache()
         with self.assertRaisesRegex(
             AccessError,
-            r"Implicitly accessed through 'Object for testing related access rights' \(test_access_right.parent\)\.",
+            r"Implicitly accessed through \\'Object for testing related access rights\\' \(test_access_right\.parent\)\.",
         ):
             p.with_user(self.user).val
 
