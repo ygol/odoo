@@ -64,9 +64,10 @@ function ChatWindowFactory({ Entity }) {
          */
         delete() {
             this.constructor.unregister(this);
+            const prevThread = this.thread;
             super.delete();
-            if (this.thread) {
-                this.thread.updateFoldState('closed');
+            if (prevThread) {
+                prevThread.updateFoldState('closed');
             }
         }
 

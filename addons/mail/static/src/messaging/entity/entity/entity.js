@@ -431,7 +431,7 @@ function EntityFactory() {
                 // (e.g. unlinking one of its reverse relation was causal)
                 return;
             }
-            const relations = entity.relations;
+            const relations = this.relations;
             const data = {};
             for (const relationName in relations) {
                 const relation = relations[relationName];
