@@ -5,6 +5,8 @@ var Class = require('web.Class');
 var Domain = require('web.Domain');
 var pyUtils = require('web.py_utils');
 
+const SEARCH_PANEL_ERROR = {error_msg: "Too many items to display.", };
+
 var MockServer = Class.extend({
     /**
      * @constructor
@@ -538,6 +540,48 @@ var MockServer = Class.extend({
         }
         return modelFields;
     },
+	_mockSearchPanelFieldImage(model, fieldName, kwargs) {
+        const enableCounters = kwargs.enable_counters;
+        const onlyCounters = kwargs.only_counters;
+        const extraDomain = kwargs.extra_domain || [];
+        const normalizedExtra = Domain.prototype.normalizeArray(extraDomain);
+        const noExtra = JSON.stringify(normalizedExtra) === JSON.stringify(Domain.TRUE_DOMAIN);
+        const modelDomain = kwargs.model_domain || [];
+        const countDomain = Domain.prototype.normalizeArray([
+            ...modelDomain,
+            ...extraDomain,
+        ]);
+
+        const limit = kwargs.limit;
+        const setLimit = kwargs.set_limit;
+
+        if (onlyCounters) {
+            return this._mockSearchPanelDomainImage(model, fieldName, countDomain, true);
+        }
+
+        const modelDomainImage = this._mockSearchPanelDomainImage(
+            model,
+            fieldName,
+            modelDomain,
+            enableCounters && noExtra,
+            setLimit && limit
+        );
+        if (enableCounters && !noExtra) {
+            const countDomainImage = this._mockSearchPanelDomainImage(
+                model,
+                fieldName,
+                countDomain,
+                true
+            );
+            for (const [id, values] of modelDomainImage.entries()) {
+                const element = countDomainImage.get(id);
+                values.__count = element ? element.__count : 0;
+            }
+        }
+
+        return modelDomainImage;
+    },
+
     /**
      * Simulates a call to the server '_search_panel_field_image' method.
      *
@@ -698,7 +742,6 @@ var MockServer = Class.extend({
     /**
      * Simulates a call to the server 'search_panel_selection_range' method.
      *
-     * @private
      * @param {string} model
      * @param {string} fieldName
      * @param {Object} kwargs
@@ -734,7 +777,6 @@ var MockServer = Class.extend({
     /**
      * Simulates a call to the server 'search_panel_select_range' method.
      *
-     * @private
      * @param {string} model
      * @param {string[]} args
      * @param {string} args[fieldName]
