@@ -108,6 +108,7 @@ return core.Class.extend({
                 position: 'bottom',
             }, {
                 trigger: `.o_statusbar_buttons button:enabled:contains('${innerTextButton}')`,
+                extra_trigger: extraTrigger,
                 content: description,
                 position: 'bottom',
             },
