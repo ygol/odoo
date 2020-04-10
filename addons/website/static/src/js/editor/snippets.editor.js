@@ -21,7 +21,7 @@ weSnippetEditor.SnippetsMenu.include({
     /**
      * @override
      */
-    _computeSnippetTemplates: function (html) {
+    _computeSnippetTemplates: async function (html) {
         const $html = $(html);
         const fontVariables = _.map($html.find('we-fontfamilypicker[data-variable]'), el => {
             return el.dataset.variable;

@@ -3,12 +3,12 @@ odoo.define('website_mass_mailing.editor', function (require) {
 
 var core = require('web.core');
 var rpc = require('web.rpc');
-var options = require('web_editor.snippets.options');
+var snippetOptions = require('web_editor.snippets.options');
 var wUtils = require('website.utils');
 var _t = core._t;
 
 
-options.registry.mailing_list_subscribe = options.SnippetOptionWidget.extend({
+snippetOptions.registry.mailing_list_subscribe = snippetOptions.SnippetOptionWidget.extend({
     popup_template_id: "editor_new_mailing_list_subscribe_button",
     popup_title: _t("Add a Newsletter Subscribe Button"),
 
@@ -63,7 +63,7 @@ options.registry.mailing_list_subscribe = options.SnippetOptionWidget.extend({
 });
 
 //todo: integration with new editor
-options.registry.newsletter_popup = options.registry.mailing_list_subscribe.extend({
+snippetOptions.registry.newsletter_popup = snippetOptions.registry.mailing_list_subscribe.extend({
     popup_template_id: "editor_new_mailing_list_subscribe_popup",
     popup_title: _t("Add a Newsletter Subscribe Popup"),
 

@@ -45,7 +45,8 @@ const ColorPaletteWidget = Widget.extend({
         }, options || {});
 
         this.selectedColor = '';
-        this.trigger_up('request_editable', {callback: val => this.options.$editable = val});
+        // todo: handle this differently
+        // this.trigger_up('request_editable', {callback: val => this.options.$editable = val});
     },
     /**
      * @override

@@ -41,6 +41,10 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
         wysiwyg_change: '_onChange',
         wysiwyg_attachment: '_onAttachmentChange',
     },
+    /**
+     * @override
+     */
+    _onKeydown () {},
 
     /**
      * @override
@@ -85,20 +89,22 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      *
      * @override
      */
-    commitChanges: function () {
-        if (this.mode == "edit") {
-            this._isDirty = this.wysiwyg.isDirty();
-        }
-        if (this.mode == "readonly" || !this.isRendered) {
-            return this._super();
-        }
+    commitChanges: async function () {
         var _super = this._super.bind(this);
-        return this.wysiwyg.saveCroppedImages(this.$content).then(function () {
-            return self.wysiwyg.save().then(function (result) {
-                self._isDirty = result.isDirty;
-                _super();
-            });
-        });
+        if (this.mode == "edit") {
+            this._isDirty = await this.wysiwyg.isDirty();
+        }
+        if (this.mode == "readonly") {
+            return _super();
+        }
+        // todo: make this work
+        // await this.wysiwyg.saveCroppedImages(this.$content);
+        this._value = (await this.wysiwyg.getValue()).innerHTML;
+        debugger
+        console.log('(await this.wysiwyg.getValue()):', (await this.wysiwyg.getValue()))
+        this._isDirty = await this.wysiwyg.isDirty();
+        console.log('this._isDirty', this._isDirty)
+        return _super();
     },
     /**
      * @override
@@ -143,7 +149,7 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      * @override
      */
     _getValue: function () {
-        return (this.mode === "edit" ? this.wysiwyg.getValue() : this.value);
+        return this._value;
     },
     /**
      * Create the wysiwyg instance with the target (this.$editorContainer)
@@ -160,7 +166,7 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
         // this.$el.append($wysiwygContainer)
 
         return this.wysiwyg.attachTo(this).then( () => {
-            this._appendTemplateButton()
+            this._appendTemplateButton();
         });
     },
     /**
@@ -170,7 +176,8 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      * @returns {Object}
      */
     _getWysiwygOptions: function () {
-        var self = this;
+        const $wrapper = $('<div class="note-editable"></div>');
+        $wrapper.html(this.value || '<p><br/></p>');
         return Object.assign({}, this.nodeOptions, {
             // widget media to add in db, the informations
             recordInfo: {
@@ -183,8 +190,29 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
             inIframe: !!this.nodeOptions.cssEdit,
             iframeCssAssets: this.nodeOptions.cssEdit,
             snippets: this.nodeOptions.snippets,
-            value: this.value,
-            
+            value: $wrapper[0].outerHTML,
+            location: [this.el, 'append'],
+            template: `
+                <t t-zone="float"/>
+                <t t-zone="default"/>
+                <div class="d-flex flex-column">
+                    <div class="d-flex flex-row overflow-auto">
+                        <t t-zone="main_sidebar"/>
+                        <div class="d-flex flex-column overflow-auto o_editor_center">
+                            <div class="o_toolbar">
+                                <t t-zone="tools"/>
+                            </div>
+                            <div class="d-flex overflow-auto note-editing-area">
+                                <t t-zone="snippetManipulators"/>
+                                <t t-zone="main"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="o_debug_zone">
+                        <t t-zone="debug"/>
+                    </div>
+                </div>
+            `,
         });
     },
     /**

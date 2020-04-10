@@ -41,37 +41,29 @@ var MassMailingFieldHtml = FieldHtml.extend({
      *
      * @override
      */
-    commitChanges: function () {
+    commitChanges: async function () {
         var self = this;
         if (this.mode === 'readonly') {
             return this._super();
         }
         var fieldName = this.nodeOptions['inline-field'];
-
-        // if (this.$content.find('.o_basic_theme').length) {
-        //     this.$content.find('*').css('font-family', '');
-        // }
-
         var $editable = this.wysiwyg.getEditable();
 
-        return this.wysiwyg.saveCroppedImages(this.$content).then(function () {
-            return self.wysiwyg.save().then(function (result) {
-                self._isDirty = result.isDirty;
+        // todo: save croped image (previously this.wysiwyg.saveCroppedImages)
+        // self._isDirty = result.isDirty;
 
-                convertInline.attachmentThumbnailToLinkImg($editable);
-                convertInline.fontToImg($editable);
-                convertInline.classToStyle($editable);
+        // convertInline.attachmentThumbnailToLinkImg($editable);
+        // convertInline.fontToImg($editable);
+        // convertInline.classToStyle($editable);
 
-                self.trigger_up('field_changed', {
-                    dataPointID: self.dataPointID,
-                    changes: _.object([fieldName], [self._unWrap($editable.html())])
-                });
+        // self.trigger_up('field_changed', {
+        //     dataPointID: self.dataPointID,
+        //     changes: _.object([fieldName], [self._unWrap($editable.html())])
+        // });
 
-                if (self._isDirty && self.mode === 'edit') {
-                    return self._doAction();
-                }
-            });
-        });
+        // if (self._isDirty && self.mode === 'edit') {
+        //     return self._doAction();
+        // }
     },
     /**
      * The html_frame widget is opened in an iFrame that has its URL encoded
@@ -291,7 +283,7 @@ var MassMailingFieldHtml = FieldHtml.extend({
                 this.$content.focusIn();
             }
         }
-        this.wysiwyg.trigger('reload_snippet_dropzones');
+        // this.wysiwyg.trigger('reload_snippet_dropzones');
     },
 
     //--------------------------------------------------------------------------

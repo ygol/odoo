@@ -4,6 +4,7 @@ odoo.define('web_editor.wysiwyg', function (require) {
 var Widget = require('web.Widget');
 var JWEditorLib = require('web_editor.jabberwock');
 var SnippetsMenu = require('web_editor.snippet.editor').SnippetsMenu;
+var weWidgets = require('wysiwyg.widgets');
 
 
 var Wysiwyg = Widget.extend({
@@ -15,7 +16,7 @@ var Wysiwyg = Widget.extend({
     },
     custom_events: {
         request_editable: '_onRequestEditable',
-        request_history_undo_record: '_onHistoryUndoRecordRequest',
+        // request_history_undo_record: '_onHistoryUndoRecordRequest',
         request_save: '_onSaveRequest',
     },
 
@@ -64,9 +65,8 @@ var Wysiwyg = Widget.extend({
         // p.innerHTML = "coucou";
         // // this.jwEditor.setValue(p)
 
-        // this.$el.html(this.jwEditor.el);
+        // this.$el.html(this.jweditorEditable);
 
-        // console.log('this.$el:', this.$el)
 
         // let element = this.$el[0];
         // if (element.tagName === 'TEXTAREA') {
@@ -105,31 +105,74 @@ var Wysiwyg = Widget.extend({
      * @override
      */
     start: async function () {
-        // this.$target.wrap('<odoo-wysiwyg-container>');
-        // this.$el = this.$target.parent();
-        // var options = this._editorOptions();
-        // this.$target.summernote(options);
-        // this.$editor = this.$('.note-editable:first');
-        // this.$editor.data('wysiwyg', this);
-        // this.$editor.data('oe-model', options.recordInfo.res_model);
-        // this.$editor.data('oe-id', options.recordInfo.res_id);
-        // $(document).on('mousedown', this._blur);
-        // this._value = this.$target.html() || this.$target.val();
+        const _super = this._super;
 
         // todo: change elementToParse to let the editor take any value
         const elementToParse = document.createElement('div');
         elementToParse.innerHTML = this.value;
-        this.editor = new JWEditorLib.BasicEditor(elementToParse);
-        // this.editor.load(JWEditorLib.DevTools);
-        this.editor.configure(JWEditorLib.Dom, {
-            autoFocus: true,
-            target: elementToParse,
-        });
-        this.editor.start();
-        this.$el.html(this.editor.el);
-        this.$el.show();
 
-        // handle megamenu
+        // Add class for website
+        if (this.options.enableWebsite) {
+            // elementToParse.firstElementChild.classList.add('o_editable');
+            // $(elementToParse).find('.oe_structure').addClass('o_editable');
+            $(document.body).addClass('o_connected_user editor_enable editor_has_snippets');
+        }
+        const $mainSidebar = $('<div class="o_main_sidebar">');
+        const $snippetManipulators = $('<div id="oe_manipulators" />');
+
+        this.editor = new JWEditorLib.OdooWebsiteEditor({
+            afterRender: async ()=> {
+                // todo: change this quick fix
+                const $firstDiv = $('.wrapwrap main>div');
+                if ($firstDiv.length) {
+                    $firstDiv.find('.oe_structure').addClass('o_editable');
+                    $firstDiv.addClass('oe_structure o_editable note-air-editor note-editable');
+
+                    this.$editorMessageElements = $firstDiv
+                        // todo: translate message
+                        .attr('data-editor-message', 'DRAG BUILDING BLOCKS HERE');
+                }
+
+                // To see the dashed lines on empty editor, the first element must be empty.
+                // As the jabberwock editor currently add <p><br/></p> when the editor is empty,
+                // we need to remove it.
+                if ($firstDiv.html() === '<br>') {
+                    $firstDiv.empty()
+                }
+
+
+                if (this.snippetsMenu) {
+                    this.snippetsMenu.$editor = $('#wrapwrap');
+                    await this.snippetsMenu.afterRender();
+                }
+            },
+            snippetMenuElement: $mainSidebar[0],
+            snippetManipulators: $snippetManipulators[0],
+            customCommands: {
+                openMedia: { handler: this.openMediaDialog.bind(this) },
+                openLinkDialog: { handler: this.openLinkDialog.bind(this) },
+                saveOdoo: { handler: this.saveToServer.bind(this) }
+            },
+            source: elementToParse,
+            location: this.options.location,
+            saveButton: this.options.saveButton,
+            template: this.options.template,
+        });
+
+        this.editor.load(JWEditorLib.DevTools);
+        await this.editor.start();
+
+        const layout = this.editor.plugins.get(JWEditorLib.Layout)
+        const domLayout = layout.engines.dom;
+        this.domLayout = domLayout;
+
+        const editableNVnode = domLayout.components.get('editable')[0];
+        this.editorEditable = domLayout.getDomNodes(editableNVnode)[0];
+
+        // init editor commands helpers for Odoo
+        this.editorCommands = JWEditorLib.createExecCommandHelpersForOdoo(this.editor);
+
+        // todo: handle megamenu
 
         if (this.options.snippets) {
             this.$webEditorToolbar = $('<div id="web_editor-toolbars">');
@@ -137,24 +180,73 @@ var Wysiwyg = Widget.extend({
             var $toolbarHandler = $('#web_editor-top-edit');
             $toolbarHandler.append(this.$webEditorToolbar);
 
-            // this.snippetsMenu = new SnippetsMenu(this, Object.assign({
-            //     $el: $(this.editor.el),
-            //     selectorEditableArea: '.o_editable',
-            // }, this.options));
-            // await this.snippetsMenu.insertAfter($toolbarHandler);
-            // this.snippetsMenu.$snippetEditorArea.insertAfter(this.snippetsMenu.$el);
-
-            // this.$editor = this.editor.rte.editable();
-            // await this.editor.prependTo(this.$editor[0].ownerDocument.body);
-            this.trigger_up('edit_mode');
+            this.snippetsMenu = new SnippetsMenu(this, Object.assign({
+                $el: $(this.editorEditable),
+                selectorEditableArea: '.o_editable',
+                $snippetEditorArea: $snippetManipulators,
+                wysiwyg: this,
+            }, this.options));
+            await this.snippetsMenu.appendTo($mainSidebar);
 
             // todo: adapt all $el.trigger('content_changed') to not use the calling of the dom
             // this.$el.on('content_changed', function (e) {
             //     self.trigger_up('wysiwyg_change');
             // });
         } else {
-            return this._super.apply(this, arguments);
+            return _super.apply(this, arguments);
         }
+    },
+
+    openLinkDialog() {
+        return new Promise(async (resolve) => {
+            const selectedText = await this.editor.execCommand('getSelectedText');
+            const selectedUrl = await this.editor.execCommand('getSelectedLink');
+            // todo: when the modifiers comes out, get the classes and "target" attributes
+            var linkDialog = new weWidgets.LinkDialog(this,
+                {
+                    props: {
+                        text: selectedText,
+                        url: selectedUrl,
+                    }
+                },
+            );
+            linkDialog.open();
+            linkDialog.on('save', this, async (params)=> {
+                    await this.editor.execBatch(async () =>{
+                        if (!selectedText) {
+                            await this.editor.execCommand('link', {
+                                url: params.url,
+                                label: params.text
+                            });
+                        } else {
+                            await this.editor.execCommand('link', {
+                                url: params.url,
+                            });
+                        }
+
+                        await this.editor.execCommand('addClasses', {
+                            classes: params.classes.split(' '),
+                        });
+                    });
+                resolve();
+            })
+            linkDialog.on('cancel', this, resolve);
+        });
+    },
+    openMediaDialog() {
+        return new Promise((resolve)=>{
+            var mediaDialog = new weWidgets.MediaDialog(this,
+                {},
+            );
+            mediaDialog.open();
+            mediaDialog.on('save', this, async (element)=> {
+                await this.editor.execCommand('insertHtml', {
+                    html: element.outerHTML
+                })
+                resolve();
+            })
+            mediaDialog.on('cancel', this, resolve);
+        });
     },
 
     /**
@@ -183,7 +275,7 @@ var Wysiwyg = Widget.extend({
      *
      * @returns {Boolean}
      */
-    isDirty: function () {
+    isDirty: async function () {
         // todo: use jweditor memory to know if it's dirty.
         //       something like jweditor.getMemorySliceId() === currentMemorySliceId
         return true;
@@ -203,7 +295,7 @@ var Wysiwyg = Widget.extend({
      * @param {jQueryElement} [options.$layout]
      * @returns {String}
      */
-    getValue: function (options) {
+    getValue: async function () {
         // var $editable = options && options.$layout || this.$editor.clone();
         // $editable.find('[contenteditable]').removeAttr('contenteditable');
         // $editable.find('[class=""]').removeAttr('class');
@@ -217,8 +309,9 @@ var Wysiwyg = Widget.extend({
         // todo: do a static editor.render('dom') tha provide the last value or
         //       hook the change of the renderer to cache the last rendered
         //       value.
-        const editable = this.editor.el.querySelector('jw-editor > [contenteditable]')
-        return editable.innerHTML;
+        // const editable = this.editorEditable.querySelector('jw-editor > [contenteditable]');
+        // return editable.innerHTML;
+        return this.editor.getValue();
     },
     /**
      * What happend when you add an image?
@@ -281,7 +374,6 @@ var Wysiwyg = Widget.extend({
      * @returns {Promise} - resolve with true if the content was dirty
      */
     save: function () {
-        // debugger
         throw new Error("Should not call save anymore. Use `getValue` and `isDirty` instead.")
         return this.getValue().then((html)=>{
             if (this.$el.is('textarea')) {
@@ -294,25 +386,24 @@ var Wysiwyg = Widget.extend({
         })
     },
     /**
-     * Create/Update cropped attachments.
-     *
-     * @param {jQuery} $editable
-     * @returns {Promise}
-     */
-    saveCroppedImages: function ($editable) {
-        return this._summernoteManager.saveCroppedImages($editable);
-    },
-    /**
      * @param {String} value
      * @param {Object} options
      * @param {Boolean} [options.notifyChange]
      * @returns {String}
      */
     setValue: function (value, options) {
-        console.log('setValue', value)
         throw new Error("Should not call setValue anymore. Use `getValue` and `isDirty` instead.")
-        // const editable = this.editor.el.querySelector('.jw-editable')
+        // const editable = this.editorEditable.querySelector('.jw-editable')
         // editable.innerHTML = value;
+    },
+
+    //--------------------------------------------------------------------------
+    // JWEditor
+    //--------------------------------------------------------------------------
+
+    getVNodes(node) {
+        const dom = this.editor.plugins.get(JWEditorLib.Dom);
+        return dom.domMap.fromDom(node);
     },
 
     //--------------------------------------------------------------------------
@@ -329,6 +420,10 @@ var Wysiwyg = Widget.extend({
         self.trigger_up('wysiwyg_focus');
         // ?
         self.trigger_up('wysiwyg_blur');
+    },
+
+    async execBatch(...args) {
+        await this.editor.execBatch(...args);
     },
 
     // todo: handle when the server error (previously carlos_danger)
@@ -350,38 +445,47 @@ var Wysiwyg = Widget.extend({
         if (this.snippetsMenu) {
             promises.push(this.snippetsMenu.cleanForSave());
         }
-        promises.push(this._saveAllViewsBlocks());
-        promises.push(this._saveCoverPropertiesBlocks());
-        promises.push(this._saveMegaMenuBlocks());
-        promises.push(this._saveNewsletterBlocks());
-        promises.push(this._saveTranslationBlocks());
-        promises.push(this._saveCroppedImages());
 
-        return Promise.all(promises);
+        promises.push(this._saveAllViewsBlocks());
+        // promises.push(this._saveCoverPropertiesBlocks());
+        // promises.push(this._saveMegaMenuBlocks());
+        // promises.push(this._saveNewsletterBlocks());
+        // promises.push(this._saveTranslationBlocks());
+        // promises.push(this.saveCroppedImages());
+
+
+
+        await Promise.all(promises);
+        location.reload();
     },
 
     _saveAllViewsBlocks: async function (views) {
+        const structureNodes = await this.editor.execCommand('getStructures');
         const promises = [];
-        for (const view of views) {
+        for (const structureNode of structureNodes) {
+            const renderer = this.editor.plugins.get(JWEditorLib.Renderer);
+            // todo: be sure it is resilient: never save something that looks strange
+            const renderedNode = (await renderer.render('dom/html', structureNode))[0];
+
             promises.push(this._rpc({
                 model: 'ir.ui.view',
                 method: 'save',
                 args: [
-                    // todo: find out what to set here.
-                    view.somethingToFindOut,
-                    outerHTML,
-                    // todo: find out what to set here.
-                    view.somethingToFindOut,
+                    parseInt(structureNode.viewId),
+                    renderedNode.outerHTML,
+                    structureNode.xpath,
                 ],
-                context: recordInfo.context,
+                context: this.options.recordInfo.context,
             }));
         }
 
         return Promise.all(promises);
     },
+
     _saveCoverPropertiesBlocks: async function (editable) {
-        var el = editable.closest('.o_record_cover_container');
+        var el = this.editor.execCommand('getRecordCover');
         if (!el) {
+            console.warn('no getRecordCover found');
             return;
         }
 
@@ -472,17 +576,17 @@ var Wysiwyg = Widget.extend({
             });
         }
     },
-    _saveCroppedImages: function ($editable) {
+    saveCroppedImages: function ($editable) {
         var defs = _.map($editable.find('.o_cropped_img_to_save'), async croppedImg => {
             var $croppedImg = $(croppedImg);
             $croppedImg.removeClass('o_cropped_img_to_save');
- 
+
             var resModel = $croppedImg.data('crop:resModel');
             var resID = $croppedImg.data('crop:resID');
             var cropID = $croppedImg.data('crop:id');
             var mimetype = $croppedImg.data('crop:mimetype');
             var originalSrc = $croppedImg.data('crop:originalSrc');
- 
+
             var datas = $croppedImg.attr('src').split(',')[1];
             let attachmentID = cropID;
             if (!cropID) {
@@ -593,6 +697,8 @@ var Wysiwyg = Widget.extend({
         }
         mediaDialog.open();
     },
+
+
 });
 
 return Wysiwyg;

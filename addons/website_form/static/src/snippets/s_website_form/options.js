@@ -3,12 +3,12 @@ odoo.define('website_form_editor', function (require) {
 
 const core = require('web.core');
 const FormEditorRegistry = require('website_form.form_editor_registry');
-const options = require('web_editor.snippets.options');
+const snippetOptions = require('web_editor.snippets.options');
 
 const qweb = core.qweb;
 const _t = core._t;
 
-const FormEditor = options.SnippetOptionWidget.extend({
+const FormEditor = snippetOptions.SnippetOptionWidget.extend({
     xmlDependencies: ['/website_form/static/src/xml/website_form_editor.xml'],
 
     //----------------------------------------------------------------------
@@ -289,8 +289,8 @@ const FieldEditor = FormEditor.extend({
     },
 });
 
-options.registry.WebsiteFormEditor = FormEditor.extend({
-    events: _.extend({}, options.SnippetOptionWidget.prototype.events || {}, {
+snippetOptions.registry.WebsiteFormEditor = FormEditor.extend({
+    events: _.extend({}, snippetOptions.SnippetOptionWidget.prototype.events || {}, {
         'click .toggle-edit-message': '_onToggleEndMessageClick',
     }),
 
@@ -418,7 +418,7 @@ options.registry.WebsiteFormEditor = FormEditor.extend({
             const htmlField = this._renderField(field);
             data.$target.after(htmlField);
             this.trigger_up('activate_snippet', {
-                $snippet: $(htmlField),
+                $element: $(htmlField),
             });
         }
     },
@@ -685,12 +685,12 @@ options.registry.WebsiteFormEditor = FormEditor.extend({
         this.showEndMessage = !this.showEndMessage;
         this.updateUIEndMessage();
         this.trigger_up('activate_snippet', {
-            $snippet: this.showEndMessage ? this.$message : this.$target,
+            $element: this.showEndMessage ? this.$message : this.$target,
         });
     },
 });
 
-options.registry.WebsiteFieldEditor = FieldEditor.extend({
+snippetOptions.registry.WebsiteFieldEditor = FieldEditor.extend({
     events: _.extend({}, FieldEditor.prototype.events, {
         'click we-button.o_we_select_remove_option': '_onRemoveItemClick',
         'click we-button.o_we_list_add_optional': '_onAddCustomItemClick',
@@ -1204,7 +1204,7 @@ options.registry.WebsiteFieldEditor = FieldEditor.extend({
     },
 });
 
-options.registry.AddFieldForm = FormEditor.extend({
+snippetOptions.registry.AddFieldForm = FormEditor.extend({
     isTopOption: true,
 
     //--------------------------------------------------------------------------
@@ -1221,12 +1221,12 @@ options.registry.AddFieldForm = FormEditor.extend({
         const htmlField = this._renderField(field);
         this.$target.find('.s_website_form_submit').before(htmlField);
         this.trigger_up('activate_snippet', {
-            $snippet: $(htmlField),
+            $element: $(htmlField),
         });
     },
 });
 
-options.registry.AddField = FieldEditor.extend({
+snippetOptions.registry.AddField = FieldEditor.extend({
     isTopOption: true,
 
     //--------------------------------------------------------------------------
@@ -1250,7 +1250,7 @@ options.registry.AddField = FieldEditor.extend({
 });
 
 // Superclass for options that need to disable a button from the snippet overlay
-const DisableOverlayButtonOption = options.SnippetOptionWidget.extend({
+const DisableOverlayButtonOption = snippetOptions.SnippetOptionWidget.extend({
     // Disable a button of the snippet overlay
     disableButton: function (buttonName, message) {
         // TODO refactor in master
@@ -1270,7 +1270,7 @@ const DisableOverlayButtonOption = options.SnippetOptionWidget.extend({
 });
 
 // Disable duplicate button for model fields
-options.registry.WebsiteFormFieldModel = DisableOverlayButtonOption.extend({
+snippetOptions.registry.WebsiteFormFieldModel = DisableOverlayButtonOption.extend({
     start: function () {
         this.disableButton('clone', _t('You can\'t duplicate a model field.'));
         return this._super.apply(this, arguments);
@@ -1278,7 +1278,7 @@ options.registry.WebsiteFormFieldModel = DisableOverlayButtonOption.extend({
 });
 
 // Disable delete button for model required fields
-options.registry.WebsiteFormFieldRequired = DisableOverlayButtonOption.extend({
+snippetOptions.registry.WebsiteFormFieldRequired = DisableOverlayButtonOption.extend({
     start: function () {
         this.disableButton('remove', _t('You can\'t remove a field that is required by the model itself.'));
         return this._super.apply(this, arguments);
@@ -1286,7 +1286,7 @@ options.registry.WebsiteFormFieldRequired = DisableOverlayButtonOption.extend({
 });
 
 // Disable delete and duplicate button for submit
-options.registry.WebsiteFormSubmitRequired = DisableOverlayButtonOption.extend({
+snippetOptions.registry.WebsiteFormSubmitRequired = DisableOverlayButtonOption.extend({
     start: function () {
         this.disableButton('remove', _t('You can\'t remove the submit button of the form'));
         this.disableButton('clone', _t('You can\'t duplicate the submit button of the form.'));

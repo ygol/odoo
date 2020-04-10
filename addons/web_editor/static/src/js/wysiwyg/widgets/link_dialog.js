@@ -27,14 +27,17 @@ var LinkDialog = Dialog.extend({
     /**
      * @constructor
      */
-    init: function (parent, options, editable, linkInfo) {
-        // var self = this;
-        // this.options = options || {};
-
+    /**
+     * @constructor
+     * @param {} [options.props.text]
+     * @param {} [options.props.className]
+     */
+    init: function (parent, options) {
         this._super(parent, _.extend({
             title: _t("Link to"),
         }, this.options));
 
+        /** Prior to jabberwock
         // this.trigger_up('getRecordInfo', {
         //     recordInfo: this.options,
         //     callback: recordInfo => {
@@ -142,15 +145,41 @@ var LinkDialog = Dialog.extend({
         // this.data.text = this.data.text.replace(/[ \t\r\n]+/g, ' ');
 
         // var allBtnClassSuffixes = /(^|\s+)btn(-[a-z0-9_-]*)?/gi;
-        // var allBtnShapes = /\s*(rounded-circle|flat)\s*/gi;
+        // var allBtnShapes = /\s*(rounded-circle|flat)\s*\/gi;
         // this.data.className = this.data.iniClassName
         //     .replace(allBtnClassSuffixes, ' ')
         //     .replace(allBtnShapes, ' ');
+        */
+        this.trigger_up('getRecordInfo', {
+            recordInfo: this.options,
+            callback: function (recordInfo) {
+                _.defaults(self.options, recordInfo);
+            },
+        });
+
+        // data is used in the dialog template.
+        this.props = options.props || {};
+
+        var allBtnClassSuffixes = /(^|\s+)btn(-[a-z0-9_-]*)?/gi;
+        var allBtnShapes = /\s*(rounded-circle|flat)\s*/gi;
+        const cleanClassNames = !this.props.initialClassNames ? '' :
+            this.props.initialClassNames
+                .replace(allBtnClassSuffixes, ' ')
+                .replace(allBtnShapes, ' ');
+
+        this.state = {
+            needLabel: !this.props.text,
+            text: this.props.text,
+            className: cleanClassNames,
+            url: this.props.url,
+            isNewWindow: this.props.isNewWindow,
+        }
     },
     /**
      * @override
      */
     start: function () {
+        /** Prior to jabberwock
         // this.buttonOptsCollapseEl = this.el.querySelector('#o_link_dialog_button_opts_collapse');
 
         // this.$styleInputs = this.$('input.link-style');
@@ -177,8 +206,46 @@ var LinkDialog = Dialog.extend({
 
         // this._updateOptionsUI();
         // this._adaptPreview();
+        */
+        this.$('input.link-style').prop('checked', false).first().prop('checked', true);
+        if (this.props.className) {
+            this.$('input[name="link_style_color"], select[name="link_style_size"] > option, select[name="link_style_shape"] > option').each(function () {
+                var $option = $(this);
+                if ($option.val() && self.state.className.match(new RegExp('(^|btn-| |btn-outline-)' + $option.val()))) {
+                    if ($option.is("input")) {
+                        $option.prop("checked", true);
+                    } else {
+                        $option.parent().find('option').removeAttr('selected').removeProp('selected');
+                        $option.parent().val($option.val());
+                        $option.attr('selected', 'selected').prop('selected', 'selected');
+                    }
+                }
+            });
+        }
+        if (this.state.url) {
+            var match = /mailto:(.+)/.exec(this.state.url);
+            this.$('input[name="url"]').val(match ? match[1] : this.state.url);
+            this._onURLInput();
+        }
 
-        // this.$('input:visible:first').focus();
+        // Hide the duplicate color buttons (most of the times, primary = alpha
+        // and secondary = beta for example but this may depend on the theme)
+        this.opened().then(function () {
+            var colors = [];
+            _.each(self.$('.o_link_dialog_color .o_btn_preview'), function (btn) {
+                var $btn = $(btn);
+                var color = $btn.css('background-color');
+                if (_.contains(colors, color)) {
+                    $btn.hide(); // Not remove to be able to edit buttons with those styles
+                } else {
+                    colors.push(color);
+                }
+            });
+        });
+
+        this._adaptPreview();
+
+        this.$('input:visible:first').focus();
 
         return this._super.apply(this, arguments);
     },
@@ -191,27 +258,20 @@ var LinkDialog = Dialog.extend({
      * @override
      */
     save: function () {
-        var data = this._getData();
+        const data = this._getData();
         if (data === null) {
             var $url = this.$('input[name="url"]');
             $url.closest('.form-group').addClass('o_has_error').find('.form-control, .custom-select').addClass('is-invalid');
             $url.focus();
             return Promise.reject();
         }
-        this.data.text = data.label;
-        this.data.url = data.url;
-        var allWhitespace = /\s+/gi;
-        var allStartAndEndSpace = /^\s+|\s+$/gi;
-        var allBtnTypes = /(^|[ ])(btn-secondary|btn-success|btn-primary|btn-info|btn-warning|btn-danger)([ ]|$)/gi;
-        this.data.className = data.classes.replace(allWhitespace, ' ').replace(allStartAndEndSpace, '');
-        if (data.classes.replace(allBtnTypes, ' ')) {
-            this.data.style = {
-                'background-color': '',
-                'color': '',
-            };
-        }
-        this.data.isNewWindow = data.isNewWindow;
-        this.final_data = this.data;
+
+        this.final_data = {
+            text: data.label,
+            url: data.url,
+            isNewWindow: data.isNewWindow,
+            classes: data.classes,
+        };
         return this._super.apply(this, arguments);
     },
 
@@ -247,11 +307,12 @@ var LinkDialog = Dialog.extend({
         var url = $url.val();
         var label = this.$('input[name="label"]').val() || url;
 
-        if (label && this.data.images) {
-            for (var i = 0; i < this.data.images.length; i++) {
-                label = label.replace('<', "&lt;").replace('>', "&gt;").replace(/\[IMG\]/, this.data.images[i].outerHTML);
-            }
-        }
+        // todo: what is that?
+        // if (label && this.data.images) {
+        //     for (var i = 0; i < this.data.images.length; i++) {
+        //         label = label.replace('<', "&lt;").replace('>', "&gt;").replace(/\[IMG\]/, this.data.images[i].outerHTML);
+        //     }
+        // }
 
         if ($url.prop('required') && (!url || !$url[0].checkValidity())) {
             return null;
