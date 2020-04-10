@@ -3,6 +3,8 @@ odoo.define('website.editMenu', function (require) {
 
 var core = require('web.core');
 var websiteNavbarData = require('website.navbar');
+var wysiwygLoader = require('web_editor.loader');
+
 
 var _t = core._t;
 
@@ -25,11 +27,6 @@ var _t = core._t;
  *
  * \-- to export --\
  * - show the building block message
- *
- *
- * \-- to delete --\
- *
- * - start edit mode by loading the editorMenu
  *
  */
 /**
@@ -101,14 +98,23 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
             }
         }, 1000); // ugly hack to wait that tooltip is loaded
 
-        self.wysiwyg = await self._createWysiwyg();
-        await this.wysiwyg.attachTo($('#wrapwrap'));
-
-        // todo: refactor
-        // Add class in navbar and hide the navbar.
-        self.trigger_up('edit_mode');
+        this._add_temporary_save_button();
 
         return def;
+    },
+
+    _add_temporary_save_button() {
+        const button = document.createElement('button');
+        $(button).css({
+            position: 'absolute',
+            top: 10,
+            right: 10,
+        });
+        button.innerText = 'save'
+        button.addEventListener('click', ()=>{
+            this.saveToServer();
+        })
+        $(document.body).prepend(button);
     },
 
     //--------------------------------------------------------------------------
@@ -134,8 +140,17 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
             this.$welcomeMessage.detach(); // detach from the readonly rendering before the clone by summernote
         }
         this.editModeEnable = true;
-        await new EditorMenu(this).prependTo(document.body);
-        this._addEditorMessages();
+
+
+
+        this.wysiwyg = await this._createWysiwyg();
+        // todo: refactor attachTo by using the editor layout config.
+        await this.wysiwyg.attachTo($('#wrapwrap'));
+
+        // todo: refactor
+        // Add class in navbar and hide the navbar.
+        this.trigger_up('edit_mode');
+
         var res = await new Promise(function (resolve, reject) {
             self.trigger_up('widgets_start_request', {
                 editableMode: true,
@@ -145,13 +160,12 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
         });
         // Trigger a mousedown on the main edition area to focus it,
         // which is required for Summernote to activate.
-        this.$editorMessageElements.mousedown();
         return res;
     },
 
     saveToServer: async function() {
         // this.trigger_up('edition_will_stopped');
-        await this.wysiwyg.saveToServer(false);
+        await this.wysiwyg.saveToServer();
     },
 
     _createWysiwyg: async function () {
@@ -191,18 +205,6 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
     // Private
     //--------------------------------------------------------------------------
 
-    /**
-     * Adds automatic editor messages on drag&drop zone elements.
-     *
-     * @private
-     */
-    _addEditorMessages: function () {
-        var $target = this._targetForEdition();
-        this.$editorMessageElements = $target
-            .find('.oe_structure.oe_empty, [data-oe-type="html"]')
-            .not('[data-editor-message]')
-            .attr('data-editor-message', _t('DRAG BUILDING BLOCKS HERE'));
-    },
     /**
      * Returns the target for edition.
      *
@@ -314,7 +316,7 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
             editableMode: true,
             $target: ev.data.$target,
         });
-        this._addEditorMessages();
+        // this._addEditorMessages();
     },
 
     /**

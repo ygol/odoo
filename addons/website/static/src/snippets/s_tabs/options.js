@@ -1,9 +1,9 @@
 odoo.define('website.s_tabs_options', function (require) {
 'use strict';
 
-const options = require('web_editor.snippets.options');
+const snippetOptions = require('web_editor.snippets.options');
 
-options.registry.NavTabs = options.SnippetOptionWidget.extend({
+snippetOptions.registry.NavTabs = snippetOptions.SnippetOptionWidget.extend({
     isTopOption: true,
 
     /**
@@ -113,7 +113,7 @@ options.registry.NavTabs = options.SnippetOptionWidget.extend({
         }
     },
 });
-options.registry.NavTabsStyle = options.SnippetOptionWidget.extend({
+snippetOptions.registry.NavTabsStyle = snippetOptions.SnippetOptionWidget.extend({
 
     //--------------------------------------------------------------------------
     // Options

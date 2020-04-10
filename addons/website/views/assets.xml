@@ -147,8 +147,7 @@
 
     <link rel="stylesheet" type="text/scss" href="/website/static/src/scss/website.editor.ui.scss"/>
 
-    <!-- why is it added here? -->
-    <script type="text/javascript" src="/website/static/src/js/editor/editor_menu_translate.js"/>
+    <!-- <script type="text/javascript" src="/website/static/src/js/editor/editor_menu_translate.js"/> -->
 
     <script type="text/javascript" src="/website/static/src/js/menu/content.js"/>
     <script type="text/javascript" src="/website/static/src/js/menu/customize.js"/>

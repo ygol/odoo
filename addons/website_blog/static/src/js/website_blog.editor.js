@@ -63,8 +63,7 @@ odoo.define('website_blog.editor', function (require) {
 
 require('web.dom_ready');
 var core = require('web.core');
-var options = require('web_editor.snippets.options');
-var WysiwygMultizone = require('web_editor.wysiwyg.multizone');
+var snippetOptions = require('web_editor.snippets.options');
 
 var _t = core._t;
 
@@ -72,7 +71,7 @@ if (!$('.website_blog').length) {
     return Promise.reject("DOM doesn't contain '.website_blog'");
 }
 
-options.registry.many2one.include({
+snippetOptions.registry.many2one.include({
 
     //--------------------------------------------------------------------------
     // Private
@@ -97,7 +96,7 @@ options.registry.many2one.include({
     }
 });
 
-options.registry.CoverProperties.include({
+snippetOptions.registry.CoverProperties.include({
     /**
      * @override
      */

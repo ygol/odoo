@@ -3,11 +3,11 @@ odoo.define('website.s_progress_bar_options', function (require) {
 
 const core = require('web.core');
 const utils = require('web.utils');
-const options = require('web_editor.snippets.options');
+const snippetOptions = require('web_editor.snippets.options');
 
 const _t = core._t;
 
-options.registry.progress = options.SnippetOptionWidget.extend({
+snippetOptions.registry.progress = snippetOptions.SnippetOptionWidget.extend({
 
     //--------------------------------------------------------------------------
     // Options

@@ -15,7 +15,7 @@ var Wysiwyg = Widget.extend({
     },
     custom_events: {
         request_editable: '_onRequestEditable',
-        request_history_undo_record: '_onHistoryUndoRecordRequest',
+        // request_history_undo_record: '_onHistoryUndoRecordRequest',
         request_save: '_onSaveRequest',
     },
 
@@ -66,7 +66,6 @@ var Wysiwyg = Widget.extend({
 
         // this.$el.html(this.jwEditor.el);
 
-        // console.log('this.$el:', this.$el)
 
         // let element = this.$el[0];
         // if (element.tagName === 'TEXTAREA') {
@@ -119,14 +118,34 @@ var Wysiwyg = Widget.extend({
         // todo: change elementToParse to let the editor take any value
         const elementToParse = document.createElement('div');
         elementToParse.innerHTML = this.value;
-        this.editor = new JWEditorLib.BasicEditor(elementToParse);
-        // this.editor.load(JWEditorLib.DevTools);
+        // this.editor = new JWEditorLib.BasicEditor(elementToParse);
+        $(document.body).addClass('o_connected_user editor_enable editor_has_snippets')
+        this.editor = new JWEditorLib.OdooWebsiteEditor({
+            afterRender: ()=>{
+                const $firstDiv = $('jw-editor main>div');
+                $firstDiv.addClass('oe_structure oe_empty o_editable note-air-editor note-editable')
+                if ($firstDiv.html() === '<br>') {
+                    $firstDiv.empty()
+                }
+
+                this.$editorMessageElements = $firstDiv
+                    // todo: translate message
+                    .attr('data-editor-message', 'DRAG BUILDING BLOCKS HERE');
+
+                this.snippetsMenu.afterRender();
+            }
+        });
+        this.editor.load(JWEditorLib.DevTools);
         this.editor.configure(JWEditorLib.Dom, {
             autoFocus: true,
             target: elementToParse,
         });
         this.editor.start();
-        this.$el.html(this.editor.el);
+
+        // init editor commands helpers for Odoo
+        this.editorCommands = JWEditorLib.createExecCommandHelpersForOdoo2(this.editor);
+
+        this.$el.replaceWith(this.editor.el);
         this.$el.show();
 
         // handle megamenu
@@ -137,14 +156,26 @@ var Wysiwyg = Widget.extend({
             var $toolbarHandler = $('#web_editor-top-edit');
             $toolbarHandler.append(this.$webEditorToolbar);
 
-            // this.snippetsMenu = new SnippetsMenu(this, Object.assign({
-            //     $el: $(this.editor.el),
-            //     selectorEditableArea: '.o_editable',
-            // }, this.options));
-            // await this.snippetsMenu.insertAfter($toolbarHandler);
+            this.snippetsMenu = new SnippetsMenu(this, Object.assign({
+                $el: $(this.editor.el),
+                selectorEditableArea: '.o_editable',
+                wysiwyg: this,
+            }, this.options));
+            await this.snippetsMenu.insertAfter($toolbarHandler);
             // this.snippetsMenu.$snippetEditorArea.insertAfter(this.snippetsMenu.$el);
+            // const $div = $('<div>')
+            // $div.css({
+            //     height: 500,
+            //     width: 500,
+            //     position: 'absolute',
+            //     top: 100,
+            //     bottom: 100,
+            // })
 
-            // this.$editor = this.editor.rte.editable();
+            // $(document.body).append($div);
+            // $div.append(this.snippetsMenu.$el);
+            $(document.body).append(this.snippetsMenu.$el);
+
             // await this.editor.prependTo(this.$editor[0].ownerDocument.body);
             this.trigger_up('edit_mode');
 
@@ -281,7 +312,6 @@ var Wysiwyg = Widget.extend({
      * @returns {Promise} - resolve with true if the content was dirty
      */
     save: function () {
-        // debugger
         throw new Error("Should not call save anymore. Use `getValue` and `isDirty` instead.")
         return this.getValue().then((html)=>{
             if (this.$el.is('textarea')) {
@@ -294,25 +324,24 @@ var Wysiwyg = Widget.extend({
         })
     },
     /**
-     * Create/Update cropped attachments.
-     *
-     * @param {jQuery} $editable
-     * @returns {Promise}
-     */
-    saveCroppedImages: function ($editable) {
-        return this._summernoteManager.saveCroppedImages($editable);
-    },
-    /**
      * @param {String} value
      * @param {Object} options
      * @param {Boolean} [options.notifyChange]
      * @returns {String}
      */
     setValue: function (value, options) {
-        console.log('setValue', value)
         throw new Error("Should not call setValue anymore. Use `getValue` and `isDirty` instead.")
         // const editable = this.editor.el.querySelector('.jw-editable')
         // editable.innerHTML = value;
+    },
+
+    //--------------------------------------------------------------------------
+    // JWEditor
+    //--------------------------------------------------------------------------
+
+    getVNodes(node) {
+        const dom = this.editor.plugins.get(JWEditorLib.Dom);
+        return dom.domMap.fromDom(node);
     },
 
     //--------------------------------------------------------------------------
@@ -350,12 +379,12 @@ var Wysiwyg = Widget.extend({
         if (this.snippetsMenu) {
             promises.push(this.snippetsMenu.cleanForSave());
         }
-        promises.push(this._saveAllViewsBlocks());
-        promises.push(this._saveCoverPropertiesBlocks());
-        promises.push(this._saveMegaMenuBlocks());
-        promises.push(this._saveNewsletterBlocks());
-        promises.push(this._saveTranslationBlocks());
-        promises.push(this._saveCroppedImages());
+        // promises.push(this._saveAllViewsBlocks());
+        // promises.push(this._saveCoverPropertiesBlocks());
+        // promises.push(this._saveMegaMenuBlocks());
+        // promises.push(this._saveNewsletterBlocks());
+        // promises.push(this._saveTranslationBlocks());
+        // promises.push(this._saveCroppedImages());
 
         return Promise.all(promises);
     },
@@ -593,6 +622,8 @@ var Wysiwyg = Widget.extend({
         }
         mediaDialog.open();
     },
+
+
 });
 
 return Wysiwyg;
