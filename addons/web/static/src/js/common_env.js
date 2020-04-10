@@ -78,6 +78,7 @@ odoo.define("web.commonEnv", function (require) {
             },
         },
         session,
+        window: window,
     };
 
 

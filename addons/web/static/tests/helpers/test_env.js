@@ -57,6 +57,18 @@ odoo.define('web.test_env', async function (require) {
                 },
                 url: session.url,
             }, env.session),
+            window: Object.assign({
+                clearTimeout: (...args) => window.clearTimeout(...args),
+                innerHeight: 1080,
+                innerWidth: 1920,
+                Notification: {
+                    permission: 'denied',
+                    async requestPermission() {
+                        return this.permission;
+                    },
+                },
+                setTimeout: (...args) => window.setTimeout(...args),
+            }, env.window),
         };
         return Object.assign(env, defaultEnv);
     }
