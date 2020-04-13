@@ -465,19 +465,11 @@
                                         </div>
                                     </td>
                                     <td t-attf-class="text-right {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
-                                        <div
-                                            t-if="line.discount &gt;= 0"
-                                            t-field="line.price_unit"
-                                            t-att-style="line.discount and 'text-decoration: line-through' or None"
-                                            t-att-class="(line.discount and 'text-danger' or '') + ' text-right'"
-                                        />
-                                        <div t-if="line.discount">
-                                            <t t-esc="(1-line.discount / 100.0) * line.price_unit" t-options='{"widget": "float", "decimal_precision": "Product Price"}'/>
-                                        </div>
+                                        <div class="oe_order_line_price_unit" t-field="line.price_unit"/>
                                     </td>
-                                    <td t-if="display_discount" t-attf-class="text-right {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
+                                    <td id="discount" t-if="display_discount" t-attf-class="text-right {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
                                         <strong t-if="line.discount &gt; 0" class="text-info">
-                                            <t t-esc="((line.discount % 1) and '%s' or '%d') % line.discount"/>%
+                                            <span class="oe_order_line_discount" t-field="line.discount"/>%
                                         </strong>
                                     </td>
                                     <td t-attf-class="text-right {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">

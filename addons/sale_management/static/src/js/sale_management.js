@@ -112,8 +112,12 @@ publicWidget.registry.SaleUpdateLineButton = publicWidget.Widget.extend({
     _updateOrderLineValues($orderLine, data) {
         let linePriceTotal = data.order_line_price_total,
             linePriceSubTotal = data.order_line_price_subtotal,
+            linePriceUnit = data.order_line_price_unit,
+            lineDiscount = data.order_line_discount,
             $linePriceTotal = $orderLine.find('.oe_order_line_price_total .oe_currency_value'),
-            $linePriceSubTotal = $orderLine.find('.oe_order_line_price_subtotal .oe_currency_value');
+            $linePriceSubTotal = $orderLine.find('.oe_order_line_price_subtotal .oe_currency_value'),
+            $linePriceUnit = $orderLine.find('.oe_order_line_price_unit'),
+            $lineDiscount = $orderLine.find('.oe_order_line_discount');
 
         if (!$linePriceTotal.length && !$linePriceSubTotal.length) {
             $linePriceTotal = $linePriceSubTotal = $orderLine.find('.oe_currency_value').last();
@@ -125,6 +129,34 @@ publicWidget.registry.SaleUpdateLineButton = publicWidget.Widget.extend({
         }
         if ($linePriceSubTotal.length && linePriceSubTotal !== undefined) {
             $linePriceSubTotal.text(linePriceSubTotal);
+        }
+        if ($linePriceUnit.length && linePriceUnit !== undefined) {
+            $linePriceUnit.text(linePriceUnit);
+        }
+        if ($lineDiscount.length == 1) {
+            if (parseInt(lineDiscount) > 0.0) {
+                $lineDiscount.text(lineDiscount + '%');
+            }
+            else if (this.$el.find('.oe_order_line_discount').length == 1) {
+                const lines = this.$el.find('table#sales_order_table td#discount');
+                _.each(lines, function(line) {
+                    line.remove();
+                });
+                this.$el.find('#sales_order_table th:contains("Disc.%")').remove();
+            }
+            else if (this.$el.find('.oe_order_line_discount').length > 1) {
+                $lineDiscount.parent().remove();
+            }
+        }
+        if ($lineDiscount.length == 0 && parseInt(lineDiscount) > 0.0) {
+            const discount = '<td id="discount" class="text-right">';
+            if (this.$el.find('#discount').length == 0) {
+                const th = $('<th class="text-right">').insertAfter(this.$el.find('#sales_order_table th:contains("Unit Price")'));
+                th.text('Disc.%');
+                $(discount).insertAfter(this.$el.find('.oe_order_line_price_unit').parent());
+            }
+            $orderLine.find('#discount').append('<strong class="text-info"><span class="oe_order_line_discount">');
+            $orderLine.find('.oe_order_line_discount').text(lineDiscount + '%');
         }
     },
     /**

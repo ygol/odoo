@@ -23,9 +23,11 @@ class CustomerPortal(CustomerPortal):
         }
         if order_line:
             results.update({
-               'order_line_product_uom_qty': str(order_line.product_uom_qty),
-               'order_line_price_total': format_price(order_line.price_total),
-               'order_line_price_subtotal': format_price(order_line.price_subtotal)
+                'order_line_product_uom_qty': str(order_line.product_uom_qty),
+                'order_line_price_unit': format_price(order_line.price_unit),
+                'order_line_discount': format_price(order_line.discount),
+                'order_line_price_total': format_price(order_line.price_total),
+                'order_line_price_subtotal': format_price(order_line.price_subtotal)
             })
             try:
                 results['order_totals_table'] = request.env['ir.ui.view'].render_template('sale.sale_order_portal_content_totals_table', {'sale_order': order_sudo})
@@ -66,6 +68,9 @@ class CustomerPortal(CustomerPortal):
             return results
 
         order_line.write({'product_uom_qty': quantity})
+        order_line._onchange_discount()
+        product = order_line.product_id.with_context(lang=order_line.order_id.partner_id.lang, quantity=order_line.product_uom_qty)
+        order_line.price_unit = order_line._get_display_price(product)
         results = self._get_portal_order_details(order_sudo, order_line)
 
         return results
