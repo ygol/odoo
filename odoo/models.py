@@ -1724,6 +1724,8 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
 
     @api.model
     def _name_search(self, name='', args=None, operator='ilike', limit=100, name_get_uid=None):
+        if name_get_uid is not None:
+            self._logger.warning("Unexpected name_get_uid=%r", name_get_uid, stack_info=True)
         # private implementation of name_search, allows passing a dedicated user
         # for the name_get part to solve some access rights issues
         args = list(args or [])

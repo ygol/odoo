@@ -2,7 +2,6 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from odoo import api, fields, models
-from odoo import SUPERUSER_ID
 from odoo.osv import expression
 
 
@@ -17,7 +16,7 @@ class SaleOrder(models.Model):
         """ For expense, we want to show all sales order but only their name_get (no ir.rule applied), this is the only way to do it. """
         if self._context.get('sale_expense_all_order'):
             domain = expression.AND([args or [], ['&', ('state', '=', 'sale'), ('company_id', 'in', self.env.companies.ids)]])
-            return super(SaleOrder, self.sudo())._name_search(name=name, args=domain, operator=operator, limit=limit, name_get_uid=SUPERUSER_ID)
+            return super(SaleOrder, self.sudo())._name_search(name=name, args=domain, operator=operator, limit=limit)
         return super(SaleOrder, self)._name_search(name=name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
 
     @api.depends('expense_ids')
