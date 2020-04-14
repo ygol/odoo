@@ -4,7 +4,7 @@
 import itertools
 import logging
 
-from odoo import api, fields, models, tools, _, SUPERUSER_ID
+from odoo import api, fields, models, tools, _
 from odoo.exceptions import ValidationError, RedirectWarning, UserError
 from odoo.osv import expression
 
@@ -30,7 +30,7 @@ class ProductTemplate(models.Model):
     def _read_group_categ_id(self, categories, domain, order):
         category_ids = self.env.context.get('default_categ_id')
         if not category_ids and self.env.context.get('group_expand'):
-            category_ids = categories._search([], order=order, access_rights_uid=SUPERUSER_ID)
+            category_ids = categories.sudo()._search([], order=order)
         return categories.browse(category_ids)
 
     name = fields.Char('Name', index=True, required=True, translate=True)

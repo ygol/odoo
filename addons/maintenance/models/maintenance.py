@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, timedelta
 
-from odoo import api, fields, models, SUPERUSER_ID, _
+from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from odoo.tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 
@@ -226,7 +226,7 @@ class MaintenanceEquipment(models.Model):
         """ Read group customization in order to display all the categories in
             the kanban view, even if they are empty.
         """
-        category_ids = categories._search([], order=order, access_rights_uid=SUPERUSER_ID)
+        category_ids = categories.sudo()._search([], order=order)
         return categories.browse(category_ids)
 
     def _create_new_request(self, date):
@@ -401,7 +401,7 @@ class MaintenanceRequest(models.Model):
         """ Read group customization in order to display all the stages in the
             kanban view, even if they are empty
         """
-        stage_ids = stages._search([], order=order, access_rights_uid=SUPERUSER_ID)
+        stage_ids = stages.sudo()._search([], order=order)
         return stages.browse(stage_ids)
 
 

@@ -4384,6 +4384,8 @@ Record ids: %(records)s
                                   (not for ir.rules, this is only for ir.model.access)
         :return: a list of record ids or an integer (if count is True)
         """
+        if access_rights_uid is not None:
+            self._logger.warning("Unexpected access_rights_uid=%r", access_rights_uid, stack_info=True)
         model = self.with_user(access_rights_uid) if access_rights_uid else self
         model.check_access_rights('read')
 

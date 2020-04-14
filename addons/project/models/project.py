@@ -4,7 +4,7 @@
 import ast
 from datetime import timedelta
 
-from odoo import api, fields, models, tools, SUPERUSER_ID, _
+from odoo import api, fields, models, tools, _
 from odoo.exceptions import UserError, AccessError, ValidationError, RedirectWarning
 from odoo.tools.misc import format_date
 
@@ -510,7 +510,7 @@ class Task(models.Model):
         if 'default_project_id' in self.env.context:
             search_domain = ['|', ('project_ids', '=', self.env.context['default_project_id'])] + search_domain
 
-        stage_ids = stages._search(search_domain, order=order, access_rights_uid=SUPERUSER_ID)
+        stage_ids = stages.sudo()._search(search_domain, order=order)
         return stages.browse(stage_ids)
 
     active = fields.Boolean(default=True)

@@ -6,7 +6,7 @@ from psycopg2 import sql, extras
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 
-from odoo import api, fields, models, tools, SUPERUSER_ID
+from odoo import api, fields, models, tools
 from odoo.tools.translate import _
 from odoo.tools import email_re, email_split
 from odoo.exceptions import UserError, AccessError
@@ -454,7 +454,7 @@ class Lead(models.Model):
             search_domain = ['|', ('id', 'in', stages.ids), ('team_id', '=', False)]
 
         # perform search
-        stage_ids = stages._search(search_domain, order=order, access_rights_uid=SUPERUSER_ID)
+        stage_ids = stages.sudo()._search(search_domain, order=order)
         return stages.browse(stage_ids)
 
     def _stage_find(self, team_id=False, domain=None, order='sequence'):

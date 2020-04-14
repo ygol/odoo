@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import api, fields, models, tools, SUPERUSER_ID
+from odoo import api, fields, models, tools
 from odoo.tools.translate import _
 from odoo.exceptions import UserError
 
@@ -200,7 +200,7 @@ class Applicant(models.Model):
         if stages:
             search_domain = ['|', ('id', 'in', stages.ids)] + search_domain
 
-        stage_ids = stages._search(search_domain, order=order, access_rights_uid=SUPERUSER_ID)
+        stage_ids = stages.sudo()._search(search_domain, order=order)
         return stages.browse(stage_ids)
 
     @api.depends('job_id', 'department_id')
