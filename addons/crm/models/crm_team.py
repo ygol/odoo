@@ -25,10 +25,15 @@ class Team(models.Model):
         'mail.alias', string='Alias', ondelete="restrict", required=True,
         help="The email address associated with this channel. New emails received will automatically create new leads assigned to the channel.")
     # assignment
+    assignment_enabled = fields.Boolean('Auto Assignment', compute='_compute_assignment_enabled')
+    assignment_optout = fields.Boolean('Do not auto assign')
     assignment_max = fields.Integer(
         'Lead Capacity', compute='_compute_assignment_max',
         help='Monthly leads for all salesmen belonging to the team')
     assignment_domain = fields.Char('Domain', tracking=True)
+    assignment_interval = fields.Selection(
+        string="Assignment Frequency", related='company_id.crm_auto_assignment_interval',
+        readonly=True)
     # statistics about leads / opportunities / both
     lead_unassigned_count = fields.Integer(
         string='# Unassigned Leads', compute='_compute_lead_unassigned_count')
@@ -52,6 +57,11 @@ class Team(models.Model):
     def _compute_assignment_max(self):
         for rec in self:
             rec.assignment_max = sum(s.assignment_max for s in rec.crm_team_member_ids)
+
+    def _compute_assignment_enabled(self):
+        assignment_enabled = self.env['ir.config_parameter'].sudo().get_param('crm.auto_assignment', False)
+        for team in self:
+            team.assignment_enabled = assignment_enabled
 
     def _compute_lead_unassigned_count(self):
         leads_data = self.env['crm.lead'].read_group([
