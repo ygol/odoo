@@ -1,7 +1,13 @@
 odoo.define('mail.messaging.entity.Attachment', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        many2many,
+        many2one,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 function AttachmentFactory({ Entity }) {
 
@@ -252,45 +258,26 @@ function AttachmentFactory({ Entity }) {
 
     }
 
-    Object.assign(Attachment, {
-        relations: Object.assign({}, Entity.relations, {
-            activeInAttachmentViewer: {
-                inverse: 'attachment',
-                to: 'AttachmentViewer',
-                type: 'one2many',
-            },
-            activities: {
-                inverse: 'attachments',
-                to: 'Activity',
-                type: 'many2many',
-            },
-            attachmentViewer: {
-                inverse: 'attachments',
-                to: 'AttachmentViewer',
-                type: 'many2many',
-            },
-            composers: {
-                inverse: 'attachments',
-                to: 'Composer',
-                type: 'many2many',
-            },
-            messages: {
-                inverse: 'attachments',
-                to: 'Message',
-                type: 'many2many',
-            },
-            originThread: {
-                inverse: 'originThreadAttachments',
-                to: 'Thread',
-                type: 'many2one',
-            },
-            threads: {
-                inverse: 'attachments',
-                to: 'Thread',
-                type: 'many2many',
-            },
+    Attachment.fields = {
+        activities: many2many('Activity', {
+            inverse: 'attachments',
         }),
-    });
+        attachmentViewer: many2many('AttachmentViewer', {
+            inverse: 'attachments',
+        }),
+        composers: many2many('Composer', {
+            inverse: 'attachments',
+        }),
+        messages: many2many('Message', {
+            inverse: 'attachments',
+        }),
+        originThread: many2one('Thread', {
+            inverse: 'originThreadAttachments',
+        }),
+        threads: many2many('Thread', {
+            inverse: 'attachments',
+        }),
+    };
 
     return Attachment;
 }

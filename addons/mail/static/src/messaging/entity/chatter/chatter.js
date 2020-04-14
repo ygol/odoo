@@ -1,7 +1,13 @@
 odoo.define('mail.messaging.entity.Chatter', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        one2many,
+        one2one,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 function ChatterFactory({ Entity }) {
 
@@ -236,20 +242,12 @@ function ChatterFactory({ Entity }) {
 
     }
 
-    Object.assign(Chatter, {
-        relations: Object.assign({}, Entity.relations, {
-            activities: {
-                inverse: 'chatter',
-                to: 'Activity',
-                type: 'one2many',
-            },
-            threadViewer: {
-                inverse: 'chatter',
-                to: 'ThreadViewer',
-                type: 'one2one',
-            },
+    Chatter.fields = {
+        activities: one2many('Activity', {
+            inverse: 'chatter',
         }),
-    });
+        threadViewer: one2one('ThreadViewer'),
+    };
 
     return Chatter;
 }

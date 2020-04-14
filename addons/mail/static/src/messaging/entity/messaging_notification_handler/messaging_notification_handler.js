@@ -511,16 +511,6 @@ function MessagingNotificationHandlerFactory({ Entity }) {
 
     }
 
-    Object.assign(MessagingNotificationHandler, {
-        relations: Object.assign({}, Entity.relations, {
-            messaging: {
-                inverse: 'notificationHandler',
-                to: 'Messaging',
-                type: 'one2one',
-            },
-        }),
-    });
-
     return MessagingNotificationHandler;
 }
 

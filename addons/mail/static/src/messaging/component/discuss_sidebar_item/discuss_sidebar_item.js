@@ -110,7 +110,7 @@ class DiscussSidebarItem extends Component {
      * @param {Event} ev
      */
     _onCancelRenaming(ev) {
-        this.discuss.cancelRenaming(this.thread);
+        this.discuss.cancelThreadRenaming(this.thread);
     }
 
     /**
@@ -149,7 +149,7 @@ class DiscussSidebarItem extends Component {
      */
     _onClickRename(ev) {
         ev.stopPropagation();
-        this.discuss.setRenaming(this.thread);
+        this.discuss.setThreadRenaming(this.thread);
     }
 
     /**
@@ -184,7 +184,7 @@ class DiscussSidebarItem extends Component {
      */
     _onValidateEditableText(ev) {
         ev.stopPropagation();
-        this.thread.rename(ev.detail.newName);
+        this.discuss.renameThread(this.thread, ev.detail.newName);
     }
 
 }

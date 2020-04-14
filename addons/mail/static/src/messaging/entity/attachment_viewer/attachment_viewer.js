@@ -1,7 +1,13 @@
 odoo.define('mail.messaging.entity.AttachmentViewer', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        many2many,
+        many2one,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 function AttachmentViewerFactory({ Entity }) {
 
@@ -51,25 +57,12 @@ function AttachmentViewerFactory({ Entity }) {
 
     }
 
-    Object.assign(AttachmentViewer, {
-        relations: Object.assign({}, Entity.relations, {
-            attachment: {
-                inverse: 'activeInAttachmentViewer',
-                to: 'Attachment',
-                type: 'many2one',
-            },
-            attachments: {
-                inverse: 'attachmentViewer',
-                to: 'Attachment',
-                type: 'many2many',
-            },
-            messaging: {
-                inverse: 'attachmentViewer',
-                to: 'Messaging',
-                type: 'one2one',
-            },
+    AttachmentViewer.fields = {
+        attachment: many2one('Attachment'),
+        attachments: many2many('Attachment', {
+            inverse: 'attachmentViewer',
         }),
-    });
+    };
 
     return AttachmentViewer;
 }

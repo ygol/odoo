@@ -1,7 +1,12 @@
 odoo.define('mail.messaging.entity.User', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        one2one,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 function UserFactory({ Entity }) {
 
@@ -58,25 +63,11 @@ function UserFactory({ Entity }) {
 
     }
 
-    Object.assign(User, {
-        relations: Object.assign({}, Entity.relations, {
-            activitiesAsAssignee: {
-                inverse: 'assignee',
-                to: 'Activity',
-                type: 'one2many',
-            },
-            activitiesAsCreator: {
-                inverse: 'creator',
-                to: 'Activity',
-                type: 'one2many',
-            },
-            partner: {
-                inverse: 'user',
-                to: 'Partner',
-                type: 'one2one',
-            },
+    User.fields = {
+        partner: one2one('Partner', {
+            inverse: 'user',
         }),
-    });
+    };
 
     return User;
 }

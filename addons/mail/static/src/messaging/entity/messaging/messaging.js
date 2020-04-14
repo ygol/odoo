@@ -1,7 +1,12 @@
 odoo.define('mail.messaging.entity.Messaging', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        one2one,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 function MessagingFactory({ Entity }) {
 
@@ -157,74 +162,38 @@ function MessagingFactory({ Entity }) {
 
     }
 
-    Object.assign(Messaging, {
-        relations: Object.assign({}, Entity.relations, {
-            attachmentViewer: {
-                inverse: 'messaging',
-                isCausal: true,
-                to: 'AttachmentViewer',
-                type: 'one2one',
-            },
-            chatWindowManager: {
-                inverse: 'messaging',
-                isCausal: true,
-                to: 'ChatWindowManager',
-                type: 'one2one',
-            },
-            currentPartner: {
-                inverse: 'currentPartnerMessaging',
-                to: 'Partner',
-                type: 'one2one',
-            },
-            device: {
-                inverse: 'messaging',
-                isCausal: true,
-                to: 'Device',
-                type: 'one2one',
-            },
-            dialogManager: {
-                inverse: 'messaging',
-                isCausal: true,
-                to: 'DialogManager',
-                type: 'one2one',
-            },
-            discuss: {
-                inverse: 'messaging',
-                isCausal: true,
-                to: 'Discuss',
-                type: 'one2one',
-            },
-            initializer: {
-                inverse: 'messaging',
-                isCausal: true,
-                to: 'MessagingInitializer',
-                type: 'one2one',
-            },
-            locale: {
-                inverse: 'messaging',
-                isCausal: true,
-                to: 'Locale',
-                type: 'one2one',
-            },
-            messagingMenu: {
-                inverse: 'messaging',
-                isCausal: true,
-                to: 'MessagingMenu',
-                type: 'one2one',
-            },
-            notificationHandler: {
-                inverse: 'messaging',
-                isCausal: true,
-                to: 'MessagingNotificationHandler',
-                type: 'one2one',
-            },
-            partnerRoot: {
-                inverse: 'partnerRootMessaging',
-                to: 'Partner',
-                type: 'one2one',
-            },
+    Messaging.fields = {
+        attachmentViewer: one2one('AttachmentViewer', {
+            isCausal: true,
         }),
-    });
+        chatWindowManager: one2one('ChatWindowManager', {
+            isCausal: true,
+        }),
+        currentPartner: one2one('Partner'),
+        device: one2one('Device', {
+            isCausal: true,
+        }),
+        dialogManager: one2one('DialogManager', {
+            isCausal: true,
+        }),
+        discuss: one2one('Discuss', {
+            isCausal: true,
+        }),
+        initializer: one2one('MessagingInitializer', {
+            inverse: 'messaging',
+            isCausal: true,
+        }),
+        locale: one2one('Locale', {
+            isCausal: true,
+        }),
+        messagingMenu: one2one('MessagingMenu', {
+            isCausal: true,
+        }),
+        notificationHandler: one2one('MessagingNotificationHandler', {
+            isCausal: true,
+        }),
+        partnerRoot: one2one('Partner'),
+    };
 
     return Messaging;
 }

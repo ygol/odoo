@@ -21,16 +21,6 @@ function LocaleFactory({ Entity }) {
 
     }
 
-    Object.assign(Locale, {
-        relations: Object.assign({}, Entity.relations, {
-            messaging: {
-                inverse: 'locale',
-                to: 'Messaging',
-                type: 'one2one',
-            },
-        }),
-    });
-
     return Locale;
 }
 

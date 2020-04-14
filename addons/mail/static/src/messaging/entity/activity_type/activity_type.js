@@ -1,7 +1,12 @@
 odoo.define('mail.messaging.entity.ActivityType', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        one2many,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 function ActivityTypeFactory({ Entity }) {
 
@@ -28,15 +33,11 @@ function ActivityTypeFactory({ Entity }) {
 
     }
 
-    Object.assign(ActivityType, {
-        relations: Object.assign({}, Entity.relations, {
-            activities: {
-                inverse: 'type',
-                to: 'Activity',
-                type: 'one2many',
-            },
+    ActivityType.fields = {
+        activities: one2many('Activity', {
+            inverse: 'type',
         }),
-    });
+    };
 
     return ActivityType;
 }

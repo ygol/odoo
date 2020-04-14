@@ -2,7 +2,13 @@ odoo.define('mail.messaging.entity.Message', function (require) {
 'use strict';
 
 const emojis = require('mail.emojis');
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        many2many,
+        many2one,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 const { addLink, parseAndTransform } = require('mail.utils');
 
 const { str_to_datetime } = require('web.time');
@@ -407,40 +413,19 @@ function MessageFactory({ Entity }) {
 
     }
 
-    Object.assign(Message, {
-        relations: Object.assign({}, Entity.relations, {
-            attachments: {
-                inverse: 'messages',
-                to: 'Attachment',
-                type: 'many2many',
-            },
-            author: {
-                inverse: 'authorMessages',
-                to: 'Partner',
-                type: 'many2one',
-            },
-            checkedThreadCaches: {
-                inverse: 'checkedMessages',
-                to: 'ThreadCache',
-                type: 'many2many',
-            },
-            originThread: {
-                inverse: 'originThreadMessages',
-                to: 'Thread',
-                type: 'many2one',
-            },
-            replyingToDiscuss: {
-                inverse: 'replyingToMessage',
-                to: 'Discuss',
-                type: 'one2one',
-            },
-            threadCaches: {
-                inverse: 'messages',
-                to: 'ThreadCache',
-                type: 'many2many',
-            },
+    Message.fields = {
+        attachments: many2many('Attachment', {
+            inverse: 'messages',
         }),
-    });
+        author: many2one('Partner'),
+        checkedThreadCaches: many2many('ThreadCache', {
+            inverse: 'checkedMessages',
+        }),
+        originThread: many2one('Thread'),
+        threadCaches: many2many('ThreadCache', {
+            inverse: 'messages',
+        }),
+    };
 
     return Message;
 }

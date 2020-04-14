@@ -1,7 +1,13 @@
 odoo.define('mail.messaging.entity.Partner', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        many2many,
+        one2one,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 const utils = require('web.utils');
 
@@ -202,45 +208,17 @@ function PartnerFactory({ Entity }) {
 
     }
 
-    Object.assign(Partner, {
-        relations: Object.assign({}, Entity.relations, {
-            authorMessages: {
-                inverse: 'author',
-                to: 'Message',
-                type: 'one2many',
-            },
-            currentPartnerMessaging: {
-                inverse: 'currentPartner',
-                to: 'Messaging',
-                type: 'one2one',
-            },
-            directPartnerThread: {
-                inverse: 'directPartner',
-                to: 'Thread',
-                type: 'one2one',
-            },
-            memberThreads: {
-                inverse: 'members',
-                to: 'Thread',
-                type: 'many2many',
-            },
-            partnerRootMessaging: {
-                inverse: 'partnerRoot',
-                to: 'Messaging',
-                type: 'one2one',
-            },
-            typingMemberThreads: {
-                inverse: 'typingMembers',
-                to: 'Thread',
-                type: 'many2many',
-            },
-            user: {
-                inverse: 'partner',
-                to: 'User',
-                type: 'one2one',
-            },
+    Partner.fields = {
+        directPartnerThread: one2one('Thread', {
+            inverse: 'directPartner',
         }),
-    });
+        memberThreads: many2many('Thread', {
+            inverse: 'members',
+        }),
+        user: one2one('User', {
+            inverse: 'partner',
+        }),
+    };
 
     return Partner;
 }

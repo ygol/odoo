@@ -1,7 +1,9 @@
 odoo.define('mail.messaging.entity.Entity', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 const STORED_RELATION_PREFIX = `_`;
 
@@ -113,6 +115,15 @@ function EntityFactory() {
         }
 
         /**
+         * @static
+         * @returns {Object[]}
+         */
+        static get relations() {
+            return Object.values(this.fields)
+                .filter(field => field.fieldType === 'relation');
+        }
+
+        /**
          * This method deletes this instance entity. After this operation, it's
          * as if this entity never existed. Note that relation are removed,
          * which may delete more relations if some of them are causal.
@@ -124,27 +135,25 @@ function EntityFactory() {
                 // (e.g. unlinking one of its reverse relation was causal)
                 return;
             }
-            const relations = this.constructor.relations;
             const data = {};
-            for (const relationName in relations) {
-                const relation = relations[relationName];
+            for (const relation of this.constructor.relations) {
                 if (relation.isCausal) {
                     switch (relation.type) {
                         case 'one2one':
                         case 'many2one':
-                            if (this[relationName]) {
-                                this[relationName].delete();
+                            if (this[relation.fieldName]) {
+                                this[relation.fieldName].delete();
                             }
                             break;
                         case 'one2many':
                         case 'many2many':
-                            for (const relatedEntity of this[relationName]) {
+                            for (const relatedEntity of this[relation.fieldName]) {
                                 relatedEntity.delete();
                             }
                             break;
                     }
                 }
-                data[relationName] = null;
+                data[relation.fieldName] = null;
             }
             this.unlink(data);
             delete state.entities[this.localId];
@@ -170,9 +179,8 @@ function EntityFactory() {
          * @param {Object} data
          */
         link(data) {
-            const relations = this.constructor.relations;
             for (const [relationName, relationValue] of Object.entries(data)) {
-                const relation = relations[relationName];
+                const relation = this.constructor.fields[relationName];
                 switch (relation.type) {
                     case 'one2one':
                         this.constructor.__linkSingleOne2One(this, {
@@ -221,9 +229,8 @@ function EntityFactory() {
                 // (e.g. unlinking one of its reverse relation was causal)
                 return;
             }
-            const relations = this.constructor.relations;
             for (const [relationName, relationValue] of Object.entries(data)) {
-                const relation = relations[relationName];
+                const relation = this.constructor.fields[relationName];
                 switch (relation.type) {
                     case 'one2one':
                         this.constructor.__unlinkSingleOne2One(this, { relationName });
@@ -301,19 +308,16 @@ function EntityFactory() {
          * @param {mail.messaging.entity.Entity} entity
          */
         static __init(entity) {
-            const relations = this.relations;
-            for (const relationName in relations) {
-                const relation = relations[relationName];
+            for (const relation of this.relations) {
                 if (['one2many', 'many2many'].includes(relation.type)) {
                     // Ensure X2many relations are arrays by defaults.
-                    const storedRelationName = this.__getStoredRelationName(relationName);
+                    const storedRelationName = this.__getStoredRelationName(relation.fieldName);
                     entity[storedRelationName] = [];
                 }
                 // compute getters
-                Object.defineProperty(entity, relationName, {
+                Object.defineProperty(entity, relation.fieldName, {
                     get: () => {
-                        const relation = relations[relationName];
-                        const storedRelationName = this.__getStoredRelationName(relationName);
+                        const storedRelationName = this.__getStoredRelationName(relation.fieldName);
                         const RelatedEntity = this.env.entities[relation.to];
                         if (['one2one', 'many2one'].includes(relation.type)) {
                             return RelatedEntity.get(entity[storedRelationName]);
@@ -362,7 +366,7 @@ function EntityFactory() {
          * @param {string|mail.messaging.entity.Entity|<mail.messaging.entity.Entity|string>[]} param1.relationValue
          */
         static __linkSingleMany2Many(entity, { relationName, relationValue }) {
-            const relation = this.relations[relationName];
+            const relation = this.fields[relationName];
             const storedRelationName = this.__getStoredRelationName(relationName);
             const prevValue = entity[storedRelationName];
             const value = relationValue instanceof Array
@@ -400,7 +404,7 @@ function EntityFactory() {
          * @param {string|mail.messaging.entity.Entity} param1.relationValue
          */
         static __linkSingleMany2One(entity, { relationName, relationValue }) {
-            const relation = this.relations[relationName];
+            const relation = this.fields[relationName];
             const storedRelationName = this.__getStoredRelationName(relationName);
             const prevValue = entity[storedRelationName];
             const value = relationValue.isEntity ? relationValue.localId : relationValue;
@@ -446,7 +450,7 @@ function EntityFactory() {
          * @param {string|mail.messaging.entity.Entity|<string|mail.messaging.entity.Entity>[]} param1.relationValue
          */
         static __linkSingleOne2Many(entity, { relationName, relationValue }) {
-            const relation = this.relations[relationName];
+            const relation = this.fields[relationName];
             const storedRelationName = this.__getStoredRelationName(relationName);
             const prevValue = entity[storedRelationName];
             const value = relationValue instanceof Array
@@ -482,7 +486,7 @@ function EntityFactory() {
          * @param {string|mail.messaging.entity.Entity} param1.relationValue
          */
         static __linkSingleOne2One(entity, { relationName, relationValue }) {
-            const relation = this.relations[relationName];
+            const relation = this.fields[relationName];
             const storedRelationName = this.__getStoredRelationName(relationName);
             const prevValue = entity[storedRelationName];
             const value = relationValue.isEntity ? relationValue.localId : relationValue;
@@ -519,7 +523,7 @@ function EntityFactory() {
                 // (e.g. unlinking one of its reverse relation was causal)
                 return;
             }
-            const relation = this.relations[relationName];
+            const relation = this.fields[relationName];
             const storedRelationName = this.__getStoredRelationName(relationName);
             const value = relationValue === null
                 ? [...entity[storedRelationName]]
@@ -560,7 +564,7 @@ function EntityFactory() {
                 // (e.g. unlinking one of its reverse relation was causal)
                 return;
             }
-            const relation = this.relations[relationName];
+            const relation = this.fields[relationName];
             const storedRelationName = this.__getStoredRelationName(relationName);
             const prevValue = entity[storedRelationName];
             if (prevValue) {
@@ -591,7 +595,7 @@ function EntityFactory() {
                 // (e.g. unlinking one of its reverse relation was causal)
                 return;
             }
-            const relation = this.relations[relationName];
+            const relation = this.fields[relationName];
             const storedRelationName = this.__getStoredRelationName(relationName);
             const prevValue = entity[storedRelationName];
             const value = relationValue === null
@@ -632,7 +636,7 @@ function EntityFactory() {
                 // (e.g. unlinking one of its reverse relation was causal)
                 return;
             }
-            const relation = this.relations[relationName];
+            const relation = this.fields[relationName];
             const storedRelationName = this.__getStoredRelationName(relationName);
             const prevValue = entity[storedRelationName];
             entity[storedRelationName] = undefined;
@@ -647,37 +651,16 @@ function EntityFactory() {
 
     }
 
-    Object.assign(Entity, {
-        /**
-         * Schema of relations for this entity.
-         *
-         * Format:
-         *
-         *   <relation-name>:
-         *      {
-         *         inverse: Name of inverse relation on related entity.
-         *         isCausal: boolean that determines whether the related entities
-         *                   are deeply connected to existence of current entity.
-         *                   (default: false)
-         *         to: Name of the related entity. Just for documentation sake.
-         *         type: Type of the relation on this entity.
-         *               Either 'one2one', 'one2many', 'many2one' or 'many2many'.
-         *      }
-         */
-        relations: {
-            /**
-             * Related dialog of entity when dialog content is directly linked to
-             * an entity that models a UI component, such as AttachmentViewer. Such
-             * entities must be created from @see `mail.messaging.entity.DialogManager.open()`
-             */
-            dialog: {
-                inverse: 'entity',
-                isCausal: true,
-                to: 'Dialog',
-                type: 'one2one',
-            },
-        },
-    });
+    /**
+     * Entity classes should define fields in static prop or getter `field`.
+     * It contains an object with name of field as key and value are objects
+     * that define the field. There are some helpers to ease the making of these
+     * objects, @see `mail.messaging.entity.core.fields`
+     *
+     * Note: fields of super-class are automatically inherited, therefore a
+     * sub-class should (re-)define fields without copying ancestors' fields.
+     */
+    Entity.fields = {};
 
     return Entity;
 }
