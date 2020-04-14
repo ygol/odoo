@@ -244,13 +244,17 @@ var FormRenderer = BasicRenderer.extend({
      * @param {Object} state the result from a getLocalState call
      */
     setLocalState: function (state) {
+        const self = this;
         this.$('div.o_notebook').each(function () {
             var $notebook = $(this);
             var name = $notebook.data('name');
             if (name in state) {
                 var $page = $notebook.find('> .o_notebook_headers > .nav-tabs > .nav-item').eq(state[name]);
                 if (!$page.hasClass('o_invisible_modifier')) {
-                    $page.find('a[data-toggle="tab"]').click();
+                    // $page.find('a[data-toggle="tab"]').click();
+                    self.trigger_up('__test__', {
+                        $target: $page.find('a[data-toggle="tab"]'),
+                    });
                 }
             }
         });

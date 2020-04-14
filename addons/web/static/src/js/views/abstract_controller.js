@@ -23,6 +23,9 @@ var session = require('web.session');
 
 var AbstractController = mvc.Controller.extend(ActionMixin, {
     custom_events: _.extend({}, ActionMixin.custom_events, {
+        __test__: function (ev) {
+            this._onActionClicked({ currentTarget: ev.data.$target[0] });
+        },
         navigation_move: '_onNavigationMove',
         open_record: '_onOpenRecord',
         search_panel_domain_updated: '_onSearchPanelDomainUpdated',
