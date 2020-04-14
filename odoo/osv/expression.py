@@ -127,6 +127,7 @@ from odoo.tools.misc import get_lang
 from ..models import MAGIC_COLUMNS, BaseModel
 import odoo.tools as tools
 
+from .. import domains
 
 # Domain operators.
 NOT_OPERATOR = '!'
@@ -185,29 +186,10 @@ _logger = logging.getLogger(__name__)
 # --------------------------------------------------
 
 def normalize_domain(domain):
-    """Returns a normalized version of ``domain_expr``, where all implicit '&' operators
-       have been made explicit. One property of normalized domain expressions is that they
-       can be easily combined together as if they were single domain components.
-    """
     assert isinstance(domain, (list, tuple)), "Domains to normalize must have a 'domain' form: a list or tuple of domain components"
     if not domain:
         return [TRUE_LEAF]
-    result = []
-    expected = 1                            # expected number of expressions
-    op_arity = {NOT_OPERATOR: 1, AND_OPERATOR: 2, OR_OPERATOR: 2}
-    for token in domain:
-        if expected == 0:                   # more than expected, like in [A, B]
-            result[0:0] = [AND_OPERATOR]             # put an extra '&' in front
-            expected = 1
-        if isinstance(token, (list, tuple)):  # domain term
-            expected -= 1
-            token = tuple(token)
-        else:
-            expected += op_arity.get(token, 0) - 1
-        result.append(token)
-    assert expected == 0, 'This domain is syntactically not correct: %s' % (domain)
-    return result
-
+    return domains.reify(domains.parse(domain))
 
 def is_false(model, domain):
     """ Return whether ``domain`` is logically equivalent to false. """
@@ -276,56 +258,12 @@ def OR(domains):
     """OR([D1,D2,...]) returns a domain representing D1 or D2 or ... """
     return combine(OR_OPERATOR, [FALSE_LEAF], [TRUE_LEAF], domains)
 
-
 def distribute_not(domain):
-    """ Distribute any '!' domain operators found inside a normalized domain.
-
-    Because we don't use SQL semantic for processing a 'left not in right'
-    query (i.e. our 'not in' is not simply translated to a SQL 'not in'),
-    it means that a '! left in right' can not be simply processed
-    by __leaf_to_sql by first emitting code for 'left in right' then wrapping
-    the result with 'not (...)', as it would result in a 'not in' at the SQL
-    level.
-
-    This function is thus responsible for pushing any '!' domain operators
-    inside the terms themselves. For example::
-
-         ['!','&',('user_id','=',4),('partner_id','in',[1,2])]
-            will be turned into:
-         ['|',('user_id','!=',4),('partner_id','not in',[1,2])]
-
-    """
-
-    # This is an iterative version of a recursive function that split domain
-    # into subdomains, processes them and combine the results. The "stack" below
-    # represents the recursive calls to be done.
-    result = []
-    stack = [False]
-
-    for token in domain:
-        negate = stack.pop()
-        # negate tells whether the subdomain starting with token must be negated
-        if is_leaf(token):
-            if negate:
-                left, operator, right = token
-                if operator in TERM_OPERATORS_NEGATION:
-                    result.append((left, TERM_OPERATORS_NEGATION[operator], right))
-                else:
-                    result.append(NOT_OPERATOR)
-                    result.append(token)
-            else:
-                result.append(token)
-        elif token == NOT_OPERATOR:
-            stack.append(not negate)
-        elif token in DOMAIN_OPERATORS_NEGATION:
-            result.append(DOMAIN_OPERATORS_NEGATION[token] if negate else token)
-            stack.append(negate)
-            stack.append(negate)
-        else:
-            result.append(token)
-
-    return result
-
+    return domains.reify(
+        domains.distribute_not(
+            domains.parse(domain)
+        )
+    )
 
 # --------------------------------------------------
 # Generic leaf manipulation
