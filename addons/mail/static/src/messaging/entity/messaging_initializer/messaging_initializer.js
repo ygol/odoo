@@ -1,7 +1,12 @@
 odoo.define('mail.messaging.entity.MessagingInitializer', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        one2one,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 function MessagingInitializerFactory({ Entity }) {
 
@@ -281,15 +286,11 @@ function MessagingInitializerFactory({ Entity }) {
 
     }
 
-    Object.assign(MessagingInitializer, {
-        relations: Object.assign({}, Entity.relations, {
-            messaging: {
-                inverse: 'initializer',
-                to: 'Messaging',
-                type: 'one2one',
-            },
+    MessagingInitializer.fields = {
+        messaging: one2one('Messaging', {
+            inverse: 'initializer',
         }),
-    });
+    };
 
     return MessagingInitializer;
 }

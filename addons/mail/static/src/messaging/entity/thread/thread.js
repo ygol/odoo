@@ -1,7 +1,14 @@
 odoo.define('mail.messaging.entity.Thread', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        many2many,
+        one2many,
+        one2one,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 function ThreadFactory({ Entity }) {
 
@@ -427,7 +434,6 @@ function ThreadFactory({ Entity }) {
                     },
                 });
             }
-            this.unlink({ renamingDiscuss: null });
             this.update({ custom_channel_name: newName });
         }
 
@@ -606,63 +612,33 @@ function ThreadFactory({ Entity }) {
 
     }
 
-    Object.assign(Thread, {
-        moderatedChannelIds: [],
-        relations: Object.assign({}, Entity.relations, {
-            attachments: {
-                inverse: 'threads',
-                to: 'Attachment',
-                type: 'many2many',
-            },
-            caches: {
-                inverse: 'thread',
-                isCausal: true,
-                to: 'ThreadCache',
-                type: 'one2many',
-            },
-            composer: {
-                inverse: 'thread',
-                isCausal: true,
-                to: 'Composer',
-                type: 'one2one',
-            },
-            directPartner: {
-                inverse: 'directPartnerThread',
-                to: 'Partner',
-                type: 'one2one',
-            },
-            members: {
-                inverse: 'memberThreads',
-                to: 'Partner',
-                type: 'many2many',
-            },
-            originThreadAttachments: {
-                inverse: 'originThread',
-                to: 'Attachment',
-                type: 'one2many',
-            },
-            originThreadMessages: {
-                inverse: 'originThread',
-                to: 'Message',
-                type: 'one2many',
-            },
-            renamingDiscuss: {
-                inverse: 'renamingThreads',
-                to: 'Discuss',
-                type: 'many2one',
-            },
-            typingMembers: {
-                inverse: 'typingMemberThreads',
-                to: 'Partner',
-                type: 'many2many',
-            },
-            viewers: {
-                inverse: 'thread',
-                to: 'ThreadViewer',
-                type: 'one2many',
-            },
+    Thread.fields = {
+        attachments: many2many('Attachment', {
+            inverse: 'threads',
         }),
-    });
+        caches: one2many('ThreadCache', {
+            inverse: 'thread',
+            isCausal: true,
+        }),
+        composer: one2one('Composer', {
+            inverse: 'thread',
+            isCausal: true,
+        }),
+        directPartner: one2one('Partner', {
+            inverse: 'directPartnerThread',
+        }),
+        members: many2many('Partner', {
+            inverse: 'memberThreads',
+        }),
+        originThreadAttachments: one2many('Attachment', {
+            inverse: 'originThread',
+        }),
+        typingMembers: many2many('Partner'),
+        viewers: one2many('ThreadViewer', {
+            inverse: 'thread',
+        }),
+    };
+    Thread.moderatedChannelIds = [];
 
     return Thread;
 }

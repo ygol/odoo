@@ -1,7 +1,13 @@
 odoo.define('mail.messaging.entity.Activity', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        many2many,
+        many2one,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 function ActivityFactory({ Entity }) {
 
@@ -157,40 +163,22 @@ function ActivityFactory({ Entity }) {
 
     }
 
-    Object.assign(Activity, {
-        relations: Object.assign({}, Entity.relations, {
-            assignee: {
-                inverse: 'activitiesAsAssignee',
-                to: 'User',
-                type: 'many2one',
-            },
-            attachments: {
-                inverse: 'activities',
-                to: 'Attachment',
-                type: 'many2many',
-            },
-            chatter: {
-                inverse: 'activities',
-                to: 'Chatter',
-                type: 'many2one'
-            },
-            creator: {
-                inverse: 'activitiesAsCreator',
-                to: 'User',
-                type: 'many2one',
-            },
-            mailTemplates: {
-                inverse: 'activities',
-                to: 'MailTemplate',
-                type: 'many2many',
-            },
-            type: {
-                inverse: 'activities',
-                to: 'ActivityType',
-                type: 'many2one',
-            },
+    Activity.fields = {
+        assignee: many2one('User'),
+        attachments: many2many('Attachment', {
+            inverse: 'activities',
         }),
-    });
+        chatter: many2one('Chatter', {
+            inverse: 'activities',
+        }),
+        creator: many2one('User'),
+        mailTemplates: many2many('MailTemplate', {
+            inverse: 'activities',
+        }),
+        type: many2one('ActivityType', {
+            inverse: 'activities',
+        }),
+    };
 
     return Activity;
 }

@@ -1,7 +1,13 @@
 odoo.define('mail.messaging.entity.Dialog', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        many2one,
+        one2one,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 function DialogFactory({ Entity }) {
 
@@ -63,26 +69,19 @@ function DialogFactory({ Entity }) {
 
     }
 
-    Object.assign(Dialog, {
-        relations: Object.assign({}, Entity.relations, {
-            /**
-             * Content of dialog that is directly linked to an entity that models
-             * a UI component, such as AttachmentViewer. These entities must be
-             * created from @see `mail.messaging.entity.DialogManager.open()`.
-             */
-            entity: {
-                inverse: 'dialog',
-                isCausal: true,
-                to: 'Entity',
-                type: 'one2one',
-            },
-            manager: {
-                inverse: 'dialogs',
-                to: 'DialogManager',
-                type: 'many2one',
-            },
+    Dialog.fields = {
+        /**
+         * Content of dialog that is directly linked to an entity that models
+         * a UI component, such as AttachmentViewer. These entities must be
+         * created from @see `mail.messaging.entity.DialogManager.open()`.
+         */
+        entity: one2one('Entity', {
+            isCausal: true,
         }),
-    });
+        manager: many2one('DialogManager', {
+            inverse: 'dialogs',
+        }),
+    };
 
     return Dialog;
 }
