@@ -20,7 +20,7 @@ class TestReconciliationHeavyLoad(TestAccountReconciliationCommon):
     def _get_values_account_move_line(
             self, account, journal, name, move,
             credit=0, debit=0, date=None):
-        date = date or fields.date.context_today(account)
+        date = date or fields.Date.context_today(account)
         return {
             'journal_id': journal.id,
             'name': name,
