@@ -219,18 +219,14 @@ var FormRenderer = BasicRenderer.extend(WidgetAdapterMixin, {
      * @returns {Object} a map from notebook name to the active tab index
      */
     getLocalState: function () {
-        var state = {};
-        this.$('div.o_notebook').each(function () {
-            var $notebook = $(this);
-            var name = $notebook.data('name');
-            var index = -1;
-            $notebook.find('.nav-link').each(function (i) {
-                if ($(this).hasClass('active')) {
-                    index = i;
-                }
-            });
-            state[name] = index;
-        });
+        const state = {};
+        for (const notebook of this.el.querySelectorAll(':scope div.o_notebook')) {
+            const name = notebook.dataset.name;
+            const navs = notebook.querySelectorAll(':scope .o_notebook_headers .nav-item > .nav-link');
+            state[name] = [...navs].findIndex(
+                nav => nav.classList.contains('active')
+            );
+        }
         return state;
     },
     /**
@@ -247,23 +243,33 @@ var FormRenderer = BasicRenderer.extend(WidgetAdapterMixin, {
         this.lastActivatedFieldIndex = -1;
     },
     /**
-     * restore active tab pages for each notebook
-     *
-     * @todo make sure this method is called
+     * Restore active tab pages for each notebook. It relies on the implicit fact
+     * that each nav header corresponds to a tab page.
      *
      * @param {Object} state the result from a getLocalState call
      */
     setLocalState: function (state) {
-        this.$('div.o_notebook').each(function () {
-            var $notebook = $(this);
-            var name = $notebook.data('name');
+        for (const notebook of this.el.querySelectorAll(':scope div.o_notebook')) {
+            const name = notebook.dataset.name;
             if (name in state) {
-                var $page = $notebook.find('> .o_notebook_headers > .nav-tabs > .nav-item').eq(state[name]);
-                if (!$page.hasClass('o_invisible_modifier')) {
-                    $page.find('a[data-toggle="tab"]').click();
+                const navs = notebook.querySelectorAll(':scope .o_notebook_headers .nav-item');
+                const pages = notebook.querySelectorAll(':scope .tab-content > .tab-pane');
+                const validTabsAmount = Math.min(navs.length, pages.length);
+                let activeIndex = state[name];
+                if (navs[activeIndex].classList.contains('o_invisible_modifier')) {
+                    activeIndex = [...navs].findIndex(
+                        nav => !nav.classList.contains('o_invisible_modifier')
+                    );
+                }
+                for (let i = 0; i < validTabsAmount; i++) {
+                    navs[i].querySelector('.nav-link').classList.toggle('active', activeIndex === i);
+                    pages[i].classList.toggle('active', activeIndex === i);
+                }
+                if (activeIndex !== 0) {
+                    core.bus.trigger('DOM_updated');
                 }
             }
-        });
+        }
     },
     /**
      * @override method from AbstractRenderer
@@ -925,9 +931,8 @@ var FormRenderer = BasicRenderer.extend(WidgetAdapterMixin, {
             });
         });
         var $notebookHeaders = $('<div class="o_notebook_headers">').append($headers);
-        var $notebook = $('<div class="o_notebook">')
-                .data('name', node.attrs.name || '_default_')
-                .append($notebookHeaders, $pages);
+        var $notebook = $('<div class="o_notebook">').append($notebookHeaders, $pages);
+        $notebook[0].dataset.name = node.attrs.name || '_default_';
         this._registerModifiers(node, this.state, $notebook);
         this._handleAttributes($notebook, node);
         return $notebook;
