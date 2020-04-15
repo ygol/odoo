@@ -123,7 +123,7 @@ class Note(models.Model):
         return super(Note, self).read_group(domain, fields, groupby, offset=offset, limit=limit, orderby=orderby, lazy=lazy)
 
     def action_close(self):
-        return self.write({'open': False, 'date_done': fields.date.today()})
+        return self.write({'open': False, 'date_done': fields.Date.today()})
 
     def action_open(self):
         return self.write({'open': True})

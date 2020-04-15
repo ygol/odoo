@@ -265,7 +265,7 @@ class Applicant(models.Model):
     def _compute_date_closed(self):
         for applicant in self:
             if applicant.stage_id and applicant.stage_id.fold:
-                applicant.date_closed = fields.datetime.now()
+                applicant.date_closed = fields.Datetime.now()
             else:
                 applicant.date_closed = False
 

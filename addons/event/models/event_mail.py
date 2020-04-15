@@ -159,7 +159,7 @@ class EventMailScheduler(models.Model):
 
     @api.model
     def run(self, autocommit=False):
-        schedulers = self.search([('done', '=', False), ('scheduled_date', '<=', datetime.strftime(fields.datetime.now(), tools.DEFAULT_SERVER_DATETIME_FORMAT))])
+        schedulers = self.search([('done', '=', False), ('scheduled_date', '<=', fields.Datetime.now())])
         for scheduler in schedulers:
             try:
                 with self.env.cr.savepoint():

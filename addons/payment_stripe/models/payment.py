@@ -253,7 +253,7 @@ class PaymentTransactionStripe(models.Model):
         tx_id = tree.get('id')
         tx_secret = tree.get("client_secret")
         vals = {
-            "date": fields.datetime.now(),
+            "date": fields.Datetime.now(),
             "acquirer_reference": tx_id,
             "stripe_payment_intent": tx_id,
             "stripe_payment_intent_secret": tx_secret

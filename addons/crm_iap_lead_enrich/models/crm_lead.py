@@ -31,7 +31,7 @@ class Lead(models.Model):
 
     @api.model
     def _iap_enrich_leads_cron(self):
-        timeDelta = fields.datetime.now() - datetime.timedelta(hours=1)
+        timeDelta = fields.Datetime.now() - datetime.timedelta(hours=1)
         # Get all leads not lost nor won (lost: active = False)
         leads = self.search([
             ('iap_enrich_done', '=', False),

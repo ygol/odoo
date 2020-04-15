@@ -21,7 +21,7 @@ class TestPurchaseLeadTime(PurchaseTestCommon):
         company.write({'po_lead': 3.00})
 
         # Make procurement request from product_1's form view, create procurement and check it's state
-        date_planned = fields.Datetime.to_string(fields.datetime.now() + timedelta(days=10))
+        date_planned = fields.Datetime.to_string(fields.Datetime.now() + timedelta(days=10))
         self._create_make_procurement(self.product_1, 15.00, date_planned=date_planned)
         purchase = self.env['purchase.order.line'].search([('product_id', '=', self.product_1.id)], limit=1).order_id
 
@@ -48,12 +48,12 @@ class TestPurchaseLeadTime(PurchaseTestCommon):
             and different Delivery Lead Time."""
 
         # Make procurement request from product_1's form view, create procurement and check it's state
-        date_planned1 = fields.Datetime.to_string(fields.datetime.now() + timedelta(days=10))
+        date_planned1 = fields.Datetime.to_string(fields.Datetime.now() + timedelta(days=10))
         self._create_make_procurement(self.product_1, 10.00, date_planned=date_planned1)
         purchase1 = self.env['purchase.order.line'].search([('product_id', '=', self.product_1.id)], limit=1).order_id
 
         # Make procurement request from product_2's form view, create procurement and check it's state
-        date_planned2 = fields.Datetime.to_string(fields.datetime.now() + timedelta(days=10))
+        date_planned2 = fields.Datetime.to_string(fields.Datetime.now() + timedelta(days=10))
         self._create_make_procurement(self.product_2, 5.00, date_planned=date_planned2)
         purchase2 = self.env['purchase.order.line'].search([('product_id', '=', self.product_2.id)], limit=1).order_id
 
@@ -100,7 +100,7 @@ class TestPurchaseLeadTime(PurchaseTestCommon):
 
         rule_delay = sum(self.warehouse_1.reception_route_id.rule_ids.mapped('delay'))
 
-        date_planned = fields.Datetime.to_string(fields.datetime.now() + timedelta(days=10))
+        date_planned = fields.Datetime.to_string(fields.Datetime.now() + timedelta(days=10))
         # Create procurement order of product_1
         self.env['procurement.group'].run([self.env['procurement.group'].Procurement(
             self.product_1, 5.000, self.uom_unit, self.warehouse_1.lot_stock_id, 'Test scheduler for RFQ', '/', self.env.company,
@@ -250,7 +250,7 @@ class TestPurchaseLeadTime(PurchaseTestCommon):
         procurement_values = {
             'warehouse_id': self.warehouse_1,
             'rule_id': self.warehouse_1.buy_pull_id,
-            'date_planned': fields.Datetime.to_string(fields.datetime.now() + timedelta(days=10)),
+            'date_planned': fields.Datetime.to_string(fields.Datetime.now() + timedelta(days=10)),
             'group_id': False,
             'route_ids': [],
         }

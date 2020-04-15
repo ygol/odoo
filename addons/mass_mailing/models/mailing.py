@@ -233,7 +233,7 @@ class MassMailing(models.Model):
     @api.model
     def create(self, values):
         if values.get('subject') and not values.get('name'):
-            values['name'] = "%s %s" % (values['subject'], datetime.strftime(fields.datetime.now(), tools.DEFAULT_SERVER_DATETIME_FORMAT))
+            values['name'] = "%s %s" % (values['subject'], datetime.strftime(fields.Datetime.now(), tools.DEFAULT_SERVER_DATETIME_FORMAT))
         if values.get('body_html'):
             values['body_html'] = self._convert_inline_images_to_urls(values['body_html'])
         return super(MassMailing, self).create(values)

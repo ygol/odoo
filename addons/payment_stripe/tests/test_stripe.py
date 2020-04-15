@@ -32,7 +32,7 @@ class StripeTest(StripeCommon):
         self.assertEqual(self.stripe.state, 'test', 'test without test environment')
         # Create transaction
         tx = self.env['payment.transaction'].create({
-            'reference': 'stripe_test_10_%s' % fields.datetime.now().strftime('%Y%m%d_%H%M%S'),
+            'reference': 'stripe_test_10_%s' % fields.Datetime.now().strftime('%Y%m%d_%H%M%S'),
             'currency_id': self.currency_euro.id,
             'acquirer_id': self.stripe.id,
             'partner_id': self.buyer_id,
@@ -57,7 +57,7 @@ class StripeTest(StripeCommon):
 
     def test_30_stripe_form_management(self):
         self.assertEqual(self.stripe.state, 'test', 'test without test environment')
-        ref = 'stripe_test_30_%s' % fields.datetime.now().strftime('%Y%m%d_%H%M%S')
+        ref = 'stripe_test_30_%s' % fields.Datetime.now().strftime('%Y%m%d_%H%M%S')
         tx = self.env['payment.transaction'].create({
             'amount': 4700.0,
             'acquirer_id': self.stripe.id,

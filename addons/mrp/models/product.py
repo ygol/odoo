@@ -102,7 +102,7 @@ class ProductProduct(models.Model):
         return action
 
     def _compute_mrp_product_qty(self):
-        date_from = fields.Datetime.to_string(fields.datetime.now() - timedelta(days=365))
+        date_from = fields.Datetime.now() - timedelta(days=365)
         #TODO: state = done?
         domain = [('state', '=', 'done'), ('product_id', 'in', self.ids), ('date_planned_start', '>', date_from)]
         read_group_res = self.env['mrp.production'].read_group(domain, ['product_id', 'product_uom_qty'], ['product_id'])
