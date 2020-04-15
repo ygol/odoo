@@ -446,11 +446,11 @@ class ProductTemplate(models.Model):
                 for template in self]
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         # Only use the product.product heuristics if there is a search term and the domain
         # does not specify a match on `product.template` IDs.
         if not name or any(term[0] == 'id' for term in (args or [])):
-            return super(ProductTemplate, self)._name_search(name=name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
+            return super(ProductTemplate, self)._name_search(name=name, args=args, operator=operator, limit=limit)
 
         Product = self.env['product.product']
         templates = self.browse([])
@@ -458,7 +458,7 @@ class ProductTemplate(models.Model):
         while True:
             domain = templates and [('product_tmpl_id', 'not in', templates.ids)] or []
             args = args if args is not None else []
-            products_ns = Product._name_search(name, args+domain, operator=operator, name_get_uid=name_get_uid)
+            products_ns = Product._name_search(name, args+domain, operator=operator)
             products = Product.browse([x[0] for x in products_ns])
             new_templates = products.mapped('product_tmpl_id')
             if new_templates & templates:
@@ -469,7 +469,7 @@ class ProductTemplate(models.Model):
             current_round_templates = self.browse([])
             if not products:
                 domain_template = args + domain_no_variant + (templates and [('id', 'not in', templates.ids)] or [])
-                template_ns = super(ProductTemplate, self)._name_search(name=name, args=domain_template, operator=operator, limit=limit, name_get_uid=name_get_uid)
+                template_ns = super(ProductTemplate, self)._name_search(name=name, args=domain_template, operator=operator, limit=limit)
                 current_round_templates |= self.browse([ns[0] for ns in template_ns])
                 templates |= current_round_templates
             if (not products and not current_round_templates) or (limit and (len(templates) > limit)):
@@ -486,13 +486,12 @@ class ProductTemplate(models.Model):
                     name,
                     args=args,
                     operator=operator,
-                    limit=limit,
-                    name_get_uid=name_get_uid)])
+                    limit=limit)])
 
         # re-apply product.template order + name_get
         return super(ProductTemplate, self)._name_search(
             '', args=[('id', 'in', list(searched_ids))],
-            operator='ilike', limit=limit, name_get_uid=name_get_uid)
+            operator='ilike', limit=limit)
 
     def open_pricelist_rules(self):
         self.ensure_one()

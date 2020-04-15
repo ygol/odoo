@@ -107,14 +107,14 @@ class PartnerCategory(models.Model):
         return res
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         args = args or []
         if name:
             # Be sure name_search is symetric to name_get
             name = name.split(' / ')[-1]
             args = [('name', operator, name)] + args
-        partner_category_ids = self._search(args, limit=limit, access_rights_uid=name_get_uid)
-        return models.lazy_name_get(self.browse(partner_category_ids).with_user(name_get_uid))
+        partner_category_ids = self._search(args, limit=limit)
+        return models.lazy_name_get(self.browse(partner_category_ids))
 
 
 class PartnerTitle(models.Model):
@@ -720,8 +720,7 @@ class Partner(models.Model):
         return ''
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
-        self = self.with_user(name_get_uid or self.env.uid)
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         # as the implementation is in SQL, we force the recompute of fields if necessary
         self.recompute(['display_name'])
         self.flush()
@@ -779,7 +778,7 @@ class Partner(models.Model):
                 return models.lazy_name_get(self.browse(partner_ids))
             else:
                 return []
-        return super(Partner, self)._name_search(name, args, operator=operator, limit=limit, name_get_uid=name_get_uid)
+        return super(Partner, self)._name_search(name, args, operator=operator, limit=limit)
 
     @api.model
     def find_or_create(self, email, assert_valid_email=False):

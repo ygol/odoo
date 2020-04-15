@@ -109,14 +109,14 @@ class MaintenanceEquipment(models.Model):
         return result
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         args = args or []
         equipment_ids = []
         if name:
-            equipment_ids = self._search([('name', '=', name)] + args, limit=limit, access_rights_uid=name_get_uid)
+            equipment_ids = self._search([('name', '=', name)] + args, limit=limit)
         if not equipment_ids:
-            equipment_ids = self._search([('name', operator, name)] + args, limit=limit, access_rights_uid=name_get_uid)
-        return models.lazy_name_get(self.browse(equipment_ids).with_user(name_get_uid))
+            equipment_ids = self._search([('name', operator, name)] + args, limit=limit)
+        return models.lazy_name_get(self.browse(equipment_ids))
 
     name = fields.Char('Equipment Name', required=True, translate=True)
     company_id = fields.Many2one('res.company', string='Company',

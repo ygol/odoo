@@ -1723,20 +1723,17 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         return self._name_search(name, args, operator, limit=limit)
 
     @api.model
-    def _name_search(self, name='', args=None, operator='ilike', limit=100, name_get_uid=None):
-        if name_get_uid is not None:
-            self._logger.warning("Unexpected name_get_uid=%r", name_get_uid, stack_info=True)
-        # private implementation of name_search, allows passing a dedicated user
-        # for the name_get part to solve some access rights issues
+    def _name_search(self, name='', args=None, operator='ilike', limit=100):
+        """ Private implementation of name_search(). """
         args = list(args or [])
         # optimize out the default criterion of ``ilike ''`` that matches everything
         if not self._rec_name:
             _logger.warning("Cannot execute name_search, no _rec_name defined on %s", self._name)
         elif not (name == '' and operator == 'ilike'):
             args += [(self._rec_name, operator, name)]
-        ids = self._search(args, limit=limit, access_rights_uid=name_get_uid)
+        ids = self._search(args, limit=limit)
         recs = self.browse(ids)
-        return lazy_name_get(recs.with_user(name_get_uid))
+        return lazy_name_get(recs)
 
     @api.model
     def _add_missing_default_values(self, values):

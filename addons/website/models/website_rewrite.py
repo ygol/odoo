@@ -14,11 +14,11 @@ class WebsiteRoute(models.Model):
     path = fields.Char('Route')
 
     @api.model
-    def _name_search(self, name='', args=None, operator='ilike', limit=100, name_get_uid=None):
-        res = super(WebsiteRoute, self)._name_search(name=name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
+    def _name_search(self, name='', args=None, operator='ilike', limit=100):
+        res = super(WebsiteRoute, self)._name_search(name=name, args=args, operator=operator, limit=limit)
         if not len(res):
             self._refresh()
-            return super(WebsiteRoute, self)._name_search(name=name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
+            return super(WebsiteRoute, self)._name_search(name=name, args=args, operator=operator, limit=limit)
         return res
 
     def _refresh(self):

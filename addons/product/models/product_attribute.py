@@ -354,16 +354,16 @@ class ProductTemplateAttributeLine(models.Model):
         self.product_tmpl_id._create_variant_ids()
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         # TDE FIXME: currently overriding the domain; however as it includes a
         # search on a m2o and one on a m2m, probably this will quickly become
         # difficult to compute - check if performance optimization is required
         if name and operator in ('=', 'ilike', '=ilike', 'like', '=like'):
             args = args or []
             domain = ['|', ('attribute_id', operator, name), ('value_ids', operator, name)]
-            attribute_ids = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
-            return models.lazy_name_get(self.browse(attribute_ids).with_user(name_get_uid))
-        return super(ProductTemplateAttributeLine, self)._name_search(name=name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
+            attribute_ids = self._search(expression.AND([domain, args]), limit=limit)
+            return models.lazy_name_get(self.browse(attribute_ids))
+        return super(ProductTemplateAttributeLine, self)._name_search(name=name, args=args, operator=operator, limit=limit)
 
     def _without_no_variant_attributes(self):
         return self.filtered(lambda ptal: ptal.attribute_id.create_variant != 'no_variant')

@@ -155,13 +155,13 @@ class PickingType(models.Model):
         return res
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         args = args or []
         domain = []
         if name:
             domain = ['|', ('name', operator, name), ('warehouse_id.name', operator, name)]
-        picking_ids = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
-        return models.lazy_name_get(self.browse(picking_ids).with_user(name_get_uid))
+        picking_ids = self._search(expression.AND([domain, args]), limit=limit)
+        return models.lazy_name_get(self.browse(picking_ids))
 
     @api.onchange('code')
     def _onchange_picking_code(self):

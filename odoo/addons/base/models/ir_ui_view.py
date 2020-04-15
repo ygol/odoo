@@ -133,11 +133,11 @@ class ViewCustom(models.Model):
         return [(rec.id, rec.user_id.name) for rec in self]
 
     @api.model
-    def _name_search(self, name='', args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name='', args=None, operator='ilike', limit=100):
         if name:
-            view_ids = self._search([('user_id', operator, name)] + (args or []), limit=limit, access_rights_uid=name_get_uid)
-            return models.lazy_name_get(self.browse(view_ids).with_user(name_get_uid))
-        return super(ViewCustom, self)._name_search(name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
+            view_ids = self._search([('user_id', operator, name)] + (args or []), limit=limit)
+            return models.lazy_name_get(self.browse(view_ids))
+        return super(ViewCustom, self)._name_search(name, args=args, operator=operator, limit=limit)
 
     def _auto_init(self):
         res = super(ViewCustom, self)._auto_init()

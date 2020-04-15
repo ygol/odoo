@@ -261,14 +261,14 @@ class FleetVehicle(models.Model):
         return super(FleetVehicle, self).read_group(domain, fields, groupby, offset, limit, orderby, lazy)
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         args = args or []
         if operator == 'ilike' and not (name or '').strip():
             domain = []
         else:
             domain = ['|', ('name', operator, name), ('driver_id.name', operator, name)]
-        rec = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
-        return models.lazy_name_get(self.browse(rec).with_user(name_get_uid))
+        rec = self._search(expression.AND([domain, args]), limit=limit)
+        return models.lazy_name_get(self.browse(rec))
 
     def return_action_to_open(self):
         """ This opens the xml view specified in xml_id for the current vehicle """

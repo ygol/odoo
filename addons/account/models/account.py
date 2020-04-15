@@ -610,15 +610,15 @@ class AccountAccount(models.Model):
         return super(AccountAccount, contextual_self).default_get(default_fields)
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         args = args or []
         domain = []
         if name:
             domain = ['|', ('code', '=ilike', name.split(' ')[0] + '%'), ('name', operator, name)]
             if operator in expression.NEGATIVE_TERM_OPERATORS:
                 domain = ['&', '!'] + domain[1:]
-        account_ids = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
-        return models.lazy_name_get(self.browse(account_ids).with_user(name_get_uid))
+        account_ids = self._search(expression.AND([domain, args]), limit=limit)
+        return models.lazy_name_get(self.browse(account_ids))
 
     @api.onchange('user_type_id')
     def _onchange_user_type_id(self):
@@ -800,15 +800,15 @@ class AccountGroup(models.Model):
         return result
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         args = args or []
         if operator == 'ilike' and not (name or '').strip():
             domain = []
         else:
             criteria_operator = ['|'] if operator not in expression.NEGATIVE_TERM_OPERATORS else ['&', '!']
             domain = criteria_operator + [('code_prefix_start', '=ilike', name + '%'), ('name', operator, name)]
-        group_ids = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
-        return models.lazy_name_get(self.browse(group_ids).with_user(name_get_uid))
+        group_ids = self._search(expression.AND([domain, args]), limit=limit)
+        return models.lazy_name_get(self.browse(group_ids))
 
     @api.constrains('code_prefix_start', 'code_prefix_end')
     def _constraint_prefix_overlap(self):
@@ -1434,7 +1434,7 @@ class AccountJournal(models.Model):
         return res
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         args = args or []
 
         if operator == 'ilike' and not (name or '').strip():
@@ -1442,8 +1442,8 @@ class AccountJournal(models.Model):
         else:
             connector = '&' if operator in expression.NEGATIVE_TERM_OPERATORS else '|'
             domain = [connector, ('code', operator, name), ('name', operator, name)]
-        journal_ids = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
-        return models.lazy_name_get(self.browse(journal_ids).with_user(name_get_uid))
+        journal_ids = self._search(expression.AND([domain, args]), limit=limit)
+        return models.lazy_name_get(self.browse(journal_ids))
 
     @api.depends('inbound_payment_method_ids', 'outbound_payment_method_ids')
     def _methods_compute(self):
@@ -1826,7 +1826,7 @@ class AccountTax(models.Model):
         return [(tax.id, '%s (%s)' % (tax.name, tax_type.get(tax.type_tax_use))) for tax in self]
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         """ Returns a list of tuples containing id, name, as internally it is called {def name_get}
             result format: {[(id, name), (id, name), ...]}
         """
@@ -1836,8 +1836,8 @@ class AccountTax(models.Model):
         else:
             connector = '&' if operator in expression.NEGATIVE_TERM_OPERATORS else '|'
             domain = [connector, ('description', operator, name), ('name', operator, name)]
-        tax_ids = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
-        return models.lazy_name_get(self.browse(tax_ids).with_user(name_get_uid))
+        tax_ids = self._search(expression.AND([domain, args]), limit=limit)
+        return models.lazy_name_get(self.browse(tax_ids))
 
     @api.model
     def _search(self, args, offset=0, limit=None, order=None, count=False, access_rights_uid=None):

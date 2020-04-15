@@ -121,15 +121,15 @@ class Location(models.Model):
         return super(Location, self).write(values)
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         """ search full name and barcode """
         args = args or []
         if operator == 'ilike' and not (name or '').strip():
             domain = []
         else:
             domain = ['|', ('barcode', operator, name), ('complete_name', operator, name)]
-        location_ids = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
-        return models.lazy_name_get(self.browse(location_ids).with_user(name_get_uid))
+        location_ids = self._search(expression.AND([domain, args]), limit=limit)
+        return models.lazy_name_get(self.browse(location_ids))
 
     def _get_putaway_strategy(self, product):
         ''' Returns the location where the product has to be put, if any compliant putaway strategy is found. Otherwise returns None.'''

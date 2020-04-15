@@ -44,13 +44,13 @@ class L10nLatamDocumentType(models.Model):
         return result
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         args = args or []
         if operator == 'ilike' and not (name or '').strip():
             domain = []
         else:
             domain = ['|', ('name', 'ilike', name), ('code', 'ilike', name)]
-        ids = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
+        ids = self._search(expression.AND([domain, args]), limit=limit)
         return self.browse(ids).name_get()
 
     def _filter_taxes_included(self, taxes):

@@ -517,7 +517,7 @@ class SaleOrder(models.Model):
         return super(SaleOrder, self).name_get()
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         if self._context.get('sale_show_partner_name'):
             if operator == 'ilike' and not (name or '').strip():
                 domain = []
@@ -526,9 +526,9 @@ class SaleOrder(models.Model):
                     args or [],
                     ['|', ('name', operator, name), ('partner_id.name', operator, name)]
                 ])
-                order_ids = self._search(domain, limit=limit, access_rights_uid=name_get_uid)
-                return models.lazy_name_get(self.browse(order_ids).with_user(name_get_uid))
-        return super(SaleOrder, self)._name_search(name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
+                order_ids = self._search(domain, limit=limit)
+                return models.lazy_name_get(self.browse(order_ids))
+        return super(SaleOrder, self)._name_search(name, args=args, operator=operator, limit=limit)
 
     def _prepare_invoice(self):
         """
@@ -1628,13 +1628,13 @@ class SaleOrderLine(models.Model):
         return result
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         if operator in ('ilike', 'like', '=', '=like', '=ilike'):
             args = expression.AND([
                 args or [],
                 ['|', ('order_id.name', operator, name), ('name', operator, name)]
             ])
-        return super(SaleOrderLine, self)._name_search(name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
+        return super(SaleOrderLine, self)._name_search(name, args=args, operator=operator, limit=limit)
 
     def _check_line_unlink(self):
         """

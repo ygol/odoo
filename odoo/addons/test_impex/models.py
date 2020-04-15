@@ -48,10 +48,10 @@ for name, field in MODELS:
             return [(record.id, "%s:%s" % (self._name, record.value)) for record in self]
 
         @api.model
-        def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+        def _name_search(self, name, args=None, operator='ilike', limit=100):
             if isinstance(name, str) and name.split(':')[0] == self._name:
-                record_ids = self._search([('value', operator, int(name.split(':')[1]))], access_rights_uid=name_get_uid)
-                return models.lazy_name_get(self.browse(record_ids).with_user(name_get_uid))
+                record_ids = self._search([('value', operator, int(name.split(':')[1]))])
+                return models.lazy_name_get(self.browse(record_ids))
             else:
                 return []
 
@@ -69,10 +69,10 @@ class One2ManyChild(models.Model):
         return [(record.id, "%s:%s" % (self._name, record.value)) for record in self]
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         if isinstance(name, str) and name.split(':')[0] == self._name:
-            record_ids = self._search([('value', operator, int(name.split(':')[1]))], access_rights_uid=name_get_uid)
-            return models.lazy_name_get(self.browse(record_ids).with_user(name_get_uid))
+            record_ids = self._search([('value', operator, int(name.split(':')[1]))])
+            return models.lazy_name_get(self.browse(record_ids))
         else:
             return []
 
@@ -127,10 +127,10 @@ class Many2ManyChild(models.Model):
         return [(record.id, "%s:%s" % (self._name, record.value)) for record in self]
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         if isinstance(name, str) and name.split(':')[0] == self._name:
-            record_ids = self._search([('value', operator, int(name.split(':')[1]))], access_rights_uid=name_get_uid)
-            return models.lazy_name_get(self.browse(record_ids).with_user(name_get_uid))
+            record_ids = self._search([('value', operator, int(name.split(':')[1]))])
+            return models.lazy_name_get(self.browse(record_ids))
         else:
             return []
 

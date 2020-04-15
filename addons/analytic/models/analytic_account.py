@@ -154,19 +154,19 @@ class AccountAnalyticAccount(models.Model):
         return res
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         if operator not in ('ilike', 'like', '=', '=like', '=ilike'):
-            return super(AccountAnalyticAccount, self)._name_search(name, args, operator, limit, name_get_uid=name_get_uid)
+            return super(AccountAnalyticAccount, self)._name_search(name, args, operator, limit)
         args = args or []
         if operator == 'ilike' and not (name or '').strip():
             domain = []
         else:
             # `partner_id` is in auto_join and the searches using ORs with auto_join fields doesn't work
             # we have to cut the search in two searches ... https://github.com/odoo/odoo/issues/25175
-            partner_ids = self.env['res.partner']._search([('name', operator, name)], limit=limit, access_rights_uid=name_get_uid)
+            partner_ids = self.env['res.partner']._search([('name', operator, name)], limit=limit)
             domain = ['|', '|', ('code', operator, name), ('name', operator, name), ('partner_id', 'in', partner_ids)]
-        analytic_account_ids = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
-        return models.lazy_name_get(self.browse(analytic_account_ids).with_user(name_get_uid))
+        analytic_account_ids = self._search(expression.AND([domain, args]), limit=limit)
+        return models.lazy_name_get(self.browse(analytic_account_ids))
 
 
 class AccountAnalyticLine(models.Model):

@@ -38,7 +38,7 @@ class Pricelist(models.Model):
         return [(pricelist.id, '%s (%s)' % (pricelist.name, pricelist.currency_id.name)) for pricelist in self]
 
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    def _name_search(self, name, args=None, operator='ilike', limit=100):
         if name and operator == '=' and not args:
             # search on the name of the pricelist and its currency, opposite of name_get(),
             # Used by the magic context filter in the product search view.
@@ -71,10 +71,10 @@ class Pricelist(models.Model):
             self._cr.execute(query, query_args)
             ids = [r[0] for r in self._cr.fetchall()]
             # regular search() to apply ACLs - may limit results below limit in some cases
-            pricelist_ids = self._search([('id', 'in', ids)], limit=limit, access_rights_uid=name_get_uid)
+            pricelist_ids = self._search([('id', 'in', ids)], limit=limit)
             if pricelist_ids:
-                return models.lazy_name_get(self.browse(pricelist_ids).with_user(name_get_uid))
-        return super(Pricelist, self)._name_search(name, args, operator=operator, limit=limit, name_get_uid=name_get_uid)
+                return models.lazy_name_get(self.browse(pricelist_ids))
+        return super(Pricelist, self)._name_search(name, args, operator=operator, limit=limit)
 
     def _compute_price_rule_multi(self, products_qty_partner, date=False, uom_id=False):
         """ Low-level method - Multi pricelist, multi products
