@@ -109,7 +109,7 @@ class ResPartnerBank(models.Model):
         return 'bank'
 
     @api.model
-    def _search(self, args, offset=0, limit=None, order=None, count=False, access_rights_uid=None):
+    def _search(self, args, offset=0, limit=None, order=None, count=False):
         pos = 0
         while pos < len(args):
             # DLE P14
@@ -124,4 +124,4 @@ class ResPartnerBank(models.Model):
                     value = '%' + value + '%'
                 args[pos] = ('sanitized_acc_number', op, value)
             pos += 1
-        return super(ResPartnerBank, self)._search(args, offset, limit, order, count=count, access_rights_uid=access_rights_uid)
+        return super(ResPartnerBank, self)._search(args, offset, limit, order, count=count)

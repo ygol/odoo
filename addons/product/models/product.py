@@ -409,11 +409,11 @@ class ProductProduct(models.Model):
         return self.product_tmpl_id.copy(default=default).product_variant_id
 
     @api.model
-    def _search(self, args, offset=0, limit=None, order=None, count=False, access_rights_uid=None):
+    def _search(self, args, offset=0, limit=None, order=None, count=False):
         # TDE FIXME: strange
         if self._context.get('search_default_categ_id'):
             args.append((('categ_id', 'child_of', self._context['search_default_categ_id'])))
-        return super(ProductProduct, self)._search(args, offset=offset, limit=limit, order=order, count=count, access_rights_uid=access_rights_uid)
+        return super(ProductProduct, self)._search(args, offset=offset, limit=limit, order=order, count=count)
 
     def name_get(self):
         # TDE: this could be cleaned a bit I think

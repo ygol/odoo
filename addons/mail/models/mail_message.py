@@ -215,7 +215,7 @@ class Message(models.Model):
             self._cr.execute("""CREATE INDEX mail_message_model_res_id_idx ON mail_message (model, res_id)""")
 
     @api.model
-    def _search(self, args, offset=0, limit=None, order=None, count=False, access_rights_uid=None):
+    def _search(self, args, offset=0, limit=None, order=None, count=False):
         """ Override that adds specific access rights of mail.message, to remove
         ids uid could not see according to our custom rules. Please refer to
         check_access_rule for more details about those rules.
@@ -234,14 +234,14 @@ class Message(models.Model):
         if self.env.is_superuser():
             return super(Message, self)._search(
                 args, offset=offset, limit=limit, order=order,
-                count=count, access_rights_uid=access_rights_uid)
+                count=count)
         # Non-employee see only messages with a subtype and not internal
         if not self.env['res.users'].has_group('base.group_user'):
             args = expression.AND([self._get_search_domain_share(), args])
         # Perform a super with count as False, to have the ids, not a counter
         ids = super(Message, self)._search(
             args, offset=offset, limit=limit, order=order,
-            count=False, access_rights_uid=access_rights_uid)
+            count=False)
         if not ids and count:
             return 0
         elif not ids:
@@ -252,7 +252,7 @@ class Message(models.Model):
         model_ids = {}
 
         # check read access rights before checking the actual rules on the given ids
-        super(Message, self.with_user(access_rights_uid or self._uid)).check_access_rights('read')
+        super(Message, self).check_access_rights('read')
 
         self.flush(['model', 'res_id', 'author_id', 'message_type', 'partner_ids', 'channel_ids'])
         self.env['mail.notification'].flush(['mail_message_id', 'res_partner_id'])
