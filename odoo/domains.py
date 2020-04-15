@@ -4,6 +4,153 @@ manipulating an AST of sorts
 """
 
 # NOTE: normalize_domain([]) -> [(1, '=', 1)] whereas reify(parse([])) -> ['&']
+from collections import namedtuple
+
+class Loc:
+    def __init__(self, node_or_loc, *, node=None, lefts=None, rights=None, path=None, changed=None, end=None):
+        if isinstance(node_or_loc, Loc):
+            loc = node_or_loc
+            node = loc.node if node is None else node
+            lefts = loc.lefts if lefts is None else lefts
+            rights = loc.rights if rights is None else rights
+            path = loc.path if path is None else path
+            changed = loc.changed if changed is None else changed
+            end = loc.end if end is None else False
+        else:
+            if node:
+                raise TypeError("Got two paraneters for node: %s and %s", node_or_loc, node)
+            node = node_or_loc
+
+        if not node:
+            raise TypeError("A loc must have a node")
+        # node, lefts and rights is laid out such that parent.children = lefts + [node] + rights
+        self.node = node
+        self.is_branch = self.node[0] in '|&!'
+        self.lefts = lefts
+        self.rights = rights
+        self.path = path
+        self.changed = changed or False
+        self.end = end or False
+
+    @property
+    def children(self):
+        """ Node's children, raises an error if the current node can't have children.
+        """
+        if self.is_branch:
+            return self.node[1:]
+        raise ValueError("children() called on leaf node %s" % self.node)
+
+    def next(self):
+        """ Moves to the next loc in depth-first traversal order.
+
+        Once reaching the end of the traversal, returns a placeholder loc
+        recognisable via the `.end` predicate.
+
+        If already at the end, stays there.
+
+        :rtype: Loc
+        """
+        if self.end:
+            return self
+
+        loc = self.is_branch and self.down()
+        if loc:
+            return loc
+
+        return self.skip()
+
+    def skip(self):
+        """ Moves to the next loc in DFS, except skipping the current node's
+        children.
+
+        Once reaching the end of the traversal, returns a placeholder loc
+        regonisable via the `.end` predicate.
+
+        If already at the end, stay there.
+
+        :rtype: Loc
+        """
+        if self.end:
+            return self
+
+        loc = self.right()
+        if loc:
+            return loc
+
+        loc = self
+        while True:
+            parent = loc.up()
+            if not parent:
+                return Loc(loc.node, end=True)  # loc is completely empty by design
+
+            right = parent.right()
+            if right:
+                return right
+            loc = parent
+
+    def left(self):
+        """
+        :return: the loc of the left sibling of this loc's node, or None
+        :rtype: Loc or None
+        """
+        if self.lefts:
+            return Loc(self, node=self.lefts[-1], lefts=self.lefts[:-1], rights=[self.node] + self.rights)
+
+    def right(self):
+        """
+        :returns: the loc of the right sibling of this loc's node, or None
+        :rtype: Loc or None
+        """
+        if self.rights:
+            return Loc(self, node=self.rights[0], lefts=self.lefts + [self.node], rights=self.rights[1:])
+
+    def root(self):
+        """ Zips all the way up and returns the root node
+
+        :rtype: Loc
+        """
+        if self.end:
+            return self.node
+
+        loc = self
+        while True:
+            up = loc.up()
+            if up:
+                loc = up
+            else:
+                break
+        return loc.node
+
+    def up(self):
+        """
+        :return: loc of the parent of this loc's node, or None if at the top
+        :rtype: Loc or None
+        """
+        parent = self.path
+        if not parent:
+            return None
+
+        if not self.changed:
+            return parent
+
+        return Loc(parent, node=[parent.node[0], *self.lefts, self.node, *self.rights], changed=True)
+
+    def down(self):
+        """
+        :returns: loc of the leftmost child of this loc's node, or None if no children
+        :rtype: Loc or None
+        """
+        if self.is_branch and self.children:
+            return Loc(self.children[0], lefts=[], rights=self.children[1:], path=self)
+
+    def replace(self, node):
+        """ Replaces the node at this loc, without moving
+        """
+        return Loc(self, node=node, changed=True)
+
+def zipper(node):
+    return Loc(node)
+
 def parse(domain):
     """ Parses a domain to a simple tree representation where all nodes are
     prefix-notation lists (operator followed by any number of operands):
@@ -51,7 +198,7 @@ def reify(tree):
             domain.append((children[0], op, children[1]))
     return domain
 
-NODE_NEGATION = {'&': '|', '|': '&'}
+LOGICAL_NEGATION = {'&': '|', '|': '&'}
 TERM_NEGATION = {
     '<': '>=',
     '>': '<=',
@@ -66,45 +213,42 @@ TERM_NEGATION = {
     'not like': 'like',
     'not ilike': 'ilike',
 }
+
 def distribute_not(node):
-    negation_stack = [(node, False)]
-    zipper = []
-    while negation_stack:
-        node, negate = negation_stack.pop()
-        op, *children = node
+    """ Looks for negation nodes and distributes them to their children
+    """
+    loc = Loc(node)
+    while not loc.end:
+        # we only care for negation nodes
+        if loc.node[0] != '!':
+            loc = loc.next()
+            continue
 
+        [child] = loc.node[1:]
+        # if the child can be negated, replace the current node by the
+        # child's negation
+        if child[0] in LOGICAL_NEGATION or child[0] in TERM_NEGATION:
+            loc = loc.replace(_negate(child))
+        # skip subtree regardless, we've either processed it entirely
+        # (e.g. (! (& a b)) -> (| (!a) (!b)) or have nothing to process
+        # (e.g. (! (child_of a b)) -> (! (child_of a b))
+        loc = loc.skip()
+    return loc.node
+
+def _negate(node):
+    """ Returns a negated version of this tree
+    """
+    loc = Loc(node)
+    while not loc.end:
+        # a negation node is straight replaced by its child (processed)
+        op = loc.node[0]
         if op == '!':
-            [child] = children
-            # process negatable child, otherwise shortcut (either strip or
-            # keep the negation node depending on negate state / flag)
-            if child[0] in NODE_NEGATION or child[0] in TERM_NEGATION:
-                negation_stack.append((child, not negate))
-            elif negate: # !(!(child)) -> child
-                zipper.append((child, 0))
-            else:
-                zipper.append((node, 0))
-            continue
-
-        neg = NODE_NEGATION.get(op)
-        if neg:
-            for c in reversed(children):
-                negation_stack.append((c, negate))
-            zipper.append((neg if negate else op, len(children)))
-            continue
-
-        neg = TERM_NEGATION.get(op)
-        if not negate:
-            zipper.append((node, 0))
-        elif neg:
-            zipper.append(([neg, *children], 0))
+            loc = loc.replace(distribute_not(loc.node[1])).skip()
+        elif op in LOGICAL_NEGATION:
+            # replace by new node with same children & inverse logical operator
+            loc = loc.replace([LOGICAL_NEGATION[op], *loc.node[1:]]).next()
+        elif op in TERM_NEGATION:
+            loc = loc.replace([TERM_NEGATION[op], *loc.node[1:]]).next()
         else:
-            zipper.append((['!', node], 0))
-
-    nodes = []
-    for (n, count) in reversed(zipper):
-        if count == 0:
-            nodes.append(n)
-        else:
-            nodes.append([n, *(nodes.pop() for _ in range(count))])
-    [root] = nodes
-    return root
+            loc = loc.replace(['!', loc.node]).skip()
+    return loc.node
