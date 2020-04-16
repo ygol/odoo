@@ -4,8 +4,13 @@ manipulating an AST of sorts
 """
 
 # NOTE: normalize_domain([]) -> [(1, '=', 1)] whereas reify(parse([])) -> ['&']
-from collections import namedtuple
 
+# abstract operations:
+# * is_branch (ok)
+# * children (ok)
+# * make_node
+# * create loc ~ type(self)(...) instead of hard-coded Loc (opt: `clone` method w/ same params as ctor?)
+# * maybe use placeholders other than None?
 class Loc:
     def __init__(self, node_or_loc, *, node=None, lefts=None, rights=None, path=None, changed=None, end=None):
         if isinstance(node_or_loc, Loc):
@@ -88,6 +93,18 @@ class Loc:
                 return right
             loc = parent
 
+    def prev(self):
+        loc = self.left()
+        if not loc:
+            return self.up()
+
+        while True:
+            child = loc.down()
+            if child:
+                loc = child.rightmost()
+            else:
+                return loc
+
     def left(self):
         """
         :return: the loc of the left sibling of this loc's node, or None
@@ -96,6 +113,22 @@ class Loc:
         if self.lefts:
             return Loc(self, node=self.lefts[-1], lefts=self.lefts[:-1], rights=[self.node] + self.rights)
 
+    def leftmost(self):
+        """
+        :return: the left-most sibling of self, or self if it's the left-most
+        :rtype: Loc
+        """
+        lefts = self.lefts
+        if not lefts:
+            return self
+
+        return Loc(
+            self,
+            node=lefts[0],
+            lefts=[],
+            rights=lefts[1:] + [self.node] + self.rights
+        )
+
     def right(self):
         """
         :returns: the loc of the right sibling of this loc's node, or None
@@ -103,6 +136,22 @@ class Loc:
         """
         if self.rights:
             return Loc(self, node=self.rights[0], lefts=self.lefts + [self.node], rights=self.rights[1:])
+
+    def rightmost(self):
+        """
+        :return: the right-most sibling of self, or self if it's the rightmost
+        :rtype: Loc
+        """
+        rights = self.rights
+        if not rights:
+            return self
+
+        return Loc(
+            self,
+            node=rights[-1],
+            lefts=self.lefts + [self.node] + rights[:-1],
+            rights=[]
+        )
 
     def root(self):
         """ Zips all the way up and returns the root node
@@ -252,3 +301,35 @@ def _negate(node):
         else:
             loc = loc.replace(['!', loc.node]).skip()
     return loc.node
+
+def is_false(node):
+    """ Returns whether the tree is always false(y) based on constant
+    propagation?
+    """
+    return constant_propagation(node) is False
+
+# maybe this could be part of normal parsing?
+def constant_propagation(node):
+    loc = Loc(node, end=True)
+    # loop until we're back at the root, but at the start
+    while True:
+        prev, loc = loc, loc.prev()
+        if not loc:
+            return prev.node
+
+        if loc.node == ['=', 1, 1] or (loc.node[0] == 'not in' and not loc.node[2]):
+            loc = loc.replace(True)
+        elif loc.node == ['=', 0, 1] or (loc.node[0] == 'in' and not loc.node[2]):
+            loc = loc.replace(False)
+        elif loc.node[0] == '!' and loc.node[1] in (True, False):
+            loc = loc.replace(not loc.node[1])
+        elif loc.node[0] == '&':
+            if any(n is False for n in loc.node[1:]):
+                loc = loc.replace(False)
+            elif all(n is True for n in loc.node[1:]):
+                loc = loc.replace(True)
+        elif loc.node[0] == '|':
+            if any(n is True for n in loc.node[1:]):
+                loc = loc.replace(True)
+            elif all(n is False for n in loc.node[1:]):
+                loc = loc.replace(False)

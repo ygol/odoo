@@ -191,29 +191,8 @@ def normalize_domain(domain):
         return [TRUE_LEAF]
     return domains.reify(domains.parse(domain))
 
-def is_false(model, domain):
-    """ Return whether ``domain`` is logically equivalent to false. """
-    # use three-valued logic: -1 is false, 0 is unknown, +1 is true
-    stack = []
-    for token in reversed(normalize_domain(domain)):
-        if token == '&':
-            stack.append(min(stack.pop(), stack.pop()))
-        elif token == '|':
-            stack.append(max(stack.pop(), stack.pop()))
-        elif token == '!':
-            stack.append(-stack.pop())
-        elif token == TRUE_LEAF:
-            stack.append(+1)
-        elif token == FALSE_LEAF:
-            stack.append(-1)
-        elif token[1] == 'in' and not token[2]:
-            stack.append(-1)
-        elif token[1] == 'not in' and not token[2]:
-            stack.append(+1)
-        else:
-            stack.append(0)
-    return stack.pop() == -1
-
+def is_false(_, domain):
+    return domains.is_false(domains.parse(domain))
 
 def combine(operator, unit, zero, domains):
     """Returns a new domain expression where all domain components from ``domains``
