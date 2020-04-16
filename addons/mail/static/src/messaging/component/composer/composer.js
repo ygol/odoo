@@ -150,7 +150,9 @@ class Composer extends Component {
      * @returns {Object}
      */
     get newAttachmentExtraData() {
-        return { composers: [this.composer] };
+        return {
+            composers: [['replace', this.composer]],
+        };
     }
 
     //--------------------------------------------------------------------------

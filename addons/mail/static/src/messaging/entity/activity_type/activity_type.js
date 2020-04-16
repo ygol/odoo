@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.ActivityType', function (require) {
 
 const {
     fields: {
+        attr,
         one2many,
     },
     registerNewEntity,
@@ -10,33 +11,16 @@ const {
 
 function ActivityTypeFactory({ Entity }) {
 
-    class ActivityType extends Entity {
+    class ActivityType extends Entity {}
 
-        //----------------------------------------------------------------------
-        // Private
-        //----------------------------------------------------------------------
-
-        /**
-         * @override
-         */
-        _update(data) {
-            let {
-                displayName = this.displayName,
-                id = this.id,
-            } = data;
-
-            Object.assign(this, {
-                displayName,
-                id,
-            });
-        }
-
-    }
+    ActivityType.entityName = 'ActivityType';
 
     ActivityType.fields = {
         activities: one2many('Activity', {
             inverse: 'type',
         }),
+        displayName: attr(),
+        id: attr(),
     };
 
     return ActivityType;

@@ -172,8 +172,8 @@ class AttachmentViewer extends Component {
             attachment === attachmentViewer.attachment
         );
         const nextIndex = (index + 1) % attachmentViewer.attachments.length;
-        attachmentViewer.link({
-            attachment: attachmentViewer.attachments[nextIndex],
+        attachmentViewer.update({
+            attachment: [['link', attachmentViewer.attachments[nextIndex]]],
         });
     }
 
@@ -190,8 +190,8 @@ class AttachmentViewer extends Component {
         const nextIndex = index === 0
             ? attachmentViewer.attachments.length - 1
             : index - 1;
-        attachmentViewer.link({
-            attachment: attachmentViewer.attachments[nextIndex],
+        attachmentViewer.update({
+            attachment: [['link', attachmentViewer.attachments[nextIndex]]],
         });
     }
 
@@ -298,7 +298,7 @@ class AttachmentViewer extends Component {
             return;
         }
         const unflooredAdaptedScale = (
-            this.state.scale -
+            this.attachmentViewer.scale -
             (scroll ? SCROLL_ZOOM_STEP : ZOOM_STEP)
         );
         this.attachmentViewer.update({

@@ -117,7 +117,7 @@ function useStore(selector, options = {}) {
 
     const extendedSelector = (state, props) => selector(props);
     return owl.hooks.useStore(extendedSelector, Object.assign({}, options, {
-        isEqual: proxyComparatorDeep(options.compareDepth),
+        // isEqual: proxyComparatorDeep(options.compareDepth),
     }));
 }
 

@@ -8,7 +8,7 @@
                 'o-discussion': message and (message.is_discussion or message.is_notification),
                 'o-mobile': env.messaging.device.isMobile,
                 'o-not-discussion': message and !(message.is_discussion or message.is_notification),
-                'o-notification': message and message.message_type === 'notification',
+                'o-notification': message and message.type === 'notification',
                 'o-selected': props.isSelected,
                 'o-squashed': props.isSquashed,
                 'o-starred': message and isStarred,
@@ -37,7 +37,7 @@
                             <t t-esc="shortTime"/>
                         </div>
                         <div class="o_Message_commands o_Message_sidebarCommands o_Message_sidebarItem o-message-squashed" t-att-class="{ 'o-message-selected': props.isSelected, 'o-mobile': env.messaging.device.isMobile }">
-                            <t t-if="message.message_type !== 'notification'">
+                            <t t-if="message.type !== 'notification'">
                                 <div class="o_Message_command o_Message_commandStar fa"
                                     t-att-class="{
                                         'fa-star': isStarred,
@@ -86,7 +86,7 @@
                                 <span class="o_Message_moderationPending o-author" title="Your message is pending moderation.">Pending moderation</span>
                             </t>
                             <div class="o_Message_commands o_Message_headerCommands" t-att-class="{ 'o-mobile': env.messaging.device.isMobile }">
-                                <t t-if="!message.isTemporary and ((message.message_type !== 'notification' and message.originThread and message.originThread.model === 'mail.channel') or !message.isTransient) and message.moderation_status !== 'pending_moderation'">
+                                <t t-if="!message.isTemporary and ((message.type !== 'notification' and message.originThread and message.originThread.model === 'mail.channel') or !message.isTransient) and message.moderation_status !== 'pending_moderation'">
                                     <span class="o_Message_command o_Message_commandStar o_Message_headerCommand fa"
                                         t-att-class="{
                                             'fa-star': isStarred,

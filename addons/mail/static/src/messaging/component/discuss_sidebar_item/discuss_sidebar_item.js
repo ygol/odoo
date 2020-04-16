@@ -118,7 +118,7 @@ class DiscussSidebarItem extends Component {
      * @param {MouseEvent} ev
      */
     _onClick(ev) {
-        this.discuss.update({ thread: this.thread });
+        this.discuss.threadViewer.update({ thread: [['link', this.thread]] });
     }
 
     /**

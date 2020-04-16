@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.Dialog', function (require) {
 
 const {
     fields: {
+        attr,
         many2one,
         one2one,
     },
@@ -31,43 +32,9 @@ function DialogFactory({ Entity }) {
             this.delete();
         }
 
-        //----------------------------------------------------------------------
-        // Private
-        //----------------------------------------------------------------------
-
-        /**
-         * @override
-         */
-        _update(data) {
-            const {
-                entityName,
-                entityData,
-                manager,
-            } = data;
-
-            const prevManager = this.manager;
-
-            // manager
-            if (manager && this.manager !== manager) {
-                manager.register(this);
-                if (prevManager) {
-                    prevManager.unregister(this);
-                }
-            }
-
-            if (!this.entity) {
-                if (!entityName) {
-                    throw new Error("Dialog should have a link to entity");
-                }
-                const Entity = this.env.entities[entityName];
-                if (!Entity) {
-                    throw new Error(`No entity exists with name ${entityName}`);
-                }
-                this.link({ entity: Entity.create(entityData) });
-            }
-        }
-
     }
+
+    Dialog.entityName = 'Dialog';
 
     Dialog.fields = {
         /**

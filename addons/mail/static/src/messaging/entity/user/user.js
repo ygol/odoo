@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.User', function (require) {
 
 const {
     fields: {
+        attr,
         one2one,
     },
     registerNewEntity,
@@ -19,7 +20,7 @@ function UserFactory({ Entity }) {
         /**
          * @returns {string}
          */
-        get nameOrDisplayName() {
+        nameOrDisplayName() {
             const partner = this.partner;
             if (!partner) {
                 return this._displayName;
@@ -35,35 +36,28 @@ function UserFactory({ Entity }) {
          * @override
          */
         _createInstanceLocalId(data) {
-            return `${this.constructor.name}_${data.id}`;
+            return `${this.constructor.entityName}_${data.id}`;
         }
 
         /**
          * @override
          */
-        _update(data) {
-            const {
-                displayName,
-                id = this.id,
-            } = data;
-
-            Object.assign(this, {
-                id,
-                model: 'res.user',
-            });
-
-            if (displayName) {
-                if (this.partner) {
-                    this.partner.update({ display_name: displayName });
-                } else {
-                    this._displayName = displayName;
-                }
+        _updateAfter(previous) {
+            if (this._displayName && this.partner) {
+                this.partner.update({ display_name: this._displayName });
             }
         }
 
     }
 
+    User.entityName = 'User';
+
     User.fields = {
+        _displayName: attr(),
+        id: attr(),
+        model: attr({
+            default: 'res.user',
+        }),
         partner: one2one('Partner', {
             inverse: 'user',
         }),

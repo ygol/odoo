@@ -142,7 +142,7 @@ class MessagingMenu extends Component {
      */
     _onClickDesktopTabButton(ev) {
         ev.stopPropagation();
-        this.messagingMenu.setActiveTabId(ev.currentTarget.dataset.tabId);
+        this.messagingMenu.update({ activeTabId: ev.currentTarget.dataset.tabId });
     }
 
     /**
@@ -187,7 +187,7 @@ class MessagingMenu extends Component {
      */
     _onMobileNewMessageInputSelect(ev, ui) {
         const partnerId = ui.item.id;
-        const partner = this.env.entities.Partner.fromId(partnerId);
+        const partner = this.env.entities.Partner.find(partner => partner.id === partnerId);
         const chat = partner.directPartnerThread;
         if (chat) {
             chat.open();
@@ -235,7 +235,7 @@ class MessagingMenu extends Component {
      */
     _onSelectMobileNavbarTab(ev) {
         ev.stopPropagation();
-        this.messagingMenu.setActiveTabId(ev.detail.tabId);
+        this.messagingMenu.update({ activeTabId: ev.detail.tabId });
     }
 
     /**

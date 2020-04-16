@@ -55,13 +55,43 @@ class DiscussSidebar extends Component {
     }
 
     /**
+     * @returns {mail.messaging.entity.Thread[]}
+     */
+    get orderedMailboxes() {
+        return this.env.entities.Thread
+            .all(thread => thread.isPinned && thread.model === 'mail.box')
+            .sort((mailbox1, mailbox2) => {
+                if (mailbox1.id === 'inbox') {
+                    return -1;
+                }
+                if (mailbox2.id === 'inbox') {
+                    return 1;
+                }
+                if (mailbox1.id === 'starred') {
+                    return -1;
+                }
+                if (mailbox2.id === 'starred') {
+                    return 1;
+                }
+                const mailbox1Name = mailbox1.displayName;
+                const mailbox2Name = mailbox2.displayName;
+                mailbox1Name < mailbox2Name ? -1 : 1;
+            });
+    }
+
+    /**
      * Return the list of chats that match the quick search value input.
      *
      * @returns {mail.messaging.entity.Thread[]}
      */
     get quickSearchPinnedAndOrderedChats() {
-        const allOrderedAndPinnedChats =
-            this.env.entities.Thread.allOrderedAndPinnedChats;
+        const allOrderedAndPinnedChats = this.env.entities.Thread
+            .all(thread =>
+                thread.channel_type === 'chat' &&
+                thread.isPinned &&
+                thread.model === 'mail.channel'
+            )
+            .sort((c1, c2) => c1.displayName < c2.displayName ? -1 : 1);
         if (!this.discuss.sidebarQuickSearchValue) {
             return allOrderedAndPinnedChats;
         }
@@ -78,8 +108,13 @@ class DiscussSidebar extends Component {
      * @returns {mail.messaging.entity.Thread[]}
      */
     get quickSearchOrderedAndPinnedMultiUserChannels() {
-        const allOrderedAndPinnedMultiUserChannels =
-            this.env.entities.Thread.allOrderedAndPinnedMultiUserChannels;
+        const allOrderedAndPinnedMultiUserChannels = this.env.entities.Thread
+            .all(thread =>
+                thread.channel_type === 'channel' &&
+                thread.isPinned &&
+                thread.model === 'mail.channel'
+            )
+            .sort((c1, c2) => c1.displayName < c2.displayName ? -1 : 1);
         if (!this.discuss.sidebarQuickSearchValue) {
             return allOrderedAndPinnedMultiUserChannels;
         }
@@ -124,10 +159,26 @@ class DiscussSidebar extends Component {
     _useStoreSelector(props) {
         const Thread = this.env.entities.Thread;
         return {
-            allOrderedAndPinnedChats: Thread.allOrderedAndPinnedChats,
-            allOrderedAndPinnedMailboxes: Thread.allOrderedAndPinnedMailboxes,
-            allOrderedAndPinnedMultiUserChannels: Thread.allOrderedAndPinnedMultiUserChannels,
-            allPinnedChannelAmount: Thread.allPinnedChannels.length,
+            allOrderedAndPinnedChats: Thread
+                .all(thread =>
+                    thread.channel_type === 'chat' &&
+                    thread.isPinned &&
+                    thread.model === 'mail.channel'
+                )
+                .sort((c1, c2) => c1.displayName < c2.displayName ? -1 : 1),
+            allOrderedAndPinnedMailboxes: this.orderedMailboxes,
+            allOrderedAndPinnedMultiUserChannels: Thread
+                .all(thread =>
+                    thread.channel_type === 'channel' &&
+                    thread.isPinned &&
+                    thread.model === 'mail.channel'
+                )
+                .sort((c1, c2) => c1.displayName < c2.displayName ? -1 : 1),
+            allPinnedChannelAmount: Thread
+                .all(thread =>
+                    thread.isPinned &&
+                    thread.model === 'mail.channel'
+                ).length,
             discuss: this.env.messaging.discuss,
         };
     }
@@ -232,7 +283,9 @@ class DiscussSidebar extends Component {
      */
     _onInputQuickSearch(ev) {
         ev.stopPropagation();
-        this.discuss.update({ sidebarQuickSearchValue: this._quickSearchInputRef.el.value });
+        this.discuss.update({
+            sidebarQuickSearchValue: this._quickSearchInputRef.el.value,
+        });
     }
 
 }

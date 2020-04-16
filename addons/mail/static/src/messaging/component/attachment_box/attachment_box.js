@@ -46,8 +46,7 @@ class AttachmentBox extends Component {
      */
     get newAttachmentExtraData() {
         return {
-            res_id: this.thread.id,
-            res_model: this.thread.model,
+            originThread: [['link', this.thread]],
         };
     }
 

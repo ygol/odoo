@@ -19,7 +19,6 @@ class ChatWindowHeader extends Component {
             const chatWindow = this.env.entities.ChatWindow.get(props.chatWindowLocalId);
             return {
                 chatWindow,
-                chatWindowName: chatWindow && chatWindow.name,
                 isDeviceMobile: this.env.messaging.device.isMobile,
             };
         });

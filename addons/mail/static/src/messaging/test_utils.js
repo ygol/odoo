@@ -714,6 +714,7 @@ async function start(param0 = {}) {
 
     const testEnv = widget.call('messaging', 'getEnv');
     const result = { env: testEnv, widget };
+    window.testEnv = testEnv;
 
     if (waitUntilMessagingInitialized) {
         // env key only accessible after MessagingService has started

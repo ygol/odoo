@@ -14,8 +14,7 @@ class DiscussMobileMailboxSelection extends Component {
         super(...args);
         useStore(props => {
             return {
-                allOrderedAndPinnedMailboxes:
-                    this.env.entities.Thread.allOrderedAndPinnedMailboxes,
+                allOrderedAndPinnedMailboxes: this.orderedMailboxes,
                 discussThread: this.env.messaging.discuss.thread,
             };
         }, {
@@ -28,6 +27,31 @@ class DiscussMobileMailboxSelection extends Component {
     //--------------------------------------------------------------------------
     // Public
     //--------------------------------------------------------------------------
+
+    /**
+     * @returns {mail.messaging.entity.Thread[]}
+     */
+    get orderedMailboxes() {
+        return this.env.entities.Thread
+            .all(thread => thread.isPinned && thread.model === 'mail.box')
+            .sort((mailbox1, mailbox2) => {
+                if (mailbox1.id === 'inbox') {
+                    return -1;
+                }
+                if (mailbox2.id === 'inbox') {
+                    return 1;
+                }
+                if (mailbox1.id === 'starred') {
+                    return -1;
+                }
+                if (mailbox2.id === 'starred') {
+                    return 1;
+                }
+                const mailbox1Name = mailbox1.displayName;
+                const mailbox2Name = mailbox2.displayName;
+                mailbox1Name < mailbox2Name ? -1 : 1;
+            });
+    }
 
     /**
      * @returns {mail.messaging.entity.Discuss}
@@ -48,7 +72,7 @@ class DiscussMobileMailboxSelection extends Component {
      */
     _onClick(ev) {
         const { mailbox } = ev.currentTarget.dataset;
-        this.discuss.update({ thread: mailbox });
+        this.discuss.threadViewer.update({ thread: [['link', mailbox]] });
     }
 
 }

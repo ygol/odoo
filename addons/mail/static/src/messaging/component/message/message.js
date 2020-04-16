@@ -115,7 +115,7 @@ class Message extends Component {
             // we should probably use the correspondig attachment id + access token
             // or create a dedicated route to get message image, checking the access right of the message
             return `/web/image/res.partner/${this.message.author.id}/image_128`;
-        } else if (this.message.message_type === 'email') {
+        } else if (this.message.type === 'email') {
             return '/mail/static/src/img/email_icon.png';
         }
         return '/mail/static/src/img/smiley/avatar.jpg';
@@ -221,7 +221,10 @@ class Message extends Component {
      * @returns {boolean}
      */
     get isStarred() {
-        const starredMailbox = this.env.entities.Thread.mailboxFromId('starred');
+        const starredMailbox = this.env.entities.Thread.find(thread =>
+            thread.id === 'starred' &&
+            thread.model === 'mail.box'
+        );
         return this.message.allThreads.includes(starredMailbox);
     }
 

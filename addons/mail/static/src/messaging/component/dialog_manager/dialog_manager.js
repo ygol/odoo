@@ -38,7 +38,7 @@ class DialogManager extends Component {
      * @private
      */
     _checkDialogOpen() {
-        if (this.env.entities.Dialog.all.length > 0) {
+        if (this.env.entities.Dialog.all().length > 0) {
             document.body.classList.add('modal-open');
         } else {
             document.body.classList.remove('modal-open');

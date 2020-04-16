@@ -247,10 +247,10 @@ class Discuss extends Component {
      * @private
      * @param {CustomEvent} ev
      * @param {Object} ev.detail
-     * @param {string} ev.detail.thread
+     * @param {mail.messaging.entity.Thread} ev.detail.thread
      */
     _onSelectThread(ev) {
-        this.discuss.update({ thread: ev.detail.thread });
+        this.discuss.threadViewer.update({ thread: [['link', ev.detail.thread]] });
     }
 
     /**

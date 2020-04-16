@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.MailTemplate', function (require) {
 
 const {
     fields: {
+        attr,
         many2many,
     },
     registerNewEntity,
@@ -57,31 +58,16 @@ function MailTemplateFactory({ Entity }) {
             }
         }
 
-        //----------------------------------------------------------------------
-        // Private
-        //----------------------------------------------------------------------
-
-        /**
-         * @override
-         */
-        _update(data) {
-            let {
-                id = this.id,
-                name = this.name,
-            } = data;
-
-            Object.assign(this, {
-                id,
-                name,
-            });
-        }
-
     }
+
+    MailTemplate.entityName = 'MailTemplate';
 
     MailTemplate.fields = {
         activities: many2many('Activity', {
             inverse: 'mailTemplates',
         }),
+        id: attr(),
+        name: attr(),
     };
 
     return MailTemplate;

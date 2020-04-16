@@ -103,14 +103,46 @@ class NotificationList extends Component {
      */
     _useStoreSelectorThreads(props) {
         if (props.filter === 'mailbox') {
-            return this.env.entities.Thread.allOrderedAndPinnedMailboxes;
+            return this.env.entities.Thread
+                .all(thread => thread.isPinned && thread.model === 'mail.box')
+                .sort((mailbox1, mailbox2) => {
+                    if (mailbox1.id === 'inbox') {
+                        return -1;
+                    }
+                    if (mailbox2.id === 'inbox') {
+                        return 1;
+                    }
+                    if (mailbox1.id === 'starred') {
+                        return -1;
+                    }
+                    if (mailbox2.id === 'starred') {
+                        return 1;
+                    }
+                    const mailbox1Name = mailbox1.displayName;
+                    const mailbox2Name = mailbox2.displayName;
+                    mailbox1Name < mailbox2Name ? -1 : 1;
+                });
         } else if (props.filter === 'channel') {
-            return this.env.entities.Thread.allOrderedAndPinnedMultiUserChannels;
+            return this.env.entities.Thread
+                .all(thread =>
+                    thread.channel_type === 'channel' &&
+                    thread.isPinned &&
+                    thread.model === 'mail.channel'
+                )
+                .sort((c1, c2) => c1.displayName < c2.displayName ? -1 : 1);
         } else if (props.filter === 'chat') {
-            return this.env.entities.Thread.allOrderedAndPinnedChats;
+            return this.env.entities.Thread
+                .all(thread =>
+                    thread.channel_type === 'chat' &&
+                    thread.isPinned &&
+                    thread.model === 'mail.channel'
+                )
+                .sort((c1, c2) => c1.displayName < c2.displayName ? -1 : 1);
         } else if (props.filter === 'all') {
             // "All" filter is for channels and chats
-            return this.env.entities.Thread.allOrderedAndPinnedChannels;
+            return this.env.entities.Thread
+                .all(thread => thread.isPinned && thread.model === 'mail.channel')
+                .sort((c1, c2) => c1.displayName < c2.displayName ? -1 : 1);
         } else {
             throw new Error(`Unsupported filter ${props.filter}`);
         }

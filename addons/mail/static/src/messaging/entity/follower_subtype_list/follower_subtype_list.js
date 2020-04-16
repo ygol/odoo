@@ -10,22 +10,9 @@ const {
 
 function FollowerSubtypeListFactory({ Entity }) {
 
-    class FollowerSubtypeList extends Entity {
+    class FollowerSubtypeList extends Entity {}
 
-        //----------------------------------------------------------------------
-        // Private
-        //----------------------------------------------------------------------
-
-        /**
-         * @override
-         */
-        _update(data) {
-            const { follower } = data;
-            if (follower) {
-                this.link({ follower });
-            }
-        }
-    }
+    FollowerSubtypeList.entityName = 'FollowerSubtypeList';
 
     FollowerSubtypeList.fields = {
         follower: many2one('Follower'),

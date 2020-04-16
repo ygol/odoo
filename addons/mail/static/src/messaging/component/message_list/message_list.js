@@ -23,7 +23,6 @@ class MessageList extends Component {
             const threadCache = threadViewer ? threadViewer.threadCache : undefined;
             return {
                 isDeviceMobile: this.env.messaging.device.isMobile,
-                messages: threadCache ? threadCache.orderedMessages : [],
                 thread,
                 threadCache,
                 threadViewer,
@@ -269,7 +268,7 @@ class MessageList extends Component {
             // more than 1 min. elasped
             return false;
         }
-        if (prevMessage.message_type !== 'comment' || message.message_type !== 'comment') {
+        if (prevMessage.type !== 'comment' || message.type !== 'comment') {
             return false;
         }
         if (prevMessage.author !== message.author) {

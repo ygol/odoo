@@ -156,6 +156,8 @@
                 <script type="text/javascript" src="/mail/static/src/messaging/entity/dialog_manager/dialog_manager.js"></script>
                 <script type="text/javascript" src="/mail/static/src/messaging/entity/discuss/discuss.js"></script>
                 <script type="text/javascript" src="/mail/static/src/messaging/entity/entity/entity.js"></script>
+                <script type="text/javascript" src="/mail/static/src/messaging/entity/entity/field.js"></script>
+                <script type="text/javascript" src="/mail/static/src/messaging/entity/entity/field_definition.js"></script>
                 <script type="text/javascript" src="/mail/static/src/messaging/entity/entity_core.js"></script>
                 <script type="text/javascript" src="/mail/static/src/messaging/entity/follower/follower.js"></script>
                 <script type="text/javascript" src="/mail/static/src/messaging/entity/follower_subtype/follower_subtype.js"></script>
