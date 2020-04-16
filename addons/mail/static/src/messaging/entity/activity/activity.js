@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.Activity', function (require) {
 
 const {
     fields: {
+        attr,
         many2many,
         many2one,
     },
@@ -168,13 +169,25 @@ function ActivityFactory({ Entity }) {
         attachments: many2many('Attachment', {
             inverse: 'activities',
         }),
+        canWrite: attr(),
+        category: attr(),
         chatter: many2one('Chatter', {
             inverse: 'activities',
         }),
         creator: many2one('User'),
+        dateCreate: attr(),
+        dateDeadline: attr(),
+        forceNext: attr(),
+        icon: attr(),
+        id: attr(),
         mailTemplates: many2many('MailTemplate', {
             inverse: 'activities',
         }),
+        note: attr(),
+        res_id: attr(),
+        res_model: attr(),
+        state: attr(),
+        summary: attr(),
         type: many2one('ActivityType', {
             inverse: 'activities',
         }),

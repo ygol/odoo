@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.ChatWindowManager', function (require) {
 
 const {
     fields: {
+        attr,
         one2many,
     },
     registerNewEntity,
@@ -345,10 +346,12 @@ function ChatWindowManagerFactory({ Entity }) {
     }
 
     ChatWindowManager.fields = {
+        _ordered: attr(),
         chatWindows: one2many('ChatWindow', {
             inverse: 'manager',
             isCausal: true,
         }),
+        isHiddenMenuOpen: attr(),
     };
 
     return ChatWindowManager;

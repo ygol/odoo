@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.AttachmentViewer', function (require) {
 
 const {
     fields: {
+        attr,
         many2many,
         many2one,
     },
@@ -58,10 +59,13 @@ function AttachmentViewerFactory({ Entity }) {
     }
 
     AttachmentViewer.fields = {
+        angle: attr(),
         attachment: many2one('Attachment'),
         attachments: many2many('Attachment', {
             inverse: 'attachmentViewer',
         }),
+        isImageLoading: attr(),
+        scale: attr(),
     };
 
     return AttachmentViewer;

@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.ThreadCache', function (require) {
 
 const {
     fields: {
+        attr,
         many2many,
         many2one,
     },
@@ -220,12 +221,17 @@ function ThreadCacheFactory({ Entity }) {
         checkedMessages: many2many('Message', {
             inverse: 'checkedThreadCaches',
         }),
-        thread: many2one('Thread', {
-            inverse: 'caches',
-        }),
+        isAllHistoryLoaded: attr(),
+        isLoaded: attr(),
+        isLoading: attr(),
+        isLoadingMore: attr(),
         messages: many2many('Message', {
             inverse: 'threadCaches',
         }),
+        thread: many2one('Thread', {
+            inverse: 'caches',
+        }),
+        stringifiedDomain: attr(),
     };
 
     return ThreadCache;

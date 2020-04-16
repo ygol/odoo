@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.ChatWindow', function (require) {
 
 const {
     fields: {
+        attr,
         many2one,
         one2one,
     },
@@ -302,9 +303,13 @@ function ChatWindowFactory({ Entity }) {
     }
 
     ChatWindow.fields = {
+        _isFolded: attr(),
+        isDoFocus: attr(),
+        isFocused: attr(),
         manager: many2one('ChatWindowManager', {
             inverse: 'chatWindows',
         }),
+        threadInitialScrollTop: attr(),
         threadViewer: one2one('ThreadViewer'),
     };
 

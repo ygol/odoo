@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.Chatter', function (require) {
 
 const {
     fields: {
+        attr,
         one2many,
         one2one,
     },
@@ -246,6 +247,20 @@ function ChatterFactory({ Entity }) {
         activities: one2many('Activity', {
             inverse: 'chatter',
         }),
+        activityIds: attr(),
+        context: attr(),
+        followerIds: attr(),
+        hasActivities: attr(),
+        hasFollowers: attr(),
+        hasThread: attr(),
+        isActivityBoxVisible: attr(),
+        isAttachmentBoxVisible: attr(),
+        isComposerLog: attr(),
+        isComposerVisible: attr(),
+        isDisabled: attr(),
+        messageIds: attr(),
+        threadId: attr(),
+        threadModel: attr(),
         threadViewer: one2one('ThreadViewer'),
     };
 

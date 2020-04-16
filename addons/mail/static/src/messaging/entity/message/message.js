@@ -4,6 +4,7 @@ odoo.define('mail.messaging.entity.Message', function (require) {
 const emojis = require('mail.emojis');
 const {
     fields: {
+        attr,
         many2many,
         many2one,
     },
@@ -418,13 +419,34 @@ function MessageFactory({ Entity }) {
             inverse: 'messages',
         }),
         author: many2one('Partner'),
+        body: attr(),
         checkedThreadCaches: many2many('ThreadCache', {
             inverse: 'checkedMessages',
         }),
+        customer_email_data: attr(),
+        customer_email_status: attr(),
+        date: attr(),
+        email_from: attr(),
+        id: attr(),
+        isTransient: attr(),
+        is_discussion: attr(),
+        is_note: attr(),
+        is_notification: attr(),
+        message_type: attr(),
+        model: attr(),
+        moderation_status: attr(),
+        module_icon: attr(),
+        needaction_partner_ids: attr(),
         originThread: many2one('Thread'),
+        snailmail_error: attr(),
+        snailmail_status: attr(),
+        subject: attr(),
+        subtype_description: attr(),
+        subtype_id: attr(),
         threadCaches: many2many('ThreadCache', {
             inverse: 'messages',
         }),
+        tracking_value_ids: attr(),
     };
 
     return Message;

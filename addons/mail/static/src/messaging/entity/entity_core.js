@@ -18,8 +18,11 @@ function _checkFields(Entities) {
     for (const Entity of Object.values(Entities)) {
         for (const fieldName in Entity.fields) {
             const field = Entity.fields[fieldName];
-            if (field.fieldType !== 'relation') {
+            if (!(['attribute', 'relation'].includes(field.fieldType))) {
                 throw new Error(`Field "${Entity.name}/${fieldName}" has unsupported type ${field.fieldType}.`);
+            }
+            if (field.fieldType === 'attribute') {
+                continue;
             }
             if (!field.type) {
                 throw new Error(
@@ -252,6 +255,15 @@ function _relation(entityClassName, { inverse, isCausal = false, type }) {
 //------------------------------------------------------------------------------
 
 /**
+ * @return {Object}
+ */
+function attr() {
+    return {
+        fieldType: 'attribute',
+    };
+}
+
+/**
  * @returns {Object}
  */
 function generateEntities() {
@@ -412,6 +424,7 @@ function registerNewEntity(name, factory, dependencies = []) {
 
 return {
     fields: {
+        attr,
         many2many,
         many2one,
         one2many,

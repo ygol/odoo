@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.Attachment', function (require) {
 
 const {
     fields: {
+        attr,
         many2many,
         many2one,
     },
@@ -268,12 +269,18 @@ function AttachmentFactory({ Entity }) {
         composers: many2many('Composer', {
             inverse: 'attachments',
         }),
+        filename: attr(),
+        id: attr(),
+        isTemporary: attr(),
         messages: many2many('Message', {
             inverse: 'attachments',
         }),
+        mimetype: attr(),
+        name: attr(),
         originThread: many2one('Thread', {
             inverse: 'originThreadAttachments',
         }),
+        size: attr(),
         threads: many2many('Thread', {
             inverse: 'attachments',
         }),

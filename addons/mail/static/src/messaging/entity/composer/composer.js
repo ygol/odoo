@@ -4,6 +4,7 @@ odoo.define('mail.messaging.entity.Composer', function (require) {
 const emojis = require('mail.emojis');
 const {
     fields: {
+        attr,
         many2many,
         one2one,
     },
@@ -255,6 +256,9 @@ function ComposerFactory({ Entity }) {
         attachments: many2many('Attachment', {
             inverse: 'composers',
         }),
+        textInputContent: attr(),
+        textInputCursorStart: attr(),
+        textInputCursorEnd: attr(),
         thread: one2one('Thread', {
             inverse: 'composer',
         }),

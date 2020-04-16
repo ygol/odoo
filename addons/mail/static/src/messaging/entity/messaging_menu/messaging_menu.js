@@ -1,7 +1,12 @@
 odoo.define('mail.messaging.entity.MessagingMenu', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        attr,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 function MessagingMenuFactory({ Entity }) {
 
@@ -103,6 +108,13 @@ function MessagingMenuFactory({ Entity }) {
         }
 
     }
+
+    MessagingMenu.fields = {
+        activeTabId: attr(),
+        counter: attr(),
+        isMobileNewMessageToggled: attr(),
+        isOpen: attr(),
+    };
 
     return MessagingMenu;
 }

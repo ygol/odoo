@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.Messaging', function (require) {
 
 const {
     fields: {
+        attr,
         one2one,
     },
     registerNewEntity,
@@ -166,9 +167,11 @@ function MessagingFactory({ Entity }) {
         attachmentViewer: one2one('AttachmentViewer', {
             isCausal: true,
         }),
+        cannedReponses: attr(),
         chatWindowManager: one2one('ChatWindowManager', {
             isCausal: true,
         }),
+        commands: attr(),
         currentPartner: one2one('Partner'),
         device: one2one('Device', {
             isCausal: true,
@@ -183,6 +186,7 @@ function MessagingFactory({ Entity }) {
             inverse: 'messaging',
             isCausal: true,
         }),
+        isInitialized: attr(),
         locale: one2one('Locale', {
             isCausal: true,
         }),
@@ -192,6 +196,7 @@ function MessagingFactory({ Entity }) {
         notificationHandler: one2one('MessagingNotificationHandler', {
             isCausal: true,
         }),
+        outOfFocusUnreadMessageCounter: attr(),
         partnerRoot: one2one('Partner'),
     };
 

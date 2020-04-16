@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.DialogManager', function (require) {
 
 const {
     fields: {
+        attr,
         one2many,
     },
     registerNewEntity,
@@ -83,6 +84,7 @@ function DialogManagerFactory({ Entity }) {
     }
 
     DialogManager.fields = {
+        _ordered: attr(),
         dialogs: one2many('Dialog', {
             inverse: 'manager',
             isCausal: true,

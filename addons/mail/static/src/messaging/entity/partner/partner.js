@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.Partner', function (require) {
 
 const {
     fields: {
+        attr,
         many2many,
         one2one,
     },
@@ -212,9 +213,15 @@ function PartnerFactory({ Entity }) {
         directPartnerThread: one2one('Thread', {
             inverse: 'directPartner',
         }),
+        display_name: attr(),
+        email: attr(),
+        id: attr(),
+        im_status: attr(),
         memberThreads: many2many('Thread', {
             inverse: 'members',
         }),
+        model: attr(),
+        name: attr(),
         user: one2one('User', {
             inverse: 'partner',
         }),

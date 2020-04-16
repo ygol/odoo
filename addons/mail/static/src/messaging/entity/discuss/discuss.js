@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.Discuss', function (require) {
 
 const {
     fields: {
+        attr,
         one2many,
         one2one,
     },
@@ -341,8 +342,19 @@ function DiscussFactory({ Entity }) {
     }
 
     Discuss.fields = {
+        activeMobileNavbarTabId: attr(),
+        addingChannelValue: attr(),
+        defaultInitActiveId: attr(),
+        hasModerationDiscardDialog: attr(),
+        hasModerationRejectDialog: attr(),
+        initActiveId: attr(),
+        isAddingChannel: attr(),
+        isAddingChat: attr(),
+        isOpen: attr(),
+        menu_id: attr(),
         renamingThreads: one2many('Thread'),
         replyingToMessage: one2one('Message'),
+        sidebarQuickSearchValue: attr(),
         threadViewer: one2one('ThreadViewer', {
             isCausal: true,
         }),

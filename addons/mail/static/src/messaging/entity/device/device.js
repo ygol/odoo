@@ -1,7 +1,12 @@
 odoo.define('mail.messaging.entity.Device', function (require) {
 'use strict';
 
-const { registerNewEntity } = require('mail.messaging.entity.core');
+const {
+    fields: {
+        attr,
+    },
+    registerNewEntity,
+} = require('mail.messaging.entity.core');
 
 function DeviceFactory({ Entity }) {
 
@@ -52,6 +57,12 @@ function DeviceFactory({ Entity }) {
         }
 
     }
+
+    Device.fields = {
+        globalWindowInnerHeight: attr(),
+        globalWindowInnerWidth: attr(),
+        isMobile: attr(),
+    };
 
     return Device;
 }

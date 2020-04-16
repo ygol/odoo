@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.ThreadViewer', function (require) {
 
 const {
     fields: {
+        attr,
         many2one,
     },
     registerNewEntity,
@@ -219,9 +220,12 @@ function ThreadViewerFactory({ Entity }) {
     }
 
     ThreadViewer.fields = {
+        componentHintList: attr(),
+        stringifiedDomain: attr(),
         thread: many2one('Thread', {
             inverse: 'viewers',
         }),
+        threadCacheInitialScrollPositions: attr(),
     };
 
     return ThreadViewer;

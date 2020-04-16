@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.Thread', function (require) {
 
 const {
     fields: {
+        attr,
         many2many,
         one2many,
         one2one,
@@ -613,6 +614,7 @@ function ThreadFactory({ Entity }) {
     }
 
     Thread.fields = {
+        areAttachmentsLoaded: attr(),
         attachments: many2many('Attachment', {
             inverse: 'threads',
         }),
@@ -620,20 +622,41 @@ function ThreadFactory({ Entity }) {
             inverse: 'thread',
             isCausal: true,
         }),
+        channel_type: attr(),
         composer: one2one('Composer', {
             inverse: 'thread',
             isCausal: true,
         }),
+        correspondent_name: attr(),
+        counter: attr(),
+        create_uid: attr(),
+        custom_channel_name: attr(),
         directPartner: one2one('Partner', {
             inverse: 'directPartnerThread',
         }),
+        foldState: attr(),
+        group_based_subscription: attr(),
+        id: attr(),
+        isPinned: attr(),
+        isTemporary: attr(),
+        is_moderator: attr(),
+        mass_mailing: attr(),
         members: many2many('Partner', {
             inverse: 'memberThreads',
         }),
+        message_needaction_counter: attr(),
+        message_unread_counter: attr(),
+        model: attr(),
+        moderation: attr(),
+        name: attr(),
         originThreadAttachments: one2many('Attachment', {
             inverse: 'originThread',
         }),
+        public: attr(),
+        seen_message_id: attr(),
+        seen_partners_info: attr(),
         typingMembers: many2many('Partner'),
+        uuid: attr(),
         viewers: one2many('ThreadViewer', {
             inverse: 'thread',
         }),

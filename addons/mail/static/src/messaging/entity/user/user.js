@@ -3,6 +3,7 @@ odoo.define('mail.messaging.entity.User', function (require) {
 
 const {
     fields: {
+        attr,
         one2one,
     },
     registerNewEntity,
@@ -64,6 +65,8 @@ function UserFactory({ Entity }) {
     }
 
     User.fields = {
+        id: attr(),
+        model: attr(),
         partner: one2one('Partner', {
             inverse: 'user',
         }),
