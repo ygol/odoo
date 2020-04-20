@@ -73,15 +73,9 @@ class StatusController(http.Controller):
         image = get_resource_path('hw_drivers', 'static/img', 'False.jpg')
         if not server:
             credential = b64decode(token).decode('utf-8').split('|')
-            url = credential[0]
-            token = credential[1]
-            if len(credential) > 2:
-                # IoT Box send token with db_uuid and enterprise_code only since V13
-                db_uuid = credential[2]
-                enterprise_code = credential[3]
-                helpers.add_credential(db_uuid, enterprise_code)
+            helpers.add_server_config(credential)
             try:
-                subprocess.check_call([get_resource_path('point_of_sale', 'tools/posbox/configuration/connect_to_server.sh'), url, '', token, 'noreboot'])
+                helpers.check_certificate()
                 m.send_alldevices()
                 image = get_resource_path('hw_drivers', 'static/img', 'True.jpg')
                 helpers.odoo_restart(3)
@@ -380,7 +374,7 @@ class Manager(Thread):
         """
         server = helpers.get_odoo_server_url()
         if server:
-            subject = helpers.read_file_first_line('odoo-subject.conf')
+            subject = helpers.read_iot_config('iot_box_network').get('odoo-subject', False)
             if subject:
                 domain = helpers.get_ip().replace('.', '-') + subject.strip('*')
             else:
@@ -427,7 +421,7 @@ class Manager(Thread):
         """
         Thread that will check connected/disconnected device, load drivers if needed and contact the odoo server with the updates
         """
-        helpers.check_git_branch()
+        #helpers.check_git_branch()
         helpers.check_certificate()
         self.send_alldevices()
         self.load_iot_handlers()
