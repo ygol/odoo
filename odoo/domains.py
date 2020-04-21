@@ -5,6 +5,8 @@ manipulating an AST of sorts
 
 # NOTE: normalize_domain([]) -> [(1, '=', 1)] whereas reify(parse([])) -> ['&']
 
+def operator(node):
+    return 'const' if node in (True, False) else node[0]
 # abstract operations:
 # * is_branch (ok)
 # * children (ok)
@@ -26,24 +28,16 @@ class Loc:
                 raise TypeError("Got two paraneters for node: %s and %s", node_or_loc, node)
             node = node_or_loc
 
-        if not node:
+        if node is None:
             raise TypeError("A loc must have a node")
         # node, lefts and rights is laid out such that parent.children = lefts + [node] + rights
         self.node = node
-        self.is_branch = self.node[0] in '|&!'
+        self.is_branch = operator(self.node) in '|&!'
         self.lefts = lefts
         self.rights = rights
         self.path = path
         self.changed = changed or False
         self.end = end or False
-
-    @property
-    def children(self):
-        """ Node's children, raises an error if the current node can't have children.
-        """
-        if self.is_branch:
-            return self.node[1:]
-        raise ValueError("children() called on leaf node %s" % self.node)
 
     def next(self):
         """ Moves to the next loc in depth-first traversal order.
@@ -58,7 +52,7 @@ class Loc:
         if self.end:
             return self
 
-        loc = self.is_branch and self.down()
+        loc = self.down()
         if loc:
             return loc
 
@@ -94,7 +88,10 @@ class Loc:
             loc = parent
 
     def prev(self):
-        loc = self.left()
+        if self.end:
+            loc = Loc(self, end=False)
+        else:
+            loc = self.left()
         if not loc:
             return self.up()
 
@@ -182,15 +179,16 @@ class Loc:
         if not self.changed:
             return parent
 
-        return Loc(parent, node=[parent.node[0], *self.lefts, self.node, *self.rights], changed=True)
+        return Loc(parent, node=[operator(parent.node), *self.lefts, self.node, *self.rights], changed=True)
 
     def down(self):
         """
         :returns: loc of the leftmost child of this loc's node, or None if no children
         :rtype: Loc or None
         """
-        if self.is_branch and self.children:
-            return Loc(self.children[0], lefts=[], rights=self.children[1:], path=self)
+        c = self.node[1:] if self.is_branch else None
+        if c:
+            return Loc(c[0], lefts=[], rights=c[1:], path=self)
 
     def replace(self, node):
         """ Replaces the node at this loc, without moving
@@ -223,7 +221,7 @@ def parse(domain):
 
     if len(stack) == 1:
         return stack[0]
-
+    # FIXME: there are cases where we parse to `['&']` still?
     t = ['&']
     for node in reversed(stack):
         if node[0] == '&':
@@ -236,7 +234,12 @@ def reify(tree):
     to_process = [tree]
     domain = []
     while to_process:
-        op, *children = to_process.pop()
+        item = to_process.pop()
+        if item in (True, False):
+            domain.append((1, '=', 1) if item else (0, '=', 1))
+            continue
+
+        op, *children = item
         if op == '!':
             domain.append(op)
             to_process.extend(children)
@@ -269,7 +272,7 @@ def distribute_not(node):
     loc = Loc(node)
     while not loc.end:
         # we only care for negation nodes
-        if loc.node[0] != '!':
+        if operator(loc.node) != '!':
             loc = loc.next()
             continue
 
@@ -317,19 +320,67 @@ def constant_propagation(node):
         if not loc:
             return prev.node
 
-        if loc.node == ['=', 1, 1] or (loc.node[0] == 'not in' and not loc.node[2]):
+        op = operator(loc.node)
+        if loc.node == ['=', 1, 1] or (op == 'not in' and not loc.node[2]):
             loc = loc.replace(True)
-        elif loc.node == ['=', 0, 1] or (loc.node[0] == 'in' and not loc.node[2]):
+        elif loc.node == ['=', 0, 1] or (op == 'in' and not loc.node[2]):
             loc = loc.replace(False)
-        elif loc.node[0] == '!' and loc.node[1] in (True, False):
+        elif op == '!' and loc.node[1] in (True, False):
             loc = loc.replace(not loc.node[1])
-        elif loc.node[0] == '&':
-            if any(n is False for n in loc.node[1:]):
-                loc = loc.replace(False)
-            elif all(n is True for n in loc.node[1:]):
-                loc = loc.replace(True)
-        elif loc.node[0] == '|':
-            if any(n is True for n in loc.node[1:]):
-                loc = loc.replace(True)
-            elif all(n is False for n in loc.node[1:]):
-                loc = loc.replace(False)
+        elif op in '&|':
+            unit = op == '&' # identity value (no effect on the expression)
+            zero = not unit
+
+            children = loc.node[1:]
+            if any(n is zero for n in children):
+                loc = loc.replace(zero)
+                continue
+
+            # strip out constant True
+            cs = [n for n in children if n is not unit]
+            if not cs:
+                loc = loc.replace(unit)
+            elif len(cs) == 1:
+                loc = loc.replace(cs[0])
+            else:
+                loc = loc.replace([op] + cs)
+
+def subfilter(node):
+    """ merges filters on sub-fields into sub-filter on fields aka
+
+    (& (= a.b 1) (= a.c 2)) => (where a (& (= b 1) (= c 2)))
+    (| (= a.b 1) (= a.c 2)) => (where a (| (= b 1) (= c 2)))
+    """
+    loc = Loc(node)
+    while not loc.end:
+        op = operator(loc.node)
+        if op not in '|&':
+            loc = loc.next()
+            continue
+
+        # partition child nodes between subfields (<op> a.b c) and non-subfields
+        # grouping subfields by field
+        subfields, children = {}, [op]
+        for c in loc.node[1:]:
+            if c in (True, False):
+                children.append(c)
+                continue
+            fieldname = c[1]
+            if isinstance(fieldname, str) and '.' in fieldname:
+                f, fs = fieldname.split('.', 1)
+                subfields.setdefault(f, []).append([c[0], fs, c[2]])
+            else:
+                children.append(c)
+
+        for f, fs in subfields.items():
+            fs = [op] + fs if len(fs) > 1 else fs[0]
+            children.append(['where', f, subfilter(fs)])
+        # if there were only subfields of the same field, swap parent node out
+        # for sole child
+        if len(children) == 2:
+            loc = loc.replace(children[1])
+        else:
+            loc = loc.replace(children)
+        loc = loc.next()
+
+    return loc.node

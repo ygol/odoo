@@ -1146,3 +1146,99 @@ class TestAutoJoin(TransactionCase):
             (obj1 | obj2 | obj3),
             "Should have returned all banks whose city doesn't contain field"
         )
+
+from odoo import domains
+class TestLoc(TransactionCase):
+    def test_next_singleton(self):
+        d = domains.Loc(['=', 1, 1])
+        n = d.next()
+        self.assertTrue(n.end)
+        self.assertEqual(n.node, ['=', 1, 1])
+    def test_prev_singleton(self):
+        d = domains.Loc(['=', 1, 1], end=True)
+        p = d.prev()
+        self.assertFalse(p.end)
+        self.assertEqual(p.node, ['=', 1, 1])
+
+    def test_prev(self):
+        t0 = domains.Loc(['&', ['=', 0, 1], ['=', 1, 1]], end=True)
+        t1 = t0.prev()
+        self.assertEqual(t1.node, ['=', 1, 1])
+        t2 = t1.prev()
+        self.assertEqual(t2.node, ['=', 0, 1])
+        t3 = t2.prev()
+        self.assertEqual(t3.node, t0.node)
+        self.assertFalse(t3.prev())
+
+        t0 = domains.Loc(['&', ['=', 0, 1], ['=', 1, 1]], end=True)
+        t1 = t0.prev()
+        self.assertEqual(t1.node, ['=', 1, 1])
+        self.assertEqual(t1.lefts, [['=', 0, 1]])
+        t1 = t1.replace(True)
+        self.assertEqual(t1.node, True)
+        self.assertEqual(t1.lefts, [['=', 0, 1]])
+        t2 = t1.prev()
+        self.assertEqual(t2.node, ['=', 0, 1])
+        t2 = t2.replace(False)
+        self.assertEqual(t2.node, False)
+        t3 = t2.prev()
+        self.assertEqual(t3.node, ['&', False, True])
+        t4 = t3.replace(False)
+        self.assertEqual(t4.node, False)
+
+class TestConstantPropagation(TransactionCase):
+    def test_constant_true(self):
+        self.assertEqual(
+            domains.constant_propagation(['=', 1, 1]),
+            True
+        )
+    def test_constant_false(self):
+        self.assertEqual(
+            domains.constant_propagation(['=', 0, 1]),
+            False
+        )
+    def test_constant_and_false(self):
+        self.assertEqual(
+            domains.constant_propagation(['&', ['=', 0, 1], ['=', 1, 1]]),
+            False
+        )
+    def test_constant_or_false(self):
+        self.assertEqual(
+            domains.constant_propagation(['|', ['=', 0, 1], ['=', 1, 1]]),
+            True
+        )
+    def test_constant_and_true(self):
+        self.assertEqual(
+            domains.constant_propagation(['&', ['=', 'active', 1], ['=', 0, 1], ['in', 'child_ids.bank_ids.id', [3, 5]]]),
+            False
+        )
+    def test_simplification(self):
+        self.assertEqual(
+            domains.constant_propagation(['&', ['=', 'active', 1], ['=', 1, 1], ['in', 'child_ids.bank_ids.id', [3, 5]]]),
+            ['&', ['=', 'active', 1], ['in', 'child_ids.bank_ids.id', [3, 5]]]
+        )
+
+class TestSwapping(TransactionCase):
+    def test_where(self):
+        t = domains.subfilter(domains.distribute_not(
+            ['&',
+             ['=', 'a', 'b'],
+             ['=', 'c', 'd'],
+             ['|',
+              ['=', 'e.f', 'g'],
+              ['=', 'e.f', 'h'],
+              ['=', 'e.f', 'i'],
+              ],
+             ['!',
+              ['|',
+               ['=', 'g.h', 'g'],
+               ['=', 'g.h', 'h'],
+               ['=', 'g.h', 'i'],
+               ]]]))
+        self.assertEqual(
+            t,
+            ['&',
+             ['=', 'a', 'b'], ['=', 'c', 'd'],
+             ['where', 'e', ['|', ['=', 'f', 'g'], ['=', 'f', 'h'], ['=', 'f', 'i']]],
+             ['where', 'g', ['&', ['!=', 'h', 'g'], ['!=', 'h', 'h'], ['!=', 'h', 'i']]]]
+        )
