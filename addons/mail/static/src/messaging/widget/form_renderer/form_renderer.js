@@ -111,7 +111,13 @@ FormRenderer.include({
      * @private
      */
     async _mountChatterContainerComponent() {
-        await this._chatterContainerComponent.mount(this._chatterContainerTarget);
+        try {
+            await this._chatterContainerComponent.mount(this._chatterContainerTarget);
+        } catch (error) {
+            if (error.message !== "Mounting operation cancelled") {
+                throw error;
+            }
+        }
     },
     /**
      * @override
@@ -141,7 +147,7 @@ FormRenderer.include({
             if (!this._chatterContainerComponent) {
                 this._makeChatterContainerComponent();
             } else {
-                this._updateChatterContainerComponent();
+                await this._updateChatterContainerComponent();
             }
             await this._mountChatterContainerComponent();
         }
@@ -149,9 +155,15 @@ FormRenderer.include({
     /**
      * @private
      */
-    _updateChatterContainerComponent() {
+    async _updateChatterContainerComponent() {
         const props = this._makeChatterContainerProps();
-        this._chatterContainerComponent.update(props);
+        try {
+            await this._chatterContainerComponent.update(props);
+        } catch (error) {
+            if (error.message !== "Mounting operation cancelled") {
+                throw error;
+            }
+        }
     },
 
     //--------------------------------------------------------------------------

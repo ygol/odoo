@@ -3174,8 +3174,7 @@
             if (index >= 0) {
                 const [task] = this.tasks.splice(index, 1);
                 fiber.cancel();
-                // Do not leak Mounting operation cancelled as a crash: https://github.com/odoo/owl/issues/676
-                fiber.error = reason;
+                fiber.error = new Error(reason);
                 task.callback();
             }
         }
