@@ -369,6 +369,10 @@ def subfilter(node):
             if isinstance(fieldname, str) and '.' in fieldname:
                 f, fs = fieldname.split('.', 1)
                 subfields.setdefault(f, []).append([c[0], fs, c[2]])
+            elif operator(c) == '!' and isinstance(c[1][1], str) and '.' in c[1][1]:
+                n = c[1]
+                f, fs = n[1].split('.', 1)
+                subfields.setdefault(f, []).append(['!', [n[0], fs, n[2]]])
             else:
                 children.append(c)
 

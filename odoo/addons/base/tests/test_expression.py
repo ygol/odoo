@@ -1242,3 +1242,22 @@ class TestSwapping(TransactionCase):
              ['where', 'e', ['|', ['=', 'f', 'g'], ['=', 'f', 'h'], ['=', 'f', 'i']]],
              ['where', 'g', ['&', ['!=', 'h', 'g'], ['!=', 'h', 'h'], ['!=', 'h', 'i']]]]
         )
+
+    def test_where_not(self):
+        """
+        Some operators can't be negated so the leaf is wrapped in a NOT, but
+        we still want to merge these alongside the rest... maybe?
+        """
+        t = domains.subfilter(domains.distribute_not(
+            ['!',
+             ['|',
+              ['child_of', 'a.b', 'c'],
+              ['child_of', 'a.b', 'd']]]
+        ))
+        self.assertEqual(
+            t,
+            ['where', 'a',
+             ['&',
+              ['!', ['child_of', 'b', 'c']],
+              ['!', ['child_of', 'b', 'd']]]]
+        )
