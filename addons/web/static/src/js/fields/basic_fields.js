@@ -622,6 +622,15 @@ var FieldDateRange = InputField.extend({
         }
         this._super.apply(this, arguments);
     },
+    /**
+     * return the UTC date
+     *
+     * @private
+     */
+    _getValue: function () {
+        const value = moment.utc(this.$input.val());
+        return value && value.add(-this.getSession().getTZOffset(value), 'minutes');
+    },
 
     //--------------------------------------------------------------------------
     // Private
