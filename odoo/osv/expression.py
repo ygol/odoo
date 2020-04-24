@@ -1216,4 +1216,5 @@ class expression(object):
             query = '(%s) AND %s' % (joins, query)
 
         params.reverse()
+        print(query)
         return query, params

@@ -2,8 +2,9 @@
 Attempt at a less ad-hoc module for manipulating domains, based around
 manipulating an AST of sorts
 """
+# FIXME: normalize_domain([]) -> [(1, '=', 1)] whereas reify(parse([])) -> ['&']
+from functools import partial
 
-# NOTE: normalize_domain([]) -> [(1, '=', 1)] whereas reify(parse([])) -> ['&']
 
 def operator(node):
     return 'const' if node in (True, False) else node[0]
@@ -198,6 +199,27 @@ class Loc:
 def zipper(node):
     return Loc(node)
 
+def parse2(model, domain):
+    """
+    FIXME: do subfilter and deshortcut need to merge? AKA is it possible for a
+
+    """
+    # note: in expressions, substitution nodes don't get distributed
+    # maybe we want to constprop twice as well? Cleanup the tree before
+    # expansion, then clean it *again*
+    fns = [
+        parse,
+        partial(expand, model),
+        # should always yield a simple IN query... maybe?
+        partial(deparent, model),
+        distribute_not, constant_propagation,
+        subfilter,
+        CodeGenerator(model).compile,
+    ]
+    obj = domain
+    for fn in fns:
+        obj = fn(obj)
+    return obj
 def parse(domain):
     """ Parses a domain to a simple tree representation where all nodes are
     prefix-notation lists (operator followed by any number of operands):
@@ -313,6 +335,10 @@ def is_false(node):
 
 # maybe this could be part of normal parsing?
 def constant_propagation(node):
+    """ Folds True/False upwards the tree if applicable, and strips out
+    irrelevant constant nodes, so this should return either True, False, or a
+    domain without any constant node
+    """
     loc = Loc(node, end=True)
     # loop until we're back at the root, but at the start
     while True:
@@ -345,6 +371,27 @@ def constant_propagation(node):
             else:
                 loc = loc.replace([op] + cs)
 
+def expand(model, node):
+    """ Some leaves are "shortcuts", rather than control the search they stand
+    in for others:
+
+    * segments on inherited fields stand for filters on joined parents
+    * segments on computed fields stand in for whatever the field's `search`
+      generates
+
+    These two can feed into one another (e.g. a computed search can yield a
+    domain based on an inherited field, which is the inheritance of a computed
+    field, ...) so they should be the same pass, and probably each node
+    replacement should process the replacement node
+    """
+    # FIXME: in `foo.bar`, either foo *or* bar could be a compute or inherited,
+    #        meaning we might want to run subfilter first in order to split
+    #        paths?
+    loc = Loc(node)
+    while not loc.end:
+        ...
+    return loc.node
+
 def subfilter(node):
     """ merges filters on sub-fields into sub-filter on fields aka
 
@@ -362,9 +409,6 @@ def subfilter(node):
         # grouping subfields by field
         subfields, children = {}, [op]
         for c in loc.node[1:]:
-            if c in (True, False):
-                children.append(c)
-                continue
             fieldname = c[1]
             if isinstance(fieldname, str) and '.' in fieldname:
                 f, fs = fieldname.split('.', 1)
@@ -388,3 +432,43 @@ def subfilter(node):
         loc = loc.next()
 
     return loc.node
+
+def deparent(node):
+    ...
+
+class CodeGenerator:
+    def __init__(self, model):
+        self.model = model
+
+    def compile(self, node):
+        """ Compiles a domain tree to a Query object (?)
+        """
+        from .osv.query import Query
+        q = Query([self.model._table])
+        # after constant propagation, constant nodes should only exist at the
+        # toplevel
+        if node in (True, False):
+            q.where_clause.append('%s')
+            q.where_clause_params.append(node)
+            return q
+
+        for n in node[1:] if operator(node) == '&' else [node]:
+            clause, params = self._compile(q, node)
+            q.where_clause.append(n)
+            q.where_clause_params.extend(params)
+
+        return q
+
+    def _compile(self, query, node):
+        op = operator(node)
+        if op == '!':
+            c, ps = self._compile(query, node[1])
+            return 'NOT (%s)' % c, ps
+        elif op in '|&':
+            sc, params = [], []
+            for child in node[1:]:
+                c, ps = self._compile(query, child)
+                sc.append(c)
+                params.extend(ps)
+            op = ' AND ' if op == '&' else ' OR '
+            return op.join('(' + c + ')' for c in sc), params
