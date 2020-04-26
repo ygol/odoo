@@ -225,13 +225,18 @@ class IrMailServer(models.Model):
             # See also bug #597143 and python issue #5285
             smtp_user = pycompat.to_text(ustr(smtp_user))
             smtp_password = pycompat.to_text(ustr(smtp_password))
-            connection.login(smtp_user, smtp_password)
+            self.server_login(connection, smtp_user, smtp_password, mail_server)
 
         # Some methods of SMTP don't check whether EHLO/HELO was sent.
         # Anyway, as it may have been sent by login(), all subsequent usages should consider this command as sent.
         connection.ehlo_or_helo_if_needed()
 
         return connection
+
+    def server_login(self, connection, smtp_user, smtp_password, mail_server):
+        """The purpose of this method is to be overriden in case other authentication methods
+        have to be supported in the future (OAuth2 for gmail for example)"""
+        connection.login(smtp_user, smtp_password)
 
     def build_email(self, email_from, email_to, subject, body, email_cc=None, email_bcc=None, reply_to=False,
                     attachments=None, message_id=None, references=None, object_id=False, subtype='plain', headers=None,
