@@ -3,9 +3,10 @@ Attempt at a less ad-hoc module for manipulating domains, based around
 manipulating an AST of sorts
 """
 # FIXME: normalize_domain([]) -> [(1, '=', 1)] whereas reify(parse([])) -> ['&']
+import logging
 from functools import partial
 
-
+_logger = logging.getLogger(__name__)
 def operator(node):
     return 'const' if node in (True, False) else node[0]
 # abstract operations:
@@ -209,9 +210,6 @@ def parse2(model, domain):
     # expansion, then clean it *again*
     fns = [
         parse,
-        partial(expand, model),
-        # should always yield a simple IN query... maybe?
-        partial(deparent, model),
         distribute_not, constant_propagation,
         subfilter,
         CodeGenerator(model).compile,
@@ -371,28 +369,13 @@ def constant_propagation(node):
             else:
                 loc = loc.replace([op] + cs)
 
-def expand(model, node):
-    """ Some leaves are "shortcuts", rather than control the search they stand
-    in for others:
-
-    * segments on inherited fields stand for filters on joined parents
-    * segments on computed fields stand in for whatever the field's `search`
-      generates
-
-    These two can feed into one another (e.g. a computed search can yield a
-    domain based on an inherited field, which is the inheritance of a computed
-    field, ...) so they should be the same pass, and probably each node
-    replacement should process the replacement node
-    """
-    # FIXME: in `foo.bar`, either foo *or* bar could be a compute or inherited,
-    #        meaning we might want to run subfilter first in order to split
-    #        paths?
-    loc = Loc(node)
-    while not loc.end:
-        ...
-    return loc.node
-
-def subfilter(node):
+"""
+Problem:
+* where / how to expand inherited fields (also related?)
+* where / how to expand non-stored search fields
+* where / how to transform child_of / parent_of
+"""
+def subfilter(model, node):
     """ merges filters on sub-fields into sub-filter on fields aka
 
     (& (= a.b 1) (= a.c 2)) => (where a (& (= b 1) (= c 2)))
@@ -418,11 +401,15 @@ def subfilter(node):
                 f, fs = n[1].split('.', 1)
                 subfields.setdefault(f, []).append(['!', [n[0], fs, n[2]]])
             else:
+                # maybe expand node here? Could need additional processing
                 children.append(c)
 
         for f, fs in subfields.items():
             fs = [op] + fs if len(fs) > 1 else fs[0]
-            children.append(['where', f, subfilter(fs)])
+            field = model._fields[f]
+            m = model.env[field.comodel_name]
+            # process f if inherited / computed? how?
+            children.append(['where', f, subfilter(m, fs)])
         # if there were only subfields of the same field, swap parent node out
         # for sole child
         if len(children) == 2:
@@ -432,9 +419,6 @@ def subfilter(node):
         loc = loc.next()
 
     return loc.node
-
-def deparent(node):
-    ...
 
 class CodeGenerator:
     def __init__(self, model):
