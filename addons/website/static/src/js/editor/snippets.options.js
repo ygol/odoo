@@ -575,7 +575,6 @@ snippetOptions.registry.background.include({
      * @override
      */
     _computeWidgetState: function (methodName) {
-        console.log('this.$target:', this.$target)
         // todo: fix target
         if (methodName === 'background' && this.$target[0].classList.contains('o_background_video')) {
             return this.$('> .o_bg_video_container iframe').attr('src');

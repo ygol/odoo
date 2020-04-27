@@ -44,7 +44,7 @@ var SnippetEditor = Widget.extend({
      * @param {jQuery} $editable
      * @param {Object} options
      */
-    init: function (parent, snippetElement, templateOptions, $editable, vNode, options) {
+    init: function (parent, snippetElement, templateOptions, $editable, vNode, snippetMenu, options) {
         this._super.apply(this, arguments);
         this.options = options;
         this.$editable = $editable;
@@ -55,7 +55,9 @@ var SnippetEditor = Widget.extend({
         this.isTargetParentEditable = false;
         this.isTargetMovable = false;
         this.vNode = vNode;
+        this.wysiwyg = options.wysiwyg;
         this.editorCommands = options.wysiwyg.editorCommands;
+        this.snippetMenu = snippetMenu;
 
         this.__isStarted = new Promise(resolve => {
             this.__isStartedResolveFunc = resolve;
@@ -251,58 +253,63 @@ var SnippetEditor = Widget.extend({
      * @returns {Promise}
      */
     removeSnippet: async function () {
-        this.toggleOverlay(false);
-        this.toggleOptions(false);
+        await this.wysiwyg.execBatch(async ()=> {
+            this.toggleOverlay(false);
+            this.toggleOptions(false);
 
-        await new Promise(resolve => {
-            this.trigger_up('call_for_each_child_snippet', {
-                $snippet: this.$snippetBlock,
-                callback: function (editor, $snippet) {
-                    for (var i in editor.snippetOptionInstances) {
-                        editor.snippetOptionInstances[i].onRemove();
-                    }
-                    resolve();
-                },
+            await new Promise(resolve => {
+                this.trigger_up('call_for_each_child_snippet', {
+                    $snippet: this.$snippetBlock,
+                    callback: function (editor, $snippet) {
+                        for (var i in editor.snippetOptionInstances) {
+                            editor.snippetOptionInstances[i].onRemove();
+                        }
+                        resolve();
+                    },
+                });
             });
-        });
 
-        this.trigger_up('go_to_parent', {$snippet: this.$snippetBlock});
-        var $parent = this.$snippetBlock.parent();
-        this.$snippetBlock.find('*').addBack().tooltip('dispose');
-        this.$snippetBlock.remove();
-        this.$el.remove();
+            this.trigger_up('go_to_parent', {$snippet: this.$snippetBlock});
+            var $parent = this.$snippetBlock.parent();
+            this.$snippetBlock.find('*').addBack().tooltip('dispose');
+            this.editorCommands.remove(this.$snippetBlock[0]);
+            this.$el.remove();
 
-        var node = $parent[0];
-        if (node && node.firstChild) {
-            if (!node.firstChild.tagName && node.firstChild.textContent === ' ') {
-                node.removeChild(node.firstChild);
-            }
-        }
+            // var node = $parent[0];
+            // if (node && node.firstChild) {
+            //     if (!node.firstChild.tagName && node.firstChild.textContent === ' ') {
+            //         this.editorCommands.remove(node.firstChild);
+            //     }
+            // }
 
-        if ($parent.closest(':data("snippet-editor")').length) {
-            var editor = $parent.data('snippet-editor');
-            while (!editor) {
-                var $nextParent = $parent.parent();
-                if (isEmptyAndRemovable($parent)) {
-                    $parent.remove();
+            if ($parent.closest(':data("snippet-editor")').length) {
+                var editor = $parent.data('snippet-editor');
+                while (!editor) {
+                    var $nextParent = $parent.parent();
+                    if (isEmptyAndRemovable($parent)) {
+                        this.editorCommands.remove(this.$parent[0]);
+                    }
+                    $parent = $nextParent;
+                    editor = $parent.data('snippet-editor');
                 }
-                $parent = $nextParent;
-                editor = $parent.data('snippet-editor');
+                if (isEmptyAndRemovable($parent, editor)) {
+                    // TODO maybe this should be part of the actual Promise being
+                    // returned by the function ?
+                    await new Promise((resolve)=> {
+                        setTimeout(() => editor.removeSnippet().then(resolve));
+                    });
+                }
             }
-            if (isEmptyAndRemovable($parent, editor)) {
-                // TODO maybe this should be part of the actual Promise being
-                // returned by the function ?
-                setTimeout(() => editor.removeSnippet());
+
+            await new Promise((resolve) => this.trigger_up('snippet_removed', {onFinish: resolve}));
+            this.destroy();
+            const childs = this.snippetMenu.getChildsSnippetBlock(this.$snippetBlock);
+            for (const child of childs) {
+                const snippetEditor = $(child).data('snippet-editor');
+                if (snippetEditor) snippetEditor.destroy();
             }
-        }
-
-        // clean editor if they are image or table in deleted content
-        this.$body.find('.note-control-selection').hide();
-        this.$body.find('.o_table_handler').remove();
-
-        this.trigger_up('snippet_removed');
-        this.destroy();
-        $parent.trigger('content_changed');
+            $parent.trigger('content_changed');
+        });
 
         function isEmptyAndRemovable($el, editor) {
             editor = editor || $el.data('snippet-editor');
@@ -317,8 +324,6 @@ var SnippetEditor = Widget.extend({
      * @param {boolean} [previewMode=false]
      */
     toggleOverlay: function (show, previewMode) {
-        console.log('toggleOverlay', show, previewMode)
-        console.log('this.$el', this.$el)
         if (!this.$el) {
             return;
         }

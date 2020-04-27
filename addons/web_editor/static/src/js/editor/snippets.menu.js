@@ -75,7 +75,6 @@ var SnippetsMenu = Widget.extend({
         'snippet_removed': '_onSnippetRemoved',
         'snippet_cloned': '_onSnippetCloned',
         'snippet_option_visibility_update': '_onSnippetOptionVisibilityUpdate',
-        'reload_snippet_dropzones': '_disableUndroppableSnippets',
         'request_save': '_onSaveRequest',
         'update_customize_elements': '_onUpdateCustomizeElements',
         'hide_overlay': '_onHideOverlay',
@@ -122,6 +121,8 @@ var SnippetsMenu = Widget.extend({
         this.selectorEditableArea = options.selectorEditableArea;
         this.$editor = options.$el;
         this.$body = this.$editor.closest('body');
+
+        this.editorCommands = this.options.wysiwyg.editorCommands;
 
         const jwEditor = this.options.wysiwyg.editor;
         const dom = jwEditor.plugins.get(JWEditorLib.Dom);
@@ -314,7 +315,11 @@ var SnippetsMenu = Widget.extend({
     //--------------------------------------------------------------------------
 
     afterRender: function() {
+        this.snippetEditors = this.snippetEditors.filter(x=>!x.isDestroyed());
         for (const editor of this.snippetEditors) {
+            if (!editor.vNode) continue;
+            if (!this.domMap.toDom(editor.vNode)) debugger;
+
             // todo: what to do if one node has multiples dom nodes?
             const $snippetBlock = $(this.domMap.toDom(editor.vNode)[0][0]);
             editor.$snippetBlock = $snippetBlock;
@@ -324,6 +329,7 @@ var SnippetsMenu = Widget.extend({
         // setTarget access the $snippetBlock of the editor that would not
         // be set otherwise.
         for (const editor of this.snippetEditors) {
+            if (!editor.vNode) continue;
             for (const key in editor.snippetOptionInstances) {
                 const $snippetBlock = $(this.domMap.toDom(editor.vNode)[0][0]);
                 editor.snippetOptionInstances[key].setTarget($snippetBlock);
@@ -620,8 +626,8 @@ var SnippetsMenu = Widget.extend({
      * @returns {Promise} (might be async if snippet editors need to be created
      *                     and/or the callback is async)
      */
-    _callForEachChildSnippet: function ($snippet, callback) {
-        const defs = _.map($snippet.add(globalSelector.all($snippet)), async (child) => {
+    _callForEachChildSnippet: function ($snippetBlock, callback) {
+        const defs = _.map(this.getChildsSnippetBlock($snippetBlock), async (child) => {
             const $childSnippet = $(child);
             const editor = await this._getOrCreateSnippetEditor($childSnippet);
             if (editor) {
@@ -629,6 +635,10 @@ var SnippetsMenu = Widget.extend({
             }
         });
         return Promise.all(defs);
+    },
+
+    getChildsSnippetBlock($snippetBlock) {
+        return $snippetBlock.add(globalSelector.all($snippetBlock));
     },
     /**
      * Close widget for all editors.
@@ -742,7 +752,7 @@ var SnippetsMenu = Widget.extend({
      * @private
      * @param {string} html
      */
-    _computeSnippetTemplates: function (html) {
+    _computeSnippetTemplates: async function (html) {
         var self = this;
         var $html = $(html);
         var $scroll = $html.siblings('#o_scroll');
@@ -881,7 +891,7 @@ var SnippetsMenu = Widget.extend({
         this.$el.append(this.customizePanel);
         this.$el.append(this.invisibleDOMPanelEl);
         this._makeSnippetDraggable(this.$snippets);
-        this._disableUndroppableSnippets();
+        await this._disableUndroppableSnippets();
 
         this.$el.addClass('o_loaded');
         $('body.editor_enable').addClass('editor_has_snippets');
@@ -929,6 +939,7 @@ var SnippetsMenu = Widget.extend({
             this.templateOptions,
             $snippet.closest('[data-oe-type="html"], .oe_structure').add(editableArea),
             node,
+            this,
             this.options);
         this.snippetEditors.push(snippetEditor);
         await snippetEditor.appendTo(this.$snippetEditorArea);
@@ -942,16 +953,16 @@ var SnippetsMenu = Widget.extend({
      * @todo make them undraggable
      * @private
      */
-    _disableUndroppableSnippets: function () {
+    _disableUndroppableSnippets: async function () {
         var self = this;
         var cache = {};
-        this.$snippets.each(function () {
-            var $snippet = $(this);
-            var $snippetBody = $snippet.find('.oe_snippet_body');
+        for (const snippetDraggable of this.$snippets.toArray()) {
+            var $snippetDraggable = $(snippetDraggable);
+            var $snippetTemplate = $snippetDraggable.find('.oe_snippet_body');
 
             var isEnabled = false;
             _.each(self.templateOptions, function (option, k) {
-                if (isEnabled || !($snippetBody.is(option.base_selector) && !$snippetBody.is(option.base_exclude))) {
+                if (isEnabled || !($snippetTemplate.is(option.base_selector) && !$snippetTemplate.is(option.base_exclude))) {
                     return;
                 }
 
@@ -961,9 +972,13 @@ var SnippetsMenu = Widget.extend({
                 };
                 isEnabled = (cache[k]['drop-near'] || cache[k]['drop-in']);
             });
-
-            $snippet.toggleClass('o_disabled', !isEnabled);
-        });
+            // todo: we should look if we started the editor in anoher way.
+            if (this.editorCommands.hasVNode(snippetDraggable)) {
+                this.editorCommands.toggleClass(snippetDraggable, 'o_disabled', !isEnabled);
+            } else {
+                $snippetDraggable.toggleClass('o_disabled', !isEnabled);
+            }
+        }
     },
     /**
      * Creates a dropzone element and inserts it by replacing the given jQuery
@@ -1095,15 +1110,15 @@ var SnippetsMenu = Widget.extend({
                         $parent.prepend($snippetToInsert);
                     }
 
-                    _.defer( async () => {
+                    _.defer(async () => {
                         self.trigger_up('snippet_dropped', {$target: $snippetToInsert});
                         const jwEditor = self.options.wysiwyg.editor;
-                        const vNode = await self.insertSnippet($snippetToInsert);
+                        const vNodes = await self.insertSnippet($snippetToInsert);
                         const dom = jwEditor.plugins.get(JWEditorLib.Dom);
-                        const domNode = dom.domMap.toDom(vNode)[0][0];
+                        const domNode = dom.domMap.toDom(vNodes[0])[0][0];
 
 
-                        self._disableUndroppableSnippets();
+                        await self._disableUndroppableSnippets();
 
                         await self._callForEachChildSnippet($(domNode), function (editor) {
                             return editor.buildSnippet();
@@ -1434,9 +1449,11 @@ var SnippetsMenu = Widget.extend({
      *
      * @private
      */
-    _onSnippetRemoved: function () {
-        this._disableUndroppableSnippets();
+    _onSnippetRemoved: async function (ev) {
+        await this._disableUndroppableSnippets();
         this._updateInvisibleDOM();
+        ev.data.onFinish();
+        console.log('finish onsnippetemoved')
     },
     /**
      * @private
@@ -1478,8 +1495,10 @@ var SnippetsMenu = Widget.extend({
         const dom = this.options.wysiwyg.editor.plugins.get(JWEditorLib.Dom);
 
         let currentNode = element.nextSibling;
+        console.log('currentNode', currentNode)
         while (currentNode) {
-            const node = dom.domMap.fromDom(currentNode)[0]
+            const nodes = dom.domMap.fromDom(currentNode);
+            const node = nodes && nodes[0];
             if (node) {
                 return JWEditorLib.VRange.at(node, 'BEFORE')[0];
             }
@@ -1487,7 +1506,8 @@ var SnippetsMenu = Widget.extend({
         }
         currentNode = element.previousSibling;
         while (currentNode) {
-            const node = dom.domMap.fromDom(currentNode)[0]
+            const nodes = dom.domMap.fromDom(currentNode);
+            const node = nodes && nodes[0];
             if (node) {
                 return JWEditorLib.VRange.at(node, 'AFTER')[0];
     }
@@ -1495,7 +1515,8 @@ var SnippetsMenu = Widget.extend({
         }
         currentNode = element.parentElement;
         while (currentNode) {
-            const node = dom.domMap.fromDom(currentNode)[0]
+            const nodes = dom.domMap.fromDom(currentNode);
+            const node = nodes && nodes[0];
             if (node) {
                 return JWEditorLib.VRange.at(node, 'INSIDE')[0];
     }
@@ -1504,16 +1525,11 @@ var SnippetsMenu = Widget.extend({
     },
 
     insertSnippet: async function ($snippet) {
-        // todo: remove this try catch
-        try {
-            const rangePoint = this._getVNodeRange($snippet[0]);
-            return await this.options.wysiwyg.editor.execCommand('insertHtml', {
-                html: $snippet[0].outerHTML,
-                rangePoint: rangePoint,
-            });
-        } catch (e) {
-            console.error('impossible to insert snippet, found error', e);
-        }
+        const rangePoint = this._getVNodeRange($snippet[0]);
+        return await this.options.wysiwyg.editor.execCommand('insertHtml', {
+            html: $snippet[0].outerHTML,
+            rangePoint: rangePoint,
+        });
     }
 });
 

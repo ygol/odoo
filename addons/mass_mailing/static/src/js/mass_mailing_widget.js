@@ -283,7 +283,7 @@ var MassMailingFieldHtml = FieldHtml.extend({
                 this.$content.focusIn();
             }
         }
-        this.wysiwyg.trigger('reload_snippet_dropzones');
+        // this.wysiwyg.trigger('reload_snippet_dropzones');
     },
 
     //--------------------------------------------------------------------------

@@ -1412,6 +1412,7 @@ const SnippetOptionWidget = Widget.extend({
         this.data = data;
         this.options = options;
         this.editor = this.options.wysiwyg.editor;
+        this.wysiwyg = this.options.wysiwyg;
         this.editorCommands = this.options.wysiwyg.editorCommands;
 
         this.className = 'snippet-option-' + this.data.optionName;
@@ -1584,101 +1585,102 @@ const SnippetOptionWidget = Widget.extend({
      * @returns {Promise|undefined}
      */
     selectStyle: async function (previewMode, widgetValue, params) {
-        console.log('selectStyle:', previewMode, widgetValue, params);
-        if (params.cssProperty === 'background-color') {
-            let onFinish;
-            const promise = new Promise((resolve)=> onFinish = resolve);
-            console.log('onFinish:', onFinish)
-            this.$target.trigger('background-color-event', [previewMode, onFinish]);
-            console.log('onFinish:', onFinish)
-            await promise;
-        }
+        await this.wysiwyg.execBatch(async ()=>{
+            if (params.cssProperty === 'background-color') {
+                let onFinish;
+                const promise = new Promise((resolve)=> onFinish = resolve);
+                this.$target.trigger('background-color-event', [previewMode, onFinish]);
+                await promise;
+            }
 
-        const cssProps = weUtils.CSS_SHORTHANDS[params.cssProperty] || [params.cssProperty];
-        for (const cssProp of cssProps) {
-            console.log('selectStyle:cssProp:', cssProp)
-            console.log('selectStyle:cssProp widgetValue:', widgetValue)
-            // Always reset the inline style first to not put inline style on an
-            // element which already have this style through css stylesheets.
-            await this.editorCommands.setStyle(this.$target[0], cssProp, '');
-        }
-        if (params.extraClass) {
-            await this.editorCommands.removeClasses(this.$target[0], [params.extraClass]);
-        }
+            const cssProps = weUtils.CSS_SHORTHANDS[params.cssProperty] || [params.cssProperty];
+            for (const cssProp of cssProps) {
+                // Always reset the inline style first to not put inline style on an
+                // element which already have this style through css stylesheets.
+                await this.editorCommands.setStyle(this.$target[0], cssProp, '');
+            }
+            if (params.extraClass) {
+                await this.editorCommands.removeClasses(this.$target[0], [params.extraClass]);
+            }
 
-        // Only allow to use a color name as a className if we know about the
-        // other potential color names (to remove) and if we know about a prefix
-        // (otherwise we suppose that we should use the actual related color).
-        if (params.colorNames && params.colorPrefix) {
-            const classes = params.colorNames.map(c => params.colorPrefix + c);
-            await this.editorCommands.removeClasses(this.$target[0], classes);
+            // Only allow to use a color name as a className if we know about the
+            // other potential color names (to remove) and if we know about a prefix
+            // (otherwise we suppose that we should use the actual related color).
+            if (params.colorNames && params.colorPrefix) {
+                const classes = params.colorNames.map(c => params.colorPrefix + c);
+                await this.editorCommands.removeClasses(this.$target[0], classes);
 
-            if (params.colorNames.includes(widgetValue)) {
-                const originalCSSValue = window.getComputedStyle(this.$target[0])[cssProps[0]];
-                const className = params.colorPrefix + widgetValue;
-                await this.editorCommands.addClasses(this.$target[0], [className]);
-                if (originalCSSValue !== window.getComputedStyle(this.$target[0])[cssProps[0]]) {
-                    // If applying the class did indeed changed the css
-                    // property we are editing, nothing more has to be done.
-                    // (except adding the extra class)
+                if (params.colorNames.includes(widgetValue)) {
+                    const originalCSSValue = window.getComputedStyle(this.$target[0])[cssProps[0]];
+                    const className = params.colorPrefix + widgetValue;
                     await this.editorCommands.addClasses(this.$target[0], [className]);
-                    return;
-                }
-                // Otherwise, it means that class probably does not exist,
-                // we remove it and continue. Especially useful for some
-                // prefixes which only work with some color names but not all.
-                await this.editorCommands.removeClasses(this.$target[0], [className]);
-            }
-        }
-
-        // At this point, the widget value is either a property/color name or
-        // an actual css property value. If it is a property/color name, we will
-        // apply a css variable as style value.
-        const htmlStyle = window.getComputedStyle(document.documentElement);
-        const htmlPropValue = htmlStyle.getPropertyValue('--' + widgetValue);
-        if (htmlPropValue) {
-            widgetValue = `var(--${widgetValue})`;
-        }
-
-        // replacing ', ' by ',' to prevent attributes with internal space separators from being split:
-        // eg: "rgba(55, 12, 47, 1.9) 47px" should be split as ["rgba(55,12,47,1.9)", "47px"]
-        const values = widgetValue.replace(/,\s/g, ',').split(/\s+/g);
-        while (values.length < cssProps.length) {
-            switch (values.length) {
-                case 1:
-                case 2: {
-                    values.push(values[0]);
-                    break;
-                }
-                case 3: {
-                    values.push(values[1]);
-                    break;
-                }
-                default: {
-                    values.push(values[values.length - 1]);
+                    if (originalCSSValue !== window.getComputedStyle(this.$target[0])[cssProps[0]]) {
+                        // If applying the class did indeed changed the css
+                        // property we are editing, nothing more has to be done.
+                        // (except adding the extra class)
+                        await this.editorCommands.addClasses(this.$target[0], [className]);
+                        return;
+                    }
+                    // Otherwise, it means that class probably does not exist,
+                    // we remove it and continue. Especially useful for some
+                    // prefixes which only work with some color names but not all.
+                    await this.editorCommands.removeClasses(this.$target[0], [className]);
                 }
             }
-        }
 
-        const styles = window.getComputedStyle(this.$target[0]);
-        let hasUserValue = false;
-        for (let i = cssProps.length - 1; i > 0; i--) {
-            hasUserValue = await applyCSS.call(this, cssProps[i], values.pop(), styles) || hasUserValue;
-        }
-        hasUserValue = await applyCSS.call(this, cssProps[0], values.join(' '), styles) || hasUserValue;
-
-        async function applyCSS(cssProp, cssValue, styles) {
-            if (!weUtils.areCssValuesEqual(styles[cssProp], cssValue)) {
-                await this.editorCommands.setStyle(this.$target[0], cssProp, cssValue, true);
-                return true;
+            // At this point, the widget value is either a property/color name or
+            // an actual css property value. If it is a property/color name, we will
+            // apply a css variable as style value.
+            const htmlStyle = window.getComputedStyle(document.documentElement);
+            const htmlPropValue = htmlStyle.getPropertyValue('--' + widgetValue);
+            if (htmlPropValue) {
+                widgetValue = `var(--${widgetValue})`;
             }
-            return false;
-        }
 
-        if (params.extraClass) {
-            // this.$target.toggleClass(params.extraClass, hasUserValue);
-            await this.editorCommands.toggleClass(this.$target[0], params.extraClass, hasUserValue);
-        }
+            // replacing ', ' by ',' to prevent attributes with internal space separators from being split:
+            // eg: "rgba(55, 12, 47, 1.9) 47px" should be split as ["rgba(55,12,47,1.9)", "47px"]
+            const values = widgetValue.replace(/,\s/g, ',').split(/\s+/g);
+            while (values.length < cssProps.length) {
+                switch (values.length) {
+                    case 1:
+                    case 2: {
+                        values.push(values[0]);
+                        break;
+                    }
+                    case 3: {
+                        values.push(values[1]);
+                        break;
+                    }
+                    default: {
+                        values.push(values[values.length - 1]);
+                    }
+                }
+            }
+            const nodes = domMap.fromDom(this.$target[0]);
+            const actualStyle = nodes[0].attributes.style;
+            const fakeElement = document.createElement('div');
+            fakeElement.setAttribute('style', actualStyle);
+
+            const styles = window.getComputedStyle(fakeElement);
+            let hasUserValue = false;
+            for (let i = cssProps.length - 1; i > 0; i--) {
+                hasUserValue = await applyCSS.call(this, cssProps[i], values.pop(), styles) || hasUserValue;
+            }
+            hasUserValue = await applyCSS.call(this, cssProps[0], values.join(' '), styles) || hasUserValue;
+
+            async function applyCSS(cssProp, cssValue, styles) {
+                if (!weUtils.areCssValuesEqual(styles[cssProp], cssValue)) {
+                    await this.editorCommands.setStyle(this.$target[0], cssProp, cssValue, true);
+                    return true;
+                }
+                return false;
+            }
+
+            if (params.extraClass) {
+                // this.$target.toggleClass(params.extraClass, hasUserValue);
+                await this.editorCommands.toggleClass(this.$target[0], params.extraClass, hasUserValue);
+            }
+        });
     },
 
     //--------------------------------------------------------------------------

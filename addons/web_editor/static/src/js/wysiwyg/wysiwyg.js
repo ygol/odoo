@@ -142,6 +142,12 @@ var Wysiwyg = Widget.extend({
         });
         this.editor.start();
 
+
+        window.editor = this.editor;
+        window.Dom = JWEditorLib.Dom;
+        window.JWEditorLib = JWEditorLib;
+        window.domMap = this.editor.plugins.get(JWEditorLib.Dom).domMap;
+
         // init editor commands helpers for Odoo
         this.editorCommands = JWEditorLib.createExecCommandHelpersForOdoo2(this.editor);
 
@@ -358,6 +364,10 @@ var Wysiwyg = Widget.extend({
         self.trigger_up('wysiwyg_focus');
         // ?
         self.trigger_up('wysiwyg_blur');
+    },
+
+    async execBatch(...args) {
+        await this.editor.execBatch(...args);
     },
 
     // todo: handle when the server error (previously carlos_danger)
