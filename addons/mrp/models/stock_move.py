@@ -11,7 +11,6 @@ class StockMoveLine(models.Model):
 
     workorder_id = fields.Many2one('mrp.workorder', 'Work Order', check_company=True)
     production_id = fields.Many2one('mrp.production', 'Production Order', check_company=True)
-    lot_produced_ids = fields.Many2many('stock.production.lot', string='Finished Lot/Serial Number', check_company=True)
     done_move = fields.Boolean('Move Done', related='move_id.is_done', readonly=False, store=True)  # TDE FIXME: naming
 
     @api.model_create_multi
@@ -23,8 +22,10 @@ class StockMoveLine(models.Model):
             # traceability report
             if line.move_id.raw_material_production_id and line.state == 'done':
                 mo = line.move_id.raw_material_production_id
-                if line.lot_produced_ids:
-                    produced_move_lines = mo.move_finished_ids.move_line_ids.filtered(lambda sml: sml.lot_id in line.lot_produced_ids)
+                finished_lots = mo.lot_producing_id
+                finished_lots |= mo.move_finished_ids.filtered(lambda m: m.product_id != mo.product_id).move_line_ids.lot_id
+                if finished_lots:
+                    produced_move_lines = mo.move_finished_ids.move_line_ids.filtered(lambda sml: sml.lot_id in finished_lots)
                     line.produce_line_ids = [(6, 0, produced_move_lines.ids)]
                 else:
                     produced_move_lines = mo.move_finished_ids.move_line_ids
@@ -45,7 +46,7 @@ class StockMoveLine(models.Model):
 
     def _reservation_is_updatable(self, quantity, reserved_quant):
         self.ensure_one()
-        if self.lot_produced_ids:
+        if self.produce_line_ids.lot_id:
             ml_remaining_qty = self.qty_done - self.product_uom_qty
             ml_remaining_qty = self.product_uom_id._compute_quantity(ml_remaining_qty, self.product_id.uom_id, rounding_method="HALF-UP")
             if float_compare(ml_remaining_qty, quantity, precision_rounding=self.product_id.uom_id.rounding) < 0:
@@ -54,10 +55,6 @@ class StockMoveLine(models.Model):
 
     def write(self, vals):
         for move_line in self:
-            if move_line.move_id.production_id and 'lot_id' in vals:
-                move_line.production_id.move_raw_ids.mapped('move_line_ids')\
-                    .filtered(lambda r: not r.done_move and move_line.lot_id in r.lot_produced_ids)\
-                    .write({'lot_produced_ids': [(4, vals['lot_id'])]})
             production = move_line.move_id.production_id or move_line.move_id.raw_material_production_id
             if production and move_line.state == 'done' and any(field in vals for field in ('lot_id', 'location_id', 'qty_done')):
                 move_line._log_message(production, move_line, 'mrp.track_production_move_template', vals)
@@ -153,28 +150,55 @@ class StockMove(models.Model):
         for move in self:
             move.is_done = (move.state in ('done', 'cancel'))
 
-    @api.depends('product_uom_qty')
+    @api.depends('product_uom_qty', 'raw_material_production_id', 'raw_material_production_id.product_qty', 'raw_material_production_id.qty_produced')
     def _compute_unit_factor(self):
         for move in self:
             mo = move.raw_material_production_id or move.production_id
             if mo:
-                move.unit_factor = (move.product_uom_qty - move.quantity_done) / ((mo.product_qty - mo.qty_produced) or 1)
+                move.unit_factor = move.product_uom_qty / ((mo.product_qty - mo.qty_produced) or 1)
             else:
                 move.unit_factor = 1.0
+
+    @api.depends('raw_material_production_id', 'raw_material_production_id.name', 'production_id', 'production_id.name')
+    def _compute_reference(self):
+        moves_with_reference = self.env['stock.move']
+        for move in self:
+            if move.raw_material_production_id and move.raw_material_production_id.name:
+                move.reference = move.raw_material_production_id.name
+                moves_with_reference |= move
+            if move.production_id and move.production_id.name:
+                move.reference = move.production_id.name
+                moves_with_reference |= move
+        super(StockMove, self - moves_with_reference)._compute_reference()
 
     @api.model
     def default_get(self, fields_list):
         defaults = super(StockMove, self).default_get(fields_list)
-        if self.env.context.get('default_raw_material_production_id'):
-            production_id = self.env['mrp.production'].browse(self.env.context['default_raw_material_production_id'])
-            if production_id.state in ('confirmed', 'done'):
-                if production_id.state == 'confirmed':
+        if self.env.context.get('default_raw_material_production_id') or self.env.context.get('default_production_id'):
+            production_id = self.env['mrp.production'].browse(self.env.context.get('default_raw_material_production_id') or self.env.context.get('default_production_id'))
+            if production_id.state not in ('draft', 'cancel'):
+                if production_id.state != 'done':
                     defaults['state'] = 'draft'
                 else:
                     defaults['state'] = 'done'
                 defaults['product_uom_qty'] = 0.0
                 defaults['additional'] = True
         return defaults
+
+    def update(self, values):
+        """ The server-side form cannot deal with 2 levels of one2many inside the main form view.
+        The field 'id' is added to the values to save and not remove properly like the main form one
+        or any other level 1 one2many object. It's saw as a field to be modify in database.
+        This leads to an error in fields.py, __setattr__() of class Id.
+        We remove manually the added 'id' key of the values to save dict. This hack is done waiting
+        for a fix in the served-side Form engine.
+
+        This override was needed for test_product_produce_9 and test_product_produce_11."""
+        if self.env.context.get('debug'):
+            if 'move_line_ids' in values:
+                if 'id' in values['move_line_ids'][0][2]:
+                    values['move_line_ids'][0][2].pop('id')
+        return super().update(values)
 
     def _action_assign(self):
         res = super(StockMove, self)._action_assign()
@@ -224,6 +248,17 @@ class StockMove(models.Model):
             phantom_moves._adjust_procure_method()
             moves_to_return |= phantom_moves.action_explode()
         return moves_to_return
+
+    def action_show_details(self):
+        self.ensure_one()
+        action = super().action_show_details()
+        if self.raw_material_production_id:
+            action['views'] = [(self.env.ref('mrp.view_stock_move_operations_raw').id, 'form')]
+            action['context']['show_destination_location'] = False
+        elif self.production_id:
+            action['views'] = [(self.env.ref('mrp.view_stock_move_operations_finished').id, 'form')]
+            action['context']['show_source_location'] = False
+        return action
 
     def _action_cancel(self):
         res = super(StockMove, self)._action_cancel()
