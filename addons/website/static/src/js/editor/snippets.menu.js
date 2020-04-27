@@ -1,16 +1,16 @@
-odoo.define('website.snippet.editor', function (require) {
+odoo.define('websi5te.snippet.menu', function (require) {
 'use strict';
 
-const weSnippetEditor = require('web_editor.snippet.editor');
+const weSnippetMenu = require('web_editor.snippet.menu');
 const wSnippetOptions = require('website.editor.snippets.options');
 
 const FontFamilyPickerUserValueWidget = wSnippetOptions.FontFamilyPickerUserValueWidget;
 
-weSnippetEditor.SnippetsMenu.include({
-    events: _.extend({}, weSnippetEditor.SnippetsMenu.prototype.events, {
+weSnippetMenu.SnippetsMenu.include({
+    events: _.extend({}, weSnippetMenu.SnippetsMenu.prototype.events, {
         'click .o_we_customize_theme_btn': '_onThemeTabClick',
     }),
-    tabs: _.extend({}, weSnippetEditor.SnippetsMenu.prototype.tabs, {
+    tabs: _.extend({}, weSnippetMenu.SnippetsMenu.prototype.tabs, {
         THEME: 'theme',
     }),
 

@@ -1417,7 +1417,7 @@ const SnippetOptionWidget = Widget.extend({
         this.className = 'snippet-option-' + this.data.optionName;
         this._userValueWidgets = [];
 
-        this.setOptionTarget($snippetBlock);
+        this.setTarget($snippetBlock);
         this.ownerDocument = this.$target[0].ownerDocument;
 
     },
@@ -1584,12 +1584,20 @@ const SnippetOptionWidget = Widget.extend({
      * @returns {Promise|undefined}
      */
     selectStyle: async function (previewMode, widgetValue, params) {
+        console.log('selectStyle:', previewMode, widgetValue, params);
         if (params.cssProperty === 'background-color') {
-            this.$target.trigger('background-color-event', previewMode);
+            let onFinish;
+            const promise = new Promise((resolve)=> onFinish = resolve);
+            console.log('onFinish:', onFinish)
+            this.$target.trigger('background-color-event', [previewMode, onFinish]);
+            console.log('onFinish:', onFinish)
+            await promise;
         }
 
         const cssProps = weUtils.CSS_SHORTHANDS[params.cssProperty] || [params.cssProperty];
         for (const cssProp of cssProps) {
+            console.log('selectStyle:cssProp:', cssProp)
+            console.log('selectStyle:cssProp widgetValue:', widgetValue)
             // Always reset the inline style first to not put inline style on an
             // element which already have this style through css stylesheets.
             await this.editorCommands.setStyle(this.$target[0], cssProp, '');
@@ -1661,7 +1669,7 @@ const SnippetOptionWidget = Widget.extend({
 
         async function applyCSS(cssProp, cssValue, styles) {
             if (!weUtils.areCssValuesEqual(styles[cssProp], cssValue)) {
-                await this.editorCommands.setStyle(this.$target[0], cssProp, '', true);
+                await this.editorCommands.setStyle(this.$target[0], cssProp, cssValue, true);
                 return true;
             }
             return false;
@@ -2641,7 +2649,7 @@ registry.background = SnippetOptionWidget.extend({
      * @returns {boolean} true if the color has been applied (removing the
      *                    background)
      */
-    _onBackgroundColorUpdate: async function (ev, previewMode) {
+    _onBackgroundColorUpdate: async function (ev, previewMode, onFinish) {
         ev.stopPropagation();
         if (ev.currentTarget !== ev.target) {
             return false;
@@ -2650,6 +2658,7 @@ registry.background = SnippetOptionWidget.extend({
             this.__customImageSrc = undefined;
         }
         await this.background(previewMode, '', {});
+        onFinish();
         return true;
     },
     /**

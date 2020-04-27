@@ -155,6 +155,7 @@ snippetOptions.registry.InnerChart = snippetOptions.SnippetOptionWidget.extend({
      */
     _reloadGraph: async function () {
         const jsonValue = this._matrixToChartData();
+        // todo change the dataset in jabberwock
         if (this.$target[0].dataset.data !== jsonValue) {
             this.$target[0].dataset.data = jsonValue;
             await this._refreshPublicWidgets();

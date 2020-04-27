@@ -3,7 +3,7 @@ odoo.define('web_editor.wysiwyg', function (require) {
 
 var Widget = require('web.Widget');
 var JWEditorLib = require('web_editor.jabberwock');
-var SnippetsMenu = require('web_editor.snippet.editor').SnippetsMenu;
+var SnippetsMenu = require('web_editor.snippet.menu').SnippetsMenu;
 
 
 var Wysiwyg = Widget.extend({

@@ -575,6 +575,8 @@ snippetOptions.registry.background.include({
      * @override
      */
     _computeWidgetState: function (methodName) {
+        console.log('this.$target:', this.$target)
+        // todo: fix target
         if (methodName === 'background' && this.$target[0].classList.contains('o_background_video')) {
             return this.$('> .o_bg_video_container iframe').attr('src');
         }
@@ -615,7 +617,7 @@ snippetOptions.registry.background.include({
      _onBackgroundColorUpdate: async function (ev, previewMode) {
         const ret = await this._super(...arguments);
         if (ret) {
-            this._setBgVideo(previewMode, '');
+            await this._setBgVideo(previewMode, '');
         }
         return ret;
     },
@@ -2019,6 +2021,8 @@ snippetOptions.registry.ScrollButton = snippetOptions.SnippetOptionWidget.extend
                 anchor.title = _t("Scroll down to next section");
                 const arrow = document.createElement('i');
                 arrow.classList.add('fa', 'fa-angle-down', 'fa-3x');
+                // todo: remove this nbsp when the problem with empty inline will be fixed.
+                arrow.innerHTML = "&nbsp;"
                 anchor.appendChild(arrow);
                 this.$buttonTemplate = $(anchor);
             }

@@ -8,6 +8,8 @@ var snippetOptions = require('web_editor.snippets.options');
 var _t = core._t;
 var qweb = core.qweb;
 
+// todo: jabberwock dependency
+// - editable=false
 snippetOptions.registry.gallery = snippetOptions.SnippetOptionWidget.extend({
     xmlDependencies: ['/website/static/src/xml/website.gallery.xml'],
 
