@@ -3,9 +3,10 @@ odoo.define('hr.employee_language', function (require) {
 
 var FormController = require('web.FormController');
 var FormView = require('web.FormView');
+const UserManagementMixin = require('web.UserManagementMixin');
 var viewRegistry = require('web.view_registry');
 
-var EmployeeFormController = FormController.extend({
+var EmployeeFormController = FormController.extend(UserManagementMixin, {
     saveRecord: function () {
         var self = this;
         return this._super.apply(this, arguments).then(function () {

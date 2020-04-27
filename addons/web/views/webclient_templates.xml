@@ -154,6 +154,7 @@
         <script type="text/javascript" src="/web/static/src/js/core/session_storage.js"></script>
         <script type="text/javascript" src="/web/static/src/js/core/time.js"></script>
         <script type="text/javascript" src="/web/static/src/js/core/translation.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/core/user_management_mixin.js"></script>
         <script type="text/javascript" src="/web/static/src/js/core/utils.js"></script>
         <script type="text/javascript" src="/web/static/src/js/core/widget.js"></script>
 
