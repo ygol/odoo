@@ -481,10 +481,12 @@ class Lead(models.Model):
         elif 'probability' in vals:
             vals['date_closed'] = False
 
-        write_result = super(Lead, self).write(vals)
         # Compute new automated_probability (and, eventually, probability) for each lead separately
         if self._should_update_probability(vals):
             self._update_probability()
+            [vals.pop(key, None) if vals.get(key) != 100 else None for key in ['probability', 'automated_probability']]
+
+        write_result = super(Lead, self).write(vals)
 
         return write_result
 
@@ -574,7 +576,7 @@ class Lead(models.Model):
             lead_proba = lead_probabilities.get(lead.id, 0)
             proba_vals = {'automated_probability': lead_proba}
             if lead.is_automated_probability:
-                proba_vals = {'probability': lead_proba}
+                proba_vals.update({'probability': lead_proba})
             super(Lead, lead).write(proba_vals)
         return
 
@@ -696,7 +698,7 @@ class Lead(models.Model):
         self.action_unarchive()
         for lead in self:
             stage_id = lead._stage_find(domain=[('is_won', '=', True)])
-            lead.write({'stage_id': stage_id.id, 'probability': 100})
+            lead.write({'stage_id': stage_id.id, 'probability': 100, 'automated_probability': 100})
         self._rebuild_pls_frequency_table_threshold()
         return True
 
