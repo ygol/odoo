@@ -126,11 +126,11 @@ class MailComposer(models.TransientModel):
         'mail.activity.type', 'Mail Activity Type',
         index=True, ondelete='set null')
     # destination
-    reply_to = fields.Char('Reply-To-Email', help='Reply email address. Setting the reply_to bypasses the automatic thread creation.')
+    reply_to = fields.Char('Reply To', help='Reply email address. Setting the reply_to bypasses the automatic thread creation.')
     reply_to_target = fields.Selection([
-        ('original_discussion', 'Original Discussion'),
-        ('another_email_address', 'Another Email Address')],
-        string='Reply-To', default='original_discussion',
+        ('original_discussion', 'Log in the original discussion thread'),
+        ('another_email_address', 'Redirect to another email address')],
+        string='Replies', default='original_discussion',
         help="Original Discussion: Answers go in the original document discussion thread. \n Another Email Address: Answers go to the email address mentioned in the tracking message-id instead of original document discussion thread. \n This has an impact on the generated message-id.")
     is_log = fields.Boolean('Log an Internal Note',
                             help='Whether the message is an internal note (comment mode only)')

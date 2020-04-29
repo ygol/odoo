@@ -63,7 +63,7 @@
                             attrs="{'invisible':[('composition_mode', '!=', 'mass_post')]}"/>
                         <!-- mass mailing -->
                         <field name="reply_to_target" attrs="{'invisible':[('composition_mode', '!=', 'mass_mail')]}" widget="radio"/>
-                        <field name="reply_to" placeholder="Email address to redirect replies..."
+                        <field name="reply_to" placeholder="Email address to which replies will be redirected"
                             attrs="{'invisible':['|', ('reply_to_target', '=', 'original_discussion'), ('composition_mode', '!=', 'mass_mail')],
                                     'required':[('reply_to_target', '!=', 'original_discussion'), ('composition_mode', '=', 'mass_mail')]}"/>
                     </group>
