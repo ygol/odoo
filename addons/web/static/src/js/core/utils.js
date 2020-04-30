@@ -204,6 +204,7 @@ var diacriticsMap = {
 };
 
 const patchMap = new WeakMap();
+const top = window.top;
 
 /**
  * This object is where the special object types are defined. It can be further
@@ -245,6 +246,8 @@ function jsonReplacer(key, value) {
         const serialized = type.serialize(value);
         const stringified = JSON.stringify(serialized, jsonReplacer);
         return type.prefix + stringified;
+    } else if (value === undefined || typeof value === "symbol") {
+        return "undefined";
     } else {
         return value;
     }
@@ -264,6 +267,8 @@ function jsonReviver(key, value) {
         const stringified = value.slice(type.prefix.length);
         const serialized = JSON.parse(stringified, jsonReviver);
         return new type.Class(serialized);
+    } else if (value === "undefined") {
+        return undefined;
     } else {
         return value;
     }
@@ -308,6 +313,20 @@ var utils = {
      */
     confine: function (val, min, max) {
         return Math.max(min, Math.min(max, val));
+    },
+    /**
+     * Returns true iff all given objects are equal in value to each other.
+     *
+     * @param  {...any} objects
+     * @returns {boolean}
+     */
+    deepEqual: function (...objects) {
+        if (objects.length < 2) {
+            return true;
+        }
+        const objs = objects.map(utils.stringify);
+        const ref = objs.shift();
+        return objs.every(obj => obj === ref);
     },
     /**
      * @param {number} value

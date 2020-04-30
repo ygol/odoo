@@ -7,6 +7,57 @@ QUnit.module('core', {}, function () {
 
     QUnit.module('utils');
 
+    QUnit.test('deepEqual', function (assert) {
+        assert.expect(26);
+
+        const { Component } = owl;
+        const { deepEqual } = utils;
+
+        // Same values => should yield true
+
+        assert.ok(deepEqual());
+        // 1 object
+        assert.ok(deepEqual(false));
+        assert.ok(deepEqual('abc'));
+        assert.ok(deepEqual(13));
+        assert.ok(deepEqual([]));
+        assert.ok(deepEqual({}));
+        // 2 objects
+        assert.ok(deepEqual(undefined, undefined));
+        assert.ok(deepEqual(null, null));
+        assert.ok(deepEqual(false, false));
+        assert.ok(deepEqual('abc', 'abc'));
+        assert.ok(deepEqual(13, 13));
+        assert.ok(deepEqual(['abc'], ['abc']));
+        assert.ok(deepEqual({ a: 1 }, { a: 1 }));
+        assert.ok(deepEqual(new Date('09/01/1997'), new Date('09/01/1997')));
+        // n objects
+        assert.ok(deepEqual({ a: 1 }, { a: 1 }, { a: 1 }));
+
+        // Different values => should yield false
+
+        // 1 object => always yields true
+        // 2 objects
+        assert.notOk(deepEqual(null, undefined));
+        assert.notOk(deepEqual(true, false));
+        assert.notOk(deepEqual('abc', 'def'));
+        assert.notOk(deepEqual(13, 31));
+        assert.notOk(deepEqual(['abc'], ['def']));
+        assert.notOk(deepEqual({ a: 1 }, { a: 2 }));
+        assert.notOk(deepEqual(new Date('09/01/1997'), new Date('09/01/2020')));
+        // n objects
+        assert.notOk(deepEqual({ a: 1 }, { a: 2 }, { a: 1 }));
+
+        // Non serializable types
+
+        // Map returns an iterator and is stringified as empty object '{}'
+        assert.ok(deepEqual(new Map([['a', 1]]), new Map([['a', 1]]), `__MAP__[["a",1]]`));
+        // Stringified symbol returns 'undefined'
+        assert.ok(deepEqual(Symbol('a'), Symbol('a'), undefined));
+        // Component is an example of circular object => cannot be stringified at all.
+        assert.throws(() => deepEqual(new Component(), new Component()), TypeError);
+    });
+
     QUnit.test('intersperse', function (assert) {
         assert.expect(27);
 
