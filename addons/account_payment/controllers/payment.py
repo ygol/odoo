@@ -5,14 +5,14 @@ from werkzeug.urls import url_encode
 
 from odoo import http, _
 from odoo.addons.portal.controllers.portal import _build_url_w_params
-from odoo.addons.payment.controllers.portal import PaymentProcessing
+from odoo.addons.payment.controllers.portal import PaymentPostProcessing
 from odoo.http import request, route
 
 
 class PaymentPortal(http.Controller):
 
     @route('/invoice/pay/<int:invoice_id>/form_tx', type='json', auth="public", website=True)
-    def invoice_pay_form(self, acquirer_id, invoice_id, save_token=False, access_token=None, **kwargs):
+    def invoice_pay_form(self, acquirer_id, invoice_id, tokenization_requested=False, access_token=None, **kwargs):
         """ Json method that creates a payment.transaction, used to create a
         transaction when the user clicks on 'pay now' button on the payment
         form.
@@ -23,36 +23,28 @@ class PaymentPortal(http.Controller):
         if not invoice_sudo:
             return False
 
-        try:
-            acquirer_id = int(acquirer_id)
-        except:
-            return False
-
-        if request.env.user._is_public():
-            save_token = False # we avoid to create a token for the public user
+        acquirer_sudo = request.env['payment.acquirer'].browse(acquirer_id).sudo()
+        tokenize = bool(
+            # Public users are not allowed to save tokens as their partner is unknown
+            not request.env.user.sudo()._is_public()
+            # Token is only saved if requested by the user and allowed by the acquirer
+            and tokenization_requested and acquirer_sudo.allow_tokenization
+        )
 
         success_url = kwargs.get(
             'success_url', "%s?%s" % (invoice_sudo.access_url, url_encode({'access_token': access_token}) if access_token else '')
         )
         vals = {
             'acquirer_id': acquirer_id,
-            'return_url': success_url,
+            'landing_route': success_url,
+            'operation': f'online_{kwargs.get("flow", "redirect")}',
+            'tokenize': tokenize,
         }
 
-        if save_token:
-            vals['type'] = 'form_save'
-
         transaction = invoice_sudo._create_payment_transaction(vals)
-        PaymentProcessing.add_payment_transaction(transaction)
+        PaymentPostProcessing.monitor_transactions(transaction)
 
-        return transaction.render_invoice_button(
-            invoice_sudo,
-            submit_txt=_('Pay & Confirm'),
-            render_values={
-                'type': 'form_save' if save_token else 'form',
-                'alias_usage': _('If we store your payment information on our server, subscription payments will be made automatically.'),
-            }
-        )
+        return transaction.render_invoice_button(invoice_sudo)
 
     @http.route('/invoice/pay/<int:invoice_id>/s2s_token_tx', type='http', auth='public', website=True)
     def invoice_pay_token(self, invoice_id, pm_id=None, **kwargs):
@@ -81,13 +73,13 @@ class PaymentPortal(http.Controller):
             return request.redirect(_build_url_w_params(error_url, params))
 
         vals = {
-            'payment_token_id': token.id,
-            'type': 'server2server',
-            'return_url': _build_url_w_params(success_url, params),
+            'token_id': token.id,
+            'operation': 'online_token',
+            'landing_route': _build_url_w_params(success_url, params),
         }
 
         tx = invoice_sudo._create_payment_transaction(vals)
-        PaymentProcessing.add_payment_transaction(tx)
+        PaymentPostProcessing.monitor_transactions(tx)
 
         params['success'] = 'pay_invoice'
-        return request.redirect('/payment/process')
+        return request.redirect('/payment/status')

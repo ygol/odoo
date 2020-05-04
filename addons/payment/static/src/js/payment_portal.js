@@ -1,4 +1,4 @@
-$(function () {
+$(function () {  // TODO DBO wut
 
     $('input#cc_number').payment('formatCardNumber');
     $('input#cc_cvc').payment('formatCardCVC');

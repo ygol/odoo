@@ -809,8 +809,8 @@ Reason(s) of this behavior could be:
         for order in self:
             tx = order.sudo().transaction_ids.get_last_transaction()
             if tx and tx.state == 'pending' and tx.acquirer_id.provider == 'transfer':
-                tx._set_transaction_done()
-                tx.write({'is_processed': True})
+                tx._set_done()
+                tx.write({'is_post_processed': True})
         return self.write({'state': 'done'})
 
     def action_unlock(self):
@@ -937,7 +937,7 @@ Reason(s) of this behavior could be:
         # Try to retrieve the acquirer. However, fallback to the token's acquirer.
         acquirer_id = vals.get('acquirer_id')
         acquirer = False
-        payment_token_id = vals.get('payment_token_id')
+        payment_token_id = vals.get('token_id')
 
         if payment_token_id:
             payment_token = self.env['payment.token'].sudo().browse(payment_token_id)
@@ -979,8 +979,8 @@ Reason(s) of this behavior could be:
         transaction = self.env['payment.transaction'].create(vals)
 
         # Process directly if payment_token
-        if transaction.payment_token_id:
-            transaction.s2s_do_transaction()
+        if transaction.token_id:
+            transaction._send_payment_request()
 
         return transaction
 
@@ -1030,9 +1030,9 @@ Reason(s) of this behavior could be:
             return self.get_portal_url(query_string='&%s' % auth_param)
         return super(SaleOrder, self)._get_share_url(redirect, signup_partner, pid)
 
-    def _get_payment_type(self):
+    def _get_payment_flow(self):
         self.ensure_one()
-        return 'form'
+        return 'redirect'
 
     def _get_portal_return_action(self):
         """ Return the action used to display orders when returning from customer portal. """

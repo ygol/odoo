@@ -45,7 +45,7 @@ var buyCertificationSteps = [{
     trigger: 'a:contains("Process Checkout")'
 }, {
     content: 'eCommerce: select Test payment acquirer',
-    trigger: '.o_payment_acquirer_select:contains("Test")'
+    trigger: '.o_payment_acquirer_option:contains("Test")'
 }, {
     content: 'eCommerce: add card number',
     trigger: 'input[name="cc_number"]',

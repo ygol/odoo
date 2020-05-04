@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import api, fields, models, _
+from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -41,7 +40,7 @@ class AccountMove(models.Model):
         # Try to retrieve the acquirer. However, fallback to the token's acquirer.
         acquirer_id = vals.get('acquirer_id')
         acquirer = None
-        payment_token_id = vals.get('payment_token_id')
+        payment_token_id = vals.get('token_id')
 
         if payment_token_id:
             payment_token = self.env['payment.token'].sudo().browse(payment_token_id)
@@ -82,8 +81,8 @@ class AccountMove(models.Model):
         transaction = self.env['payment.transaction'].create(vals)
 
         # Process directly if payment_token
-        if transaction.payment_token_id:
-            transaction.s2s_do_transaction()
+        if transaction.token_id:
+            transaction._send_payment_request()
 
         return transaction
 

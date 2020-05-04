@@ -9,7 +9,7 @@ from odoo import fields, http, SUPERUSER_ID, tools, _
 from odoo.http import request
 from odoo.addons.base.models.ir_qweb_fields import nl2br
 from odoo.addons.http_routing.models.ir_http import slug
-from odoo.addons.payment.controllers.portal import PaymentProcessing
+from odoo.addons.payment.controllers.portal import PaymentPostProcessing
 from odoo.addons.website.controllers.main import QueryURL
 from odoo.addons.website.models.ir_http import sitemap_qs2dom
 from odoo.exceptions import ValidationError
@@ -821,11 +821,11 @@ class WebsiteSale(http.Controller):
         values = dict(
             website_sale_order=order,
             errors=[],
-            partner=order.partner_id.id,
+            partner=order.partner_id,
+            partner_id=order.partner_id.id,
             order=order,
             payment_action_id=request.env.ref('payment.action_payment_acquirer').id,
-            return_url= '/shop/payment/validate',
-            bootstrap_formatting= True
+            landing_route='/shop/payment/validate',
         )
 
         domain = expression.AND([
@@ -836,13 +836,16 @@ class WebsiteSale(http.Controller):
         acquirers = request.env['payment.acquirer'].search(domain)
 
         values['access_token'] = order.access_token
-        values['acquirers'] = [acq for acq in acquirers if (acq.payment_flow == 'form' and acq.view_template_id) or
-                                    (acq.payment_flow == 's2s' and acq.registration_view_template_id)]
+        values['acquirers'] = [acq for acq in acquirers if (acq.payment_flow == 'form' and acq.redirect_template_view_id) or
+                                    (acq.payment_flow == 's2s' and acq.inline_template_view_id)]
         values['tokens'] = request.env['payment.token'].search(
             [('acquirer_id', 'in', acquirers.ids)])
-
-        if order:
-            values['acq_extra_fees'] = acquirers.get_acquirer_extra_fees(order.amount_total, order.currency_id, order.partner_id.country_id.id)
+        values['reference'] = ''
+        values['amount'] = order.amount_total
+        values['currency'] = order.currency_id
+        values['fees_by_acquirer'] = {acquirer: acquirer._compute_fees(
+            order.amount_total, order.currency_id, order.partner_id.country_id.id
+        ) for acquirer in acquirers.filtered('fees_active')}
         return values
 
     @http.route(['/shop/payment'], type='http', auth="public", website=True, sitemap=False)
@@ -873,7 +876,7 @@ class WebsiteSale(http.Controller):
     @http.route(['/shop/payment/transaction/',
         '/shop/payment/transaction/<int:so_id>',
         '/shop/payment/transaction/<int:so_id>/<string:access_token>'], type='json', auth="public", website=True)
-    def payment_transaction(self, acquirer_id, save_token=False, so_id=None, access_token=None, token=None, **kwargs):
+    def payment_transaction(self, acquirer_id, tokenization_requested=False, so_id=None, access_token=None, token=None, **kwargs):
         """ Json method that creates a payment.transaction, used to create a
         transaction when the user clicks on 'pay now' button. After having
         created the transaction, the event continues and the user is redirected
@@ -886,10 +889,13 @@ class WebsiteSale(http.Controller):
         if not acquirer_id:
             return False
 
-        try:
-            acquirer_id = int(acquirer_id)
-        except:
-            return False
+        acquirer_sudo = request.env['payment.acquirer'].browse(acquirer_id).sudo()
+        tokenize = bool(
+            # Public users are not allowed to save tokens as their partner is unknown
+            not request.env.user.sudo()._is_public()
+            # Token is only saved if requested by the user and allowed by the acquirer
+            and tokenization_requested and acquirer_sudo.allow_tokenization
+        )
 
         # Retrieve the sale order
         if so_id:
@@ -909,13 +915,15 @@ class WebsiteSale(http.Controller):
         assert order.partner_id.id != request.website.partner_id.id
 
         # Create transaction
-        vals = {'acquirer_id': acquirer_id,
-                'return_url': '/shop/payment/validate'}
+        vals = {
+            'acquirer_id': acquirer_id,
+            'landing_route': '/shop/payment/validate',
+            'operation': f'online_{kwargs.get("flow", "redirect")}',
+            'tokenize': tokenize,
+        }
 
-        if save_token:
-            vals['type'] = 'form_save'
         if token:
-            vals['payment_token_id'] = int(token)
+            vals['token_id'] = int(token)
 
         transaction = order._create_payment_transaction(vals)
 
@@ -924,12 +932,12 @@ class WebsiteSale(http.Controller):
         last_tx_id = request.session.get('__website_sale_last_tx_id')
         last_tx = request.env['payment.transaction'].browse(last_tx_id).sudo().exists()
         if last_tx:
-            PaymentProcessing.remove_payment_transaction(last_tx)
-        PaymentProcessing.add_payment_transaction(transaction)
+            PaymentPostProcessing.remove_transactions(last_tx)
+        PaymentPostProcessing.monitor_transactions(transaction)
         request.session['__website_sale_last_tx_id'] = transaction.id
         return transaction.render_sale_button(order)
 
-    @http.route('/shop/payment/token', type='http', auth='public', website=True, sitemap=False)
+    @http.route('/shop/payment/token', type='http', auth='public', website=True, sitemap=False)  # TODO ANV merge in /shop/payment/transaction
     def payment_token(self, pm_id=None, **kwargs):
         """ Method that handles payment using saved tokens
 
@@ -952,11 +960,11 @@ class WebsiteSale(http.Controller):
             return request.redirect('/shop/?error=token_not_found')
 
         # Create transaction
-        vals = {'payment_token_id': pm_id, 'return_url': '/shop/payment/validate'}
+        vals = {'operation': 'online_token', 'token_id': pm_id, 'landing_route': '/shop/payment/validate'}
 
         tx = order._create_payment_transaction(vals)
-        PaymentProcessing.add_payment_transaction(tx)
-        return request.redirect('/payment/process')
+        PaymentPostProcessing.monitor_transactions(tx)
+        return request.redirect('/payment/status')
 
     @http.route('/shop/payment/get_status/<int:sale_order_id>', type='json', auth="public", website=True)
     def payment_get_status(self, sale_order_id, **post):
@@ -1006,7 +1014,7 @@ class WebsiteSale(http.Controller):
         if tx and tx.state == 'draft':
             return request.redirect('/shop')
 
-        PaymentProcessing.remove_payment_transaction(tx)
+        PaymentPostProcessing.remove_transactions(tx)
         return request.redirect('/shop/confirmation')
 
     @http.route(['/shop/terms'], type='http', auth="public", website=True, sitemap=True)

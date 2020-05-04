@@ -1,4 +1,4 @@
-# coding: utf-8
+# Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 import datetime
 
@@ -55,10 +55,10 @@ class AccountPayment(models.Model):
             'partner_id': self.partner_id.id,
             'partner_country_id': self.partner_id.country_id.id,
             'invoice_ids': [(6, 0, self.invoice_ids.ids)],
-            'payment_token_id': self.payment_token_id.id,
+            'token_id': self.payment_token_id.id,
             'acquirer_id': self.payment_token_id.acquirer_id.id,
             'payment_id': self.id,
-            'type': 'server2server',
+            'type': 'offline',
         }
 
     def _create_payment_transaction(self, vals=None):
@@ -85,32 +85,18 @@ class AccountPayment(models.Model):
 
     def action_validate_invoice_payment(self):
         res = super(AccountPayment, self).action_validate_invoice_payment()
-        self.mapped('payment_transaction_id').filtered(lambda x: x.state == 'done' and not x.is_processed)._post_process_after_done()
+        self.mapped('payment_transaction_id').filtered(lambda x: x.state == 'done' and not x.is_post_processed)._finalize_post_processing()
         return res
 
     def action_post(self):
         # Post the payments "normally" if no transactions are needed.
         # If not, let the acquirer updates the state.
-        #                                __________            ______________
-        #                               | Payments |          | Transactions |
-        #                               |__________|          |______________|
-        #                                  ||                      |    |
-        #                                  ||                      |    |
-        #                                  ||                      |    |
-        #  __________  no s2s required   __\/______   s2s required |    | s2s_do_transaction()
-        # |  Posted  |<-----------------|  post()  |----------------    |
-        # |__________|                  |__________|<-----              |
-        #                                                |              |
-        #                                               OR---------------
-        #  __________                    __________      |
-        # | Cancelled|<-----------------| cancel() |<-----
-        # |__________|                  |__________|
 
         payments_need_trans = self.filtered(lambda pay: pay.payment_token_id and not pay.payment_transaction_id)
         transactions = payments_need_trans._create_payment_transaction()
 
         res = super(AccountPayment, self - payments_need_trans).action_post()
 
-        transactions.s2s_do_transaction()
+        transactions._send_payment_request()
 
         return res

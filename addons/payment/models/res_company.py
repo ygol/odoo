@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from odoo import api, fields, models
@@ -8,7 +7,6 @@ class ResCompany(models.Model):
     _inherit = 'res.company'
 
     payment_acquirer_onboarding_state = fields.Selection([('not_done', "Not done"), ('just_done', "Just done"), ('done', "Done")], string="State of the onboarding payment acquirer step", default='not_done')
-    # YTI FIXME: Check if it's really needed on the company. Should be enough on the wizard
     payment_onboarding_payment_method = fields.Selection([
         ('paypal', "PayPal"),
         ('stripe', "Stripe"),

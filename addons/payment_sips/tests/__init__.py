@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-from . import test_sips
+# from . import test_sips  # TODO

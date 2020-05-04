@@ -1,22 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
 
-    <template id="default_acquirer_button">
-        <input type="hidden" name="data_set" t-att-data-action-url="tx_url"/>
-        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-        <t t-if="return_url">
-            <input type="hidden" name="return_url" t-att-value="return_url"/>
-        </t>
-        <input type="hidden" name="reference" t-att-value="reference"/>
-        <input type="hidden" name="amount" t-att-value="amount"/>
-        <input type="hidden" name="currency" t-att-value="currency.name"/>
-    </template>
-
     <record id="payment_acquirer_buckaroo" model="payment.acquirer">
         <field name="name">Buckaroo</field>
         <field name="display_as">Credit Card (powered by Buckaroo)</field>
         <field name="image_128" type="base64" file="payment_buckaroo/static/src/img/buckaroo_icon.png"/>
-        <field name="view_template_id" ref="default_acquirer_button"/>
         <field name="module_id" ref="base.module_payment_buckaroo"/>
         <field name="description" type="html">
             <p>
@@ -39,7 +27,6 @@
         <field name="name">Ingenico</field>
         <field name="display_as">Credit Card (powered by Ingenico)</field>
         <field name="sequence">2</field>
-        <field name="view_template_id" ref="default_acquirer_button"/>
         <field name="image_128" type="base64" file="payment_ingenico/static/src/img/ingenico_icon.png"/>
         <field name="module_id" ref="base.module_payment_ingenico"/>
         <field name="description" type="html">
@@ -65,7 +52,6 @@
     <record id="payment_acquirer_adyen" model="payment.acquirer">
         <field name="name">Adyen</field>
         <field name="display_as">Credit Card (powered by Adyen)</field>
-        <field name="view_template_id" ref="default_acquirer_button"/>
         <field name="image_128" type="base64" file="payment_adyen/static/src/img/adyen_icon.png"/>
         <field name="module_id" ref="base.module_payment_adyen"/>
         <field name="description" type="html">
@@ -92,7 +78,6 @@
         <field name="name">Authorize.net</field>
         <field name="display_as">Credit Card (powered by Authorize)</field>
         <field name="sequence">3</field>
-        <field name="view_template_id" ref="default_acquirer_button"/>
         <field name="image_128" type="base64" file="payment_authorize/static/src/img/authorize_icon.png"/>
         <field name="module_id" ref="base.module_payment_authorize"/>
         <field name="description" type="html">
@@ -120,7 +105,6 @@
     <record id="payment_acquirer_transfer" model="payment.acquirer">
         <field name="name">Wire Transfer</field>
         <field name="sequence">2</field>
-        <field name="view_template_id" ref="default_acquirer_button"/>
         <field name="image_128" type="base64" file="payment_transfer/static/src/img/transfer_icon.png"/>
         <field name="module_id" ref="base.module_payment_transfer"/>
         <field name="pending_msg">&lt;i&gt;Pending&lt;/i&gt;... The order will be validated after the payment.</field>
@@ -134,7 +118,6 @@
     <record id="payment_acquirer_sips" model="payment.acquirer">
         <field name="name">Sips</field>
         <field name="display_as">Credit Card (powered by Sips)</field>
-        <field name="view_template_id" ref="default_acquirer_button"/>
         <field name="image_128" type="base64" file="payment_sips/static/src/img/sips_icon.png"/>
         <field name="module_id" ref="base.module_payment_sips"/>
         <field name="description" type="html">
@@ -161,7 +144,6 @@
     <record id="payment_acquirer_paypal" model="payment.acquirer">
         <field name="name">PayPal</field>
         <field name="sequence">1</field>
-        <field name="view_template_id" ref="default_acquirer_button"/>
         <field name="image_128" type="base64" file="payment_paypal/static/src/img/paypal_icon.png"/>
         <field name="module_id" ref="base.module_payment_paypal"/>
         <field name="description" type="html">
@@ -187,7 +169,6 @@
     <record id="payment_acquirer_stripe" model="payment.acquirer">
         <field name="name">Stripe</field>
         <field name="display_as">Credit Card (powered by Stripe)</field>
-        <field name="view_template_id" ref="default_acquirer_button"/>
         <field name="image_128" type="base64" file="payment_stripe/static/src/img/stripe_icon.png"/>
         <field name="module_id" ref="base.module_payment_stripe"/>
         <field name="description" type="html">
@@ -218,7 +199,6 @@
         <field name="name">PayUmoney</field>
         <field name="display_as">Credit Card (powered by PayUmoney)</field>
         <field name="image_128" type="base64" file="payment_payumoney/static/src/img/payumoney_icon.png"/>
-        <field name="view_template_id" ref="default_acquirer_button"/>
         <field name="module_id" ref="base.module_payment_payumoney"/>
         <field name="description" type="html">
             <p>
@@ -242,7 +222,6 @@
         <field name="name">PayU Latam</field>
         <field name="display_as">Credit Card (powered by PayU Latam)</field>
         <field name="image_128" type="base64" file="payment_payulatam/static/src/img/payulatam_icon.png"/>
-        <field name="view_template_id" ref="default_acquirer_button"/>
         <field name="module_id" ref="base.module_payment_payulatam"/>
         <field name="description" type="html">
             <p>
@@ -265,7 +244,6 @@
         <field name="name">Alipay</field>
         <field name="display_as">Credit Card (powered by Alipay)</field>
         <field name="image_128" type="base64" file="payment_alipay/static/description/icon.png"/>
-        <field name="view_template_id" ref="default_acquirer_button"/>
         <field name="module_id" ref="base.module_payment_alipay"/>
         <field name="description" type="html">
             <p>
@@ -282,7 +260,6 @@
 
     <record id="payment.payment_acquirer_sepa_direct_debit" model="payment.acquirer">
         <field name="name">SEPA Direct Debit</field>
-        <field name="view_template_id" ref="default_acquirer_button"/>
         <field name="image_128" type="base64" file="base/static/img/icons/payment_sepa_direct_debit.png"/>
         <field name="module_id" ref="base.module_payment_sepa_direct_debit"/>
         <field name="description" type="html">
