@@ -809,7 +809,7 @@ class Survey(models.Model):
             'type': 'ir.actions.act_url',
             'name': "Results of the Survey",
             'target': 'self',
-            'url': '/survey/results/%s' % self.id
+            'url': '/survey/%s/results' % self.id
         }
 
     def action_test_survey(self):
@@ -819,7 +819,7 @@ class Survey(models.Model):
             'type': 'ir.actions.act_url',
             'name': "Test Survey",
             'target': 'self',
-            'url': '/survey/test/%s' % self.access_token,
+            'url': '/survey/%s/test' % self.access_token,
         }
 
     def action_survey_user_input_completed(self):
@@ -883,7 +883,7 @@ class Survey(models.Model):
             'type': 'ir.actions.act_url',
             'name': "Open Session Manager",
             'target': 'self',
-            'url': '/survey/session/manage/%s' % self.access_token
+            'url': '/survey/%s/session/manage' % self.access_token
         }
 
     def action_end_session(self):
@@ -898,14 +898,14 @@ class Survey(models.Model):
         self.env['bus.bus'].sendone(self.access_token, {'type': 'end_session'})
 
     def get_start_url(self):
-        return '/survey/start/%s' % self.access_token
+        return '/survey/%s/start' % self.access_token
 
     def get_start_short_url(self):
         """ See controller method docstring for more details. """
         return '/s/%s' % self.access_token[:6]
 
     def get_print_url(self):
-        return '/survey/print/%s' % self.access_token
+        return '/survey/%s/print' % self.access_token
 
     # ------------------------------------------------------------
     # GRAPH / RESULTS
