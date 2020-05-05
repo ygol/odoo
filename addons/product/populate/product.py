@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 import logging
-import random
 import collections
 
 from odoo import models
 from odoo.tools import populate
 
 _logger = logging.getLogger(__name__)
-
-PRODUCT_TYPES = ["consu", "service"]
 
 
 class ProductCategory(models.Model):
@@ -35,10 +32,10 @@ class ProductCategory(models.Model):
         parent_ids = parents.ids
         categories -= parents # Avoid recursion in parent-child relations.
         parent_childs = collections.defaultdict(lambda: self.env['product.category'])
-        rand = random.Random()
+        rand = populate.Random('product.product+parent_generator')
         for count, category in enumerate(categories):
             if not rand.getrandbits(2): # 1/4 of remaining categories have a parent.
-                parent_childs[random.choice(parent_ids)] |= category
+                parent_childs[rand.choice(parent_ids)] |= category
 
         for count, (parent, children) in enumerate(parent_childs.items()):
             if (count + 1) % 100 == 0:
@@ -50,14 +47,14 @@ class ProductProduct(models.Model):
     _populate_sizes = {"small": 150, "medium": 5000, "large": 60000}
     _populate_dependencies = ["product.category"]
 
-    def _get_types(self):
-        return PRODUCT_TYPES, [0.8, 0.2]
+    def _populate_get_types(self):
+        return ["consu", "service"], [2, 1]
 
     def _populate_factories(self):
         category_ids = self.env.registry.populated_models["product.category"]
-        types, types_distribution = self._get_types()
+        types, types_distribution = self._populate_get_types()
 
-        def get_rand_float(values=None, counter=0, **kwargs):
+        def get_rand_float(values, counter, random):
             return random.randrange(0, 1500) * random.random()
 
         return [
