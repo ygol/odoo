@@ -27,12 +27,14 @@ class ProductCategory(models.Model):
 
     def _populate_set_parents(self, categories, size):
         _logger.info('Setting parent categories')
-        parent_len = int(self._populate_sizes[size] / 5) # ~20% of categories may have children
-        parents = categories[::parent_len]
+        parents = self.env["product.category"]
+        rand = populate.Random('product.product+parent_generator')
+        for category in categories:
+            if not rand.getrandbits(4):
+                parents |= category
         parent_ids = parents.ids
         categories -= parents # Avoid recursion in parent-child relations.
         parent_childs = collections.defaultdict(lambda: self.env['product.category'])
-        rand = populate.Random('product.product+parent_generator')
         for count, category in enumerate(categories):
             if not rand.getrandbits(2): # 1/4 of remaining categories have a parent.
                 parent_childs[rand.choice(parent_ids)] |= category
