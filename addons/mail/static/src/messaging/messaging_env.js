@@ -18,7 +18,7 @@ async function addMessagingToEnv(env) {
     const store = new Store({
         env,
         state: {
-            entities: {},
+            counter: 0,
         },
     });
     /**

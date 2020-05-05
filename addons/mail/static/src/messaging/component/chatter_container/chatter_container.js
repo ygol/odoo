@@ -24,6 +24,7 @@ class ChatterContainer extends Component {
     constructor(...args) {
         super(...args);
         this.chatter = undefined;
+        this._prevProps = undefined;
         this._wasMessagingInitialized = false;
         useStore(props => {
             const isMessagingInitialized = this.env.isMessagingInitialized();
@@ -58,8 +59,9 @@ class ChatterContainer extends Component {
      * @private
      */
     _update() {
-        if (this.chatter) {
+        if (this.chatter && this._prevProps !== this.props) {
             this.chatter.update(this.props);
+            this._prevProps = this.props;
         }
     }
 

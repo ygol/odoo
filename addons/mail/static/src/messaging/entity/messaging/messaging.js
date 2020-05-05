@@ -27,6 +27,10 @@ function MessagingFactory({ Entity }) {
              */
             this.isMessaging = true;
             /**
+             * Contain state of messaging that is used right now.
+             */
+            this.state = {};
+            /**
              * Whether this is currently handling an "update after" on an entity.
              * Useful to determine if we should process computed/related fields.
              */
@@ -91,6 +95,7 @@ function MessagingFactory({ Entity }) {
          *   registered for compute during this update cycle.
          */
         processUpdate(entity, data, { isJustCreated = false } = {}) {
+            this.env.store.state.counter++;
             if (!this._isInUpdateCycle) {
                 this._isInUpdateCycle = true;
                 this._processDirectUpdate(entity, data, { isJustCreated });
@@ -188,8 +193,8 @@ function MessagingFactory({ Entity }) {
         registerEntity(entity, data) {
             // Make state, which contain field values of entity that have to
             // be observed in store.
-            this.env.store.state.entities[entity.localId] = {};
-            entity.__state = this.env.store.state.entities[entity.localId];
+            this.state[entity.localId] = {};
+            entity.__state = this.state[entity.localId];
 
             // Make proxified entity, so that access to field redirects
             // to field getter.
@@ -251,7 +256,7 @@ function MessagingFactory({ Entity }) {
          */
         unregisterEntity(entity) {
             delete this.entityInstances[entity.localId];
-            delete this.env.store.state.entities[entity.localId];
+            delete this.state[entity.localId];
         }
 
         //----------------------------------------------------------------------

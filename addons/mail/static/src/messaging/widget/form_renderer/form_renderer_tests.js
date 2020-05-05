@@ -5,6 +5,7 @@ const {
     afterEach: utilsAfterEach,
     afterNextRender,
     beforeEach: utilsBeforeEach,
+    pause,
     start,
 } = require('mail.messaging.testUtils');
 
