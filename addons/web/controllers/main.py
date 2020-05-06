@@ -838,7 +838,8 @@ class Home(http.Controller):
     def web_client(self, s_action=None, **kw):
         ensure_db()
         if not request.session.uid:
-            return werkzeug.utils.redirect('/web/login', 303)
+            qs = '?' + url_encode({'redirect': kw['redirect']}) if kw.get('redirect') else ''
+            return werkzeug.utils.redirect('/web/login' + qs, 303)
         if kw.get('redirect'):
             return werkzeug.utils.redirect(kw.get('redirect'), 303)
 

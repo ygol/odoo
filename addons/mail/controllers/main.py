@@ -22,7 +22,7 @@ class MailController(http.Controller):
 
     @classmethod
     def _redirect_to_messaging(cls):
-        url = '/web#%s' % url_encode({'action': 'mail.action_discuss'})
+        url = '/web?' + url_encode({'redirect': '/web#%s' % url_encode({'action': 'mail.action_discuss'})})
         return werkzeug.utils.redirect(url)
 
     @classmethod
@@ -123,7 +123,8 @@ class MailController(http.Controller):
 
         if cids:
             url_params['cids'] = ','.join([str(cid) for cid in cids])
-        url = '/web?#%s' % url_encode(url_params)
+        action_url = '/web?#%s' % url_encode(url_params)
+        url = '/web?' + url_encode({'redirect': action_url})
         return werkzeug.utils.redirect(url)
 
     @http.route('/mail/read_followers', type='json', auth='user')
