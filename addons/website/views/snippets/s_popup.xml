@@ -47,7 +47,7 @@
                 <we-button data-select-class="modal-xl">Big</we-button>
                 <we-button data-select-class="s_popup_full" data-name="s_popup_size_full">Full</we-button>
             </we-select>
-            <we-colorpicker string="Backdrop Color" data-select-style="true"
+            <we-colorpicker string="Backdrop Color" class="s_popup_backdrop" data-select-style="true"
                 data-css-property="background-color" data-color-prefix="bg-" data-dependencies="position_centered"/>
         </div>
         <div data-js="PopupContent" data-selector=".s_popup" data-target=".s_popup_content">
