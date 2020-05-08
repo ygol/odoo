@@ -34,6 +34,7 @@ options.registry.SnippetPopup = options.Class.extend({
      */
     onTargetShow: async function () {
         this.$target.removeClass('d-none');
+        $('body').addClass('modal-open');
     },
     /**
      * @override

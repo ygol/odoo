@@ -1099,6 +1099,9 @@ var SnippetsMenu = Widget.extend({
         }
 
         if ($selectorChildren) {
+            if ($('body').hasClass('modal-open')) {
+                $selectorChildren = $(this).find('.s_popup_main .modal-content');
+            }
             $selectorChildren.each(function () {
                 var $zone = $(this);
                 var style;
@@ -1112,7 +1115,6 @@ var SnippetsMenu = Widget.extend({
 
                 style = {};
                 vertical = false;
-                node = $zone[0].lastChild;
                 var test = !!(node && ((!node.tagName && node.textContent.match(/\S/)) || node.tagName === 'BR'));
                 if (test) {
                     vertical = true;
@@ -1152,6 +1154,9 @@ var SnippetsMenu = Widget.extend({
         }
 
         if ($selectorSiblings) {
+            if ($('body').hasClass('modal-open')) {
+                $selectorSiblings = $('.s_popup_main .modal-content');
+            }
             $selectorSiblings.filter(':not(.oe_drop_zone):not(.oe_drop_clone)').each(function () {
                 var $zone = $(this);
                 var style;
