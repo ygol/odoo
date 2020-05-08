@@ -21,7 +21,7 @@
             <field name="name">account.analytic.line.tree.hr_timesheet</field>
             <field name="model">account.analytic.line</field>
             <field name="arch" type="xml">
-                <tree editable="top" string="Timesheet Activities" js_class="timesheet_tree">
+                <tree editable="top" string="Timesheet Activities" js_class="timesheet_tree" multi_edit="1">
                     <field name="date"/>
                     <field name="project_id" required="1" context="{'form_view_ref': 'project.project_project_view_form_simplified',}"/>
                     <field name="task_id" optional="show" widget="task_with_hours" context="{'default_project_id': project_id}" domain="[('project_id', '=', project_id)]"/>
