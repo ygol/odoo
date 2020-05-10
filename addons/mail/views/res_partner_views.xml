@@ -11,11 +11,17 @@
                     <field name="is_blacklisted" invisible="1"/>
                     <label for="email" class="oe_inline"/>
                     <div class="o_row o_row_readonly">
+<<<<<<< HEAD
                         <button name="mail_action_blacklist_remove" class="fa fa-ban text-danger"
                             title="This email is blacklisted for mass mailings. Click to unblacklist."
                             type="object" context="{'default_email': email}" groups="base.group_user"
                             attrs="{'invisible': [('is_blacklisted', '=', False)]}"/>
                         <field name="email" widget="email"/>
+=======
+                        <i class="fa fa-ban" style="color: red;" role="img" title="This email is blacklisted for mass mailing"
+                            aria-label="Blacklisted" attrs="{'invisible': [('is_blacklisted', '=', False)]}" groups="base.group_user"></i>
+                        <field name="email" widget="email" context="{'gravatar_image': True}" attrs="{'required': [('user_ids','!=', [])]}" />
+>>>>>>> d7d3b19679b... temp
                     </div>
                 </xpath>
                 <xpath expr="//sheet" position="after">
