@@ -1918,7 +1918,11 @@ class Form(object):
             return
 
         record = self._model.browse(self._values.get('id'))
-        result = record.onchange(self._onchange_values(), fields, spec)
+        onchange_values = self._onchange_values()
+        # print(' onchange '.center(200, '^'))
+        # pprint.pprint(onchange_values)
+        # print('v'*200)
+        result = record.onchange(onchange_values, fields, spec)
         self._model.flush()
         self._model.env.clear()  # discard cache and pending recomputations
         if result.get('warning'):
@@ -1935,20 +1939,34 @@ class Form(object):
             if k in self._view['fields']
         )
 
-    def _onchange_values(self):
-        f = self._view['fields']
+    def _onchange_values(self, *, fields=None, vals=None):
+        if fields is None:
+            fields = self._view['fields']
+        if vals is None:
+            vals = self._values
         values = {}
-        for k, v in self._values.items():
-            if f[k]['type'] == 'one2many':
+        for k, v in vals.items():
+            descr = fields[k]
+            if descr['type'] == 'one2many':
                 it = values[k] = []
                 for (c, rid, vs) in v:
-                    if c == 1 and not vs:
+                    if vs:
+                        if c == 1 and isinstance(vs, UpdateDict):
+                            vs = dict(vs.changed_items())
+                        else:
+                            vs = dict(vs)
+                        # vs.pop('id', None)
+
+                    if vs:
+                        vs = self._onchange_values(
+                            fields=descr['views']['edition']['fields'],
+                            vals=vs
+                        )
+                    elif c == 1:
                         # web client sends a 4 for unmodified o2m rows
-                        it.append((4, rid, False))
-                    elif c == 1 and isinstance(vs, UpdateDict):
-                        it.append((1, rid, dict(vs.changed_items())))
-                    else:
-                        it.append((c, rid, vs))
+                        c = 4
+
+                    it.append((c, rid, vs))
             else:
                 values[k] = v
         return values
@@ -2065,11 +2083,12 @@ class O2MForm(Form):
 
         return super()._get_modifier(field, modifier, default=default, modmap=modmap, vals=vals)
 
-    def _onchange_values(self):
-        values = super(O2MForm, self)._onchange_values()
-        # computed o2m may not have a relation_field(?)
+    def _onchange_values(self, *, fields=None, vals=None):
+        values = super(O2MForm, self)._onchange_values(fields=fields, vals=vals)
         descr = self._proxy._descr
-        if 'relation_field' in descr: # note: should be fine because not recursive
+        # if fields was provided we're not on `self`... so maybe should have the
+        # entire view / form object instead? Not sure how we'd get the parent's
+        if fields is None and 'relation_field' in descr: # note: should be fine because not recursive
             values[descr['relation_field']] = self._proxy._parent._onchange_values()
         return values
 

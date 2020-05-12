@@ -176,21 +176,6 @@ class StockMove(models.Model):
                 defaults['additional'] = True
         return defaults
 
-    def update(self, values):
-        """ The server-side form cannot deal with 2 levels of one2many inside the main form view.
-        The field 'id' is added to the values to save and not remove properly like the main form one
-        or any other level 1 one2many object. It's saw as a field to be modify in database.
-        This leads to an error in fields.py, __setattr__() of class Id.
-        We remove manually the added 'id' key of the values to save dict. This hack is done waiting
-        for a fix in the served-side Form engine.
-
-        This override was needed for test_product_produce_9 and test_product_produce_11."""
-        if self.env.context.get('debug'):
-            if 'move_line_ids' in values:
-                if 'id' in values['move_line_ids'][0][2]:
-                    values['move_line_ids'][0][2].pop('id')
-        return super().update(values)
-
     def _action_assign(self):
         res = super(StockMove, self)._action_assign()
         for move in self.filtered(lambda x: x.production_id or x.raw_material_production_id):
