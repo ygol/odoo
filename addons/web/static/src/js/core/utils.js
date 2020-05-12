@@ -205,6 +205,70 @@ var diacriticsMap = {
 
 const patchMap = new WeakMap();
 
+/**
+ * This object is where the special object types are defined. It can be further
+ * extended with more object types if needed. Object type definitions should have
+ * the following form:
+ * @property {class} Class the object constructor class (eg: Map, Date)
+ * @property {string} prefix a unique string used to deserialize the stringified
+ *      object (eg: "__MAP__")
+ * @property {(object: any) => any} serialize a function returning a serializable
+ *      form of the given object, like a string or an array.
+ */
+const UNSERIALIZABLE_TYPES = [
+    {
+        Class: Map,
+        prefix: "__MAP__",
+        serialize: map => [...map.entries()],
+    },
+    {
+        Class: Set,
+        prefix: "__SET__",
+        serialize: set => [...set.values()],
+    },
+];
+
+const compressBS = (m) => `\\${m.length}`;
+const decompressBS = (m) => new Array(Number(m.slice(1))).fill('\\').join("");
+
+/**
+ * Used to propertly stringify unserialized objects.
+ * @param {any} key
+ * @param {any} value
+ * @returns {any}
+ */
+function jsonReplacer(key, value) {
+    const type = UNSERIALIZABLE_TYPES.find(
+        ({ Class }) => value instanceof Class
+    );
+    if (type) {
+        const serialized = type.serialize(value);
+        const stringified = JSON.stringify(serialized, jsonReplacer);
+        return type.prefix + stringified;
+    } else {
+        return value;
+    }
+}
+
+/**
+ * Used to instantiate objects stringified via 'jsonReplacer'.
+ * @param {any} key
+ * @param {any} value
+ * @returns {any}
+ */
+function jsonReviver(key, value) {
+    const type = UNSERIALIZABLE_TYPES.find(
+        ({ prefix }) => new RegExp('^' + prefix).test(value)
+    );
+    if (type) {
+        const stringified = value.slice(type.prefix.length);
+        const serialized = JSON.parse(stringified, jsonReviver);
+        return new type.Class(serialized);
+    } else {
+        return value;
+    }
+}
+
 var utils = {
 
     /**
@@ -717,6 +781,29 @@ var utils = {
                 return stable.indexOf(a) - stable.indexOf(b);
             }
         });
+    },
+    /**
+     * Serialize and stringify a given object. Multiple consecutive backslashes
+     * are then compressed to avoid having an exponential amount of them.
+     *
+     * @param {any} object
+     * @returns {string}
+     */
+    stringify: function (object) {
+        const stringified = JSON.stringify(object, jsonReplacer);
+        const compressed = stringified.replace(/\\{2,}/g, compressBS);
+        return compressed;
+    },
+    /**
+     * Parse and instantiate strings serialized via 'stringify'.
+     *
+     * @param {string} string
+     * @returns {any}
+     */
+    parse: function (string) {
+        const decompressed = string.replace(/\\\d+/g, decompressBS);
+        const parsed = JSON.parse(decompressed, jsonReviver);
+        return parsed;
     },
     /**
      * @param {any} array

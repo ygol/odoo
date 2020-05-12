@@ -257,6 +257,111 @@ QUnit.module('core', {}, function () {
         assert.deepEqual(sortBy(objbools, getter), [{ x: false }, { x: true }, { x: true }]);
         assert.deepEqual(sortBy(objints, getter), [{ x: 1 }, { x: 2 }, { x: 5 }]);
         assert.deepEqual(sortBy(objstrss, getter), [{ x: 'a' }, { x: 'b' }, { x: 'z' }]);
+
+    });
+
+    QUnit.test("parse/stringify", function (assert) {
+        assert.expect(29);
+
+        /**
+         * Helper performing the following actions:
+         * 1. CALL 'util.stringify' on the initial object;
+         * 2. ASSERT that the resulting string is strictly equal to the 'transition'
+         *    argument;
+         * 3. CALL 'util.parse' on the string result;
+         * 4. CALL the given 'assertEquality' which can assert the equality of the
+         *    initial object and the final result.
+         * @assert once
+         * @param {any} initial
+         * @param {string} transition
+         * @param {(init: any, result: any) => void} assertEquality
+         */
+        function assertTransition(initial, transition, assertEquality) {
+            const stringified = utils.stringify(initial);
+            assert.strictEqual(stringified, transition);
+            const result = utils.parse(stringified);
+            assertEquality.call(assert, initial, result);
+        }
+
+        // Simple objects
+        assertTransition("a", `"a"`, assert.strictEqual);
+        assertTransition(1, `1`, assert.strictEqual);
+        assertTransition(true, `true`, assert.strictEqual);
+        assertTransition([], `[]`, assert.deepEqual);
+        assertTransition({}, `{}`, assert.deepEqual);
+        assertTransition(["a"], `["a"]`, assert.deepEqual);
+        assertTransition({ a: 1 }, `{"a":1}`, assert.deepEqual);
+
+        // Symbols (supported but not working)
+        assertTransition(Symbol("a"), `"undefined"`,
+            (a, init, res) => res === undefined);
+
+        // Simple maps
+        assertTransition(
+            {
+                map: new Map([
+                    ["a", 1],
+                    ["b", 2],
+                ]),
+            },
+            `{"map":"__MAP__[[\\"a\\",1],[\\"b\\",2]]"}`,
+            ({ map: init }, { map: result }) => {
+                assert.ok(result instanceof Map);
+                assert.deepEqual([...init.entries()], [...result.entries()]);
+            }
+        );
+
+        // Nested maps
+        assertTransition(
+            {
+                map: new Map([
+                    ["a", 1],
+                    ["b", new Map([ ["c", 3] ])],
+                ]),
+            },
+            `{"map":"__MAP__[[\\"a\\",1],[\\"b\\",\\"__MAP__[[\\3"c\\3",3]]\\"]]"}`,
+            ({ map: init }, { map: result }) => {
+                assert.ok(result.get("b") instanceof Map);
+                assert.deepEqual([...init.get("b").entries()], [...result.get("b").entries()]);
+            }
+        );
+
+        // Sets
+        assertTransition(
+            { set: new Set([1, 4, 1, 2]) },
+            `{"set":"__SET__[1,4,2]"}`,
+            ({ set: init }, { set: result }) => {
+                assert.ok(result instanceof Set);
+                assert.deepEqual([...init.values()], [...result.values()]);
+            }
+        );
+
+        // Mix of nested maps/sets
+        assertTransition(
+            {
+                map: new Map([
+                    ["set", new Set([
+                        new Map([
+                            [true, 1]
+                        ])
+                    ])]
+                ]),
+            },
+            `{"map":"__MAP__[[\\"set\\",\\"__SET__[\\3"__MAP__[[true,1]]\\3"]\\"]]"}`,
+            (init, result) => {
+                // First map
+                const map1 = result.map;
+                assert.ok(map1 instanceof Map);
+                const set = map1.get("set");
+                assert.ok(set instanceof Set);
+                const map2 = [...set][0];
+                assert.ok(map2 instanceof Map);
+                assert.deepEqual(
+                    [...map2.entries()],
+                    [...[...init.map.get("set")][0].entries()]
+                );
+            }
+        );
     });
 });
 
