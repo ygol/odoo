@@ -204,7 +204,7 @@ class AccountBankStatement(models.Model):
 
     name = fields.Char(string='Reference', states={'open': [('readonly', False)]}, copy=False, readonly=True)
     reference = fields.Char(string='External Reference', states={'open': [('readonly', False)]}, copy=False, readonly=True, help="Used to hold the reference of the external mean that created this statement (name of imported file, reference of online synchronization...)")
-    date = fields.Date(required=True, states={'confirm': [('readonly', True)]}, index=True, copy=False, default=fields.Date.context_today)
+    date = fields.Datetime(required=True, states={'confirm': [('readonly', True)]}, index=True, copy=False, default=fields.Datetime.context_timestamp)
     date_done = fields.Datetime(string="Closed On")
     balance_start = fields.Monetary(string='Starting Balance', states={'confirm': [('readonly', True)]}, compute='_compute_starting_balance', readonly=False, store=True)
     balance_end_real = fields.Monetary('Ending Balance', states={'confirm': [('readonly', True)]}, compute='_compute_ending_balance', readonly=False, store=True)
