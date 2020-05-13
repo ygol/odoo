@@ -60,7 +60,7 @@ class ProductProduct(models.Model):
             return random.randrange(0, 1500) * random.random()
 
         return [
-            ("name", populate.constant('product_template_name_{counter}')),
+            ("name", populate.constant('product_product_name_{counter}')),
             ("sequence", populate.randomize([False] + [i for i in range(1, 101)])),
             ("description", populate.constant('product_template_description_{counter}')),
             ("default_code", populate.constant('product_default_code_{counter}')),
