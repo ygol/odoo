@@ -3155,6 +3155,12 @@ registry.SnippetSave = SnippetOptionWidget.extend({
                     classes: 'btn-primary',
                     close: true,
                     click: async () => {
+                        // Here, Destroying related widget of snippet. widgets_stop_request will destroy
+                        // a snippet and reload_snippet_template will starting template.
+                        // Widgets refreshed after change an option, so no need to call widget_strat_request
+                        // to restart the widget.
+                        this.trigger_up('widgets_stop_request', {$target: this.$target});
+
                         const snippetName = dialog.el.querySelector('.o_we_snippet_name_input').value;
                         const targetCopyEl = this.$target[0].cloneNode(true);
                         delete targetCopyEl.dataset.name;

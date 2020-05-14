@@ -30,7 +30,7 @@ const CountdownWidget = publicWidget.Widget.extend({
         this.progressBarWeight = this.el.dataset.progressBarWeight;
 
         this.textColor = this._ensureCssColor(this.el.dataset.textColor);
-        this.layoutBackgroundColor = this._ensureCssColor(this.el.dataset.layoutBackgroundColor);
+        this.layoutBackgroundColor = this._ensureCssColor(this.el.dataset.layoutBackgroundColor) || 'rgba(0, 0, 0, 0)';
         this.progressBarColor = this._ensureCssColor(this.el.dataset.progressBarColor);
 
         this.onlyOneUnit = this.display === 'd';
