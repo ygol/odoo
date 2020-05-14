@@ -119,8 +119,10 @@ var Wysiwyg = Widget.extend({
         const elementToParse = document.createElement('div');
         elementToParse.innerHTML = this.value;
         // this.editor = new JWEditorLib.BasicEditor(elementToParse);
+        elementToParse
         $(document.body).addClass('o_connected_user editor_enable editor_has_snippets')
         this.editor = new JWEditorLib.OdooWebsiteEditor({
+            elementToParse: elementToParse,
             afterRender: ()=>{
                 const $firstDiv = $('jw-editor main>div');
                 $firstDiv.addClass('oe_structure oe_empty o_editable note-air-editor note-editable')
@@ -135,18 +137,17 @@ var Wysiwyg = Widget.extend({
                 this.snippetsMenu.afterRender();
             }
         });
-        this.editor.load(JWEditorLib.DevTools);
-        this.editor.configure(JWEditorLib.Dom, {
-            autoFocus: true,
-            target: elementToParse,
-        });
+        // this.editor.load(JWEditorLib.DevTools);
+        // this.editor.configure(JWEditorLib.Dom, {
+        //     autoFocus: true,
+        //     target: elementToParse,
+        // });
         this.editor.start();
 
 
         window.editor = this.editor;
-        window.Dom = JWEditorLib.Dom;
         window.JWEditorLib = JWEditorLib;
-        window.domMap = this.editor.plugins.get(JWEditorLib.Dom).domMap;
+        // window.domMap = this.editor.plugins.get(JWEditorLib.Dom).domMap;
 
         // init editor commands helpers for Odoo
         this.editorCommands = JWEditorLib.createExecCommandHelpersForOdoo2(this.editor);
