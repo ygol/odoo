@@ -181,12 +181,13 @@ class TestAccountPayment(AccountTestInvoicingCommon):
         pay_form.partner_type = 'customer'
         pay_form.destination_account_id = copy_receivable
         payment = pay_form.save()
+        payment.payment_reference = 'turlututu'
 
         expected_payment_values = {
             'amount': 50.0,
             'payment_type': 'inbound',
             'partner_type': 'customer',
-            'payment_reference': False,
+            'payment_reference': 'turlututu',
             'is_reconciled': False,
             'currency_id': self.company_data['currency'].id,
             'partner_id': False,
