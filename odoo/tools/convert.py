@@ -580,10 +580,13 @@ form: module.record_id""" % (xml_id,)
         record.append(Field(full_tpl_id, name='key'))
         record.append(Field("qweb", name='type'))
 
-        if 'track' in el.attrib:
-            record.append(Field(el.get('track'), name='track'))
-        else:
-            record.append(Field(name="track", eval="False"))
+        View = self.env['ir.ui.view']
+
+        if 'track' in View:
+            if 'track' in el.attrib:
+                record.append(Field(el.get('track'), name='track'))
+            else:
+                record.append(Field(name="track", eval="False"))
 
         if 'priority' in el.attrib:
             record.append(Field(el.get('priority'), name='priority'))
@@ -595,10 +598,11 @@ form: module.record_id""" % (xml_id,)
         else:
             record.append(Field(name="inherit_id", eval="False"))
 
-        if 'website_id' in el.attrib:
-            record.append(Field(name='website_id', ref=el.get('website_id')))
-        else:
-            record.append(Field(name="website_id", eval="False"))
+        if 'website_id' in View:
+            if 'website_id' in el.attrib:
+                record.append(Field(name='website_id', ref=el.get('website_id')))
+            else:
+                record.append(Field(name="website_id", eval="False"))
 
         if 'key' in el.attrib:
             record.append(Field(el.get('key'), name='key'))
@@ -611,10 +615,11 @@ form: module.record_id""" % (xml_id,)
             else:
                 record.append(Field(name='active', eval='False'))
 
-        if el.get('customize_show') in ("True", "False"):
-            record.append(Field(name='customize_show', eval=el.get('customize_show')))
-        else:
-            record.append(Field(name="customize_show", eval="False"))
+        if 'customize_show' in View:
+            if el.get('customize_show') in ("True", "False"):
+                record.append(Field(name='customize_show', eval=el.get('customize_show')))
+            else:
+                record.append(Field(name="customize_show", eval="False"))
 
         groups = el.attrib.pop('groups', None)
         if groups:
