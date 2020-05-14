@@ -278,20 +278,13 @@ form: module.record_id""" % (xml_id,)
             assert res[dest], "Attribute %s of report is empty !" % (f,)
         for field, dest in (('attachment', 'attachment'),
                             ('attachment_use', 'attachment_use'),
-                            ('usage', 'usage'),
                             ('file', 'report_file'),
                             ('report_type', 'report_type'),
-                            ('parser', 'parser'),
                             ('print_report_name', 'print_report_name'),
                             ):
             res[dest] = rec.get(field)
-        if rec.get('auto'):
-            res['auto'] = safe_eval(rec.get('auto','False'))
-        else:
-            res["auto"] = False
 
-        res["header"] = rec.get("header") and safe_eval(rec.get("header", "False"))
-        res["multi"] = rec.get("multi") and safe_eval(rec.get("multi", "False"))
+        res['multi'] = safe_eval(rec.get('multi') or 'False')
 
         xml_id = rec.get('id','')
         self._test_xml_id(xml_id)
@@ -299,11 +292,8 @@ form: module.record_id""" % (xml_id,)
 
         res["groups_id"] = self.parse_groups(rec.get("groups"), xid)
 
-        pf_id = False
-        if rec.get('paperformat'):
-            pf_name = rec.get('paperformat')
-            pf_id = self.id_get(pf_name)
-        res["paperformat_id"] = pf_id
+        pf_name = rec.get('paperformat')
+        res["paperformat_id"] = self.id_get(pf_name) if pf_name else False
 
         data = dict(xml_id=xid, values=res, noupdate=self.noupdate)
         report = self.env['ir.actions.report']._load_records([data], self.mode == 'update')
@@ -398,11 +388,11 @@ form: module.record_id""" % (xml_id,)
         if binding_model:
             res['binding_model_id'] = self.env['ir.model']._get(binding_model).id
             res['binding_type'] = rec.get('binding_type') or 'action'
-            views = rec.get('binding_views')
-            if views is not None:
-                res['binding_view_types'] = views
+            res['binding_view_types'] = rec.get('binding_views') or 'list,form'
         else:
-            res["binding_model_id"] = res["binding_type"] = res["binding_view_types"] = False
+            res["binding_model_id"] = False
+            res["binding_type"] = 'action'
+            res["binding_view_types"] = 'list,form'
         data = dict(xml_id=xid, values=res, noupdate=self.noupdate)
         self.env['ir.actions.act_window']._load_records([data], self.mode == 'update')
 
@@ -416,9 +406,9 @@ form: module.record_id""" % (xml_id,)
         values = {
             'parent_id': False,
             'active': nodeattr2bool(rec, 'active', default=True),
-            "web_icon": False,
-            "name": False,
-            "action": False,
+            'web_icon': False,
+            'name': False,
+            'action': False,
         }
 
         values['sequence'] = int(rec.get('sequence', 16))
@@ -590,31 +580,42 @@ form: module.record_id""" % (xml_id,)
         record.append(Field(full_tpl_id, name='key'))
         record.append(Field("qweb", name='type'))
 
-        set_false = lambda field: record.append(Field(name=field, eval="False"))
-
         if 'track' in el.attrib:
             record.append(Field(el.get('track'), name='track'))
-        else: set_false("track")
+        else:
+            record.append(Field(name="track", eval="False"))
+
         if 'priority' in el.attrib:
             record.append(Field(el.get('priority'), name='priority'))
-        else: set_false("priority")
+        else:
+            record.append(Field(name="priority", eval="False"))
+
         if 'inherit_id' in el.attrib:
             record.append(Field(name='inherit_id', ref=el.get('inherit_id')))
-        else: set_false("inherit_id")
+        else:
+            record.append(Field(name="inherit_id", eval="False"))
+
         if 'website_id' in el.attrib:
             record.append(Field(name='website_id', ref=el.get('website_id')))
-        else: set_false("website_id")
+        else:
+            record.append(Field(name="website_id", eval="False"))
+
         if 'key' in el.attrib:
             record.append(Field(el.get('key'), name='key'))
-        else: set_false("key")
-        if el.get('active') in ("True", "False"):
-            view_id = self.id_get(tpl_id, raise_if_not_found=False)
-            if self.mode != "update" or not view_id:
+        else:
+            record.append(Field(name="key", eval="False"))
+
+        if self.mode != 'update':
+            if el.get('active') in ("True", "False") and self.id_get(tpl_id, raise_if_not_found=False):
                 record.append(Field(name='active', eval=el.get('active')))
-        elif self.mode != "update": set_false("active")
+            else:
+                record.append(Field(name='active', eval='False'))
+
         if el.get('customize_show') in ("True", "False"):
             record.append(Field(name='customize_show', eval=el.get('customize_show')))
-        else: set_false("customize_show")
+        else:
+            record.append(Field(name="customize_show", eval="False"))
+
         groups = el.attrib.pop('groups', None)
         if groups:
             grp_lst = [("ref('%s')" % x) for x in groups.split(',')]
