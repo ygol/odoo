@@ -242,6 +242,12 @@ form: module.record_id""" % (xml_id,)
                 modcnt = self.env['ir.module.module'].search_count([('name', '=', module), ('state', '=', 'installed')])
                 assert modcnt == 1, """The ID "%s" refers to an uninstalled module""" % (xml_id,)
 
+    def parse_groups(self, groups, xid):
+        groups = groups.split(",") if groups else []
+        if any(group.startswith("-") for group in groups):
+            _logger.warning("bad `groups` for %s: %r", xid, groups)
+        return [(6, 0, [self.id_get(group) for group in groups])]
+
     def _tag_delete(self, rec):
         d_model = rec.get("model")
         records = self.env[d_model]
@@ -291,10 +297,7 @@ form: module.record_id""" % (xml_id,)
         self._test_xml_id(xml_id)
         xid = self.make_xml_id(xml_id)
 
-        groups = rec.get("groups", "").split(",")
-        if any(g[0] == "-" for g in groups if g):
-            _logger.warning("bad `groups` for %s: %r", xid, rec.get("groups"))
-        res["groups_id"] = [(6, 0, [self.id_get(g) for g in groups if g])]
+        res["groups_id"] = self.parse_groups(rec.get("groups"), xid)
 
         pf_id = False
         if rec.get('paperformat'):
@@ -389,10 +392,7 @@ form: module.record_id""" % (xml_id,)
             'limit': limit,
         }
 
-        groups = rec.get("groups", "").split(",")
-        if any(g[0] == "-" for g in groups if g):
-            _logger.warning("bad `groups` for %s: %r", xid, rec.get("groups"))
-        res["groups_id"] = [(6, 0, [self.id_get(g) for g in groups if g])]
+        res["groups_id"] = self.parse_groups(rec.get("groups"), xid)
 
         res["target"] = rec.get("target", False)
         if binding_model:
@@ -446,10 +446,7 @@ form: module.record_id""" % (xml_id,)
         if not values.get('name'):
             values['name'] = rec_id or '?'
 
-        groups = rec.get("groups", "").split(",")
-        if any(g[0] == "-" for g in groups if g):
-            _logger.warning("bad `groups` for %s: %r", xid, rec.get("groups"))
-        values["groups_id"] = [(6, 0, [self.id_get(g) for g in groups if g])]
+        values["groups_id"] = self.parse_groups(rec.get("groups"), xid)
 
         data = {
             'xml_id': xid,
