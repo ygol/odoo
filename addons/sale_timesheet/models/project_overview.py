@@ -406,6 +406,10 @@ class Project(models.Model):
             })
         ts_tree = self.env.ref('hr_timesheet.hr_timesheet_line_tree')
         ts_form = self.env.ref('hr_timesheet.hr_timesheet_line_form')
+        timesheet_ctx = self.env.context
+        if len(self) == 1:
+            timesheet_ctx = {**timesheet_ctx, 'default_project_id': self.ids[0]}
+
         stat_buttons.append({
             'name': _('Timesheets'),
             'icon': 'fa fa-calendar',
@@ -413,6 +417,7 @@ class Project(models.Model):
                 'account.analytic.line',
                 domain=[('project_id', 'in', self.ids)],
                 views=[(ts_tree.id, 'list'), (ts_form.id, 'form')],
+                context={**self.env.context, 'default_project_id': self.ids[0]}
             )
         })
 
@@ -425,9 +430,8 @@ class Project(models.Model):
         # filter out all the projects that have no tasks
         task_projects_ids = self.env['project.task'].read_group([('project_id', 'in', self.ids)], ['project_id'], ['project_id'])
         task_projects_ids = [p['project_id'][0] for p in task_projects_ids]
-
-        if len(task_projects_ids) == 1:
-            tasks_context = {**tasks_context, 'default_project_id': task_projects_ids[0]}
+        if len(self) == 1:
+            tasks_context = {**tasks_context, 'default_project_id': self.ids[0]}
         stat_buttons.append({
             'name': _('Tasks'),
             'count': sum(self.mapped('task_count')),
@@ -468,15 +472,24 @@ class Project(models.Model):
 
             sale_orders = self.mapped('sale_line_id.order_id') | self.env['sale.order'].browse(task_so_ids)
             if sale_orders:
+                action_data = {
+                    'domain': [('id', 'in', sale_orders.ids)],
+                    'context': {'create': False, 'edit': False, 'delete': False},
+                }
+                if len(sale_orders) == 1:
+                    action_data.update({
+                        'action': self.env.ref('sale.action_sale_order_form_view'),
+                        'res_id': sale_orders.id
+                    })
+                else:
+                    action_data.update({
+                        'action': self.env.ref('sale.action_orders'),
+                    })
                 stat_buttons.append({
                     'name': _('Sales Orders'),
                     'count': len(sale_orders),
                     'icon': 'fa fa-dollar',
-                    'action': _to_action_data(
-                        action=self.env.ref('sale.action_orders'),
-                        domain=[('id', 'in', sale_orders.ids)],
-                        context={'create': False, 'edit': False, 'delete': False}
-                    )
+                    'action': _to_action_data(**action_data),
                 })
 
                 invoice_ids = self.env['sale.order'].search_read([('id', 'in', sale_orders.ids)], ['invoice_ids'])
