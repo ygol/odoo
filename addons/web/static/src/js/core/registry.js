@@ -21,12 +21,15 @@ odoo.define("web.Registry", function (require) {
     class Registry {
         /**
          * @param {Object} [mapping] the initial data in the registry
+         * @param {(value: any) => boolean} [predicate=(value => true)] predicate
+         *      that each added value must pass to be registered.
          */
-        constructor(mapping) {
+        constructor(mapping, predicate = () => true) {
             this.map = Object.create(mapping || null);
             this._scoreMapping = Object.create(null);
             this._sortedKeys = null;
             this.listeners = []; // listening callbacks on newly added items.
+            this.predicate = predicate;
         }
 
         //--------------------------------------------------------------------------
@@ -42,6 +45,9 @@ odoo.define("web.Registry", function (require) {
          * @returns {Registry} can be used to chain add calls.
          */
         add(key, value, score) {
+            if (!this.predicate(value)) {
+                throw new Error(`Value of key "${key}" does not pass the addition predicate.`);
+            }
             this._scoreMapping[key] = score === undefined ? key : score;
             this._sortedKeys = null;
             this.map[key] = value;
