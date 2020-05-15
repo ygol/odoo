@@ -1,18 +1,18 @@
 odoo.define('web.field_registry', function (require) {
-"use strict";
+    "use strict";
 
-var Registry = require('web.Registry');
+    const Registry = require('web.Registry');
 
-var FieldRegistry = Registry.extend({
-    add: function (key, value, score) {
-        if (value.prototype instanceof owl.Component) {
-            throw new Error("This registry should not contain any Component. Use 'web.field_registry_owl' instead.");
+    class FieldRegistry extends Registry {
+        add(key, value) {
+            if (value.prototype instanceof owl.Component) {
+                throw new Error("This registry should not contain any Component. Use 'web.field_registry_owl' instead.");
+            }
+            return super.add(...arguments);
         }
-        return this._super(...arguments);
-    },
-});
+    }
 
-return new FieldRegistry();
+    return new FieldRegistry();
 });
 
 odoo.define('web._field_registry', function (require) {

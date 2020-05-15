@@ -3,14 +3,14 @@ odoo.define('web.field_registry_owl', function (require) {
 
     const Registry = require('web.Registry');
 
-    const FieldRegistry = Registry.extend({
-        add: function (key, value, score) {
+    class FieldRegistry extends Registry {
+        add(key, value) {
             if (!(value.prototype instanceof owl.Component)) {
                 throw new Error("This registry should only contain subclasses of Component");
             }
-            return this._super(...arguments);
-        },
-    });
+            return super.add(...arguments);
+        }
+    }
 
     return new FieldRegistry();
 });
