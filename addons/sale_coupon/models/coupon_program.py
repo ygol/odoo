@@ -2,7 +2,9 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from odoo import api, fields, models, _
-
+from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
+from datetime import datetime
+import pytz
 
 class CouponProgram(models.Model):
     _inherit = 'coupon.program'
@@ -41,7 +43,11 @@ class CouponProgram(models.Model):
             message = {'error': _('The promotional offer is already applied on this order')}
         elif not self.active:
             message = {'error': _('Promo code is invalid')}
-        elif self.rule_date_from and self.rule_date_from > order.date_order or self.rule_date_to and order.date_order > self.rule_date_to:
+        elif self.rule_date_from and self.rule_date_from > fields.Datetime.now():
+            user_tz = pytz.timezone(self.env.context.get('tz') or self.env.user.tz or 'UTC')
+            coupon_date = datetime.strftime(pytz.utc.localize(self.rule_date_from, DEFAULT_SERVER_DATETIME_FORMAT).astimezone(user_tz), "%d/%m/%Y %H:%M:%S")
+            message = {'error': _('This coupon is not yet usable. It will be starting from %s') % (coupon_date)}
+        elif self.rule_date_to and fields.Datetime.now() > self.rule_date_to:
             message = {'error': _('Promo code is expired')}
         elif order.promo_code and self.promo_code_usage == 'code_needed':
             message = {'error': _('Promotionals codes are not cumulative.')}
@@ -85,7 +91,7 @@ class CouponProgram(models.Model):
     def _filter_on_validity_dates(self, order):
         return self.filtered(lambda program:
             program.rule_date_from and program.rule_date_to and
-            program.rule_date_from <= order.date_order and program.rule_date_to >= order.date_order or
+            program.rule_date_from <= fields.Datetime.now() and program.rule_date_to >= fields.Datetime.now() or
             not program.rule_date_from or not program.rule_date_to)
 
     @api.model
