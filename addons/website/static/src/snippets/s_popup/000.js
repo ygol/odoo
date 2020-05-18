@@ -77,6 +77,9 @@ const PopupWidget = publicWidget.Widget.extend({
      * @private
      */
     _onCloseClick: function () {
+        if (this.$el.find('.media_iframe_video').length) {
+            this.$el.find('iframe')[0].src = this.$el.find('iframe')[0].src;    
+        }
         const nbDays = this.$el.find('.s_popup_main').data('consentsDuration');
         utils.set_cookie(this.$el.attr('id'), true, nbDays * 24 * 60 * 60);
         this._hidePopup();
