@@ -547,7 +547,9 @@
 
                         <!-- Payment status for invoices / receipts -->
                         <widget name="web_ribbon" title="Paid"
-                                attrs="{'invisible': ['|', ('payment_state', '!=', 'paid'), ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'))]}"/>
+                                attrs="{'invisible': ['|', ('payment_state', '!=', 'paid'), '|', ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')),('reversed_entry_id', '!=', False)]}"/>
+                        <widget name="web_ribbon" title="Reversal"
+                                attrs="{'invisible': ['|', ('payment_state', '!=', 'paid'), '|', ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')),('reversed_entry_id', '=', False)]}"/>
                         <widget name="web_ribbon" title="In Payment"
                                 attrs="{'invisible': ['|', ('payment_state', '!=', 'in_payment'), ('move_type', 'not in', ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'))]}"/>
                         <widget name="web_ribbon" title="Partial"
