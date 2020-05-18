@@ -2,6 +2,7 @@ odoo.define('website_forum.website_forum', function (require) {
 'use strict';
 
 var core = require('web.core');
+var Dialog = require('web.Dialog');
 var weDefaultOptions = require('web_editor.wysiwyg.default_options');
 var wysiwygLoader = require('web_editor.loader');
 var publicWidget = require('web.public.widget');
@@ -28,6 +29,8 @@ publicWidget.registry.websiteForum = publicWidget.Widget.extend({
         'click .comment_delete': '_onDeleteCommentClick',
         'click .js_close_intro': '_onCloseIntroClick',
         'submit .js_wforum_submit_form:has(:not(.karma_required).o_wforum_submit_post)': '_onSubmitForm',
+        'click .js_flag_validator': '_onClickFlagValidator',
+        'click .js_flag_mark_as_offensive': '_onClickFlagMarkAsOffensive',
     },
 
     /**
@@ -323,13 +326,17 @@ publicWidget.registry.websiteForum = publicWidget.Widget.extend({
             } else if (data.success) {
                 var elem = $link;
                 if (data.success === 'post_flagged_moderator') {
-                    elem.data('href') && elem.html(' Flagged');
-                    var c = parseInt($('#count_flagged_posts').html(), 10);
-                    c++;
-                    $('#count_flagged_posts').html(c);
+                    let $child = elem.children(),
+                        $count_flagged_posts = $('span#count_flagged_posts'),
+                        c = parseInt($count_flagged_posts.html(), 10) + 1;
+
+                    elem.html(' Flagged').prepend($child);
+                    $count_flagged_posts.switchClass("badge-light", "badge-danger").html(c);
+                    elem.next('#flag_validator').removeClass('d-none');
                 } else if (data.success === 'post_flagged_non_moderator') {
-                    elem.data('href') && elem.html(' Flagged');
-                    var forumAnswer = elem.closest('.forum_answer');
+                    let $child = elem.children(),
+                        forumAnswer = elem.closest('.forum_answer');
+                    elem.html(' Flagged').prepend($child);
                     forumAnswer.fadeIn(1000);
                     forumAnswer.slideUp(1000);
                 }
@@ -499,6 +506,62 @@ publicWidget.registry.websiteForum = publicWidget.Widget.extend({
         document.cookie = 'forum_welcome_message = false';
         $('.forum_intro').slideUp();
         return true;
+    },
+    /**
+     * @private
+     * @param {Event} ev
+     */
+    _onClickFlagValidator: function (ev) {
+        ev.preventDefault();
+        const $currentTarget = $(ev.currentTarget);
+        const data = $currentTarget.data();
+        this._rpc({
+            model: 'forum.post',
+            method: data.action,
+            args: [data.postId],
+        }).then(result => {
+            if (result) {
+                let $flaggedButton = $currentTarget.parent().toggleClass('d-none').siblings('button'),
+                    $child = $flaggedButton.children(),
+                    $count_flagged_posts = $('span#count_flagged_posts'),
+                    c = parseInt($count_flagged_posts.html(), 10) - 1;
+
+                $flaggedButton.html(' Flag').prepend($child);
+                $count_flagged_posts.addClass(c === 0 ? "badge-light" : "").html(c);
+            }
+        });
+    },
+    /**
+     * @private
+     * @param {Event} ev
+     */
+    _onClickFlagMarkAsOffensive: function (ev) {
+        ev.preventDefault();
+        const self = this;
+        this._rpc({
+            route: $(ev.currentTarget).data('action'),
+            params: {}
+        }).then(result => {
+            if (result && result.error) {
+                self.call('crash_manager', 'show_warning', {
+                    message: result.error,
+                    title: _t("Access Denied"),
+                });
+            } else {
+                const dialog = new Dialog(self, {
+                    size: 'medium',
+                    title: _t("Offensive Post"),
+                    $content: result.mark_as_offensive,
+                    renderFooter: false,
+                }).open();
+                dialog.opened().then(() => {
+                    dialog.$(".btn-light:contains('Discard')").click((ev) => {
+                        ev.preventDefault();
+                        dialog.close();
+                    });
+                });
+            }
+        });
     },
 });
 
