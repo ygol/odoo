@@ -32,6 +32,16 @@ class Project(models.Model):
 class ProjectTask(models.Model):
     _inherit = "project.task"
 
+    @api.model
+    def _get_default_partner_id(self):
+        res = super()._get_default_partner_id()
+        project_id = self.env.context.get('default_project_id')
+        if not res and project_id:
+            project_partner = self.env['project.project'].browse(project_id).sale_line_id.order_partner_id
+            if project_partner:
+                return project_partner.id
+        return res
+
     sale_order_id = fields.Many2one('sale.order', 'Sales Order', help="Sales order to which the task is linked.")
     sale_line_id = fields.Many2one(
         'sale.order.line', 'Sales Order Item', domain="[('is_service', '=', True), ('order_partner_id', 'child_of', commercial_partner_id), ('is_expense', '=', False), ('state', 'in', ['sale', 'done']), ('order_id', '=?', project_sale_order_id)]",
@@ -42,13 +52,6 @@ class ProjectTask(models.Model):
     project_sale_order_id = fields.Many2one('sale.order', string="project's sale order", related='project_id.sale_order_id')
     invoice_count = fields.Integer("Number of invoices", related='sale_order_id.invoice_count')
     task_to_invoice = fields.Boolean("To invoice", compute='_compute_task_to_invoice', search='_search_task_to_invoice', groups='sales_team.group_sale_salesman_all_leads')
-
-    @api.depends('project_id.sale_line_id.order_partner_id')
-    def _compute_partner_id(self):
-        for task in self:
-            if not task.partner_id:
-                task.partner_id = task.project_id.sale_line_id.order_partner_id
-        super()._compute_partner_id()
 
     @api.depends('partner_id.commercial_partner_id', 'sale_line_id.order_partner_id.commercial_partner_id', 'parent_id.sale_line_id', 'project_id.sale_line_id')
     def _compute_sale_line(self):

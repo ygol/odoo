@@ -489,6 +489,20 @@ class Task(models.Model):
     _order = "priority desc, sequence, id desc"
     _check_company_auto = True
 
+    @api.model
+    def _get_default_partner_id(self):
+        parent_id = self.env.context.get('default_parent_id')
+        if parent_id:
+            parent_partner = self.env['project.task'].browse(parent_id).partner_id
+            if parent_partner:
+                return parent_partner.id
+        project_id = self.env.context.get('default_project_id')
+        if project_id:
+            project_partner = self.env['project.project'].browse(project_id).partner_id
+            if project_partner:
+                return project_partner.id
+        return False
+
     def _get_default_stage_id(self):
         """ Gives default stage_id """
         project_id = self.env.context.get('default_project_id')
@@ -550,8 +564,9 @@ class Task(models.Model):
         default=lambda self: self.env.uid,
         index=True, tracking=True)
     partner_id = fields.Many2one('res.partner',
-        string='Customer',
-        compute='_compute_partner_id', store=True, readonly=False,
+        string='Customer', default=_get_default_partner_id,
+        # compute='_compute_partner_id',
+        store=True, readonly=False,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
     partner_is_company = fields.Boolean(related='partner_id.is_company', readonly=True)
     commercial_partner_id = fields.Many2one(related='partner_id.commercial_partner_id')

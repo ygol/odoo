@@ -161,6 +161,18 @@ class Project(models.Model):
 class ProjectTask(models.Model):
     _inherit = "project.task"
 
+    @api.model
+    def _get_default_partner_id(self):
+        res = super()._get_default_partner_id()
+        project_id = self.env.context.get('default_project_id')
+        if not res and project_id:
+            project = self.env['project.project'].browse(project_id)
+            if project.billable_type == 'employee_rate':
+                return project.sale_order_id.partner_id.id
+            if project.billable_type == 'task_rate':
+                return project.sale_line_id.order_partner_id.id
+        return res
+
     # override sale_order_id and make it computed stored field instead of regular field.
     sale_order_id = fields.Many2one(compute='_compute_sale_order_id', store=True, readonly=False,
     domain="['|', '|', ('partner_id', '=', partner_id), ('partner_id', 'child_of', commercial_partner_id), ('partner_id', 'parent_of', partner_id)]")
