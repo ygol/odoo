@@ -170,7 +170,7 @@ odoo.define('pos_reataurant.tour.synchronized_table_management', function (requi
     }]);
     steps = steps.concat(open_table('T5', 1));
 
-    Tour.register('pos_restaurant_sync', { test: true, url: '/pos/web' }, steps);
+    Tour.register('pos_restaurant_sync', { test: true, url: '/pos/ui' }, steps);
 
 
     /* pos_restaurant_sync_second_login
@@ -247,6 +247,6 @@ odoo.define('pos_reataurant.tour.synchronized_table_management', function (requi
         run: function() {},
     }]);
 
-    Tour.register('pos_restaurant_sync_second_login', { test: true, url: '/pos/web' }, steps);
+    Tour.register('pos_restaurant_sync_second_login', { test: true, url: '/pos/ui' }, steps);
 
 });

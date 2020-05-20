@@ -71,5 +71,5 @@ odoo.define('point_of_sale.tour.PaymentScreen', function (require) {
     PaymentScreen.do.clickEmailButton();
     PaymentScreen.check.emailButtonIsHighligted(false);
 
-    Tour.register('PaymentScreenTour', { test: true, url: '/pos/web' }, getSteps());
+    Tour.register('PaymentScreenTour', { test: true, url: '/pos/ui' }, getSteps());
 });

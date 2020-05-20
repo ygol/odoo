@@ -70,5 +70,5 @@ odoo.define('point_of_sale.tour.Chrome', function (require) {
     // go next screen
     ReceiptScreen.do.clickNextOrder();
 
-    Tour.register('ChromeTour', { test: true, url: '/pos/web' }, getSteps());
+    Tour.register('ChromeTour', { test: true, url: '/pos/ui' }, getSteps());
 });

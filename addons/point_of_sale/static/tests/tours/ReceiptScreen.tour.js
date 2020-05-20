@@ -31,5 +31,5 @@ odoo.define('point_of_sale.tour.ReceiptScreen', function (require) {
     ReceiptScreen.check.changeIs('725.6');
     ReceiptScreen.do.clickNextOrder();
 
-    Tour.register('ReceiptScreenTour', { test: true, url: '/pos/web' }, getSteps());
+    Tour.register('ReceiptScreenTour', { test: true, url: '/pos/ui' }, getSteps());
 });

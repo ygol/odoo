@@ -216,7 +216,7 @@ shelf have not (their price was manually overridden)",
         run: function() {}, //it's a check,
     }]);
 
-    Tour.register('pos_pricelist', { test: true, url: '/pos/web' }, steps);
+    Tour.register('pos_pricelist', { test: true, url: '/pos/ui' }, steps);
 });
 
 odoo.define('point_of_sale.tour.acceptance', function (require) {
@@ -428,6 +428,6 @@ odoo.define('point_of_sale.tour.acceptance', function (require) {
         run: function() {}, //it's a check,
     }]);
 
-    Tour.register('pos_basic_order', { test: true, url: '/pos/web' }, steps);
+    Tour.register('pos_basic_order', { test: true, url: '/pos/ui' }, steps);
 
 });
