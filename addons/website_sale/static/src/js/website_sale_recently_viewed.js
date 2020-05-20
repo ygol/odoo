@@ -42,7 +42,6 @@ publicWidget.registry.productsRecentlyViewedSnippet = publicWidget.Widget.extend
      */
     destroy: function () {
         this._super(...arguments);
-        this.$el.addClass('d-none');
         this.$el.find('.slider').html('');
     },
 
