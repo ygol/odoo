@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+from datetime import date
 from ast import literal_eval
 
 from odoo.addons.mass_mailing.tests.common import TestMassMailCommon
@@ -108,6 +109,31 @@ class TestMassMailValues(TestMassMailCommon):
             'mailing_model_id': self.env['ir.model']._get('res.partner').id,
         })
         self.assertEqual(literal_eval(mailing.mailing_domain), [('email', 'ilike', 'test.example.com')])
+
+    @users('user_marketing')
+    def test_mailing_generated_source_name(self):
+        today_str = date.today().strftime('%Y-%m-%d')
+        mailing = self.env['mailing.mailing'].create({
+            'subject': 'Test source',
+            'mailing_type': 'mail',
+            'body_html': '<p>Hello ${object.name}</p>',
+            'mailing_model_id': self.env['ir.model']._get('res.partner').id,
+        })
+        self.assertEqual(mailing.name, 'Test source (Mailing created on %s)' % today_str)
+        mailing2 = self.env['mailing.mailing'].create({
+            'subject': 'Test source',
+            'mailing_type': 'mail',
+            'body_html': '<p>Hello ${object.name}</p>',
+            'mailing_model_id': self.env['ir.model']._get('res.partner').id,
+        })
+        self.assertEqual(mailing2.name, 'Test source (Mailing created on %s) [2]' % today_str)
+        mailing3 = self.env['mailing.mailing'].create({
+            'subject': 'Test source',
+            'mailing_type': 'mail',
+            'body_html': '<p>Hello ${object.name}</p>',
+            'mailing_model_id': self.env['ir.model']._get('res.partner').id,
+        })
+        self.assertEqual(mailing3.name, 'Test source (Mailing created on %s) [3]' % today_str)
 
     @users('user_marketing')
     def test_mailing_computed_fields_form(self):

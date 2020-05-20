@@ -233,23 +233,37 @@ class MassMailing(models.Model):
     @api.model
     def create(self, values):
         if values.get('subject') and not values.get('name'):
-            values['name'] = "%s %s" % (values['subject'], datetime.strftime(fields.datetime.now(), tools.DEFAULT_SERVER_DATETIME_FORMAT))
+            name = _("%s (Mailing created on %s)") % (
+                values['subject'],
+                datetime.strftime(fields.datetime.now(), tools.DEFAULT_SERVER_DATE_FORMAT))
+            values['name'] = name
+
+        # check for duplicate name in db
+        base_name = values['name']
+        match = re.match(".*( \[[0-9]+\])$", base_name)
+        if match:
+            remove_char_count = len(match.groups()[0]) * -1
+            base_name = base_name[:remove_char_count]
+
+        duplicate_count = self.env['utm.source'].search_count([('name', '=like', base_name + "%")])
+        if duplicate_count > 0:
+            values['name'] = "%s [%s]" % (base_name, duplicate_count+1)
+
         if values.get('body_html'):
             values['body_html'] = self._convert_inline_images_to_urls(values['body_html'])
         return super(MassMailing, self).create(values)
+
+    def copy(self, default=None):
+        # we don't keep the name during duplication
+        # because we want the system to regenerate a the name based on the subject ( see create() )
+        default = default or {}
+        default["name"] = None
+        return super(MassMailing, self).copy(default=default)
 
     def write(self, values):
         if values.get('body_html'):
             values['body_html'] = self._convert_inline_images_to_urls(values['body_html'])
         return super(MassMailing, self).write(values)
-
-    @api.returns('self', lambda value: value.id)
-    def copy(self, default=None):
-        self.ensure_one()
-        default = dict(default or {},
-                       name=_('%s (copy)') % self.name,
-                       contact_list_ids=self.contact_list_ids.ids)
-        return super(MassMailing, self).copy(default=default)
 
     def _group_expand_states(self, states, domain, order):
         return [key for key, val in type(self).state.selection]
