@@ -49,6 +49,7 @@ class ProductTemplate(models.Model):
         def get_rand_float(values, counter, random):
             return random.randrange(0, 1500) * random.random()
 
+        # TODO random sale & purchase uoms
         product_factories = [
             ("name", populate.constant('product_template_name_{counter}')),
             ("sequence", populate.randomize([False] + [i for i in range(1, 101)])),
