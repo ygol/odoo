@@ -131,11 +131,11 @@ class TestLeadMerge(TestLeadConvertMassCommon):
         result = merge.action_merge()
         merge_opportunity = self.env['crm.lead'].browse(result['res_id'])
         self.assertFalse((ordered_merge - merge_opportunity).exists())
-        self.assertEqual(merge_opportunity, self.lead_1)
+        self.assertEqual(merge_opportunity, self.lead_w_partner_company)
         self.assertEqual(merge_opportunity.type, 'opportunity')
 
         # merged opportunity has same salesman (not updated in wizard)
-        self.assertEqual(merge_opportunity.user_id, self.user_sales_leads)
+        self.assertEqual(merge_opportunity.user_id, self.user_sales_manager)
         # TDE FIXME: as same uer_id is enforced, team is updated through onchange and therefore stage
         self.assertEqual(merge_opportunity.team_id, self.sales_team_convert)
         # self.assertEqual(merge_opportunity.team_id, self.sales_team_1)

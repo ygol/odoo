@@ -872,11 +872,11 @@ class Lead(models.Model):
 
     def _sort_by_confidence_level(self, reverse=False):
         """ Sorting the leads/opps according to the confidence level of its stage, which relates to the probability of winning it
-        The confidence level increases with the stage sequence
+        The confidence level increases with the stage sequence and probability
         An Opportunity always has higher confidence level than a lead
         """
         def opps_key(opportunity):
-            return opportunity.type == 'opportunity', opportunity.stage_id.sequence, -opportunity._origin.id
+            return opportunity.type == 'opportunity', opportunity.stage_id.sequence, opportunity.probability, -opportunity._origin.id
 
         return self.sorted(key=opps_key, reverse=reverse)
 
