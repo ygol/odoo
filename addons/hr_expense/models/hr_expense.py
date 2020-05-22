@@ -167,7 +167,7 @@ class HrExpense(models.Model):
             expense.product_uom_id = expense.product_id.uom_id
             expense.tax_ids = expense.product_id.supplier_taxes_id.filtered(lambda tax: tax.company_id == expense.company_id)  # taxes only from the same company
             account = expense.product_id.product_tmpl_id._get_product_accounts()['expense']
-            if account:
+            if account and expense.is_editable:
                 expense.account_id = account
 
     @api.depends('company_id')
