@@ -366,6 +366,13 @@ class Bar(models.Model):
         return [('name', 'in', records.mapped('name'))]
 
 
+class Bazz(models.Model):
+    _name = 'test_new_api.bazz'
+    _description = 'Test New API Bazz'
+
+    name = fields.Char()
+
+
 class Related(models.Model):
     _name = 'test_new_api.related'
     _description = 'Test New API Related'
