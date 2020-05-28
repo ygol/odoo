@@ -6,6 +6,7 @@ const publicWidget = require('web.public.widget');
 const utils = require('web.utils');
 
 const PopupWidget = publicWidget.Widget.extend({
+    disabledInEditableMode: false,
     selector: '.s_popup',
     events: {
         'click .js_close_popup': '_onCloseClick',
@@ -16,8 +17,13 @@ const PopupWidget = publicWidget.Widget.extend({
      * @override
      */
     start: function () {
+        const $main = this.$target.find('.modal');
+
+        this.display = $main.data('display');
+        this.delay = $main.data('showAfter');
+
         this._popupAlreadyShown = !!utils.get_cookie(this.$el.attr('id'));
-        if (!this._popupAlreadyShown) {
+        if (!this._popupAlreadyShown || this.display === 'onClick') {
             this._bindPopup();
         }
         return this._super(...arguments);
@@ -39,21 +45,27 @@ const PopupWidget = publicWidget.Widget.extend({
      * @private
      */
     _bindPopup: function () {
-        const $main = this.$target.find('.modal');
-
-        let display = $main.data('display');
-        let delay = $main.data('showAfter');
 
         if (config.device.isMobile) {
-            if (display === 'onExit') {
-                display = 'afterDelay';
-                delay = 5000;
+            if (this.display === 'mouseExit') {
+                this.display = 'afterDelay';
+                this.delay = 5000;
             }
             this.$('.modal').removeClass('s_popup_middle').addClass('s_popup_bottom');
         }
 
-        if (display === 'afterDelay') {
-            this.timeout = setTimeout(() => this._showPopup(), delay);
+        if (this.display === 'afterDelay') {
+            this.timeout = setTimeout(() => this._showPopup(), this.delay);
+        } else if (this.display === 'onClick') {
+            let anchor = $.escapeSelector(this.$target.find('.modal').attr('id'));
+
+            const classesToAdd = {
+                'data-toggle': this.editableMode ? null : 'modal',
+                'data-target': this.editableMode ? null : '#' + anchor,
+            };
+            const $linkSelector = "a[href*='" + anchor + "']";
+            const $link = $($linkSelector);
+            $link.attr(classesToAdd);
         } else {
             $(document).on('mouseleave.open_popup', () => this._showPopup());
         }

@@ -3929,8 +3929,167 @@ registry.SnippetSave = SnippetOptionWidget.extend({
     },
 });
 
+/**
+ * Allows to copy the anchor to clipboard and optionally rename the anchor.
+ */
+const CopyAnchorToClipboardAndNotifyWidget = SnippetOptionWidget.extend({
+
+    /**
+     * @override
+     * @param {jQuery} $trigger the element that triggers the copy to clipboard and the notification
+     */
+    start: function ($trigger) {
+        if ($trigger) {
+            this.$trigger = $trigger;
+            const clipboardParams = {
+                trigger: this.$trigger,
+                options: {
+                    text: () => this._getAnchorLink(),
+                }
+            };
+            this._setupClipboardJSAndNotification(clipboardParams, () => {
+                const anchor = decodeURI(clipboardParams.options.text());
+                return {
+                    type: 'success',
+                    message: _.str.sprintf(_t("Anchor copied to clipboard<br>Link: %s"), anchor),
+                    buttons: [{text: _t("Edit"), click: () => this._openAnchorDialog(), primary: true}],
+                };
+            });
+            return this._super.apply(this, arguments);
+        }
+    },
+    /**
+     * @override
+     */
+    onClone: function () {
+        this.$target.removeAttr('data-anchor');
+        this.$target.filter(':not(.carousel)').removeAttr('id');
+    },
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     * @see this.selectClass for parameters
+     */
+    _openAnchorDialog: function (previewMode, widgetValue, params) {
+        var self = this;
+        var buttons = [{
+            text: _t("Save & copy"),
+            classes: 'btn-primary',
+            click: function () {
+                var $input = this.$('.o_input_anchor_name');
+                var anchorName = self._text2Anchor($input.val());
+                if (self.$target[0].id === anchorName) {
+                    // If the chosen anchor name is already the one used by the
+                    // element, close the dialog and do nothing else
+                    this.close();
+                    return;
+                }
+
+                const alreadyExists = !!document.getElementById(anchorName);
+                this.$('.o_anchor_already_exists').toggleClass('d-none', !alreadyExists);
+                $input.toggleClass('is-invalid', alreadyExists);
+                if (!alreadyExists) {
+                    self._setAnchorName(anchorName);
+                    this.close();
+                    self.$trigger.click();
+                }
+            },
+        }, {
+            text: _t("Discard"),
+            close: true,
+        }];
+        if (this.$target.attr('id')) {
+            buttons.push({
+                text: _t("Remove"),
+                classes: 'btn-link ml-auto',
+                icon: 'fa-trash',
+                close: true,
+                click: function () {
+                    self._setAnchorName();
+                },
+            });
+        }
+        new Dialog(this, {
+            title: _t("Link Anchor"),
+            $content: $(qweb.render('website.dialog.anchorName', {
+                currentAnchor: decodeURI(this.$target.attr('id')),
+            })),
+            buttons: buttons,
+        }).open();
+    },
+    /**
+     * Returns anchor text.
+     *
+     * @private
+     * @returns {string}
+     */
+    _getAnchorLink: function () {
+        if (!this.$target[0].id) {
+            const $titles = this.$target.find('h1, h2, h3, h4, h5, h6');
+            const title = $titles.length > 0 ? $titles[0].innerText : this.data.snippetName;
+            const anchorName = this._text2Anchor(title);
+            let n = '';
+            while (document.getElementById(anchorName + n)) {
+                n = (n || 1) + 1;
+            }
+            this._setAnchorName(anchorName + n);
+        }
+        return `${window.location.pathname}#${this.$target[0].id}`;
+    },
+    /**
+     * @private
+     * @param {String} value
+     */
+    _setAnchorName: function (value) {
+        if (value) {
+            this.$target.attr({
+                'id': value,
+                'data-anchor': true,
+            });
+        } else {
+            this.$target.removeAttr('id data-anchor');
+        }
+        this.$target.trigger('content_changed');
+    },
+    /**
+     * Displays a notification.
+     *
+     * @param {Object} clipboardParams
+     * @param {jQuery} clipboardParams.trigger
+     * @param {Object} clipboardParams.options
+     * @param {function} [clipboardParams.options.action]
+     * @param {function} [clipboardParams.options.target]
+     * @param {function} clipboardParams.options.text
+     * @param {Object} [clipboardParams.options.container]
+     * @param {function} notificationParams
+     * @see this.displayNotification notificationParams
+     */
+    _setupClipboardJSAndNotification: function (clipboardParams, notificationParams) {
+        const clipboard = new ClipboardJS(clipboardParams.trigger, clipboardParams.options);
+        clipboard.on('success', () => {
+            this.displayNotification(notificationParams());
+        });
+    },
+    /**
+     * Creates a safe id/anchor from text.
+     *
+     * @private
+     * @param {string} text
+     * @returns {string}
+     */
+    _text2Anchor: function (text) {
+        return encodeURI(text.trim().replace(/\s+/g, '-'));
+    },
+
+});
 
 return {
+    CopyAnchorToClipboardAndNotifyWidget: CopyAnchorToClipboardAndNotifyWidget,
+
     SnippetOptionWidget: SnippetOptionWidget,
     snippetOptionRegistry: registry,
 

@@ -70,6 +70,7 @@
             <we-select string="Display" data-attribute-name="display" data-attribute-default-value="always">
                 <we-button data-select-data-attribute="afterDelay" data-name="show_delay">Delay</we-button>
                 <we-button data-select-data-attribute="mouseExit">On Exit</we-button>
+                <we-button data-select-data-attribute="onClick">On Click</we-button>
             </we-select>
             <we-input string="⌙ Delay"
                       data-select-data-attribute=""
