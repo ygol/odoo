@@ -32,6 +32,24 @@ class TestPerformance(TransactionCase):
             for record in records:
                 record.value_pc
 
+    def test_read_base_depends_context(self):
+        records = self.env['test_performance.base'].search([])
+        self.assertEqual(len(records), 5)
+
+        records.invalidate_cache()
+
+        with self.assertQueryCount(__system__=1, demo=1):  # ok
+            for record in records.with_context(key=1):
+                self.assertEqual(record.value_ctx, 1)
+
+        with self.assertQueryCount(__system__=1, demo=1):  # fail to call in batch
+            for record in records.with_context(key=2):
+                self.assertEqual(record.value_ctx, 2)
+
+        with self.assertQueryCount(__system__=1, demo=1):  # fail to call in batch
+            for record in records:
+                self.assertEqual(record.with_context(key=3).value_ctx, 3)
+
     @users('__system__', 'demo')
     @warmup
     def test_write_base(self):
