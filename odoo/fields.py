@@ -674,7 +674,6 @@ class Field(MetaField('DummyField', (object,), {})):
                     ) from None # we don't need to chain the exception created 2 lines above
                 else:
                     return v
-
         return tuple(get(key) for key in self.depends_context)
 
     #
