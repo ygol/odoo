@@ -1325,7 +1325,7 @@ var BasicModel = AbstractModel.extend({
                         self._visitChildren(record, function (elem) {
                             _.extend(elem, initialData[elem.id]);
                         });
-                        onchangeDef.resolve({});
+                        onchangeDef.reject({});
                     });
             } else {
                 onchangeDef = $.Deferred().resolve(_.keys(changes));
