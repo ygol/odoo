@@ -47,6 +47,7 @@ const ChartWidget = publicWidget.Widget.extend({
                 },
                 tooltips: {
                     enabled: this.el.dataset.tooltipDisplay === 'true',
+                    position: 'custom',
                 },
                 title: {
                     display: !!this.el.dataset.title,
@@ -79,18 +80,43 @@ const ChartWidget = publicWidget.Widget.extend({
                 },
             };
         } else {
+            // for extending the range of the axis while maintaining the auto fit behaviour
+            const beforeBuildTicks = (scale) => {
+                scale.min = parseInt(this.el.dataset.minValue) || 0;
+                let maxValue = parseInt(this.el.dataset.maxValue);
+                if (!isNaN(maxValue)) {
+                    scale.max = maxValue;
+                    // for reversing a min max value when min value is greater than max value
+                    if (scale.max < scale.min) {
+                        scale.max = scale.min;
+                        scale.min = maxValue;
+                    } else if (scale.max == scale.min) {
+                        // to maintaining a chart if min value and max value are same for positive and negative number
+                        scale.min < 0 ? (scale.max = 0, scale.min = 2*scale.min) : (scale.min = 0, scale.max = 2*scale.max);
+                    }
+                } else {
+                    // for managing range of axis when max value does not given and min value is greater than chart data value
+                    if (scale.min > Math.max(...data.datasets[0].data)) {
+                        scale.max = scale.min;
+                        scale.min = 0;
+                    }
+                }
+                return;
+            };
             chartData.options.scales = {
                 xAxes: [{
                     stacked: this.el.dataset.stacked === 'true',
                     ticks: {
                         beginAtZero: true
                     },
+                    beforeBuildTicks: beforeBuildTicks,
                 }],
                 yAxes: [{
                     stacked: this.el.dataset.stacked === 'true',
                     ticks: {
                         beginAtZero: true
                     },
+                    beforeBuildTicks: beforeBuildTicks,
                 }],
             };
         }
@@ -103,6 +129,7 @@ const ChartWidget = publicWidget.Widget.extend({
         }
 
         const canvas = this.el.querySelector('canvas');
+        window.Chart.Tooltip.positioners.custom = (elements, eventPosition) => {return eventPosition;};
         this.chart = new window.Chart(canvas, chartData);
         return this._super.apply(this, arguments);
     },

@@ -3,6 +3,7 @@
 
 <template id="s_chart" name="Chart">
     <div class="s_chart" data-type="bar" data-legend-position="top" data-tooltip-display="true" data-stacked="false" data-border-width="2"
+            data-min-value="" data-max-value=""
             data-data="{
                 &quot;labels&quot;:[&quot;First&quot;,&quot;Second&quot;,&quot;Third&quot;,&quot;Fourth&quot;,&quot;Fifth&quot;],
                 &quot;datasets&quot;:[
@@ -30,7 +31,7 @@
             <we-select string="Type" data-attribute-name="type" data-attribute-default-value="bar" data-no-preview="true">
                 <we-button data-select-data-attribute="bar" data-name="bar_chart_opt">Bar Vertical</we-button>
                 <we-button data-select-data-attribute="horizontalBar" data-name="horizontal_bar_chart_opt">Bar Horizontal</we-button>
-                <we-button data-select-data-attribute="line">Line</we-button>
+                <we-button data-select-data-attribute="line" data-name="line_chart_opt">Line</we-button>
                 <we-button data-select-data-attribute="pie">Pie</we-button>
                 <we-button data-select-data-attribute="doughnut">Doughnut</we-button>
                 <we-button data-select-data-attribute="radar">Radar</we-button>
@@ -56,6 +57,8 @@
                     </tr>
                 </table>
             </we-matrix>
+            <we-input string="Min Axis" data-select-data-attribute="" data-dependencies="bar_chart_opt, horizontal_bar_chart_opt, line_chart_opt" data-attribute-name="minValue"/>
+            <we-input string="Max Axis" data-select-data-attribute="" data-dependencies="bar_chart_opt, horizontal_bar_chart_opt, line_chart_opt" data-attribute-name="maxValue"/>
             <we-colorpicker string="Background" data-name="chart_bg_color_opt"
                 data-color-change=""
                 data-attribute-name="backgroundColor"
