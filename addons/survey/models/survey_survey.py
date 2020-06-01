@@ -214,6 +214,8 @@ class Survey(models.Model):
     def copy_data(self, default=None):
         title = _("%s (copy)") % (self.title)
         default = dict(default or {}, title=title)
+        if self.certification_give_badge:
+            default.update(certification_badge_id=self.certification_badge_id.copy(default={'name': _("%s (copy)") % (self.certification_badge_id.name)}).id)
         return super(Survey, self).copy_data(default)
 
     # ------------------------------------------------------------
