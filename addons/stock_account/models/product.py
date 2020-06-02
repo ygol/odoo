@@ -425,6 +425,61 @@ class ProductProduct(models.Model):
             vacuum_svl.stock_move_id._account_entry_move(
                 vacuum_svl.quantity, vacuum_svl.description, vacuum_svl.id, vacuum_svl.value
             )
+            # Create the related invoice
+            self._create_fifo_vacuum_anglo_saxon_invoice(vacuum_svl, svl_to_vacuum)
+
+    def _create_fifo_vacuum_anglo_saxon_invoice(self, vacuum_svl, svl_to_vacuum):
+        """
+            We should nevertheless take into account the fact that the product has already been delivered and invoiced to the customer
+            by posting the value difference in the expense account also. We should therefore create additional journal items like:
+
+            Account                         | Debit    | Credit
+            ===================================================
+            Stock Interim (Delivered)       | 0.00     | 5.00
+            Expenses Revaluation            | 5.00     | 0.00
+        """
+
+        account_move_lines = svl_to_vacuum.sudo().account_move_id.line_ids
+        # Find related customer invoice where product is delivered while you don't have units in stock anymore
+        reconciled_line_ids = list(set(account_move_lines._reconciled_lines()) - set(account_move_lines.ids))
+        account_move = self.env['account.move'].sudo().search([('line_ids','in', reconciled_line_ids)], limit=1)
+        # If delivered quantity is not invoiced then no need to create this entry
+        if not account_move:
+            return False
+        accounts = svl_to_vacuum.product_id.product_tmpl_id.get_product_accounts(fiscal_pos=account_move.fiscal_position_id)
+        debit_interim_account = accounts['stock_output']
+        credit_expense_account = accounts['expense']
+        if not debit_interim_account or not credit_expense_account:
+            return False
+        balance = vacuum_svl.value * -1
+        new_account_move = account_move.copy()
+        anglo_saxon_lines = new_account_move._stock_account_prepare_anglo_saxon_out_lines_vals()
+        # When copying related customer invoice, its lines including the ones with anglo saxon are copied as well,
+        # so, we are reseting it and we will create new ones that can be reconciled correctly.
+        new_account_move.line_ids = False
+        for line in anglo_saxon_lines:
+            if line['account_id'] == debit_interim_account.id:
+                # Update interim account line.
+                line.update(
+                    quantity=vacuum_svl.quantity,
+                    price_unit=balance < 0.0 and -balance or balance,
+                    debit=balance < 0.0 and -balance or 0.0,
+                    credit=balance > 0.0 and balance or 0.0
+                )
+            elif line['account_id'] == credit_expense_account.id:
+                # Update expense account line.
+                line.update(
+                    quantity=vacuum_svl.quantity,
+                    price_unit=balance < 0.0 and balance or -balance,
+                    debit=balance > 0.0 and balance or 0.0,
+                    credit=balance < 0.0 and -balance or 0.0,
+                )
+        # Creating anglo saxon move lines.
+        self.env['account.move.line'].create(anglo_saxon_lines)
+        new_account_move.post()
+        to_reconcile_account_move_lines = vacuum_svl.account_move_id.line_ids.filtered(lambda l: l.account_id.reconcile)
+        to_reconcile_account_move_lines += new_account_move.line_ids.filtered(lambda l: l.is_anglo_saxon_line and l.account_id.reconcile)
+        return to_reconcile_account_move_lines.reconcile()
 
     @api.model
     def _svl_empty_stock(self, description, product_category=None, product_template=None):
