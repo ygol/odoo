@@ -1,4 +1,4 @@
-odoo.define('web_editor.wysiwyg', function (require) {
+odoo.define('web_editor.jabberwock.wysiwyg', function (require) {
 'use strict';
 
 var Widget = require('web.Widget');
@@ -7,7 +7,7 @@ var SnippetsMenu = require('web_editor.snippet.editor').SnippetsMenu;
 var weWidgets = require('wysiwyg.widgets');
 
 
-var Wysiwyg = Widget.extend({
+var JabberwockWysiwyg = Widget.extend({
     // todo: theses tree keys currently comes from previous editor.js
     xmlDependencies: ['/web_editor/static/src/xml/editor.xml'],
     events: {
@@ -199,32 +199,36 @@ var Wysiwyg = Widget.extend({
 
     openLinkDialog() {
         return new Promise(async (resolve) => {
-            const selectedText = await this.editor.execCommand('getSelectedText');
-            const selectedUrl = await this.editor.execCommand('getSelectedLink');
+            const linkInfo = await this.editor.execCommand('getLinkInfo');
+            console.log('linkInfo:', linkInfo)
             // todo: when the modifiers comes out, get the classes and "target" attributes
             var linkDialog = new weWidgets.LinkDialog(this,
                 {
                     props: {
-                        text: selectedText,
-                        url: selectedUrl,
+                        text: linkInfo.text,
+                        url: linkInfo.url,
+                        class: linkInfo.class,
+                        target: linkInfo.target,
                     }
                 },
             );
             linkDialog.open();
             linkDialog.on('save', this, async (params)=> {
                     await this.editor.execBatch(async () =>{
-                        if (!selectedText) {
-                            await this.editor.execCommand('link', {
+                        // if (!selectedText) {
+                            const linkParams = {
                                 url: params.url,
-                                label: params.text
-                            });
-                        } else {
-                            await this.editor.execCommand('link', {
-                                url: params.url,
-                            });
-                        }
+                                label: params.text,
+                                target: params.isNewWindow ? '_blank' : '',
+                            };
+                            await this.editor.execCommand('link', linkParams);
+                        // } else {
+                        //     await this.editor.execCommand('link', {
+                        //         url: params.url,
+                        //     });
+                        // }
 
-                        await this.editor.execCommand('addClasses', {
+                        await this.editor.execCommand('addClassToLink', {
                             classes: params.classes.split(' '),
                         });
                     });
@@ -701,5 +705,5 @@ var Wysiwyg = Widget.extend({
 
 });
 
-return Wysiwyg;
+return JabberwockWysiwyg;
 });
