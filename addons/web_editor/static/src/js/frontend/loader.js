@@ -4,9 +4,11 @@ odoo.define('web_editor.loader', function (require) {
 var ajax = require('web.ajax');
 
 async function loadWysiwyg() {
-    // console.log('loading', { assetLibs: ['web_editor.compiled_assets_wysiwyg', 'website.compiled_assets_wysiwyg'] })
-    // await ajax.loadLibs({ assetLibs: ['website.compiled_assets_wysiwyg'] });
     await ajax.loadLibs({ assetLibs: ['web_editor.compiled_assets_wysiwyg'] });
+    return odoo.__DEBUG__.services['web_editor.wysiwyg'];
+}
+async function loadJabberwockWysiwyg() {
+    await ajax.loadLibs({ assetLibs: ['web_editor.compiled_assets_jabberwock_wysiwyg'] });
     return odoo.__DEBUG__.services['web_editor.jabberwock.wysiwyg'];
 }
 
@@ -37,5 +39,6 @@ async function loadFromTextarea(parent, $textarea, options) {
 return {
     loadFromTextarea: loadFromTextarea,
     loadWysiwyg: loadWysiwyg,
+    loadJabberwockWysiwyg: loadJabberwockWysiwyg,
 };
 });

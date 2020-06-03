@@ -3,7 +3,7 @@ odoo.define('mass_mailing.FieldHtml', function (require) {
 
 var config = require('web.config');
 var core = require('web.core');
-var FieldHtml = require('web_editor.field.html');
+var FieldHtml = require('web_editor.field.html.legacy');
 var fieldRegistry = require('web.field_registry');
 var convertInline = require('web_editor.convertInline');
 
@@ -41,29 +41,41 @@ var MassMailingFieldHtml = FieldHtml.extend({
      *
      * @override
      */
-    commitChanges: async function () {
+    commitChanges: function () {
         var self = this;
-        if (this.mode === 'readonly') {
+        if (config.isDebug() && this.mode === 'edit') {
+            var layoutInfo = $.summernote.core.dom.makeLayoutInfo(this.wysiwyg.$editor);
+            $.summernote.pluginEvents.codeview(undefined, undefined, layoutInfo, false);
+        }
+        if (this.mode === 'readonly' || !this.isRendered) {
             return this._super();
         }
         var fieldName = this.nodeOptions['inline-field'];
+
+        if (this.$content.find('.o_basic_theme').length) {
+            this.$content.find('*').css('font-family', '');
+        }
+
         var $editable = this.wysiwyg.getEditable();
 
-        // todo: save croped image (previously this.wysiwyg.saveCroppedImages)
-        // self._isDirty = result.isDirty;
+        return this.wysiwyg.saveCroppedImages(this.$content).then(function () {
+            return self.wysiwyg.save().then(function (result) {
+                self._isDirty = result.isDirty;
 
-        // convertInline.attachmentThumbnailToLinkImg($editable);
-        // convertInline.fontToImg($editable);
-        // convertInline.classToStyle($editable);
+                convertInline.attachmentThumbnailToLinkImg($editable);
+                convertInline.fontToImg($editable);
+                convertInline.classToStyle($editable);
 
-        // self.trigger_up('field_changed', {
-        //     dataPointID: self.dataPointID,
-        //     changes: _.object([fieldName], [self._unWrap($editable.html())])
-        // });
+                self.trigger_up('field_changed', {
+                    dataPointID: self.dataPointID,
+                    changes: _.object([fieldName], [self._unWrap($editable.html())])
+                });
 
-        // if (self._isDirty && self.mode === 'edit') {
-        //     return self._doAction();
-        // }
+                if (self._isDirty && self.mode === 'edit') {
+                    return self._doAction();
+                }
+            });
+        });
     },
     /**
      * The html_frame widget is opened in an iFrame that has its URL encoded
@@ -283,7 +295,7 @@ var MassMailingFieldHtml = FieldHtml.extend({
                 this.$content.focusIn();
             }
         }
-        // this.wysiwyg.trigger('reload_snippet_dropzones');
+        this.wysiwyg.trigger('reload_snippet_dropzones');
     },
 
     //--------------------------------------------------------------------------
@@ -307,6 +319,7 @@ var MassMailingFieldHtml = FieldHtml.extend({
      * @param {OdooEvent} ev
      */
     _onSnippetsLoaded: function (ev) {
+        console.log('onsnippetloaded');
         var self = this;
         if (!this.$content) {
             this.snippetsLoaded = ev;
@@ -484,6 +497,7 @@ var MassMailingFieldHtml = FieldHtml.extend({
     },
 });
 
+console.log('mass_mailing_html added')
 fieldRegistry.add('mass_mailing_html', MassMailingFieldHtml);
 
 return MassMailingFieldHtml;

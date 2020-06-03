@@ -862,6 +862,7 @@ var SnippetsMenu = Widget.extend({
      * @constructor
      */
     init: function (parent, options) {
+        console.log('init snippetmenu')
         this._super.apply(this, arguments);
         options = options || {};
         this.trigger_up('getRecordInfo', {
@@ -920,6 +921,7 @@ var SnippetsMenu = Widget.extend({
      * @override
      */
     start: function () {
+        console.log('start editor')
         var defs = [this._super.apply(this, arguments)];
         this.ownerDocument = this.$el[0].ownerDocument;
         this.$document = $(this.ownerDocument);
@@ -1381,6 +1383,7 @@ var SnippetsMenu = Widget.extend({
      * @param {boolean} invalidateCache
      */
     _loadSnippetsTemplates: async function (invalidateCache) {
+        console.log('_loadSnippetsTemplates:', _loadSnippetsTemplates)
         return this._mutex.exec(async () => {
             await this._destroyEditors();
             const html = await this.loadSnippets(invalidateCache);
@@ -1669,6 +1672,7 @@ var SnippetsMenu = Widget.extend({
 
         this.$el.addClass('o_loaded');
         $('body.editor_enable').addClass('editor_has_snippets');
+        console.log('trigger up', 'snippets_loaded')
         this.trigger_up('snippets_loaded', self.$el);
     },
     /**

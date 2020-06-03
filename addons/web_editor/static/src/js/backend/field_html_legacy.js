@@ -1,12 +1,11 @@
-odoo.define('web_editor.field.html', function (require) {
+odoo.define('web_editor.field.html.legacy', function (require) {
 'use strict';
 
 var ajax = require('web.ajax');
 var basic_fields = require('web.basic_fields');
 var config = require('web.config');
 var core = require('web.core');
-// var Wysiwyg = reequire('web_editor.wysiwyg.root');
-var wysiwygLoader = require('web_editor.loader');
+var Wysiwyg = require('web_editor.wysiwyg.root');
 var field_registry = require('web.field_registry');
 // must wait for web/ to add the default html widget, otherwise it would override the web_editor one
 require('web._field_registry');
@@ -31,7 +30,7 @@ var jinjaRegex = /(^|\n)\s*%\s(end|set\s)/;
  *  - snippets
  *  - wrapper
  */
-var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
+var FieldHtmlLegacy = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
     description: _lt("Html"),
     className: 'oe_form_field oe_form_field_html',
     supportedFieldTypes: ['html'],
@@ -42,25 +41,22 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
         wysiwyg_change: '_onChange',
         wysiwyg_attachment: '_onAttachmentChange',
     },
-    /**
-     * @override
-     */
-    _onKeydown () {},
 
     /**
      * @override
      */
-    willStart: async function () {
+    willStart: function () {
+        var self = this;
+        this.isRendered = false;
         this._onUpdateIframeId = 'onLoad_' + _.uniqueId('FieldHtml');
         var defAsset;
         if (this.nodeOptions.cssReadonly) {
             defAsset = ajax.loadAsset(this.nodeOptions.cssReadonly);
         }
-        debugger
+        console.log('legacy started')
 
         if (!assetsLoaded) { // avoid flickering when begin to edit
-            assetsLoaded = new Promise(async (resolve) => {
-                const Wysiwyg = await this._getWysiwygClass();
+            assetsLoaded = new Promise(function (resolve) {
                 var wysiwyg = new Wysiwyg(self, {});
                 wysiwyg.attachTo($('<textarea>')).then(function () {
                     wysiwyg.destroy();
@@ -102,18 +98,22 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      *
      * @override
      */
-    commitChanges: async function () {
+    commitChanges: function () {
+        var self = this;
+        if (config.isDebug() && this.mode === 'edit') {
+            var layoutInfo = $.summernote.core.dom.makeLayoutInfo(this.wysiwyg.$editor);
+            $.summernote.pluginEvents.codeview(undefined, undefined, layoutInfo, false);
+        }
+        if (this.mode == "readonly" || !this.isRendered) {
+            return this._super();
+        }
         var _super = this._super.bind(this);
-        if (this.mode == "edit") {
-            this._isDirty = await this.wysiwyg.isDirty();
-        }
-        if (this.mode == "readonly") {
-            return _super();
-        }
-        // todo: make this work
-        this._value = (await this.wysiwyg.getValue()).innerHTML;
-        this._isDirty = await this.wysiwyg.isDirty();
-        return _super();
+        return this.wysiwyg.saveCroppedImages(this.$content).then(function () {
+            return self.wysiwyg.save().then(function (result) {
+                self._isDirty = result.isDirty;
+                _super();
+            });
+        });
     },
     /**
      * @override
@@ -126,7 +126,7 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      * @override
      */
     getFocusableElement: function () {
-        return this.$el;
+        return this.$target || $();
     },
     /**
      * Do not re-render this field if it was the origin of the onchange call.
@@ -144,7 +144,7 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
             if (this.mode === 'edit') {
                 this.wysiwyg.setValue(value);
             } else {
-                this.$readOnlyContainer.html(value);
+                this.$content.html(value);
             }
         }
         return Promise.resolve();
@@ -158,32 +158,31 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      * @override
      */
     _getValue: function () {
-        return this._value;
+        var value = this.$target.val();
+        if (this.nodeOptions.wrapper) {
+            return this._unWrap(value);
+        }
+        return value;
     },
     /**
-     * Create the wysiwyg instance with the target (this.$editorContainer)
-     * then add the editable content (this.$readOnlyContainer).
+     * Create the wysiwyg instance with the target (this.$target)
+     * then add the editable content (this.$content).
      *
      * @private
      * @returns {$.Promise}
      */
-    _createWysiwygIntance: async function () {
-        const Wysiwyg = await this._getWysiwygClass();
+    _createWysiwygIntance: function () {
+        var self = this;
         this.wysiwyg = new Wysiwyg(this, this._getWysiwygOptions());
-        // const $wysiwygContainer = $('<div class="wysiwyg-container"></div>');
-        // this.$el.append($wysiwygContainer)
-        console.log('createwysiwyg')
 
-        return this.wysiwyg.attachTo(this).then( () => {
-            this._appendTemplateButton();
+        // by default this is synchronous because the assets are already loaded in willStart
+        // but it can be async in the case of options such as iframe, snippets...
+        console.log('creatWysiwyg instance')
+        return this.wysiwyg.attachTo(this.$target).then(function () {
+            self.$content = self.wysiwyg.$editor.closest('body, odoo-wysiwyg-container');
+            self._onLoadWysiwyg();
+            self.isRendered = true;
         });
-    },
-    _getWysiwygClass: function() {
-        // if (this.nodeOptions.cssReadonly) {
-            return wysiwygLoader.loadWysiwyg();
-        // } else {
-        //     return wysiwygLoader.loadJabberwockWysiwyg();
-        // }
     },
     /**
      * Get wysiwyg options to create wysiwyg instance.
@@ -192,43 +191,47 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      * @returns {Object}
      */
     _getWysiwygOptions: function () {
-        const $wrapper = $('<div class="note-editable"></div>');
-        $wrapper.html(this.value || '<p><br/></p>');
+        var self = this;
         return Object.assign({}, this.nodeOptions, {
-            // widget media to add in db, the informations
             recordInfo: {
                 context: this.record.getContext(this.recordParams),
                 res_model: this.model,
                 res_id: this.res_id,
             },
             noAttachment: this.nodeOptions['no-attachment'],
-            // inject js or css in iframe
             inIframe: !!this.nodeOptions.cssEdit,
             iframeCssAssets: this.nodeOptions.cssEdit,
             snippets: this.nodeOptions.snippets,
-            value: $wrapper[0].outerHTML,
-            location: [this.el, 'append'],
-            template: `
-                <t t-zone="float"/>
-                <t t-zone="default"/>
-                <div class="d-flex flex-column">
-                    <div class="d-flex flex-row overflow-auto">
-                        <t t-zone="main_sidebar"/>
-                        <div class="d-flex flex-column overflow-auto o_editor_center">
-                            <div class="o_toolbar">
-                                <t t-zone="tools"/>
-                            </div>
-                            <div class="d-flex overflow-auto note-editing-area">
-                                <t t-zone="snippetManipulators"/>
-                                <t t-zone="main"/>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="o_debug_zone">
-                        <t t-zone="debug"/>
-                    </div>
-                </div>
-            `,
+
+            tabsize: 0,
+            height: 180,
+            generateOptions: function (options) {
+                var toolbar = options.toolbar || options.airPopover || {};
+                var para = _.find(toolbar, function (item) {
+                    return item[0] === 'para';
+                });
+                if (para && para[1] && para[1].indexOf('checklist') === -1) {
+                    para[1].splice(2, 0, 'checklist');
+                }
+                if (config.isDebug()) {
+                    options.codeview = true;
+                    var view = _.find(toolbar, function (item) {
+                        return item[0] === 'view';
+                    });
+                    if (view) {
+                        if (!view[1].includes('codeview')) {
+                            view[1].splice(-1, 0, 'codeview');
+                        }
+                    } else {
+                        toolbar.splice(-1, 0, ['view', ['codeview']]);
+                    }
+                }
+                if ("mailing.mailing" === self.model) {
+                    options.noVideos = true;
+                }
+                options.prettifyHtml = false;
+                return options;
+            },
         });
     },
     /**
@@ -263,8 +266,8 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
         if (this.nodeOptions.wrapper) {
             value = this._wrap(value);
         }
-        // this.$editorContainer = $('div').val(value).hide();
-        // this.$editorContainer.appendTo(this.$el);
+        this.$target = $('<textarea>').val(value).hide();
+        this.$target.appendTo(this.$el);
 
         var fieldNameAttachment = _.chain(this.recordData)
             .pairs()
@@ -313,7 +316,7 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
                     console.warn('Wysiwyg iframe double load detected');
                     return;
                 }
-                self.$readOnlyContainer = $('#iframe_target', self.$iframe[0].contentWindow.document.body);
+                self.$content = $('#iframe_target', self.$iframe[0].contentWindow.document.body);
                 resolver();
             };
 
@@ -353,14 +356,14 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
                 });
             });
         } else {
-            this.$readOnlyContainer = $('<div class="o_readonly"/>').html(value);
-            this.$readOnlyContainer.appendTo(this.$el);
+            this.$content = $('<div class="o_readonly"/>').html(value);
+            this.$content.appendTo(this.$el);
             resolver();
         }
 
-        // def.then(function () {
-        //     self.$readOnlyContainer.on('click', 'ul.o_checklist > li', self._onReadonlyClickChecklist.bind(self));
-        // });
+        def.then(function () {
+            self.$content.on('click', 'ul.o_checklist > li', self._onReadonlyClickChecklist.bind(self));
+        });
     },
     /**
      * @private
@@ -426,44 +429,64 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
      * @param {OdooEvent} ev
      */
     _onChange: function (ev) {
-        // todo: why?
         this._doDebouncedAction.apply(this, arguments);
-    },
-    // /**
-    //  * Method called when wysiwyg triggers a change.
-    //  *
-    //  * @private
-    //  * @param {OdooEvent} ev
-    //  */
-    // _onReadonlyClickChecklist: function (ev) {
-    //     var self = this;
-    //     if (ev.offsetX > 0) {
-    //         return;
-    //     }
-    //     ev.stopPropagation();
-    //     ev.preventDefault();
-    //     var checked = $(ev.target).hasClass('o_checked');
-    //     var checklistId = parseInt(($(ev.target).attr('id') || '0').replace(/^checklist-id-/, ''));
 
-    //     this._rpc({
-    //         route: '/web_editor/checklist',
-    //         params: {
-    //             res_model: this.model,
-    //             res_id: this.res_id,
-    //             filename: this.name,
-    //             checklistId: checklistId,
-    //             checked: !checked,
-    //         },
-    //     }).then(function (value) {
-    //         self._setValue(value);
-    //     });
-    // },
+        var $lis = this.$content.find('.note-editable ul.o_checklist > li:not(:has(> ul.o_checklist))');
+        if (!$lis.length) {
+            return;
+        }
+        var max = 0;
+        var ids = [];
+        $lis.map(function () {
+            var checklistId = parseInt(($(this).attr('id') || '0').replace(/^checklist-id-/, ''));
+            if (ids.indexOf(checklistId) === -1) {
+                if (checklistId > max) {
+                    max = checklistId;
+                }
+                ids.push(checklistId);
+            } else {
+                $(this).removeAttr('id');
+            }
+        });
+        $lis.not('[id]').each(function () {
+            $(this).attr('id', 'checklist-id-' + (++max));
+        });
+    },
+    /**
+     * Method called when wysiwyg triggers a change.
+     *
+     * @private
+     * @param {OdooEvent} ev
+     */
+    _onReadonlyClickChecklist: function (ev) {
+        var self = this;
+        if (ev.offsetX > 0) {
+            return;
+        }
+        ev.stopPropagation();
+        ev.preventDefault();
+        var checked = $(ev.target).hasClass('o_checked');
+        var checklistId = parseInt(($(ev.target).attr('id') || '0').replace(/^checklist-id-/, ''));
+
+        this._rpc({
+            route: '/web_editor/checklist',
+            params: {
+                res_model: this.model,
+                res_id: this.res_id,
+                filename: this.name,
+                checklistId: checklistId,
+                checked: !checked,
+            },
+        }).then(function (value) {
+            self._setValue(value);
+        });
+    },
     /**
      * Method called when the wysiwyg instance is loaded.
      *
      * @private
      */
-    _appendTemplateButton: function () {
+    _onLoadWysiwyg: function () {
         var $button = this._renderTranslateButton();
         $button.css({
             'font-size': '15px',
@@ -493,9 +516,7 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
     _onWysiwygFocus: function (ev) {},
 });
 
+field_registry.add('html_legacy', FieldHtmlLegacy);
 
-// field_registry.add('html', FieldHtml);
-
-
-return FieldHtml;
+return FieldHtmlLegacy;
 });

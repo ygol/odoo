@@ -10,12 +10,12 @@
 <template id="compiled_assets_wysiwyg" name="Wysiwyg Editor" groups="base.group_user,base.group_portal">
     <t t-call-assets="web_editor.assets_wysiwyg"/>
 </template>
+<template id="web_editor.compiled_assets_jabberwock_wysiwyg" name="Jabberwock Wysiwyg Editor" groups="base.group_user,base.group_portal">
+    <t t-call-assets="web_editor.assets_jabberwock_wysiwyg"/>
+</template>
 
 <template id="assets_wysiwyg_base" name="Wysiwyg Editor Assets base">
     <!-- lib -->
-
-    <!-- <t t-call-assets="web_editor.assets_summernote"/> -->
-    <!-- <t t-call-assets="web_editor.summernote"/> -->
     <script type="text/javascript" src="/web_editor/static/lib/jabberwock/jabberwock.js"/>
 
     <link rel="stylesheet" type="text/css" href="/web_editor/static/lib/cropperjs/cropper.css"/>
@@ -63,14 +63,17 @@
 <template id="web_editor.assets_jabberwock_wysiwyg" name="Jabberwock Wysiwyg Editor Assets">
     <t t-call="web_editor.assets_wysiwyg_base" />
     <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/jabberwock_wysiwyg.js"/>
-    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/wysiwyg_snippets.js"/>
-    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/wysiwyg_iframe.js"/>
 </template>
 <template id="web_editor.assets_wysiwyg" name="Wysiwyg Editor Assets" >
+    <t t-call-assets="web_editor.assets_summernote"/>
     <t t-call="web_editor.assets_wysiwyg_base" />
+    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/default_options.js"/>
     <script type="text/javascript" src="/web_editor/static/src/js/editor/editor.js"/>
     <script type="text/javascript" src="/web_editor/static/src/js/editor/rte.js"/>
     <script type="text/javascript" src="/web_editor/static/src/js/editor/rte.summernote.js"/>
+    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/wysiwyg.js"/>
+    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/wysiwyg_snippets.js"/>
+    <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/wysiwyg_iframe.js"/>
 </template>
 
 <template id="assets_summernote" name="Summernote">
@@ -142,8 +145,8 @@
         <script type="text/javascript" src="/web_editor/static/lib/vkbeautify/vkbeautify.0.99.00.beta.js"/>
         <script type="text/javascript" src="/web_editor/static/src/js/common/ace.js"/>
         <script type="text/javascript" src="/web_editor/static/src/js/common/utils.js"/>
-        <script type="text/javascript" src="/web_editor/static/src/js/frontend/assetLoaderWidget.js"/>
-        <!-- <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/root.js"/> -->
+        <!-- <script type="text/javascript" src="/web_editor/static/src/js/frontend/assetLoaderWidget.js"/> -->
+        <script type="text/javascript" src="/web_editor/static/src/js/wysiwyg/root.js"/>
     </xpath>
 </template>
 
@@ -163,6 +166,7 @@
         <script type="text/javascript" src="/web_editor/static/lib/jabberwock/jabberwock.js"/>
         <script type="text/javascript" src="/web_editor/static/src/js/frontend/loader.js" />
         <script type="text/javascript" src="/web_editor/static/src/js/backend/field_html.js" />
+        <script type="text/javascript" src="/web_editor/static/src/js/backend/field_html_legacy.js" />
         <script type="text/javascript" src="/web_editor/static/src/js/backend/convert_inline.js" />
     </xpath>
 </template>
