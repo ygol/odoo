@@ -13,6 +13,34 @@
     </xpath>
 </template>
 
+<template id="layout" inherit_id="website.layout" name="Website Event Track Layout">
+    <xpath expr="//head/meta[last()]" position="after">
+        <t t-if="event">
+            <link rel="manifest" t-attf-href="/event/#{ slug(event) }/manifest.webmanifest"/>
+            <script type="text/javascript">
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/event/<t t-esc="slug(event)"/>/service-worker.js');
+                });
+            }
+            </script>
+        </t>
+    </xpath>
+</template>
+
+<template id="service_worker_js" name="ServiceWorker">
+    self.addEventListener('fetch', event => {
+        event.respondWith(
+            caches.open('<t t-esc="slug(event)"/>').then(function(cache) {
+                return fetch(event.request).then(function(response) {
+                    cache.put(event.request, response.clone());
+                    return response;
+                });
+            })
+        );
+    });
+</template>
+
 <template name="Sponsors" id="event_sponsor" customize_show="True" inherit_id="website_event.layout">
     <xpath expr="//div[@id='wrap']" position="inside">
         <div class="container mt32 mb16 d-print-none" t-if="event.sponsor_ids">
@@ -46,7 +74,7 @@
 </template>
 
 <template id="agenda">
-    <t t-call="website_event.layout">
+    <t t-call="website_event_track.layout">
         <div class="oe_structure" id="oe_structure_website_event_track_agenda_1"/>
         <section class="container pt48">
             <h1 t-field="event.name"/>

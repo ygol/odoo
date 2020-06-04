@@ -5,6 +5,7 @@ import babel
 import babel.dates
 import collections
 import datetime
+import json
 import pytz
 import base64
 from werkzeug.exceptions import NotFound
@@ -225,3 +226,57 @@ class WebsiteEventTrackController(http.Controller):
             'is_html_empty': is_html_empty
         }
         return request.render("website_event_track.lobby", values)
+
+    @http.route('/event/<model("event.event"):event>/manifest.webmanifest', type='http', auth="public", website=True, sitemap=False)
+    def event_webmanifest(self, event):
+        if not event.can_access_from_current_website():
+            raise NotFound()
+
+        webmanifest = {
+            "name": event.name,
+            "short_name": event.name,
+            "start_url": ".",
+            "display": "standalone",
+            "theme_color": "#875A7B",
+            "background_color": "#fff",
+            "description": "",
+            "icons": [{
+                "src": "images/touch/homescreen48.png",
+                "sizes": "48x48",
+                "type": "image/png",
+            }, {
+                "src": "images/touch/homescreen72.png",
+                "sizes": "72x72",
+                "type": "image/png",
+            }, {
+                "src": "images/touch/homescreen96.png",
+                "sizes": "96x96",
+                "type": "image/png",
+            }, {
+                "src": "images/touch/homescreen144.png",
+                "sizes": "144x144",
+                "type": "image/png",
+            }, {
+                "src": "images/touch/homescreen168.png",
+                "sizes": "168x168",
+                "type": "image/png",
+            }, {
+                "src": "images/touch/homescreen192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+            }],
+        }
+        body = json.dumps(webmanifest)
+        response = request.make_response(body, headers=[
+            ('Content-Type', 'application/manifest+json'),
+        ])
+        return response
+
+    @http.route('/event/<model("event.event"):event>/service-worker.js', type='http', auth="public", website=True, sitemap=False)
+    def event_serviceworker(self, event):
+        if not event.can_access_from_current_website():
+            raise NotFound()
+
+        return request.render('website_event_track.service_worker_js', {'event': event }, headers=[
+            ('Content-Type', 'text/javascript'),
+        ])
