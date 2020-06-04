@@ -2990,7 +2990,7 @@ registry.BackgroundPosition = SnippetOptionWidget.extend({
         this.trigger_up('block_preview_overlays');
 
         // Create empty clone of $target with same display size, make it draggable and give it a tooltip.
-        this.$bgDragger = this.$target.clone().empty();
+        this.$bgDragger = this.$target.clone().empty().removeClass('o_editable');
         this.$bgDragger.on('mousedown', this._onDragBackgroundStart.bind(this));
         this.$bgDragger.tooltip({
             title: 'Click and drag the background to adjust its position!',
