@@ -4,6 +4,7 @@ odoo.define('website.editMenu', function (require) {
 var core = require('web.core');
 var websiteNavbarData = require('website.navbar');
 var wysiwygLoader = require('web_editor.loader');
+var ajax = require('web.ajax');
 
 
 var _t = core._t;
@@ -12,7 +13,7 @@ var _t = core._t;
  * Adds the behavior when clicking on the 'edit' button (+ editor interaction)
  */
 var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
-    assetLibs: ['web_editor.compiled_assets_wysiwyg', 'website.compiled_assets_wysiwyg'],
+    // assetLibs: ['web_editor.compiled_assets_wysiwyg', 'website.compiled_assets_wysiwyg'],
 
     xmlDependencies: ['/website/static/src/xml/website.editor.xml'],
     actions: _.extend({}, websiteNavbarData.WebsiteNavbarActionWidget.prototype.actions, {
@@ -136,7 +137,7 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
             },
         });
 
-        return await wysiwygLoader.createWysiwyg(this, {
+        const wysiwyg = await wysiwygLoader.createWysiwyg(this, {
             lib: 'jabberwock',
             snippets: 'website.snippets',
             recordInfo: {
@@ -148,6 +149,8 @@ var EditPageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
             saveButton: true,
             location: [document.getElementById('wrapwrap'), 'replace'],
         });
+        await ajax.loadLibs({ assetLibs: [ 'website.compiled_assets_wysiwyg' ] });
+        return wysiwyg;
     },
     /**
      * On save, the editor will ask to parent widgets if something needs to be
