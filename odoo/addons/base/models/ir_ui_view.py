@@ -986,6 +986,11 @@ actual arch.
                     name_manager.must_have_fields(
                         self._get_field_domain_variables(node, field, node_info['editable'])
                     )
+                    # Uncomment if we want to enforce presence of currency field for monetary fields
+                    # (even if not specified as widget="monetary")
+                    # if field.type == "monetary" and node.get("invisible", "0") != "1":
+                    #     # currency should be present in view for monetary fields, iff the field is shown
+                    #     name_manager.must_have_field(field.currency_field or "currency_id", "currency_field of monetary field %s" % field.name)
                 views = {}
                 for child in node:
                     if child.tag in ('form', 'tree', 'graph', 'kanban', 'calendar'):
@@ -1324,7 +1329,7 @@ actual arch.
                 fields = dict.fromkeys(get_variable_names(expr), '%s=%s' % (attr, expr))
                 name_manager.must_have_fields(fields)
 
-            elif attr in ('attrs', 'context'):
+            elif attr in ('attrs', 'context', 'options'):
                 for key, val_ast in get_dict_asts(expr).items():
                     if attr == 'attrs' and isinstance(val_ast, ast.List):
                         # domains in attrs are used for readonly, invisible, ...
@@ -1332,6 +1337,10 @@ actual arch.
                         desc = '%s.%s' % (attr, key)
                         fields = self._get_client_domain_variables(val_ast, desc, expr)
                         name_manager.must_have_fields(fields)
+
+                    elif attr == "options":
+                        if key == "currency_field":
+                            name_manager.must_have_field(val_ast.s, "%s.%s %s" % (attr, key, expr))
 
                     elif key == 'group_by':  # only in context
                         if not isinstance(val_ast, ast.Str):
@@ -1394,6 +1403,17 @@ actual arch.
                 msg = ("A role cannot be `none` or `presentation`. "
                     "All your elements must be accessible with screen readers, describe it.")
                 self.handle_view_error(msg, raise_exception=False)
+
+            elif attr == "widget" and expr == "monetary" and node.tag == "field":
+                field = name_manager.Model._fields.get(node.get("name"))
+                if field and field.type == "monetary":
+                    # If the field is a monetary
+                    # the currency should be the field one
+                    name_manager.must_have_field(field.currency_field or "currency_id", "missing currency_field for monetary widget of %s" % field.name)
+                elif field and field.type == "float" and "currency_field" not in node.get('options', ""):
+                    # If a float field is specified as monetary
+                    # without a "currency_field" options, currency_id is necessary as fallback currency
+                    name_manager.must_have_field("currency_id", "monetary widget of field '%s'" % field.name)
 
     def _validate_classes(self, node, expr):
         """ Validate the classes present on node. """
