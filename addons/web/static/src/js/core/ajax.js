@@ -441,6 +441,8 @@ var loadAsset = (function () {
     var cache = {};
 
     var load = function loadAsset(xmlId, context, tplRoute = '/web/dataset/call_kw/') {
+        console.log('loadAsset:', xmlId)
+        console.trace();
         if (cache[xmlId]) {
             return cache[xmlId];
         }

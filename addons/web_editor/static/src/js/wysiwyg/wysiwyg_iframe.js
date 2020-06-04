@@ -23,7 +23,7 @@ Wysiwyg.include({
      **/
     init: function (parent, options) {
         this._super.apply(this, arguments);
-        if (this.options.inIframe) {
+        if (this.options.lib === 'legacy' && this.options.inIframe) {
             this._onUpdateIframeId = 'onLoad_' + this.id;
         }
     },
@@ -33,7 +33,7 @@ Wysiwyg.include({
      * @override
      **/
     willStart: function () {
-        if (!this.options.inIframe) {
+        if (!this.options.inIframe || this.options.lib !== 'legacy') {
             return this._super();
         }
 

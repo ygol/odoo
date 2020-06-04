@@ -2,11 +2,11 @@ odoo.define('website_forum.website_forum', function (require) {
 'use strict';
 
 var core = require('web.core');
-var weDefaultOptions = require('web_editor.wysiwyg.default_options');
 var wysiwygLoader = require('web_editor.loader');
 var publicWidget = require('web.public.widget');
 var session = require('web.session');
 var qweb = core.qweb;
+
 
 var _t = core._t;
 
@@ -38,6 +38,7 @@ publicWidget.registry.websiteForum = publicWidget.Widget.extend({
 
         this.lastsearch = [];
 
+        console.log('started')
         // float-left class messes up the post layout OPW 769721
         $('span[data-oe-model="forum.post"][data-oe-field="content"]').find('img.float-left').removeClass('float-left');
 
@@ -113,10 +114,9 @@ publicWidget.registry.websiteForum = publicWidget.Widget.extend({
             },
         });
 
-        _.each($('textarea.o_wysiwyg_loader'), function (textarea) {
+        _.each($('textarea.o_wysiwyg_loader'), async function (textarea) {
             var $textarea = $(textarea);
             var editorKarma = $textarea.data('karma') || 0; // default value for backward compatibility
-            var $form = $textarea.closest('form');
             var hasFullEdit = parseInt($("#karma").val()) >= editorKarma;
             var toolbar = [
                 ['style', ['style']],
@@ -134,12 +134,12 @@ publicWidget.registry.websiteForum = publicWidget.Widget.extend({
                 minHeight: 80,
                 toolbar: toolbar,
                 styleWithSpan: false,
-                styleTags: _.without(weDefaultOptions.styleTags, 'h1', 'h2', 'h3'),
                 recordInfo: {
                     context: self._getContext(),
                     res_model: 'forum.post',
                     res_id: +window.location.pathname.split('-').pop(),
                 },
+                value: textarea.value,
             };
             if (!hasFullEdit) {
                 options.plugins = {
@@ -147,13 +147,8 @@ publicWidget.registry.websiteForum = publicWidget.Widget.extend({
                     MediaPlugin: false,
                 };
             }
-            wysiwygLoader.load(self, $textarea[0], options).then(wysiwyg => {
-                // float-left class messes up the post layout OPW 769721
-                $form.find('.note-editable').find('img.float-left').removeClass('float-left');
-                $form.on('click', 'button .a-submit', () => {
-                    wysiwyg.save();
-                });
-            });
+
+            await wysiwygLoader.loadFromTextarea(this, $textarea, options);
         });
 
         _.each(this.$('.o_wforum_bio_popover'), authorBox => {

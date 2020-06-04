@@ -5,8 +5,8 @@ require('web.dom_ready');
 var core = require('web.core');
 var Dialog = require('web.Dialog');
 var localStorage = require('web.local_storage');
-var Wysiwyg = require('web_editor.wysiwyg.root');
-var EditorMenu = require('website.editor.menu');
+// var Wysiwyg = reequire('web_editor.wysiwyg.root');
+// var EditorMenu = reequire('website.editor.menu');
 
 var _t = core._t;
 

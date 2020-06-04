@@ -29,8 +29,9 @@ $o-we-zindex: $o-we-overlay-zindex + 1 !default;
     }
 }
 
-.editor_enable {
-    padding-top: var(--o-we-toolbar-height) !important;
+body.editor_enable {
+    padding: 0 !important;
+
     .note-popover .popover .popover-body {
         height: var(--o-we-toolbar-height);
     }
@@ -389,7 +390,7 @@ body .modal {
 
 // Highlight selected image/icon
 %o-we-selected-image {
-    $o-selected-image-color: rgba(150, 150, 220, 0.3);
+    $o-selected-image-color: green;
     background: $o-selected-image-color;
     outline: 3px solid $o-selected-image-color;
 }
@@ -440,4 +441,15 @@ img.o_we_custom_image.mx-auto {
             padding: 0.5rem 0; // To use more editor space if necessary
         }
     }
+}
+
+.wrap_editor {
+    height: 100vh;
+}
+
+.o_main_sidebar {
+    display: flex;
+}
+.o_editor_center {
+    flex: 1 1 auto;
 }

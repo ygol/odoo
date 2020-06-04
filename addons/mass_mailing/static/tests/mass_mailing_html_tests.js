@@ -7,7 +7,7 @@ var FieldHtml = require('web_editor.field.html');
 var MassMailingFieldHtml = require('mass_mailing.FieldHtml');
 var testUtils = require('web.test_utils');
 var weTestUtils = require('web_editor.test_utils');
-var Wysiwyg = require('web_editor.wysiwyg');
+var Wysiwyg = require('web_editor.jabberwock.wysiwyg');
 
 
 QUnit.module('mass_mailing', {}, function () {

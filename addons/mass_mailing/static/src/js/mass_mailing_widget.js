@@ -319,6 +319,7 @@ var MassMailingFieldHtml = FieldHtml.extend({
      * @param {OdooEvent} ev
      */
     _onSnippetsLoaded: function (ev) {
+        console.log('onsnippetloaded');
         var self = this;
         if (!this.$content) {
             this.snippetsLoaded = ev;
@@ -496,6 +497,7 @@ var MassMailingFieldHtml = FieldHtml.extend({
     },
 });
 
+console.log('mass_mailing_html added')
 fieldRegistry.add('mass_mailing_html', MassMailingFieldHtml);
 
 return MassMailingFieldHtml;
