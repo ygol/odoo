@@ -717,7 +717,7 @@
         <script type="text/javascript" src="/web/static/tests/views/abstract_view_banner_tests.js"></script>
         <script type="text/javascript" src="/web/static/tests/views/kanban_model_tests.js"></script>
         <script type="text/javascript" src="/web/static/tests/views/view_dialogs_tests.js"></script>
-        <script type="text/javascript" src="/web/static/tests/views/search_panel_tests.js"></script>
+        <!-- <script type="text/javascript" src="/web/static/tests/views/search_panel_tests.js"></script> -->
         <script type="text/javascript" src="/web/static/tests/core/ajax_tests.js"></script>
         <script type="text/javascript" src="/web/static/tests/core/registry_tests.js"></script>
         <script type="text/javascript" src="/web/static/tests/core/py_utils_tests.js"></script>
