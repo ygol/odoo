@@ -1842,7 +1842,7 @@ var FieldBinaryImage = AbstractFieldBinary.extend({
      * @param {string} unique   an unique integer for the record, usually __last_update
      * @returns {string} URL of the image
      */
-    _getImageUrl: function (model, res_id, field, unique) {
+    _getRecordImageUrl: function (model, res_id, field, unique) {
         return session.url('/web/image', {
             model: model,
             id: JSON.stringify(res_id),
@@ -1851,8 +1851,14 @@ var FieldBinaryImage = AbstractFieldBinary.extend({
             unique: field_utils.format.datetime(unique).replace(/[^0-9]/g, ''),
         });
     },
-    _render: function () {
-        var self = this;
+
+    /**
+     * Returns the correct url to be used a img src attribute for the widget.
+     *
+     * @private
+     * @returns {string} URL of the image
+     */
+    _getImageUrl: function () {
         var url = this.placeholder;
         if (this.value) {
             if (!utils.is_bin_size(this.value)) {
@@ -1861,9 +1867,15 @@ var FieldBinaryImage = AbstractFieldBinary.extend({
             } else {
                 var field = this.nodeOptions.preview_image || this.name;
                 var unique = this.recordData.__last_update;
-                url = this._getImageUrl(this.model, this.res_id, field, unique);
+                url = this._getRecordImageUrl(this.model, this.res_id, field, unique);
             }
         }
+        return url;
+    },
+
+    _render: function () {
+        var self = this;
+        var url = this._getImageUrl();
         var $img = $(qweb.render("FieldBinaryImage-img", {widget: this, url: url}));
         // override css size attributes (could have been defined in css files)
         // if specified on the widget
@@ -1898,7 +1910,7 @@ var FieldBinaryImage = AbstractFieldBinary.extend({
 
         if(this.nodeOptions.zoom) {
             var unique = this.recordData.__last_update;
-            var url = this._getImageUrl(this.model, this.res_id, 'image_1920', unique);
+            var url = this._getRecordImageUrl(this.model, this.res_id, 'image_1920', unique);
             var $img;
             var imageField = _.find(Object.keys(this.recordData), function(o) {
                 return o.startsWith('image_');
@@ -1915,7 +1927,7 @@ var FieldBinaryImage = AbstractFieldBinary.extend({
                 }
 
                 const image_field = this.field.manual ? this.name:'image_128';
-                var urlThumb = this._getImageUrl(this.model, this.res_id, image_field, unique);
+                var urlThumb = this._getRecordImageUrl(this.model, this.res_id, image_field, unique);
 
                 this.$el.empty();
                 $img = this.$el;
@@ -1955,7 +1967,31 @@ var FieldBinaryImage = AbstractFieldBinary.extend({
     },
 });
 
+var FieldBinaryImageUrl = FieldBinaryImage.extend({
+    /**
+     * Allow direct specification of an image url in a Char field, with a
+     * dedicated widget
+     *
+     * @override
+     * @private
+     */
+    _getImageUrl: function () {
+        return this.value ? this.value : this._super.apply(this, arguments);
+    },
+});
+
 var KanbanFieldBinaryImage = FieldBinaryImage.extend({
+    // In kanban views, there is a weird logic to determine whether or not a
+    // click on a card should open the record in a form view.  This logic checks
+    // if the clicked element has click handlers bound on it, and if so, does
+    // not open the record (assuming that the click will be handle by someone
+    // else).  In the case of this widget, there are clicks handler but they
+    // only apply in edit mode, which is never the case in kanban views, so we
+    // simply remove them.
+    events: {},
+});
+
+var KanbanFieldBinaryImageUrl = FieldBinaryImageUrl.extend({
     // In kanban views, there is a weird logic to determine whether or not a
     // click on a card should open the record in a form view.  This logic checks
     // if the clicked element has click handlers bound on it, and if so, does
@@ -3539,6 +3575,8 @@ return {
     AbstractFieldBinary: AbstractFieldBinary,
     FieldBinaryImage: FieldBinaryImage,
     KanbanFieldBinaryImage: KanbanFieldBinaryImage,
+    FieldBinaryImageUrl: FieldBinaryImage,
+    KanbanFieldBinaryImageUrl: KanbanFieldBinaryImageUrl,
     FieldBoolean: FieldBoolean,
     BooleanToggle: BooleanToggle,
     FieldChar: FieldChar,

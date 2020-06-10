@@ -9,6 +9,11 @@ from psycopg2 import IntegrityError
 from odoo.tools.translate import _
 _logger = logging.getLogger(__name__)
 
+# TODO add those flags if we want to provide full countries support
+NO_FLAG_COUNTRIES = [
+    "GF", "BV", "BQ", "GP", "HM", "YT", "RE", "MF", "PS", "SJ", "TW", "UM", "WF", "EH",
+]
+
 
 class Country(models.Model):
     _name = 'res.country'
@@ -37,7 +42,10 @@ class Country(models.Model):
              "(in reports for example), while this field is used to modify the input form for "
              "addresses.")
     currency_id = fields.Many2one('res.currency', string='Currency')
-    image = fields.Binary(attachment=True)
+    image_url = fields.Char(
+        compute="_compute_image_url_from_country_code", string="Flag",
+        help="Url of static flag image",
+    )
     phone_code = fields.Integer(string='Country Calling Code')
     country_group_ids = fields.Many2many('res.country.group', 'res_country_res_country_group_rel',
                          'res_country_id', 'res_country_group_id', string='Country Groups')
@@ -89,6 +97,14 @@ class Country(models.Model):
     def get_address_fields(self):
         self.ensure_one()
         return re.findall(r'\((.+?)\)', self.address_format)
+
+    @api.depends('code')
+    def _compute_image_url_from_country_code(self):
+        for country in self:
+            if not country.code or country.code in NO_FLAG_COUNTRIES:
+                country.image_url = False
+            else:
+                country.image_url = "/base/static/img/country_flags/%s.png" % country.code.lower()
 
 
 class CountryGroup(models.Model):

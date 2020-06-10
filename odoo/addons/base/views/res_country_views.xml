@@ -11,6 +11,7 @@
                 <tree string="Country">
                     <field name="name"/>
                     <field name="code"/>
+                    <field name="image_url" widget="image_url" options="{'size': [50, 50]}"/>
                 </tree>
             </field>
         </record>
@@ -23,7 +24,7 @@
                     <sheet>
                         <div class="oe_button_box">
                         </div>
-                        <field name="image" widget="image" class="oe_avatar"/>
+                        <field name="image_url" widget="image_url" class="oe_avatar"/>
                         <group name="main_group">
                             <group name="country_details">
                                 <field name="name"/>
