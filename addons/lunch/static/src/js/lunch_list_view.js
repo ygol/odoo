@@ -25,7 +25,7 @@ var LunchListView = ListView.extend({
      * @override
      */
     _createSearchModel(action, params) {
-        const lunchModelExtension = { "lunch-kanban": {} };
+        const lunchModelExtension = { "lunch": {} };
         return this._super(action, params, lunchModelExtension);
     },
 

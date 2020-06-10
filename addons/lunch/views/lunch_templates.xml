@@ -14,7 +14,7 @@
             <script type="text/javascript" src="/lunch/static/src/js/lunch_kanban_controller.js"></script>
             <script type="text/javascript" src="/lunch/static/src/js/lunch_kanban_renderer.js"></script>
             <script type="text/javascript" src="/lunch/static/src/js/lunch_kanban_record.js"></script>
-            <script type="text/javascript" src="/lunch/static/src/js/lunch_kanban_model_extension.js"></script>
+            <script type="text/javascript" src="/lunch/static/src/js/lunch_model_extension.js"></script>
             <script type="text/javascript" src="/lunch/static/src/js/lunch_list_view.js"></script>
             <script type="text/javascript" src="/lunch/static/src/js/lunch_list_controller.js"></script>
             <script type="text/javascript" src="/lunch/static/src/js/lunch_list_renderer.js"></script>

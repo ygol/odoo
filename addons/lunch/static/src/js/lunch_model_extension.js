@@ -1,9 +1,9 @@
-odoo.define("web.LunchKanbanModelExtension.js", function (require) {
+odoo.define("web.LunchModelExtension.js", function (require) {
     "use strict";
 
     const ActionModel = require("web.ActionModel");
 
-    class LunchKanbanModelExtension extends ActionModel.Extension {
+    class LunchModelExtension extends ActionModel.Extension {
 
         get(property) {
             switch (property) {
@@ -67,7 +67,7 @@ odoo.define("web.LunchKanbanModelExtension.js", function (require) {
         }
     }
 
-    ActionModel.registry.add("lunch-kanban", LunchKanbanModelExtension, 30);
+    ActionModel.registry.add("lunch", LunchModelExtension, 30);
 
-    return LunchKanbanModelExtension;
+    return LunchModelExtension;
 });
