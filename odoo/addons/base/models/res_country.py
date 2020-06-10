@@ -9,9 +9,22 @@ from psycopg2 import IntegrityError
 from odoo.tools.translate import _
 _logger = logging.getLogger(__name__)
 
-# TODO add those flags if we want to provide full countries support
+
+FLAG_MAPPING = {
+    "GF": "fr",
+    "BV": "no",
+    "BQ": "nl",
+    "GP": "fr",
+    "HM": "au",
+    "YT": "fr",
+    "RE": "fr",
+    "MF": "fr",
+    "UM": "us",
+}
+
 NO_FLAG_COUNTRIES = [
-    "GF", "BV", "BQ", "GP", "HM", "YT", "RE", "MF", "PS", "SJ", "TW", "UM", "WF", "EH",
+    "AQ", #Antarctica
+    "SJ", #Svalbard + Jan Mayen : separate jurisdictions : no dedicated flag
 ]
 
 
@@ -104,7 +117,8 @@ class Country(models.Model):
             if not country.code or country.code in NO_FLAG_COUNTRIES:
                 country.image_url = False
             else:
-                country.image_url = "/base/static/img/country_flags/%s.png" % country.code.lower()
+                code = FLAG_MAPPING.get(country.code, country.code.lower())
+                country.image_url = "/base/static/img/country_flags/%s.png" % code
 
 
 class CountryGroup(models.Model):
