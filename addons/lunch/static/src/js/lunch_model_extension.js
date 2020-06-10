@@ -8,15 +8,16 @@ odoo.define("web.LunchModelExtension.js", function (require) {
         get(property) {
             switch (property) {
                 case "domain": return this.getDomain();
+                case "userId": return this.state.userId;
             }
         }
 
         async reloadAfterDispatch() {
-            await this._updateLocationId();
+            await this._getLocationId();
         }
 
         async load() {
-            await this._updateLocationId();
+            await this._getLocationId();
         }
 
         prepareState() {
@@ -36,7 +37,7 @@ odoo.define("web.LunchModelExtension.js", function (require) {
             }
         }
 
-        updateLocationId(locationId) {
+        setLocationId(locationId) {
             this.state.locationId = locationId;
             return this.env.services.rpc({
                 route: "/lunch/user_location_set",
@@ -56,7 +57,7 @@ odoo.define("web.LunchModelExtension.js", function (require) {
         // Private
         //---------------------------------------------------------------------
 
-        async _updateLocationId() {
+        async _getLocationId() {
             this.state.locationId = await this.env.services.rpc({
                 route: "/lunch/user_location_get",
                 params: {

@@ -27,7 +27,6 @@ var LunchControllerCommon = {
      */
     init: function () {
         this._super.apply(this, arguments);
-        this.userId = null;
         this.editMode = false;
         this.updated = false;
         this.widgetData = null;
@@ -61,14 +60,13 @@ var LunchControllerCommon = {
         });
     },
     _fetchWidgetData: async function () {
-        const lunchInfos = await this._rpc({
+        this.widgetData = await this._rpc({
             route: '/lunch/infos',
             params: {
-                user_id: this.userId,
+                user_id: this._searchModel.get('userId'),
                 context: this.context,
             },
         });
-        this.widgetData = lunchInfos;
     },
     /**
      * Renders and appends the lunch banner widget.
@@ -128,13 +126,13 @@ var LunchControllerCommon = {
     },
     _onLocationChanged: function (ev) {
         ev.stopPropagation();
-        this._searchModel.dispatch('updateLocationId', ev.data.locationId);
+        this._searchModel.dispatch('setLocationId', ev.data.locationId);
     },
     _onOpenWizard: function (ev) {
         var self = this;
         ev.stopPropagation();
 
-        var ctx = this.userId ? {default_user_id: this.userId} : {};
+        var ctx = this._searchModel.get('userId') ? {default_user_id: this._searchModel.get('userId')} : {};
 
         var options = {
             on_close: function () {
@@ -170,7 +168,7 @@ var LunchControllerCommon = {
         this._rpc({
             route: '/lunch/pay',
             params: {
-                user_id: this.userId,
+                user_id: this._searchModel.get('userId'),
                 context: this.context,
             },
         }).then(function (isPaid) {
@@ -206,7 +204,7 @@ var LunchControllerCommon = {
         this._rpc({
             route: '/lunch/trash',
             params: {
-                user_id: this.userId,
+                user_id: this._searchModel.get('userId'),
                 context: this.context,
             },
         }).then(function () {
