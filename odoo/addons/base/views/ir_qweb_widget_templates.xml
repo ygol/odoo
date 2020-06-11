@@ -8,8 +8,7 @@
             <span itemprop="name" t-esc="object.parent_name"/>
         </t>
         <t t-if="options.get('country_image') and 'country_id' in fields and object.country_id and object.country_id.image_url">
-            <img t-attf-src="#{object.country_id.image_url}"
-                class="o_country_flag" width="50%"/>
+            <span t-field="object.country_id.image_url" t-options='{"widget": "image_url", "class": "country_flag"}'/>
         </t>
     </div>
 </template>
