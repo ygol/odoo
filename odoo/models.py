@@ -922,6 +922,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         noupdate = self._context.get('noupdate', False)
         # add current module in context for the conversion of xml ids
         self = self.with_context(_import_current_module=current_module)
+        _logger.info("user %d loads %d rows into %s", self.env.user, len(data), self._name)
 
         cr = self._cr
         cr.execute('SAVEPOINT model_load')
