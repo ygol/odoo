@@ -52,8 +52,10 @@ class TestValuationReconciliation(ValuationReconciliationTestCommon):
         move_form.invoice_date = date
         move_form.partner_id = self.partner_a
         move_form.currency_id = self.currency_data['currency']
-        move_form.purchase_id = purchase_order
-        return move_form.save()
+        invoice = move_form.save()
+        invoice.purchase_id = purchase_order
+        invoice.pre_onchange(['purchase_id'])
+        return invoice
 
     def test_shipment_invoice(self):
         """ Tests the case into which we receive the goods first, and then make the invoice.

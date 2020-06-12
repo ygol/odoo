@@ -129,8 +129,9 @@ class TestAccountEdiFacturx(AccountEdiTestCommon):
                             <RateApplicablePercent>20.0</RateApplicablePercent>
                         </ApplicableTradeTax>
                         <SpecifiedTradePaymentTerms>
+                            <Description>30% Advance End of Following Month</Description>
                             <DueDateDateTime>
-                                <DateTimeString>20170101</DateTimeString>
+                                <DateTimeString>20170228</DateTimeString>
                             </DueDateDateTime>
                         </SpecifiedTradePaymentTerms>
                         <SpecifiedTradeSettlementHeaderMonetarySummation>
@@ -190,11 +191,12 @@ class TestAccountEdiFacturx(AccountEdiTestCommon):
                         <BasisAmount currencyID="Gol">1000.000</BasisAmount>
                         <RateApplicablePercent>10.0</RateApplicablePercent>
                     </ApplicableTradeTax>
-                    <SpecifiedTradePaymentTerms>
-                        <DueDateDateTime>
-                            <DateTimeString>20170101</DateTimeString>
-                        </DueDateDateTime>
-                    </SpecifiedTradePaymentTerms>
+                        <SpecifiedTradePaymentTerms>
+                            <Description>30% Advance End of Following Month</Description>
+                            <DueDateDateTime>
+                                <DateTimeString>20170228</DateTimeString>
+                            </DueDateDateTime>
+                        </SpecifiedTradePaymentTerms>
                     <SpecifiedTradeSettlementHeaderMonetarySummation>
                         <LineTotalAmount currencyID="Gol">1000.000</LineTotalAmount>
                         <TaxBasisTotalAmount currencyID="Gol">1000.000</TaxBasisTotalAmount>
