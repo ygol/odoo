@@ -2,67 +2,116 @@ odoo.define('website.mobile', function (require) {
 'use strict';
 
 var core = require('web.core');
-var Dialog = require('web.Dialog');
+var utils = require('web.utils');
 var websiteNavbarData = require('website.navbar');
 
 var _t = core._t;
 
-var MobilePreviewDialog = Dialog.extend({
-    /**
-     * Tweaks the modal so that it appears as a phone and modifies the iframe
-     * rendering to show more accurate mobile view.
-     *
-     * @override
-     */
-    start: function () {
-        var self = this;
-        this.$modal.addClass('oe_mobile_preview');
-        this.$modal.on('click', '.modal-header', function () {
-            self.$el.toggleClass('o_invert_orientation');
-        });
-        this.$iframe = $('<iframe/>', {
-            id: 'mobile-viewport',
-            src: $.param.querystring(window.location.href, 'mobilepreview'),
-        });
-        this.$iframe.on('load', function (e) {
-            self.$iframe.contents().find('body').removeClass('o_connected_user');
-            self.$iframe.contents().find('#oe_main_menu_navbar').remove();
-        });
-        this.$iframe.appendTo(this.$el);
-
-        return this._super.apply(this, arguments);
-    },
-});
+var PREVIEW_VIEW_COOKIE = 'mobile_view_cookie';
 
 var MobileMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
-    actions: _.extend({}, websiteNavbarData.WebsiteNavbarActionWidget.prototype.actions || {}, {
-        'show-mobile-preview': '_onMobilePreviewClick',
-    }),
+    events: {
+        'click a': '_onMobilePreviewClick',
+    },
+
+    _bootstrapBreakpoints: [
+        { size: 576, infix:'xs'},
+        { size: 768, infix:'sm'},
+        { size: 992, infix:'md'},
+        { size: 1200, infix:'lg'},
+    ],
+
+    /**
+     * @constructor
+     */
+    init: function () {
+        this._super.apply(this, arguments);
+        this.selectedViewIndex = utils.get_cookie(PREVIEW_VIEW_COOKIE) || 0;
+},
+    /**
+     * @override
+     */
+    start: function() {
+        return this._super.apply(this, arguments).then(
+            () => {
+                this.$preview_buttons = this.$el.children();
+                if (this.selectedViewIndex >= this.$preview_buttons.length)
+                    this.selectedViewIndex = this.$preview_buttons.length;
+                this._setPreviewMode(this.$preview_buttons.eq(this.selectedViewIndex))
+            }
+        );
+    },
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * @param {jQuery}
+     */
+    _setPreviewMode: function ($button) {
+        const width = $button.attr('data-width');
+        const maxHeight = $button.attr('data-height');
+        let css = {};
+        let bootstrapBreakpoint = '';
+        const nbOfBootstrapBreakpoints = this._bootstrapBreakpoints.length;
+        if (width) {
+            for (let index = nbOfBootstrapBreakpoints - 1; index >= 0; index--) {
+                if (width < this._bootstrapBreakpoints[index].size) {
+                    bootstrapBreakpoint = this._bootstrapBreakpoints[index].infix;
+                }
+            }
+            css['width'] = width + 'px';
+            css['min-width'] = width + 'px';
+            css['max-width'] = width + 'px';
+            css['margin'] = 'auto';
+        }
+
+        if (!bootstrapBreakpoint) {
+            bootstrapBreakpoint = 'xl'
+        }
+
+        if (maxHeight) {
+            css['height'] = maxHeight + 'px';
+            css['min-height'] = maxHeight + 'px';
+            css['max-height'] = maxHeight + 'px';
+            css['overflow'] = 'auto';
+        }
+
+        $('#wrapwrap').toggleClass('border rounded mt-5 mb-5', !_.isEmpty(css));
+
+        $('#wrapwrap').removeAttr('style');
+        $('#wrapwrap').css(css);
+
+        $('#wrapwrap').removeClass('xs sm md lg xl');
+        $('#wrapwrap').addClass(bootstrapBreakpoint);
+
+        this.$preview_buttons.removeClass('selected');
+        $button.addClass('selected');
+    },
 
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
 
     /**
-     * Called when the mobile action is triggered -> instantiate the mobile
-     * preview dialog.
+     * Called when a preview button is clicked.
      *
      * @private
      */
-    _onMobilePreviewClick: function () {
-        if (this.mobilePreview && !this.mobilePreview.isDestroyed()) {
-            return this.mobilePreview.close();
+    _onMobilePreviewClick: function (e) {
+        let $button = this.$(e.target);
+        if ($button.is('span')) {
+            $button = $button.parent();
         }
-        this.mobilePreview = new MobilePreviewDialog(this, {
-            title: _t('Mobile preview') + ' <span class="fa fa-refresh"/>',
-        }).open();
+        utils.set_cookie(PREVIEW_VIEW_COOKIE, $button.index());
+        this._setPreviewMode($button);
     },
 });
 
-websiteNavbarData.websiteNavbarRegistry.add(MobileMenu, '#mobile-menu');
+websiteNavbarData.websiteNavbarRegistry.add(MobileMenu, '#website-preview-menu');
 
 return {
     MobileMenu: MobileMenu,
-    MobilePreviewDialog: MobilePreviewDialog,
 };
 });

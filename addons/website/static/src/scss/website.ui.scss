@@ -52,7 +52,7 @@ body.o_connected_user {
     }
 
     .o_menu_sections {
-        .o_mobile_preview a {
+        .o_website_preview a {
             text-align: center;
             font-size: 20px;
         }
@@ -74,9 +74,15 @@ body.o_connected_user {
             }
         }
 
-        .o_mobile_preview a {
-            text-align: center;
-            font-size: 20px;
+        .o_website_preview {
+            > a {
+                text-align: center;
+                font-size: 20px;
+                display: inline-block;
+                &.selected {
+                    background-color: darken($o-brand-odoo, 10%);
+                }
+            }
         }
     }
     @include media-breakpoint-down(sm) {

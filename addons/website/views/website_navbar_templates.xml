@@ -71,8 +71,10 @@
                         <t t-set="desktop_navbar" t-value="true"/>
                     </t>
                     <!-- Mobile preview -->
-                    <li class="o_mobile_preview" id="mobile-menu">
-                        <a data-action="show-mobile-preview" href="#" accesskey="v"><span title="Mobile preview" role="img" aria-label="Mobile preview" class="fa fa-mobile"/></a>
+                    <li id="website-preview-menu" class="o_website_preview">
+                        <a href="#" data-width="" data-height=""><span title="Desktop preview" role="img" aria-label="Desktop preview" class="fa fa-desktop"/></a>
+                        <a href="#" data-width="1024" data-height="667"><span title="Tablet preview" role="img" aria-label="Tablet preview" class="fa fa-tablet"/></a>
+                        <a href="#" data-width="375" data-height="667"><span title="Mobile preview" role="img" aria-label="Mobile preview" class="fa fa-mobile"/></a>
                     </li>
                     <li groups="website.group_multi_website" t-if="multi_website_websites" id="website_switcher">
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#" accesskey="w">

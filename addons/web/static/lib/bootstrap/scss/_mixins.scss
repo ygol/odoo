@@ -9,7 +9,8 @@
 @import "mixins/deprecate";
 
 // Utilities
-@import "mixins/breakpoints";
+// @import "mixins/breakpoints"; // TO BE USED WHEN NOT EDITING THE WEBSITE...
+@import "mixins/breakpoints_edition"; // TO BE USED WHEN EDITING THE WEBSITE...
 @import "mixins/hover";
 @import "mixins/image";
 @import "mixins/badge";
