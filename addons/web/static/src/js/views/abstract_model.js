@@ -16,21 +16,67 @@ odoo.define('web.AbstractModel', function (require) {
 
 var fieldUtils = require('web.field_utils');
 var mvc = require('web.mvc');
+const SampleServer = require('web.SampleServer');
+
 
 var AbstractModel = mvc.Model.extend({
+    /**
+     * @param {Widget} parent
+     * @param {Object} params
+     * @param {Object} param.fields
+     * @param {string} param.modelName
+     * @param {boolean} [params.useSampleData=false]
+     */
+    init(parent, params) {
+        this._super(...arguments);
+        params = params || {};
+        this.useSampleData = params.useSampleData || false;
+        this.isSample = false;
+        if (this.useSampleData) {
+            this.sampleServer = new SampleServer(params.modelName, params.fields);
+        }
+        window.model = this;
+    },
+
     //--------------------------------------------------------------------------
     // Public
     //--------------------------------------------------------------------------
 
+    get(handle, options) {
+        options = options || {};
+        const state = this._get(...arguments);
+        if (state && state.isSample && !options.withSamples) {
+            return this._cleanState(state);
+        }
+        return state;
+    },
+    _cleanState(state) {
+        return state;
+    },
+    _get() {
+        return {};
+    },
+    /**
+     * @override
+     */
+    load(params) {
+        this.loadParams = params;
+        return this._super(...arguments);
+    },
     /**
      * When something changes, the data may need to be refetched.  This is the
      * job for this method: reloading (only if necessary) all the data and
      * making sure that they are ready to be redisplayed.
      *
-     * @param {Object} params
+     * @param {any} handle
+     * @param {Object} [params={}]
      * @returns {Promise}
      */
-    reload: function (params) {
+    reload: function (handle, params) {
+        this.isSample = false;
+        if (this.useSampleData) {
+            this.useSampleData = !this._haveParamsChanged(params);
+        }
         return Promise.resolve();
     },
     /**
@@ -56,6 +102,55 @@ var AbstractModel = mvc.Model.extend({
             value = hasKey0 ? 0 : value;
         }
         return value;
+    },
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * Determines whether or not the given params differ from the initial ones
+     * (this.loadParams). This is used to deactivate the sample data feature as
+     * soon as a parameter (e.g. domain) changes.
+     *
+     * @private
+     * @param {Object} params
+     * @returns {boolean}
+     */
+    _haveParamsChanged(params) {
+        for (const key of ['context', 'domain', 'timeRanges']) {
+            if (key in params) {
+                const diff = JSON.stringify(params[key]) !== JSON.stringify(this.loadParams[key]);
+                if (diff) {
+                    return true;
+                }
+            }
+        }
+        if (this.useSampleData && 'groupBy' in params) {
+            return JSON.stringify(params.groupBy) !== JSON.stringify(this.loadParams.groupedBy);
+        }
+    },
+
+    /**
+     * Override to invoke the SampleServer when necessary, to populate the
+     * result with fake data.
+     *
+     * @private
+     * @override
+     */
+    async _rpc(params) {
+        let result = await this._super(...arguments);
+        if (this.useSampleData) {
+            if (this.sampleServer.canMock(params)) {
+                if (this.isSample || this.sampleServer.isEmpty(params, result)) {
+                    this.isSample = true;
+                    result = await this.sampleServer.mockRpc(params, result);
+                } else {
+                    this.useSampleData = false;
+                }
+            }
+        }
+        return result;
     },
 });
 

@@ -337,6 +337,7 @@
         <script type="text/javascript" src="/web/static/src/js/views/file_upload_mixin.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/file_upload_progress_bar.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/file_upload_progress_card.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/sample_server.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/select_create_controllers_registry.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/signature_dialog.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/standalone_field_manager_mixin.js"></script>

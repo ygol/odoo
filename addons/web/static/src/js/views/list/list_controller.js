@@ -522,9 +522,9 @@ var ListController = BasicController.extend({
     /**
      * @override
      */
-    _shouldBounceOnClick() {
+    _shouldBounceOnClick(element) {
         const state = this.model.get(this.handle, {raw: true});
-        return !state.count;
+        return !state.count || state.isSample;
     },
     /**
      * Called when clicking on 'Archive' or 'Unarchive' in the sidebar.
@@ -650,7 +650,7 @@ var ListController = BasicController.extend({
      * @private
      * @param {MouseEvent} ev
      */
-    _onCreateRecord: function (ev) {
+    _onCreateRecord: async function (ev) {
         // we prevent the event propagation because we don't want this event to
         // trigger a click on the main bus, which would be then caught by the
         // list editable renderer and would unselect the newly created row
@@ -659,7 +659,9 @@ var ListController = BasicController.extend({
         }
         var state = this.model.get(this.handle, {raw: true});
         if (this.editable && !state.groupedBy.length) {
-            this._addRecord(this.handle);
+            this._forgetSampleData(() => {
+                return this._addRecord(this.handle);
+            }, true);
         } else {
             this.trigger_up('switch_view', {view_type: 'form', res_id: undefined});
         }
@@ -867,7 +869,7 @@ var ListController = BasicController.extend({
         }
         var self = this;
         this.model.setSort(state.id, ev.data.name).then(function () {
-            self.update({});
+            self.reload({});
         });
     },
     /**

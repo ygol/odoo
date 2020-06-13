@@ -5,6 +5,7 @@ var AbstractFieldOwl = require('web.AbstractFieldOwl');
 var AbstractStorageService = require('web.AbstractStorageService');
 var BasicModel = require('web.BasicModel');
 var core = require('web.core');
+const Domain = require('web.Domain')
 var basicFields = require('web.basic_fields');
 var fieldRegistry = require('web.field_registry');
 var fieldRegistryOwl = require('web.field_registry_owl');
@@ -3761,6 +3762,226 @@ QUnit.module('Views', {
             "should not have any data row");
 
         assert.containsOnce(list, 'table', "should have a table in the dom");
+        list.destroy();
+    });
+
+    QUnit.test("empty list with sample data", async function (assert) {
+        assert.expect(11);
+
+        const list = await createView({
+            View: ListView,
+            model: 'foo',
+            data: this.data,
+            arch: `
+                <tree sample="1">
+                    <field name="foo"/>
+                    <field name="bar"/>
+                    <field name="int_field"/>
+                </tree>`,
+            domain: [['id', '<', 0]], // such that no record matches the domain
+            viewOptions: {
+                action: {
+                    help: '<p class="hello">click to add a partner</p>'
+                }
+            },
+        });
+
+        assert.containsOnce(list, '.o_list_table');
+        assert.hasClass(list.$el, 'o_sample_data');
+        assert.containsN(list, '.o_data_row', 5);
+        assert.containsOnce(list, '.o_nocontent_help .hello');
+
+        let content = list.$el.text();
+        await list.reload();
+        assert.strictEqual(content, list.$el.text(), 'The content should be the same after reloading the view without change');
+
+        // reload with another domain -> should no longer display the sample records
+        await list.reload({ domain: Domain.FALSE_DOMAIN });
+
+        assert.containsNone(list, '.o_list_table');
+        assert.containsOnce(list, '.o_nocontent_help .hello');
+
+        // reload with another domain matching records
+        await list.reload({ domain: Domain.TRUE_DOMAIN });
+
+        assert.containsOnce(list, '.o_list_table');
+        assert.containsN(list, '.o_data_row', 4);
+        assert.doesNotHaveClass(list.$el, 'o_sample_data');
+        assert.containsNone(list, '.o_nocontent_help .hello');
+
+        list.destroy();
+    });
+
+    QUnit.test("non empty list with sample data", async function (assert) {
+        assert.expect(6);
+
+        const list = await createView({
+            View: ListView,
+            model: 'foo',
+            data: this.data,
+            arch: `
+                <tree sample="1">
+                    <field name="foo"/>
+                    <field name="bar"/>
+                    <field name="int_field"/>
+                </tree>`,
+            domain: Domain.TRUE_DOMAIN,
+        });
+
+        assert.containsOnce(list, '.o_list_table');
+        assert.containsN(list, '.o_data_row', 4);
+        assert.doesNotHaveClass(list.$el, 'o_sample_data');
+
+        // reload with another domain matching no record (should not display the sample records)
+        await list.reload({ domain: Domain.FALSE_DOMAIN });
+
+        assert.containsOnce(list, '.o_list_table');
+        assert.containsNone(list, '.o_data_row');
+        assert.doesNotHaveClass(list.$el, 'o_sample_data');
+
+        list.destroy();
+    });
+
+    QUnit.test("non empty editable list with sample data: delete all records", async function (assert) {
+        assert.expect(7);
+
+        const list = await createView({
+            arch: `
+                <tree editable="top" sample="1">
+                    <field name="foo"/>
+                    <field name="bar"/>
+                    <field name="int_field"/>
+                </tree>`,
+            data: this.data,
+            domain: Domain.TRUE_DOMAIN,
+            model: 'foo',
+            View: ListView,
+            viewOptions: {
+                action: {
+                    help: '<p class="hello">click to add a partner</p>'
+                },
+                hasActionMenus: true,
+            },
+        });
+
+        // Initial state: all records displayed
+        assert.doesNotHaveClass(list, 'o_sample_data');
+        assert.containsOnce(list, '.o_list_table');
+        assert.containsN(list, '.o_data_row', 4);
+        assert.containsNone(list, '.o_nocontent_help');
+
+        // Delete all records
+        await testUtils.dom.click(list.el.querySelector('thead .o_list_record_selector input'));
+        await cpHelpers.toggleActionMenu(list);
+        await cpHelpers.toggleMenuItem(list, "Delete");
+        await testUtils.dom.click($('.modal-footer .btn-primary'));
+
+        // Final state: no more sample data, but nocontent helper displayed
+        assert.doesNotHaveClass(list, 'o_sample_data');
+        assert.containsNone(list, '.o_list_table');
+        assert.containsOnce(list, '.o_nocontent_help');
+
+        list.destroy();
+    });
+
+    QUnit.test("empty editable list with sample data: start create record and cancel", async function (assert) {
+        assert.expect(10);
+
+        const list = await createView({
+            arch: `
+                <tree editable="top" sample="1">
+                    <field name="foo"/>
+                    <field name="bar"/>
+                    <field name="int_field"/>
+                </tree>`,
+            data: this.data,
+            domain: Domain.FALSE_DOMAIN,
+            model: 'foo',
+            View: ListView,
+            viewOptions: {
+                action: {
+                    help: '<p class="hello">click to add a partner</p>'
+                },
+            },
+        });
+
+        // Initial state: sample data and nocontent helper displayed
+        assert.hasClass(list, 'o_sample_data');
+        assert.containsOnce(list, '.o_list_table');
+        assert.containsN(list, '.o_data_row', 5);
+        assert.containsOnce(list, '.o_nocontent_help');
+
+        // Start creating a record
+        await testUtils.dom.click(list.el.querySelector('.btn.o_list_button_add'));
+
+        assert.doesNotHaveClass(list, 'o_sample_data');
+        assert.containsOnce(list, '.o_data_row');
+
+        // Discard temporary record
+        await testUtils.dom.click(list.el.querySelector('.btn.o_list_button_discard'));
+
+        // Final state: table should be displayed with no data at all
+        assert.doesNotHaveClass(list, 'o_sample_data');
+        assert.containsOnce(list, '.o_list_table');
+        assert.containsNone(list, '.o_data_row');
+        assert.containsNone(list, '.o_nocontent_help');
+
+        list.destroy();
+    });
+
+    QUnit.test("empty editable list with sample data: create and delete record", async function (assert) {
+        assert.expect(13);
+
+        const list = await createView({
+            arch: `
+                <tree editable="top" sample="1">
+                    <field name="foo"/>
+                    <field name="bar"/>
+                    <field name="int_field"/>
+                </tree>`,
+            data: this.data,
+            domain: Domain.FALSE_DOMAIN,
+            model: 'foo',
+            View: ListView,
+            viewOptions: {
+                action: {
+                    help: '<p class="hello">click to add a partner</p>'
+                },
+                hasActionMenus: true,
+            },
+        });
+
+        // Initial state: sample data and nocontent helper displayed
+        assert.hasClass(list, 'o_sample_data');
+        assert.containsOnce(list, '.o_list_table');
+        assert.containsN(list, '.o_data_row', 5);
+        assert.containsOnce(list, '.o_nocontent_help');
+
+        // Start creating a record
+        await testUtils.dom.click(list.el.querySelector('.btn.o_list_button_add'));
+
+        assert.doesNotHaveClass(list, 'o_sample_data');
+        assert.containsOnce(list, '.o_data_row');
+
+        // Save temporary record
+        await testUtils.dom.click(list.el.querySelector('.btn.o_list_button_save'));
+
+        assert.doesNotHaveClass(list, 'o_sample_data');
+        assert.containsOnce(list, '.o_list_table');
+        assert.containsOnce(list, '.o_data_row');
+        assert.containsNone(list, '.o_nocontent_help');
+
+        // Delete newly created record
+        await testUtils.dom.click(list.el.querySelector('.o_data_row input'));
+        await cpHelpers.toggleActionMenu(list);
+        await cpHelpers.toggleMenuItem(list, "Delete");
+        await testUtils.dom.click($('.modal-footer .btn-primary'));
+
+        // Final state: there should be no table, but the no content helper
+        assert.doesNotHaveClass(list, 'o_sample_data');
+        assert.containsNone(list, '.o_list_table');
+        assert.containsOnce(list, '.o_nocontent_help');
+
         list.destroy();
     });
 

@@ -2,6 +2,7 @@ odoo.define('web.kanban_tests', function (require) {
 "use strict";
 
 var AbstractField = require('web.AbstractField');
+const Domain = require('web.Domain');
 var fieldRegistry = require('web.field_registry');
 var KanbanColumnProgressBar = require('web.KanbanColumnProgressBar');
 var kanbanExamplesRegistry = require('web.kanban_examples_registry');
@@ -4026,6 +4027,356 @@ QUnit.module('Views', {
             "there should not be a nocontent helper");
         assert.containsNone(kanban, '.o_column_quick_create',
             "there should not be a column quick create");
+        kanban.destroy();
+    });
+
+    /** @todo {jum} unskip */ QUnit.skip('empty grouped kanban with sample data and no columns', async function (assert) {
+        assert.expect(15);
+
+        this.data.partner.records = [];
+
+        const kanban = await createView({
+            arch: `
+                <kanban on_create="quick_create" sample="1">
+                    <field name="product_id"/>
+                    <templates>
+                        <div t-name="kanban-box">
+                            <field name="foo"/>
+                            <field name="bar" widget="boolean"/>
+                            <field name="int_field"/>
+                            <field name="product_id"/>
+                            <field name="category_ids"/>
+                        </div>
+                    </templates>
+                </kanban>`,
+            data: this.data,
+            groupBy: ['product_id'],
+            model: 'partner',
+            View: KanbanView,
+            viewOptions: {
+                action: {
+                    help: "No content helper",
+                },
+            },
+        });
+
+        const columns = kanban.el.querySelectorAll('.o_kanban_group');
+
+        assert.hasClass(kanban, 'o_sample_data');
+        assert.ok(columns.length >= 3);
+        assert.containsOnce(kanban, '.o_view_nocontent');
+
+        // Check the content of a sample box
+        const firstBox = kanban.el.querySelector('.o_kanban_record');
+        const spanContents = [...firstBox.querySelectorAll(':scope > span')].map(
+            (content) => content.innerText.trim()
+        );
+        assert.strictEqual(spanContents[0], "", "Char field should yield an empty element");
+        assert.notOk(isNaN(spanContents[1]), "Intger value is a number");
+        assert.ok(spanContents[2].length > 0, "Many2one field is a string");
+
+        const divContents = [...firstBox.querySelectorAll(':scope > div')];
+        assert.hasClass(divContents[0], 'o_field_boolean',
+            "Boolean field has been instantiated"
+        );
+
+        const firstM2MTag = divContents[1].querySelector(
+            ':scope > span.o_tag'
+        ).innerText.trim();
+        assert.ok(firstM2MTag.length > 0, "Many2many contains at least one string tag");
+
+        // Click on the first "quick ass" -> should have no effect
+        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_quick_add'));
+        // Click on create (triggers a quick create) -> should have no effect
+        await testUtils.dom.click(kanban.el.querySelector('.btn.o-kanban-button-new'));
+
+        assert.hasClass(kanban, 'o_sample_data');
+        assert.strictEqual(kanban.el.querySelectorAll('.o_kanban_group').length, columns.length);
+        assert.containsOnce(kanban, '.o_view_nocontent');
+        assert.containsNone(kanban, '.o_kanban_quick_create');
+
+        // Create a column -> should remove sample data and no_content_helper
+        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_add_column'));
+
+        assert.doesNotHaveClass(kanban, 'o_sample_data');
+        assert.containsOnce(kanban, '.o_kanban_group');
+        assert.containsNone(kanban, '.o_view_nocontent');
+
+        kanban.destroy();
+    });
+
+    QUnit.test('empty grouped kanban with sample data, no quick create and no columns', async function (assert) {
+        assert.expect(4);
+
+        this.data.partner.records = [];
+
+        const kanban = await createView({
+            arch: `
+                <kanban quick_create="0" sample="1">
+                    <field name="product_id"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div><field name="foo"/></div>
+                        </t>
+                    </templates>
+                </kanban>`,
+            data: this.data,
+            groupBy: ['product_id'],
+            model: 'partner',
+            View: KanbanView,
+            viewOptions: {
+                action: {
+                    help: "No content helper",
+                },
+            },
+        });
+
+        const columns = kanban.el.querySelectorAll('.o_kanban_group');
+
+        assert.hasClass(kanban, 'o_sample_data');
+        assert.ok(columns.length >= 3);
+        assert.containsOnce(kanban, '.o_view_nocontent');
+        assert.containsNone(kanban, '.o_kanban_quick_add');
+
+        kanban.destroy();
+    });
+
+    QUnit.test('empty grouped kanban with sample data and click quick create', async function (assert) {
+        assert.expect(11);
+
+        const kanban = await createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            arch: `
+                <kanban sample="1">
+                    <field name="product_id"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div><field name="foo"/></div>
+                        </t>
+                    </templates>
+                </kanban>`,
+            groupBy: ['product_id'],
+            async mockRPC(route, { kwargs, method }) {
+                const result = await this._super(...arguments);
+                if (method === 'web_read_group') {
+                    // override read_group to return empty groups, as this is
+                    // the case for several models (e.g. project.task grouped
+                    // by stage_id)
+                    result.groups.forEach(group => {
+                        group[`${kwargs.groupby[0]}_count`] = 0;
+                    });
+                }
+                return result;
+            },
+            viewOptions: {
+                action: {
+                    help: "No content helper",
+                },
+            },
+        });
+
+        assert.containsN(kanban, '.o_kanban_group', 2,
+            "there should be two columns");
+        assert.hasClass(kanban.$el, 'o_sample_data');
+        assert.containsOnce(kanban, '.o_view_nocontent');
+        assert.containsN(kanban, '.o_kanban_record', 12,
+            "there should be 6 sample records by column");
+
+        await testUtils.dom.click(kanban.$('.o_kanban_quick_add:first'));
+        assert.doesNotHaveClass(kanban.$el, 'o_sample_data');
+        assert.containsNone(kanban, '.o_kanban_record');
+        assert.containsNone(kanban, '.o_view_nocontent');
+        assert.containsOnce(kanban.$('.o_kanban_group:first'), '.o_kanban_quick_create');
+
+        await testUtils.fields.editInput(kanban.$('.o_kanban_quick_create .o_input'), 'twilight sparkle');
+        await testUtils.dom.click(kanban.$('.o_kanban_quick_create button.o_kanban_add'));
+
+        assert.doesNotHaveClass(kanban.$el, 'o_sample_data');
+        assert.containsOnce(kanban.$('.o_kanban_group:first'), '.o_kanban_record');
+        assert.containsNone(kanban, '.o_view_nocontent');
+
+        kanban.destroy();
+    });
+
+    QUnit.test('empty grouped kanban with sample data and cancel quick create', async function (assert) {
+        assert.expect(12);
+
+        const kanban = await createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            arch: `
+                <kanban sample="1">
+                    <field name="product_id"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div><field name="foo"/></div>
+                        </t>
+                    </templates>
+                </kanban>`,
+            groupBy: ['product_id'],
+            async mockRPC(route, { kwargs, method }) {
+                const result = await this._super(...arguments);
+                if (method === 'web_read_group') {
+                    // override read_group to return empty groups, as this is
+                    // the case for several models (e.g. project.task grouped
+                    // by stage_id)
+                    result.groups.forEach(group => {
+                        group[`${kwargs.groupby[0]}_count`] = 0;
+                    });
+                }
+                return result;
+            },
+            viewOptions: {
+                action: {
+                    help: "No content helper",
+                },
+            },
+        });
+
+        assert.containsN(kanban, '.o_kanban_group', 2,
+            "there should be two columns");
+        assert.hasClass(kanban.$el, 'o_sample_data');
+        assert.containsOnce(kanban, '.o_view_nocontent');
+        assert.containsN(kanban, '.o_kanban_record', 12,
+            "there should be 6 sample records by column");
+
+        await testUtils.dom.click(kanban.$('.o_kanban_quick_add:first'));
+        assert.doesNotHaveClass(kanban.$el, 'o_sample_data');
+        assert.containsNone(kanban, '.o_kanban_record');
+        assert.containsNone(kanban, '.o_view_nocontent');
+        assert.containsOnce(kanban.$('.o_kanban_group:first'), '.o_kanban_quick_create');
+
+        await testUtils.dom.click(kanban.$('.o_kanban_view'));
+        assert.doesNotHaveClass(kanban.$el, 'o_sample_data');
+        assert.containsNone(kanban, '.o_kanban_quick_create');
+        assert.containsNone(kanban, '.o_kanban_record');
+        assert.containsOnce(kanban, '.o_view_nocontent');
+
+        kanban.destroy();
+    });
+
+    QUnit.test('empty kanban with sample data', async function (assert) {
+        assert.expect(6);
+
+        this.data.partner.records = [];
+
+        const kanban = await createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            arch: `
+                <kanban sample="1">
+                    <field name="product_id"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div><field name="foo"/></div>
+                        </t>
+                    </templates>
+                </kanban>`,
+            viewOptions: {
+                action: {
+                    help: "No content helper",
+                },
+            },
+        });
+
+        assert.hasClass(kanban.$el, 'o_sample_data');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 5,
+            "there should be 5 sample records");
+        assert.containsOnce(kanban, '.o_view_nocontent');
+
+        await kanban.reload({ domain: [['id', '<', 0]]});
+        assert.doesNotHaveClass(kanban.$el, 'o_sample_data');
+        assert.containsNone(kanban, '.o_kanban_record:not(.o_kanban_ghost)');
+        assert.containsOnce(kanban, '.o_view_nocontent');
+
+        kanban.destroy();
+    });
+
+    QUnit.test('sample data does not change after reload with sample data', async function (assert) {
+        assert.expect(4);
+
+        this.data.partner.records = [];
+
+        const kanban = await createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            arch: `
+                <kanban sample="1">
+                    <field name="product_id"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div><field name="foo"/></div>
+                        </t>
+                    </templates>
+                </kanban>`,
+            groupBy: ['product_id'],
+            async mockRPC(route, { kwargs, method }) {
+                const result = await this._super(...arguments);
+                if (method === 'web_read_group') {
+                    // override read_group to return empty groups, as this is
+                    // the case for several models (e.g. project.task grouped
+                    // by stage_id)
+                    result.groups.forEach(
+                        (group) => group[`${kwargs.groupby[0]}_count`] = 0
+                    );
+                }
+                return result;
+            },
+        });
+
+        const columns = kanban.el.querySelectorAll('.o_kanban_group');
+
+        assert.ok(columns.length >= 3, "there should be at least 3 sample columns");
+        assert.hasClass(kanban.$el, 'o_sample_data');
+        assert.containsN(kanban, '.o_kanban_record', columns.length * 5,
+            "there should be 5 sample records by column");
+
+        const kanbanText = kanban.el.innerText;
+
+        await kanban.reload();
+
+        assert.strictEqual(kanbanText, kanban.el.innerText,
+            "the content should be the same after reloading the view");
+
+        kanban.destroy();
+    });
+
+    QUnit.test('non empty kanban with sample data', async function (assert) {
+        assert.expect(5);
+
+        const kanban = await createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            arch: `
+                <kanban sample="1">
+                    <field name="product_id"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div><field name="foo"/></div>
+                        </t>
+                    </templates>
+                </kanban>`,
+            viewOptions: {
+                action: {
+                    help: "No content helper",
+                },
+            },
+        });
+
+        assert.doesNotHaveClass(kanban.$el, 'o_sample_data');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 4);
+        assert.containsNone(kanban, '.o_view_nocontent');
+
+        await kanban.reload({ domain: [['id', '<', 0]]});
+        assert.doesNotHaveClass(kanban.$el, 'o_sample_data');
+        assert.containsNone(kanban, '.o_kanban_record:not(.o_kanban_ghost)');
+
         kanban.destroy();
     });
 
