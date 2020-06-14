@@ -92,8 +92,7 @@
         }
         notifyCB() { }
         observe(value, parent) {
-            if (value === null || typeof value !== "object" || value instanceof Date || value instanceof Promise) {
-                // Cannot use `then` on proxified promises: https://github.com/odoo/owl/issues/677
+            if (value === null || typeof value !== "object" || value instanceof Date) {
                 // fun fact: typeof null === 'object'
                 return value;
             }
