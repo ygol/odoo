@@ -108,7 +108,11 @@ odoo.define('web.SampleServer', function (require) {
                     return result.groups.every(group => group[`${groupBy}_count`] === 0);
                 }
                 case 'read_group':
-                    return !result.length;
+                    const length = result.length;
+                    if (!result.length || (length === 1 && result[0].__count === 0)) {
+                        return true;
+                    }
+                    return false;
                 case 'read_progress_bar':
                     return Object.keys(result).length === 0;
             }
