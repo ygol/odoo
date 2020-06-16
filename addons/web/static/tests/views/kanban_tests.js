@@ -4037,15 +4037,11 @@ QUnit.module('Views', {
 
         const kanban = await createView({
             arch: `
-                <kanban on_create="quick_create" sample="1">
+                <kanban sample="1">
                     <field name="product_id"/>
                     <templates>
                         <div t-name="kanban-box">
                             <field name="foo"/>
-                            <field name="bar" widget="boolean"/>
-                            <field name="int_field"/>
-                            <field name="product_id"/>
-                            <field name="category_ids"/>
                         </div>
                     </templates>
                 </kanban>`,
@@ -4063,42 +4059,6 @@ QUnit.module('Views', {
         assert.containsNone(kanban, '.o_view_nocontent');
         assert.containsOnce(kanban, '.o_quick_create_unfolded');
         assert.containsOnce(kanban, '.o_kanban_example_background_container');
-
-        kanban.destroy();
-    });
-
-    QUnit.test('empty grouped kanban with sample data, no quick create and no columns', async function (assert) {
-        assert.expect(4);
-
-        this.data.partner.records = [];
-
-        const kanban = await createView({
-            arch: `
-                <kanban quick_create="0" sample="1">
-                    <field name="product_id"/>
-                    <templates>
-                        <t t-name="kanban-box">
-                            <div><field name="foo"/></div>
-                        </t>
-                    </templates>
-                </kanban>`,
-            data: this.data,
-            groupBy: ['product_id'],
-            model: 'partner',
-            View: KanbanView,
-            viewOptions: {
-                action: {
-                    help: "No content helper",
-                },
-            },
-        });
-
-        const columns = kanban.el.querySelectorAll('.o_kanban_group');
-
-        assert.hasClass(kanban, 'o_sample_data');
-        assert.ok(columns.length >= 3);
-        assert.containsOnce(kanban, '.o_view_nocontent');
-        assert.containsNone(kanban, '.o_kanban_quick_add');
 
         kanban.destroy();
     });
@@ -4261,8 +4221,6 @@ QUnit.module('Views', {
     QUnit.test('sample data does not change after reload with sample data', async function (assert) {
         assert.expect(4);
 
-        this.data.partner.records = [];
-
         const kanban = await createView({
             View: KanbanView,
             model: 'partner',
@@ -4272,7 +4230,7 @@ QUnit.module('Views', {
                     <field name="product_id"/>
                     <templates>
                         <t t-name="kanban-box">
-                            <div><field name="foo"/></div>
+                            <div><field name="int_field"/></div>
                         </t>
                     </templates>
                 </kanban>`,
@@ -4283,9 +4241,9 @@ QUnit.module('Views', {
                     // override read_group to return empty groups, as this is
                     // the case for several models (e.g. project.task grouped
                     // by stage_id)
-                    result.groups.forEach(
-                        (group) => group[`${kwargs.groupby[0]}_count`] = 0
-                    );
+                    result.groups.forEach(group => {
+                        group[`${kwargs.groupby[0]}_count`] = 0;
+                    });
                 }
                 return result;
             },
@@ -4293,13 +4251,11 @@ QUnit.module('Views', {
 
         const columns = kanban.el.querySelectorAll('.o_kanban_group');
 
-        assert.ok(columns.length >= 3, "there should be at least 3 sample columns");
+        assert.ok(columns.length >= 1, "there should be at least 1 sample column");
         assert.hasClass(kanban.$el, 'o_sample_data');
-        assert.containsN(kanban, '.o_kanban_record', columns.length * 5,
-            "there should be 5 sample records by column");
+        assert.containsN(kanban, '.o_kanban_record', 12);
 
         const kanbanText = kanban.el.innerText;
-
         await kanban.reload();
 
         assert.strictEqual(kanbanText, kanban.el.innerText,
