@@ -3766,7 +3766,7 @@ QUnit.module('Views', {
     });
 
     QUnit.test("empty list with sample data", async function (assert) {
-        assert.expect(11);
+        assert.expect(19);
 
         const list = await createView({
             View: ListView,
@@ -3777,6 +3777,10 @@ QUnit.module('Views', {
                     <field name="foo"/>
                     <field name="bar"/>
                     <field name="int_field"/>
+                    <field name="m2o"/>
+                    <field name="m2m" widget="many2many_tags"/>
+                    <field name="date"/>
+                    <field name="datetime"/>
                 </tree>`,
             domain: [['id', '<', 0]], // such that no record matches the domain
             viewOptions: {
@@ -3786,27 +3790,54 @@ QUnit.module('Views', {
             },
         });
 
-        assert.containsOnce(list, '.o_list_table');
         assert.hasClass(list.$el, 'o_sample_data');
+        assert.containsOnce(list, '.o_list_table');
         assert.containsN(list, '.o_data_row', 5);
         assert.containsOnce(list, '.o_nocontent_help .hello');
 
-        let content = list.$el.text();
+        // Check list sample data
+        const firstRow = list.el.querySelector('.o_data_row');
+        const cells = firstRow.querySelectorAll(':scope > .o_data_cell');
+        assert.strictEqual(cells[0].innerText.trim(), "",
+            "Char field should yield an empty element"
+        );
+        assert.containsOnce(cells[1], '.custom-checkbox',
+            "Boolean field has been instantiated"
+        );
+        assert.notOk(isNaN(cells[2].innerText.trim()), "Intger value is a number");
+        assert.ok(cells[3].innerText.trim(), "Many2one field is a string");
+
+        const firstM2MTag = cells[4].querySelector(
+            ':scope span.o_badge_text'
+        ).innerText.trim();
+        assert.ok(firstM2MTag.length > 0, "Many2many contains at least one string tag");
+
+        assert.ok(/\d{2}\/\d{2}\/\d{4}/.test(cells[5].innerText.trim()),
+            "Date field should have the right format"
+        );
+        assert.ok(/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}/.test(cells[6].innerText.trim()),
+            "Datetime field should have the right format"
+        );
+
+        const textContent = list.$el.text();
         await list.reload();
-        assert.strictEqual(content, list.$el.text(), 'The content should be the same after reloading the view without change');
+        assert.strictEqual(textContent, list.$el.text(),
+            'The content should be the same after reloading the view without change'
+        );
 
         // reload with another domain -> should no longer display the sample records
         await list.reload({ domain: Domain.FALSE_DOMAIN });
 
+        assert.doesNotHaveClass(list.$el, 'o_sample_data');
         assert.containsNone(list, '.o_list_table');
         assert.containsOnce(list, '.o_nocontent_help .hello');
 
         // reload with another domain matching records
         await list.reload({ domain: Domain.TRUE_DOMAIN });
 
+        assert.doesNotHaveClass(list.$el, 'o_sample_data');
         assert.containsOnce(list, '.o_list_table');
         assert.containsN(list, '.o_data_row', 4);
-        assert.doesNotHaveClass(list.$el, 'o_sample_data');
         assert.containsNone(list, '.o_nocontent_help .hello');
 
         list.destroy();
