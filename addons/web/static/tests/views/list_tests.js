@@ -3792,7 +3792,7 @@ QUnit.module('Views', {
 
         assert.hasClass(list.$el, 'o_sample_data');
         assert.containsOnce(list, '.o_list_table');
-        assert.containsN(list, '.o_data_row', 5);
+        assert.containsN(list, '.o_data_row', 10);
         assert.containsOnce(list, '.o_nocontent_help .hello');
 
         // Check list sample data
@@ -3873,6 +3873,33 @@ QUnit.module('Views', {
         list.destroy();
     });
 
+    QUnit.test('click on header in empty with sample data', async function (assert) {
+        assert.expect(4);
+
+        const list = await createView({
+            View: ListView,
+            model: 'foo',
+            data: this.data,
+            arch: `
+                <tree sample="1">
+                    <field name="foo"/>
+                    <field name="bar"/>
+                    <field name="int_field"/>
+                </tree>`,
+            domain: Domain.FALSE_DOMAIN,
+        });
+
+        assert.hasClass(list, 'o_sample_data');
+        assert.containsOnce(list, '.o_list_table');
+        assert.containsN(list, '.o_data_row', 10);
+
+        const content = list.$el.text();
+        await testUtils.dom.click(list.$('tr:first .o_column_sortable:first'));
+        assert.strictEqual(list.$el.text(), content, "the content should still be the same");
+
+        list.destroy();
+    });
+
     QUnit.test("non empty editable list with sample data: delete all records", async function (assert) {
         assert.expect(7);
 
@@ -3939,7 +3966,7 @@ QUnit.module('Views', {
         // Initial state: sample data and nocontent helper displayed
         assert.hasClass(list, 'o_sample_data');
         assert.containsOnce(list, '.o_list_table');
-        assert.containsN(list, '.o_data_row', 5);
+        assert.containsN(list, '.o_data_row', 10);
         assert.containsOnce(list, '.o_nocontent_help');
 
         // Start creating a record
@@ -3985,7 +4012,7 @@ QUnit.module('Views', {
         // Initial state: sample data and nocontent helper displayed
         assert.hasClass(list, 'o_sample_data');
         assert.containsOnce(list, '.o_list_table');
-        assert.containsN(list, '.o_data_row', 5);
+        assert.containsN(list, '.o_data_row', 10);
         assert.containsOnce(list, '.o_nocontent_help');
 
         // Start creating a record

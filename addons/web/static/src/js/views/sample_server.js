@@ -3,9 +3,9 @@ odoo.define('web.SampleServer', function (require) {
 
     const session = require('web.session');
 
-    const MAIN_RECORDSET_SIZE = 12;
+    const MAIN_RECORDSET_SIZE = 16;
     const SUB_RECORDSET_SIZE = 5;
-    const SEARCH_READ_LIMIT = 5;
+    const SEARCH_READ_LIMIT = 10;
 
     const SAMPLE_COUNTRIES = ["Belgium", "France", "Portugal", "Singapore", "Australia"];
     const SAMPLE_PEOPLE = [

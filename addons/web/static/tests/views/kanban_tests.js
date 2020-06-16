@@ -2166,6 +2166,7 @@ QUnit.module('Views', {
             "second column (true) should contain 3 records");
 
         await testUtils.dom.click(kanban.$('.o_kanban_header:nth(1) .o_kanban_quick_add i'));
+        await testUtils.nextTick();
         assert.ok(kanban.$('.o_kanban_quick_create .o_field_boolean input').is(':checked'),
             "should have set the correct bar value by default");
         await testUtils.dom.click(kanban.$('.o_kanban_add'));
@@ -4103,8 +4104,8 @@ QUnit.module('Views', {
             "there should be two columns");
         assert.hasClass(kanban.$el, 'o_sample_data');
         assert.containsOnce(kanban, '.o_view_nocontent');
-        assert.containsN(kanban, '.o_kanban_record', 12,
-            "there should be 6 sample records by column");
+        assert.containsN(kanban, '.o_kanban_record', 16,
+            "there should be 8 sample records by column");
 
         await testUtils.dom.click(kanban.$('.o_kanban_quick_add:first'));
         assert.doesNotHaveClass(kanban.$el, 'o_sample_data');
@@ -4162,8 +4163,8 @@ QUnit.module('Views', {
             "there should be two columns");
         assert.hasClass(kanban.$el, 'o_sample_data');
         assert.containsOnce(kanban, '.o_view_nocontent');
-        assert.containsN(kanban, '.o_kanban_record', 12,
-            "there should be 6 sample records by column");
+        assert.containsN(kanban, '.o_kanban_record', 16,
+            "there should be 8 sample records by column");
 
         await testUtils.dom.click(kanban.$('.o_kanban_quick_add:first'));
         assert.doesNotHaveClass(kanban.$el, 'o_sample_data');
@@ -4206,8 +4207,8 @@ QUnit.module('Views', {
         });
 
         assert.hasClass(kanban.$el, 'o_sample_data');
-        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 5,
-            "there should be 5 sample records");
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 10,
+            "there should be 10 sample records");
         assert.containsOnce(kanban, '.o_view_nocontent');
 
         await kanban.reload({ domain: [['id', '<', 0]]});
@@ -4253,7 +4254,7 @@ QUnit.module('Views', {
 
         assert.ok(columns.length >= 1, "there should be at least 1 sample column");
         assert.hasClass(kanban.$el, 'o_sample_data');
-        assert.containsN(kanban, '.o_kanban_record', 12);
+        assert.containsN(kanban, '.o_kanban_record', 16);
 
         const kanbanText = kanban.el.innerText;
         await kanban.reload();
@@ -4330,7 +4331,7 @@ QUnit.module('Views', {
         });
 
         assert.containsN(kanban, '.o_kanban_group', 2);
-        assert.containsN(kanban, '.o_kanban_record', 12);
+        assert.containsN(kanban, '.o_kanban_record', 16);
 
         // Fold the first column
         await testUtils.dom.click(kanban.el.querySelector('.o_kanban_config > a'));
@@ -4338,14 +4339,14 @@ QUnit.module('Views', {
 
         assert.containsN(kanban, '.o_kanban_group', 2);
         assert.containsOnce(kanban, '.o_kanban_group.o_column_folded');
-        assert.containsN(kanban, '.o_kanban_record', 6);
+        assert.containsN(kanban, '.o_kanban_record', 8);
 
         // Unfold the first column
         await testUtils.dom.click(kanban.el.querySelector('.o_kanban_group.o_column_folded'));
 
         assert.containsN(kanban, '.o_kanban_group', 2);
         assert.containsNone(kanban, '.o_kanban_group.o_column_folded');
-        assert.containsN(kanban, '.o_kanban_record', 12);
+        assert.containsN(kanban, '.o_kanban_record', 16);
 
         // Delete the first column
         await testUtils.dom.click(kanban.el.querySelector('.o_kanban_config > a'));
@@ -4353,7 +4354,7 @@ QUnit.module('Views', {
         await testUtils.dom.click(document.querySelector('.modal .btn-primary'));
 
         assert.containsOnce(kanban, '.o_kanban_group');
-        assert.containsN(kanban, '.o_kanban_record', 6);
+        assert.containsN(kanban, '.o_kanban_record', 8);
 
         kanban.destroy();
     });

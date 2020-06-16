@@ -43,12 +43,12 @@
     @include o-position-absolute(30%, 0, 0, 0);
     pointer-events: none;
     z-index: 1;
-    border-radius: 50%;
-    background-color: #f9f9f9;
-    box-shadow: 0 0 120px 120px #f9f9f9;
 
     .o_nocontent_help {
         @include o-nocontent-empty;
+        border-radius: 100%;
+        background-color: #f9f9f9;
+        box-shadow: 0 0 120px 100px #f9f9f9;
 
         .o_view_nocontent_smiling_face:before {
             @extend %o-nocontent-init-image;
