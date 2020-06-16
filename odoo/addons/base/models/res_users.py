@@ -443,15 +443,18 @@ class Users(models.Model):
         super(Users, self).toggle_active()
 
     def read(self, fields=None, load='_classic_read'):
+        res_safe_fields = None
         if fields and self == self.env.user:
-            for key in fields:
-                if not (key in self.SELF_READABLE_FIELDS or key.startswith('context_')):
-                    break
-            else:
-                # safe fields only, so we read as super-user to bypass access rights
-                self = self.sudo()
-
-        return super(Users, self).read(fields=fields, load=load)
+            safe_fields = [field for field in fields if field in self.SELF_READABLE_FIELDS]
+            # safe fields only, so we read as super-user to bypass access rights
+            res_safe_fields = super(Users, self.sudo()).read(fields=safe_fields, load=load)
+            other_fields = [field for field in fields if field not in safe_fields]
+            res_other_fields = super(Users, self).read(fields=other_fields, load=load)
+            dic = res_safe_fields[0] if res_safe_fields else {}
+            dic.update(res_other_fields[0] if res_other_fields else {})
+            return [dic] if len(dic) else None
+        else:
+            return super(Users, self).read(fields=fields, load=load)
 
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
