@@ -4030,8 +4030,8 @@ QUnit.module('Views', {
         kanban.destroy();
     });
 
-    /** @todo {jum} unskip */ QUnit.skip('empty grouped kanban with sample data and no columns', async function (assert) {
-        assert.expect(15);
+    QUnit.test('empty grouped kanban with sample data and no columns', async function (assert) {
+        assert.expect(3);
 
         this.data.partner.records = [];
 
@@ -4060,47 +4060,9 @@ QUnit.module('Views', {
             },
         });
 
-        const columns = kanban.el.querySelectorAll('.o_kanban_group');
-
-        assert.hasClass(kanban, 'o_sample_data');
-        assert.ok(columns.length >= 3);
-        assert.containsOnce(kanban, '.o_view_nocontent');
-
-        // Check the content of a sample box
-        const firstBox = kanban.el.querySelector('.o_kanban_record');
-        const spanContents = [...firstBox.querySelectorAll(':scope > span')].map(
-            (content) => content.innerText.trim()
-        );
-        assert.strictEqual(spanContents[0], "", "Char field should yield an empty element");
-        assert.notOk(isNaN(spanContents[1]), "Intger value is a number");
-        assert.ok(spanContents[2].length > 0, "Many2one field is a string");
-
-        const divContents = [...firstBox.querySelectorAll(':scope > div')];
-        assert.hasClass(divContents[0], 'o_field_boolean',
-            "Boolean field has been instantiated"
-        );
-
-        const firstM2MTag = divContents[1].querySelector(
-            ':scope > span.o_tag'
-        ).innerText.trim();
-        assert.ok(firstM2MTag.length > 0, "Many2many contains at least one string tag");
-
-        // Click on the first "quick ass" -> should have no effect
-        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_quick_add'));
-        // Click on create (triggers a quick create) -> should have no effect
-        await testUtils.dom.click(kanban.el.querySelector('.btn.o-kanban-button-new'));
-
-        assert.hasClass(kanban, 'o_sample_data');
-        assert.strictEqual(kanban.el.querySelectorAll('.o_kanban_group').length, columns.length);
-        assert.containsOnce(kanban, '.o_view_nocontent');
-        assert.containsNone(kanban, '.o_kanban_quick_create');
-
-        // Create a column -> should remove sample data and no_content_helper
-        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_add_column'));
-
-        assert.doesNotHaveClass(kanban, 'o_sample_data');
-        assert.containsOnce(kanban, '.o_kanban_group');
         assert.containsNone(kanban, '.o_view_nocontent');
+        assert.containsOnce(kanban, '.o_quick_create_unfolded');
+        assert.containsOnce(kanban, '.o_kanban_example_background_container');
 
         kanban.destroy();
     });
