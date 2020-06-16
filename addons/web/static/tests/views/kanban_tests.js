@@ -4298,6 +4298,66 @@ QUnit.module('Views', {
         kanban.destroy();
     });
 
+    /** @todo {jum} unskip */ QUnit.skip('non empty grouped kanban with sample data: fold and delete a column', async function (assert) {
+        assert.expect(10);
+
+        const kanban = await createView({
+            arch: `
+                <kanban sample="1">
+                    <field name="product_id"/>
+                    <templates>
+                        <div t-name="kanban-box">
+                            <field name="foo"/>
+                        </div>
+                    </templates>
+                </kanban>`,
+            data: this.data,
+            groupBy: ['product_id'],
+            model: 'partner',
+            View: KanbanView,
+            async mockRPC(route, { kwargs, method }) {
+                const result = await this._super(...arguments);
+                if (method === 'web_read_group') {
+                    // override read_group to return empty groups, as this is
+                    // the case for several models (e.g. project.task grouped
+                    // by stage_id)
+                    result.groups.forEach(group => {
+                        group[`${kwargs.groupby[0]}_count`] = 0;
+                    });
+                }
+                return result;
+            },
+        });
+
+        assert.containsN(kanban, '.o_kanban_group', 2);
+        assert.containsN(kanban, '.o_kanban_record', 12);
+
+        // Fold the first column
+        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_config > a'));
+        await testUtils.dom.click(kanban.el.querySelector('.dropdown-item.o_kanban_toggle_fold'));
+
+        assert.containsN(kanban, '.o_kanban_group', 2);
+        assert.containsOnce(kanban, '.o_kanban_group.o_column_folded');
+        assert.containsN(kanban, '.o_kanban_record', 6);
+
+        // Unfold the first column
+        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_group.o_column_folded'));
+
+        assert.containsN(kanban, '.o_kanban_group', 2);
+        assert.containsNone(kanban, '.o_kanban_group.o_column_folded');
+        assert.containsN(kanban, '.o_kanban_record', 12);
+
+        // Delete the first column
+        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_config > a'));
+        await testUtils.dom.click(kanban.el.querySelector('.dropdown-item.o_column_delete'));
+        await testUtils.dom.click(document.querySelector('.modal .btn-primary'));
+
+        assert.containsOnce(kanban, '.o_kanban_group');
+        assert.containsN(kanban, '.o_kanban_record', 6);
+
+        kanban.destroy();
+    });
+
     QUnit.test('bounce create button when no data and click on empty area', async function (assert) {
         assert.expect(2);
 
