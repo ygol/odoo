@@ -1,7 +1,6 @@
 odoo.define('web.SampleServer', function (require) {
     "use strict";
 
-    const Class = require('web.Class');
     const session = require('web.session');
 
     const MAIN_RECORDSET_SIZE = 12;
@@ -9,18 +8,22 @@ odoo.define('web.SampleServer', function (require) {
     const SEARCH_READ_LIMIT = 5;
 
     const SAMPLE_COUNTRIES = ["Belgium", "France", "Portugal", "Singapore", "Australia"];
-    const SAMPLE_PEOPLE = ["John Miller", "Henry Campbell", "Carrie Helle", "Wendi Baltz", "Thomas Passot"];
-    const SAMPLE_TEXTS = ["Laoreet id", "Volutpat blandit", "Integer vitae", "Viverra nam", "In massa"];
+    const SAMPLE_PEOPLE = [
+        "John Miller", "Henry Campbell", "Carrie Helle", "Wendi Baltz", "Thomas Passot",
+    ];
+    const SAMPLE_TEXTS = [
+        "Laoreet id", "Volutpat blandit", "Integer vitae", "Viverra nam", "In massa",
+    ];
 
     const PEOPLE_MODELS = ['res.users', 'res.partner', 'hr.employee', 'mail.followers'];
 
-    const SampleServer = Class.extend({
+    class SampleServer {
+
         /**
-         * @constructor
          * @param {string} modelName
          * @param {Object} fields
          */
-        init(modelName, fields) {
+        constructor(modelName, fields) {
             this.mainModel = modelName;
             this.data = {};
             this.data[modelName] = {
@@ -57,16 +60,15 @@ odoo.define('web.SampleServer', function (require) {
             this.readProgressBarProm = new Promise(resolve => {
                 this.readGroupDone = resolve;
             });
-        },
+        }
 
-        //----------------------------------------------------------------------
+        //---------------------------------------------------------------------
         // Public
-        //----------------------------------------------------------------------
+        //---------------------------------------------------------------------
 
         /**
          * Determines if the SampleServer can mock a call to a given method or
          * route on a model.
-         *
          * @param {Object} params
          * @param {string} params.model
          * @param {string} [params.method]
@@ -86,12 +88,12 @@ odoo.define('web.SampleServer', function (require) {
                     return true;
             }
             return false;
-        },
+        }
+
         /**
          * Given a model method/server route, and the result of a request to
          * that method/route, determines if the result is empty (there is no
          * real data on the server).
-         *
          * @param {Object} params
          * @param {string} params.model
          * @param {string} [params.method]
@@ -117,11 +119,11 @@ odoo.define('web.SampleServer', function (require) {
                     return Object.keys(result).length === 0;
             }
             return false;
-        },
+        }
+
         /**
          * This is the main entry point of the SampleServer. Mocks a request to
          * the server with sample data.
-         *
          * @param {Object} params
          * @param {any} result the result of the real RPC
          * @returns {Promise<any>} the result obtained with the sample data
@@ -142,11 +144,11 @@ odoo.define('web.SampleServer', function (require) {
                     return this._mockRead(params);
             }
             throw new Error(`SampleServer: unimplemented route ${params.method || params.route}`);
-        },
+        }
 
-        //----------------------------------------------------------------------
+        //---------------------------------------------------------------------
         // Private
-        //----------------------------------------------------------------------
+        //---------------------------------------------------------------------
 
         /**
          * Generates field values based on heuristics according to field types
@@ -221,21 +223,21 @@ odoo.define('web.SampleServer', function (require) {
                 default:
                     return false;
             }
-        },
+        }
+
         /**
          * Generates a random id in the range of ids generated for sub models.
-         *
          * @private
          * @returns {number} id in [1, SUB_RECORDSET_SIZE]
          */
         _getRandomSubRecordId() {
             return Math.floor(Math.random() * SUB_RECORDSET_SIZE) + 1;
-        },
+        }
+
         /**
          * Updates the sample data such that the existing groups (in database)
          * also exists in the sample, and such that there are sample records in
          * those groups.
-         *
          * @private
          * @param {Object[]} groups empty groups returned by the server
          * @param {Object} params
@@ -260,11 +262,11 @@ odoo.define('web.SampleServer', function (require) {
                 });
                 this.existingGroupsPopulated = true;
             }
-        },
+        }
+
         /**
          * Generates sample records for the models in this.data. Records will be
          * generated once, and subsequent calls to this function will be skipped.
-         *
          * @private
          */
         _populateModels() {
@@ -273,8 +275,8 @@ odoo.define('web.SampleServer', function (require) {
                     const model = this.data[modelName];
                     const fieldNames = Object.keys(model.fields).filter(f => f !== 'id');
                     const size = modelName === this.mainModel ?
-                                    MAIN_RECORDSET_SIZE :
-                                    SUB_RECORDSET_SIZE;
+                        MAIN_RECORDSET_SIZE :
+                        SUB_RECORDSET_SIZE;
                     for (let id = 1; id <= size; id++) {
                         const record = { id };
                         fieldNames.forEach(fieldName => {
@@ -286,10 +288,10 @@ odoo.define('web.SampleServer', function (require) {
                 this.populated = true;
             }
             window.models = this.data; // FIXME: remove me
-        },
+        }
+
         /**
          * Mocks calls to the read method.
-         *
          * @private
          * @param {Object} params
          * @param {string} params.model
@@ -323,10 +325,10 @@ odoo.define('web.SampleServer', function (require) {
                     }
                     return record;
                 });
-        },
+        }
+
         /**
          * Mocks calls to the read_group method.
-         *
          * @param {Object} params
          * @param {string} params.model
          * @param {string[]} params.fields
@@ -475,10 +477,10 @@ odoo.define('web.SampleServer', function (require) {
                 return res;
             });
             return result;
-        },
+        }
+
         /**
          * Mocks calls to the read_progress_bar method.
-         *
          * @private
          * @param {Object} params
          * @param {string} params.model
@@ -510,16 +512,16 @@ odoo.define('web.SampleServer', function (require) {
                 }
             });
             return data;
-        },
+        }
+
         /**
          * Mocks calls to the /web/dataset/search_read route to return sample
          * records.
-         *
          * @private
          * @param {Object} params
          * @param {string} params.model
          * @param {string[]} params.fields
-         * @returns {Object} Object with keys records and length
+         * @returns {{ records: Object[], length: number }}
          */
         _mockSearchReadController(params) {
             const model = this.data[params.model];
@@ -529,18 +531,18 @@ odoo.define('web.SampleServer', function (require) {
                 args: [rawRecords.map(r => r.id), params.fields],
             });
             return { records, length: records.length };
-        },
+        }
+
         /**
          * Mocks calls to the web_read_group method to return groups populated
          * with sample records. Only handles the case where the real call to
          * web_read_group returned groups, but none of these groups contain
          * records. In this case, we keep the real groups, and populate them
          * with sample records.
-         *
          * @private
          * @param {Object} params
          * @param {Object} [result] the result of an real call to web_read_group
-         * @returns {Object} Object with keys groups and length
+         * @returns {{ groups: Object[], length: number }}
          */
         _mockWebReadGroup(params, result) {
             let groups = [];
@@ -553,12 +555,12 @@ odoo.define('web.SampleServer', function (require) {
                 groups,
                 length: groups.length,
             };
-        },
+        }
+
         /**
          * A real (web_)read_group call has been done, and it returned groups,
          * but they are all empty. This function updates the sample data such
          * that those group values exist and those groups contain sample records.
-         *
          * @private
          * @param {Object[]} groups empty groups returned by the server
          * @param {Object} params
@@ -595,8 +597,8 @@ odoo.define('web.SampleServer', function (require) {
             });
 
             return groups;
-        },
-    });
+        }
+    }
 
     return SampleServer;
 });
