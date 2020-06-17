@@ -50,8 +50,7 @@ for name, field in MODELS:
         @api.model
         def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
             if isinstance(name, str) and name.split(':')[0] == self._name:
-                record_ids = self._search([('value', operator, int(name.split(':')[1]))], access_rights_uid=name_get_uid)
-                return models.lazy_name_get(self.browse(record_ids).with_user(name_get_uid))
+                return self._search([('value', operator, int(name.split(':')[1]))], access_rights_uid=name_get_uid)
             else:
                 return []
 
@@ -71,8 +70,7 @@ class One2ManyChild(models.Model):
     @api.model
     def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
         if isinstance(name, str) and name.split(':')[0] == self._name:
-            record_ids = self._search([('value', operator, int(name.split(':')[1]))], access_rights_uid=name_get_uid)
-            return models.lazy_name_get(self.browse(record_ids).with_user(name_get_uid))
+            return self._search([('value', operator, int(name.split(':')[1]))], access_rights_uid=name_get_uid)
         else:
             return []
 
@@ -129,8 +127,7 @@ class Many2ManyChild(models.Model):
     @api.model
     def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
         if isinstance(name, str) and name.split(':')[0] == self._name:
-            record_ids = self._search([('value', operator, int(name.split(':')[1]))], access_rights_uid=name_get_uid)
-            return models.lazy_name_get(self.browse(record_ids).with_user(name_get_uid))
+            return self._search([('value', operator, int(name.split(':')[1]))], access_rights_uid=name_get_uid)
         else:
             return []
 
