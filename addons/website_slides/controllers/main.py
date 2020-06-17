@@ -7,11 +7,11 @@ import logging
 import werkzeug
 import math
 
-from ast import literal_eval
 from collections import defaultdict
 
 from odoo import http, tools, _
-from odoo.addons.http_routing.models.ir_http import slug
+from odoo.addons.http_routing.models.ir_http import slug, unslug
+from odoo.addons.website.controllers.main import QueryURL
 from odoo.addons.website_profile.controllers.main import WebsiteProfile
 from odoo.addons.website.models.ir_http import sitemap_qs2dom
 from odoo.exceptions import AccessError, UserError
@@ -39,6 +39,16 @@ class WebsiteSlides(WebsiteProfile):
             loc = '/slides/%s' % slug(channel)
             if not qs or qs.lower() in loc:
                 yield {'loc': loc}
+
+    def tags_list(self, tag_ids, current_tag=None):
+        tag_ids = list(tag_ids)  # required to avoid using the same list
+        if current_tag:
+            if current_tag in tag_ids:
+                tag_ids.remove(current_tag)
+            else:
+                tag_ids.append(current_tag)
+        tag_ids = request.env['slide.channel.tag'].browse(tag_ids)
+        return ','.join(slug(tag) for tag in tag_ids)
 
     # SLIDE UTILITIES
     # --------------------------------------------------
@@ -201,21 +211,17 @@ class WebsiteSlides(WebsiteProfile):
 
         return channel_progress
 
-    def _extract_channel_tag_search(self, **post):
-        tags = request.env['slide.channel.tag']
-        if post.get('tags'):
-            try:
-                tag_ids = literal_eval(post['tags'])
-            except:
-                pass
-            else:
-                # perform a search to filter on existing / valid tags implicitely
-                tags = request.env['slide.channel.tag'].search([('id', 'in', tag_ids)])
-        return tags
+    def _extract_channel_tag_search(self, search_tags=None):
+        Tags = request.env['slide.channel.tag']
+        if search_tags:
+            tag_ids = list(filter(None, [unslug(tag)[1] for tag in search_tags.split(',')]))
+            # perform a search to filter on existing / valid tags
+            return Tags.search([('id', 'in', tag_ids)]) if tag_ids else Tags
+        return Tags
 
-    def _build_channel_domain(self, base_domain, slide_type=None, my=False, **post):
+    def _build_channel_domain(self, base_domain, slide_type=None, tags=None, my=False, **post):
         search_term = post.get('search')
-        tags = self._extract_channel_tag_search(**post)
+        tags = self._extract_channel_tag_search(tags)
 
         domain = base_domain
         if search_term:
@@ -305,30 +311,39 @@ class WebsiteSlides(WebsiteProfile):
             'top3_users': self._get_top3_users(),
             'challenges': challenges,
             'challenges_done': challenges_done,
-            'search_tags': request.env['slide.channel.tag']
+            'search_tags': request.env['slide.channel.tag'],
+            'slide_url': QueryURL('/slides/all', ['tag']),
+            'tags_list': self.tags_list,
         })
 
         return request.render('website_slides.courses_home', values)
 
-    @http.route('/slides/all', type='http', auth="public", website=True, sitemap=True)
-    def slides_channel_all(self, slide_type=None, my=False, **post):
+    @http.route(['/slides/all', '/slides/all/tag/<string:tags>'], type='http', auth="public", website=True, sitemap=True)
+    def slides_channel_all(self, slide_type=None, tags=None, my=False, **post):
         """ Home page displaying a list of courses displayed according to some
         criterion and search terms.
 
           :param string slide_type: if provided, filter the course to contain at
            least one slide of type 'slide_type'. Used notably to display courses
            with certifications;
+          :param string tag: if provided, filter the slide.channels having
+            the tag(s)
           :param bool my: if provided, filter the slide.channels for which the
            current user is a member of
           :param dict post: post parameters, including
 
            * ``search``: filter on course description / name;
-           * ``channel_tag_id``: filter on courses containing this tag;
-           * ``channel_tag_group_id_<id>``: filter on courses containing this tag
-             in the tag group given by <id> (used in navigation based on tag group);
         """
+
+        if tags and request.httprequest.method == 'GET':
+            # redirect get tag-1,tag-2 -> get tag-1
+            tag_list = tags.split(',')
+            if len(tag_list) > 1 and not post.get('search'):
+                url = QueryURL('/slides/all', ['tag'], tag=tag_list[0], my=my, slide_type=slide_type)()
+                return request.redirect(url, code=302)
+
         domain = request.website.website_domain()
-        domain = self._build_channel_domain(domain, slide_type=slide_type, my=my, **post)
+        domain = self._build_channel_domain(domain, slide_type=slide_type, tags=tags, my=my, **post)
 
         order = self._channel_order_by_criterion.get(post.get('sorting'))
 
@@ -337,7 +352,7 @@ class WebsiteSlides(WebsiteProfile):
 
         tag_groups = request.env['slide.channel.tag.group'].search(
             ['&', ('tag_ids', '!=', False), ('website_published', '=', True)])
-        search_tags = self._extract_channel_tag_search(**post)
+        search_tags = self._extract_channel_tag_search(tags)
 
         values = self._prepare_user_values(**post)
         values.update({
@@ -347,8 +362,9 @@ class WebsiteSlides(WebsiteProfile):
             'search_slide_type': slide_type,
             'search_my': my,
             'search_tags': search_tags,
-            'search_channel_tag_id': post.get('channel_tag_id'),
             'top3_users': self._get_top3_users(),
+            'tags_list': self.tags_list,
+            'slide_url': QueryURL('/slides/all', ['tag']),
         })
 
         return request.render('website_slides.courses_all', values)
