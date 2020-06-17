@@ -180,6 +180,9 @@ function factory(dependencies) {
             if ('name' in data) {
                 data2.name = data.name;
             }
+            if ('anonymous_name' in data) {
+                data2.anonymous_name = data.anonymous_name;
+            }
             if ('public' in data) {
                 data2.public = data.public;
             }
@@ -1176,6 +1179,7 @@ function factory(dependencies) {
                 'originThreadAttachments',
             ],
         }),
+        anonymous_name: attr(),
         areAttachmentsLoaded: attr({
             default: false,
         }),
