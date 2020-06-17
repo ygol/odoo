@@ -1262,13 +1262,11 @@ class TestOne2many(TransactionCase):
         self.Partner.search([('child_ids.bank_ids.sanitized_acc_number', 'like', '12')])
 
         with self.assertQueries(['''
-            SELECT DISTINCT "partner_id"
-            FROM "res_partner_bank"
-            WHERE "id" IN %s
-        ''', '''
             SELECT "res_partner".id
             FROM "res_partner"
-            WHERE ("res_partner"."id" IN (%s))
+            WHERE ("res_partner"."id" IN (
+                SELECT "partner_id" FROM "res_partner_bank" WHERE "id" IN %s
+            ))
             ORDER BY "res_partner"."display_name"
         ''']):
             self.Partner.search([('bank_ids', 'in', self.partner.bank_ids.ids)])
@@ -1279,13 +1277,11 @@ class TestOne2many(TransactionCase):
             WHERE ("res_partner_bank"."sanitized_acc_number"::text LIKE %s)
             ORDER BY "res_partner_bank"."id"
         ''', '''
-            SELECT DISTINCT "partner_id"
-            FROM "res_partner_bank"
-            WHERE "id" IN %s
-        ''', '''
             SELECT "res_partner".id
             FROM "res_partner"
-            WHERE ("res_partner"."id" IN (%s))
+            WHERE ("res_partner"."id" IN (
+                SELECT "partner_id" FROM "res_partner_bank" WHERE "id" IN %s
+            ))
             ORDER BY "res_partner"."display_name"
         ''']):
             self.Partner.search([('bank_ids.sanitized_acc_number', 'like', '12')])
@@ -1296,22 +1292,18 @@ class TestOne2many(TransactionCase):
             WHERE ("res_partner_bank"."sanitized_acc_number"::text LIKE %s)
             ORDER BY "res_partner_bank"."id"
         ''', '''
-            SELECT DISTINCT "partner_id"
-            FROM "res_partner_bank"
-            WHERE "id" IN %s
-        ''', '''
             SELECT "res_partner".id
             FROM "res_partner"
-            WHERE ("res_partner"."id" IN (%s))
+            WHERE ("res_partner"."id" IN (
+                SELECT "partner_id" FROM "res_partner_bank" WHERE "id" IN %s
+            ))
             ORDER BY "res_partner"."id"
         ''', '''
-            SELECT DISTINCT "parent_id"
-            FROM "res_partner"
-            WHERE "id" IN %s
-        ''', '''
             SELECT "res_partner".id
             FROM "res_partner"
-            WHERE ("res_partner"."id" IN (%s))
+            WHERE ("res_partner"."id" IN (
+                SELECT "parent_id" FROM "res_partner" WHERE "id" IN %s
+            ))
             ORDER BY "res_partner"."display_name"
         ''']):
             self.Partner.search([('child_ids.bank_ids.sanitized_acc_number', 'like', '12')])
@@ -1324,13 +1316,11 @@ class TestOne2many(TransactionCase):
         self.Partner.search([('child_ids.bank_ids.sanitized_acc_number', 'like', '12')])
 
         with self.assertQueries(['''
-            SELECT DISTINCT "partner_id"
-            FROM "res_partner_bank"
-            WHERE "id" IN %s
-        ''', '''
             SELECT "res_partner".id
             FROM "res_partner"
-            WHERE ("res_partner"."id" IN (%s))
+            WHERE ("res_partner"."id" IN (
+                SELECT "partner_id" FROM "res_partner_bank" WHERE "id" IN %s
+            ))
             ORDER BY "res_partner"."display_name"
         ''']):
             self.Partner.search([('bank_ids', 'in', self.partner.bank_ids.ids)])
@@ -1447,13 +1437,11 @@ class TestOne2many(TransactionCase):
             WHERE ("res_partner_bank"."sanitized_acc_number"::text LIKE %s)
             ORDER BY "res_partner_bank"."sequence", "res_partner_bank"."id"
         ''', '''
-            SELECT DISTINCT "partner_id"
-            FROM "res_partner_bank"
-            WHERE "id" IN %s
-        ''', '''
             SELECT "res_partner".id
             FROM "res_partner"
-            WHERE ("res_partner"."id" IN (%s))
+            WHERE ("res_partner"."id" IN (
+                SELECT "partner_id" FROM "res_partner_bank" WHERE "id" IN %s
+            ))
             ORDER BY "res_partner"."display_name"
         ''']):
             self.Partner.search([('bank_ids', 'like', '12')])
