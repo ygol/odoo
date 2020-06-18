@@ -42,6 +42,46 @@
                                 type="object" icon="fa-user" class="oe_stat_button">
                             <field name="contact_nbr" string="Recipients" widget="statinfo"/>
                         </button>
+                        <button name="action_view_mailings"
+                                type="object" icon="fa-envelope-o" class="oe_stat_button">
+                            <field name="mailing_nbr" string="Mailings" widget="statinfo"/>
+                        </button>
+                        <button name="action_view_contacts_bouncing"
+                                type="object" icon="fa-exchange" class="oe_stat_button">
+                            <div class="o_field_widget o_stat_info">
+                                <div class="oe_inline">
+                                    <span class="o_stat_value">
+                                        <field name="contact_percentage_bounce" widget="statinfo" nolabel="1"/>
+                                    </span>
+                                    <span class="o_stat_value">%</span>
+                                </div>
+                                <span class="o_stat_text">Bounce</span>
+                            </div>
+                        </button>
+                        <button name="action_view_contacts_opt_out"
+                                type="object" icon="fa-bell-slash-o" class="oe_stat_button">
+                            <div class="o_field_widget o_stat_info">
+                                <div class="oe_inline">
+                                    <span class="o_stat_value">
+                                        <field name="contact_percentage_opt_out" widget="statinfo" nolabel="1"/>
+                                    </span>
+                                    <span class="o_stat_value">%</span>
+                                </div>
+                                <span class="o_stat_text">Opt-out</span>
+                            </div>
+                        </button>
+                        <button name="action_view_contacts_blacklisted"
+                                type="object" icon="fa-ban" class="oe_stat_button">
+                            <div class="o_field_widget o_stat_info">
+                                <div class="oe_inline">
+                                    <span class="o_stat_value">
+                                        <field name="contact_percentage_blacklisted" widget="statinfo" nolabel="1"/>
+                                    </span>
+                                    <span class="o_stat_value">%</span>
+                                </div>
+                                <span class="o_stat_text">Blacklist</span>
+                            </div>
+                        </button>
                     </div>
                     <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
                     <div class="oe_title">
@@ -97,46 +137,84 @@
         <field name="name">mailing.list.view.kanban</field>
         <field name="model">mailing.list</field>
         <field name="arch" type="xml">
-            <kanban js_class="mass_mailing_list_kanban" class="o_kanban_mobile" on_create="mass_mailing.open_create_mass_mailing_list" sample="1">
+            <kanban class="o_kanban_mobile" on_create="mass_mailing.open_create_mass_mailing_list" sample="1">
                 <field name="name"/>
                 <field name="contact_nbr"/>
+                <field name="contact_nbr_email"/>
+                <field name="contact_nbr_opt_out"/>
+                <field name="contact_nbr_blacklisted"/>
+                <field name="contact_percentage_bounce"/>
+                <field name="contact_percentage_opt_out"/>
+                <field name="contact_percentage_blacklisted"/>
                 <field name="active"/>
                 <templates>
                     <t t-name="kanban-box">
-                        <div t-attf-class="oe_kanban_global_click">
-                            <div class="o_mass_mailing_kanban_main">
-                                <div class="o_kanban_card_content">
-                                    <div class="o_kanban_primary_left">
-                                        <div class="o_primary">
-                                            <span><t t-esc="record.name.value"/></span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="o_kanban_card_manage_pane">
-                                    <div class="o_kanban_card_manage_section o_dropdown_kanban dropdown">
-                                        <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" href="#" data-display="static" aria-label="Dropdown menu" title="Dropdown menu">
-                                            <span class="fa fa-ellipsis-v"/>
-                                        </a>
-                                        <div class="dropdown-menu" role="menu">
-                                            <a t-if="widget.editable" role="menuitem" type="edit" class="dropdown-item">Edit</a>
-                                            <a t-if="widget.deletable" role="menuitem" type="delete" class="dropdown-item">Delete</a>
-                                            <a role="menuitem" class="dropdown-item o_kanban_mailing_active" name="toggle_active" type="object">
-                                                <t t-if="record.active.raw_value">Archive</t>
-                                                <t t-if="!record.active.raw_value">Restore</t>
-                                            </a>
-                                        </div>
-                                    </div>
+                        <div class="oe_kanban_global_click">
+                            <div class="o_dropdown_kanban dropdown" t-if="!selection_mode">
+                                <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" href="#" data-display="static" aria-label="Dropdown menu" title="Dropdown menu">
+                                    <span class="fa fa-ellipsis-v"/>
+                                </a>
+                                <div class="dropdown-menu" role="menu">
+                                    <t t-if="widget.deletable">
+                                        <a role="menuitem" type="delete" class="dropdown-item">Delete</a>
+                                    </t>
+                                    <a role="menuitem" class="dropdown-item o_kanban_mailing_active" name="toggle_active" type="object">
+                                        <t t-if="record.active.raw_value">Archive</t>
+                                        <t t-if="!record.active.raw_value">Restore</t>
+                                    </a>
                                 </div>
                             </div>
-                            <div class="o_mailing_list_kanban_boxes">
-                                <a name="action_view_contacts" type="object">
-                                    <div>
-                                        <span class="badge badge-pill">
-                                            <i class="fa fa-user" role="img" aria-label="Contacts" title="Contacts"/>
+                            <div class="oe_kanban_content">
+                                <h2 class="mb-2">
+                                    <field name="name"/>
+                                </h2>
+                                <div class="d-flex align-items-center">
+                                    <div class="mr-3">
+                                        <button class="btn btn-primary" name="action_view_contacts" type="object">
                                             <t t-esc="record.contact_nbr.value"/>
-                                        </span>
+                                            <span>Contacts</span>
+                                        </button>
                                     </div>
-                                </a>
+                                    <div class="flex-grow-1 text-right o_mass_mailing_kanban_contact_links">
+                                        <a name="action_view_contacts_email" type="object" class="d-flex text-right">
+                                            <div class="flex-grow-1">Valid email recipients</div>
+                                            <div t-esc="record.contact_nbr_email.value" class="ml-3"/>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="font-weight-bold mt-2">
+                                    <div class="d-inline-block mr-2" title="Mailing Count">
+                                        <i class="fa fa-envelope-o mr-1"/>
+                                        <field name="mailing_nbr"/>
+                                    </div>
+                                    <t t-set="bounce_class" t-value="'text-danger'"
+                                        t-if="record.contact_percentage_bounce.value > 8"/>
+                                    <t t-set="bounce_class" t-value="'text-warning'"
+                                        t-elif="record.contact_percentage_bounce.value > 3"/>
+                                    <t t-set="bounce_class" t-value="" t-else=""/>
+                                    <div class="d-inline-block mr-2" title="Bounce">
+                                        <i t-attf-class="fa fa-exchange mr-1 #{bounce_class}"/>
+                                        <field name="contact_percentage_bounce"/>%
+                                    </div>
+                                    <t t-set="opt_out_class" t-value="'text-danger'"
+                                        t-if="record.contact_percentage_opt_out.value > 0.5"/>
+                                    <t t-set="opt_out_class" t-value="'text-warning'"
+                                        t-elif="record.contact_percentage_opt_out.value > 0.2"/>
+                                    <t t-set="opt_out_class" t-value="" t-else=""/>
+                                    <div class="d-inline-block mr-2" title="Opt-out">
+                                        <i t-attf-class="fa fa-bell-slash-o mr-1 #{opt_out_class}"/>
+                                        <field name="contact_percentage_opt_out"/>%
+                                    </div>
+                                    <t t-set="blacklisted_class" t-value="'text-danger'"
+                                        t-if="record.contact_percentage_blacklisted.value > 0.1"/>
+                                    <t t-set="blacklisted_class" t-value="'text-warning'"
+                                        t-elif="record.contact_percentage_blacklisted.value > 0.05"/>
+                                    <t t-set="blacklisted_class" t-value="" t-else=""/>
+                                    <div class="d-inline-block" title="Blacklist">
+                                        <i t-attf-class="fa fa-ban mr-1 #{blacklisted_class}"/>
+                                        <field name="contact_percentage_blacklisted"/>%
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </t>
