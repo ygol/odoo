@@ -36,10 +36,10 @@ odoo.define('pos_coupon.ActivePrograms', function (require) {
          */
         _setRenderParams() {
             const order = this.currentOrder;
-            const nonGeneratingPrograms = order.nonGeneratingPrograms || [];
-            const nonGeneratingProgramIds = new Set(nonGeneratingPrograms.map(([program, ,]) => program.id));
+            const unRewardedArray = order.unRewardedArray || [];
+            const nonGeneratingProgramIds = new Set(unRewardedArray.map(({ program }) => program.id));
             const nonGeneratingCouponIds = new Set(
-                nonGeneratingPrograms.map(([, coupon_id]) => coupon_id).filter((coupon_id) => coupon_id)
+                unRewardedArray.map(({ coupon_id }) => coupon_id).filter((coupon_id) => coupon_id)
             );
             const onNextOrderPromoPrograms = order.activePromoProgramIds
                 .filter((program_id) => {
