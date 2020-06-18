@@ -17,16 +17,21 @@ odoo.define('pos_coupon.ProductScreen', function (require) {
                 this.currentOrder.activateCode(code.base_code);
             }
             /**
+             * 1/ Perform the usual set value operation (super._setValue) if the line being modified
+             * is not a reward line or if it is a reward line, the `val` being set is '' or 'remove' only.
+             *
+             * 2/ Update activated programs and coupons when removing a reward line.
+             *
+             * 3/ Trigger 'update-rewards' if the line being modified is a regular line or
+             * if removing a reward line.
+             *
              * @override
              */
             _setValue(val) {
-                // Update the reward lines when numpad buffer is updated
-                // except when the selected order line is a reward line.
                 const selectedLine = this.currentOrder.get_selected_orderline();
-                const floatVal = parseFloat(val) || 0;
                 if (
                     !selectedLine.is_program_reward ||
-                    (selectedLine.is_program_reward && [1.0, 0.0].includes(floatVal))
+                    (selectedLine.is_program_reward && ['', 'remove'].includes(val))
                 ) {
                     super._setValue(val);
                 }
@@ -49,7 +54,9 @@ odoo.define('pos_coupon.ProductScreen', function (require) {
                         );
                     }
                 }
-                selectedLine.order.trigger('update-rewards');
+                if (!selectedLine.is_program_reward || (selectedLine.is_program_reward && val === 'remove')) {
+                    selectedLine.order.trigger('update-rewards');
+                }
             }
         };
 
