@@ -171,6 +171,11 @@ odoo.define('pos_coupon.pos', function (require) {
         },
     });
 
+    /**
+     * @listens 'update-rewards' calls updateRewards when triggered.
+     * @listens 'reset-coupons' calls resetCoupons when triggered.
+     * @emits 'rewards-updated' emitted event when to updateRewards is successful.
+     */
     var _order_super = models.Order.prototype;
     models.Order = models.Order.extend({
         // OVERIDDEN METHODS
@@ -223,9 +228,7 @@ odoo.define('pos_coupon.pos', function (require) {
         },
         add_product: function (product, options) {
             _order_super.add_product.apply(this, [product, options]);
-            if (!options || (options && !options.is_program_reward)) {
-                this.trigger('update-rewards');
-            }
+            this.trigger('update-rewards');
         },
         get_last_orderline: function () {
             const regularLines = _order_super.get_orderlines
@@ -242,18 +245,17 @@ odoo.define('pos_coupon.pos', function (require) {
          * It is practically the entry point of the features of pos_coupon.
          */
         updateRewards: async function () {
-            // immediately return if `use_coupon_programs` is not activated in the config.
             if (!this.pos.config.use_coupon_programs) return;
-
-            // 1. remove reward lines
-            for (let line of this.orderlines.filter((line) => line.is_program_reward)) {
-                this.remove_orderline(line);
-            }
-
-            // 2. compute rewards and add reward lines
-            let { rewards, unRewardedArray } = await this.calculateRewards();
-            for (let { product, unit_price, quantity, program, tax_ids, coupon_id } of rewards) {
-                this.add_product(product, {
+            this.orderlines.remove(this.orderlines.filter((line) => line.is_program_reward));
+            const { rewards, unRewardedArray } = await this.calculateRewards();
+            this.addRewardLines(rewards);
+            this.unRewardedArray = unRewardedArray;
+            this.trigger('rewards-updated');
+        },
+        addRewardLines: function (rewards) {
+            this.assert_editable();
+            const lines = rewards.map(({ product, unit_price, quantity, program, tax_ids, coupon_id }) => {
+                const options = {
                     quantity: quantity,
                     price: unit_price,
                     lst_price: unit_price,
@@ -261,11 +263,13 @@ odoo.define('pos_coupon.pos', function (require) {
                     program_id: program.id,
                     tax_ids: tax_ids,
                     coupon_id: coupon_id,
-                });
-            }
-            this.unRewardedArray = unRewardedArray;
-
-            this.trigger('rewards-updated');
+                };
+                const line = new models.Orderline({}, { pos: this.pos, order: this, product });
+                this.fix_tax_included_price(line);
+                this.set_orderline_options(line, options);
+                return line;
+            });
+            this.orderlines.add(lines);
         },
         /**
          * When an order is created, it is initialized with default fields:
@@ -276,35 +280,41 @@ odoo.define('pos_coupon.pos', function (require) {
          */
         initializePrograms: async function () {
             if (!this.bookedCouponCodes) {
-                // map String -> CouponCode
+                /**
+                 * @type {CouponCode[]}
+                 */
                 this.bookedCouponCodes = {};
             }
             if (!this.activePromoProgramIds) {
-                // These are the other activated promo programs.
-                // Initialized with automatic promo programs' ids.
-                this.activePromoProgramIds = this._getInitialActiveProgramIds();
+                /**
+                 * These are the other activated promo programs.
+                 * Initialized with automatic promo programs' ids.
+                 * @type {number[]}
+                 */
+                this.activePromoProgramIds = this._getAutomaticPromoProgramIds();
             }
         },
         resetPrograms: function () {
+            let deactivatedCount = 0;
             if (this.bookedCouponCodes) {
                 const couponIds = Object.values(this.bookedCouponCodes).map((couponCode) => couponCode.coupon_id);
                 if (couponIds.length > 0) {
                     this.trigger('reset-coupons', couponIds);
                 }
                 this.bookedCouponCodes = {};
+                deactivatedCount += couponIds.length;
             }
             if (this.activePromoProgramIds) {
                 const codeNeededPromoProgramIds = this.activePromoProgramIds.filter((program_id) => {
                     return this.pos.coupon_programs_by_id[program_id].promo_code_usage === 'code_needed';
                 });
-                if (Object.keys(this.bookedCouponCodes).length + codeNeededPromoProgramIds.length > 0) {
-                    Gui.showNotification('Active coupons and promo codes were deactivated.');
-                }
-                this.activePromoProgramIds = this._getInitialActiveProgramIds();
+                this.activePromoProgramIds = this._getAutomaticPromoProgramIds();
+                deactivatedCount += codeNeededPromoProgramIds.length;
             }
+            if (deactivatedCount > 0) Gui.showNotification('Active coupons and promo codes were deactivated.');
             this.trigger('update-rewards');
         },
-        _getInitialActiveProgramIds: function () {
+        _getAutomaticPromoProgramIds: function () {
             return this.pos.promo_programs
                 .filter((program) => {
                     return program.promo_code_usage == 'no_code_needed';
@@ -431,23 +441,23 @@ odoo.define('pos_coupon.pos', function (require) {
 
             // Check max number usage
             if (program.maximum_use_number !== 0) {
-                try {
-                    const numberUse = await rpc.query({
+                const numberUse = await rpc
+                    .query({
                         model: 'coupon.program',
                         method: 'get_number_usage',
                         args: [program.id],
                         kwargs: { context: session.user_context },
-                    });
-                    if (!(numberUse < program.maximum_use_number)) {
-                        return {
-                            successful: false,
-                            reason: "Program's maximum number of usage has been reached.",
-                        };
-                    }
-                } catch (error) {
+                    })
+                    .catch(() => Promise.resolve(null)); // may happen because offline
+                if (numberUse === null) {
                     return {
                         successful: false,
                         reason: 'Unable to get the number of usage of the program.',
+                    };
+                } else if (!(numberUse < program.maximum_use_number)) {
+                    return {
+                        successful: false,
+                        reason: "Program's maximum number of usage has been reached.",
                     };
                 }
             }
@@ -624,6 +634,7 @@ odoo.define('pos_coupon.pos', function (require) {
             if (promoProgram && this.activePromoProgramIds.includes(promoProgram.id)) {
                 Gui.showNotification('That promo code program has already been activated.');
             } else if (promoProgram) {
+                // TODO these two operations should be atomic
                 this.activePromoProgramIds.push(promoProgram.id);
                 this.trigger('update-rewards');
             } else if (code in this.bookedCouponCodes) {
@@ -640,6 +651,7 @@ odoo.define('pos_coupon.pos', function (require) {
                     kwargs: { context: session.user_context },
                 });
                 if (successful) {
+                    // TODO these two operations should be atomic
                     this.bookedCouponCodes[code] = new CouponCode(code, payload.coupon_id, payload.program_id);
                     this.trigger('update-rewards');
                 } else {

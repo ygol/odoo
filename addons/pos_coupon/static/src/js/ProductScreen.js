@@ -23,11 +23,14 @@ odoo.define('pos_coupon.ProductScreen', function (require) {
                 // Update the reward lines when numpad buffer is updated
                 // except when the selected order line is a reward line.
                 const selectedLine = this.currentOrder.get_selected_orderline();
-                if (!selectedLine) return;
-                if (!selectedLine.is_program_reward) {
+                const floatVal = parseFloat(val) || 0;
+                if (
+                    !selectedLine.is_program_reward ||
+                    (selectedLine.is_program_reward && [1.0, 0.0].includes(floatVal))
+                ) {
                     super._setValue(val);
-                    this.currentOrder.trigger('update-rewards');
-                } else if (val === 'remove') {
+                }
+                if (selectedLine.is_program_reward && val === 'remove') {
                     if (selectedLine.coupon_id) {
                         const coupon_code = Object.values(selectedLine.order.bookedCouponCodes).find(
                             (couponCode) => couponCode.coupon_id === selectedLine.coupon_id
@@ -45,8 +48,8 @@ odoo.define('pos_coupon.ProductScreen', function (require) {
                             }' program has been deactivated.`
                         );
                     }
-                    selectedLine.order.trigger('update-rewards');
                 }
+                selectedLine.order.trigger('update-rewards');
             }
         };
 
