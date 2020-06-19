@@ -15,18 +15,24 @@ class MassMailing(models.Model):
     @api.depends('mailing_domain')
     def _compute_sale_quotation_count(self):
         has_so_access = self.env['sale.order'].check_access_rights('read', raise_exception=False)
+        if not has_so_access:
+            self.sale_quotation_count = 0
+            return
         for mass_mailing in self:
-            mass_mailing.sale_quotation_count = self.env['sale.order'].search_count(mass_mailing._get_sale_utm_domain()) if has_so_access else 0
+            mass_mailing.sale_quotation_count = self.env['sale.order'].search_count(mass_mailing._get_sale_utm_domain())
 
     @api.depends('mailing_domain')
     def _compute_sale_invoiced_amount(self):
+        if not (
+            self.user_has_groups('sales_team.group_sale_salesman')
+            and self.user_has_groups('account.group_account_invoice')
+        ):
+            self.sale_invoiced_amount = 0
+            return
         for mass_mailing in self:
-            if self.user_has_groups('sales_team.group_sale_salesman') and self.user_has_groups('account.group_account_invoice'):
-                domain = mass_mailing._get_sale_utm_domain() + [('state', 'not in', ['draft', 'cancel'])]
-                moves = self.env['account.move'].search_read(domain, ['amount_untaxed'])
-                mass_mailing.sale_invoiced_amount = sum(i['amount_untaxed'] for i in moves)
-            else:
-                mass_mailing.sale_invoiced_amount = 0
+            domain = mass_mailing._get_sale_utm_domain() + [('state', 'not in', ['draft', 'cancel'])]
+            moves = self.env['account.move'].search_read(domain, ['amount_untaxed'])
+            mass_mailing.sale_invoiced_amount = sum(i['amount_untaxed'] for i in moves)
 
     def action_redirect_to_quotations(self):
         action = self.env["ir.actions.actions"]._for_xml_id("sale.action_quotations_with_onboarding")
