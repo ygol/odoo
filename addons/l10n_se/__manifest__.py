@@ -17,6 +17,8 @@
         "data/account_fiscal_position_template.xml",
         "data/account_fiscal_position_account_template.xml",
         "data/account_fiscal_position_tax_template.xml",
+        "views/partner_view.xml",
+        "views/account_journal_view.xml",
     ],
     'demo': [
         'demo/demo_company.xml',
