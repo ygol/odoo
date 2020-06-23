@@ -2,6 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 import re
 import base64
+import logging
 import datetime
 
 from odoo import fields, models, api, _, tools
@@ -13,6 +14,7 @@ DEFAULT_ENDPOINT = 'https://iap-snailmail.odoo.com'
 ESTIMATE_ENDPOINT = '/iap/snailmail/1/estimate'
 PRINT_ENDPOINT = '/iap/snailmail/1/print'
 
+_logger = logging.getLogger(__name__)
 
 class SnailmailLetter(models.Model):
     _name = 'snailmail.letter'
@@ -234,6 +236,8 @@ class SnailmailLetter(models.Model):
         self.write({'state': 'pending'})
         endpoint = self.env['ir.config_parameter'].sudo().get_param('snailmail.endpoint', DEFAULT_ENDPOINT)
         params = self._snailmail_create('print')
+        info_log = [{'id': rec.id, 'model': rec.model, 'res_id': rec.res_id} for rec in self]
+        _logger.info('Sending letters to IAP: %s' % repr(info_log))
         response = jsonrpc(endpoint + PRINT_ENDPOINT, params=params)
         for doc in response['request']['documents']:
             letter = self.browse(doc['letter_id'])
