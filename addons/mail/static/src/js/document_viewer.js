@@ -2,6 +2,7 @@ odoo.define('mail.DocumentViewer', function (require) {
 "use strict";
 
 var core = require('web.core');
+var session = require('web.session');
 var Widget = require('web.Widget');
 
 var QWeb = core.qweb;
@@ -200,7 +201,9 @@ var DocumentViewer = Widget.extend({
      */
     _onDownload: function (e) {
         e.preventDefault();
-        window.location = '/web/content/' + this.activeAttachment.id + '?download=true';
+        session.get_file({
+            url: '/web/content/' + this.activeAttachment.id + '?download=true',
+        });
     },
     /**
      * @private
