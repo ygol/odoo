@@ -691,6 +691,8 @@ class MrpProduction(models.Model):
 
     @api.model
     def create(self, values):
+        if 'company_id' in values:
+            self = self.with_company(values['company_id'])
         if not values.get('name', False) or values['name'] == _('New'):
             picking_type_id = values.get('picking_type_id') or self._get_default_picking_type()
             picking_type_id = self.env['stock.picking.type'].browse(picking_type_id)

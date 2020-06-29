@@ -213,6 +213,7 @@ class PosOrder(models.Model):
         readonly=True, digits=0, required=True)
     amount_return = fields.Float(string='Returned', digits=0, required=True, readonly=True)
     lines = fields.One2many('pos.order.line', 'order_id', string='Order Lines', states={'draft': [('readonly', False)]}, readonly=True, copy=True)
+    # VFE FIXME shouldn't it be related on the session_id.config_id.company_id ???
     company_id = fields.Many2one('res.company', string='Company', required=True, readonly=True)
     pricelist_id = fields.Many2one('product.pricelist', string='Pricelist', required=True, states={
                                    'draft': [('readonly', False)]}, readonly=True)
@@ -596,7 +597,7 @@ class PosOrderLine(models.Model):
         ]
         return line
 
-    company_id = fields.Many2one('res.company', string='Company', related="order_id.company_id", store=True)
+    company_id = fields.Many2one(string='Company', related="order_id.company_id", store=True)
     name = fields.Char(string='Line No', required=True, copy=False)
     notice = fields.Char(string='Discount Notice')
     product_id = fields.Many2one('product.product', string='Product', domain=[('sale_ok', '=', True)], required=True, change_default=True)
@@ -636,14 +637,14 @@ class PosOrderLine(models.Model):
 
     @api.model
     def create(self, values):
-        if values.get('order_id') and not values.get('name'):
+        if not values.get('name'):
             # set name based on the sequence specified on the config
             config = self.env['pos.order'].browse(values['order_id']).session_id.config_id
             if config.sequence_line_id:
                 values['name'] = config.sequence_line_id._next()
-        if not values.get('name'):
-            # fallback on any pos.order sequence
-            values['name'] = self.env['ir.sequence'].next_by_code('pos.order.line')
+            else:
+                # fallback on any pos.order.line sequence:
+                values['name'] = self.env['ir.sequence'].with_company(config.company_id).next_by_code('pos.order.line')
         return super(PosOrderLine, self).create(values)
 
     def write(self, values):

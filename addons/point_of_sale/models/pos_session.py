@@ -193,7 +193,7 @@ class PosSession(models.Model):
         pos_config = self.env['pos.config'].browse(config_id)
         ctx = dict(self.env.context, company_id=pos_config.company_id.id)
 
-        pos_name = self.env['ir.sequence'].with_context(ctx).next_by_code('pos.session')
+        pos_name = self.env['ir.sequence'].with_company(pos_config.company_id.id).next_by_code('pos.session')
         if values.get('name'):
             pos_name += ' ' + values['name']
 

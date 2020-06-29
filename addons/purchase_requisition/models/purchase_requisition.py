@@ -128,6 +128,7 @@ class PurchaseRequisition(models.Model):
             self.write({'state': 'in_progress'})
         # Set the sequence number regarding the requisition type
         if self.name == 'New':
+            self = self.with_company(self.company_id)
             if self.is_quantity_copy != 'none':
                 self.name = self.env['ir.sequence'].next_by_code('purchase.requisition.purchase.tender')
             else:

@@ -463,7 +463,7 @@ class PosConfig(models.Model):
             'padding': 4,
             'prefix': "%s/" % values['name'],
             'code': "pos.order",
-            'company_id': values.get('company_id', False),
+            'company_id': values.get('company_id', self.env.company.id),
         }
         # force sequence_id field to new pos.order sequence
         values['sequence_id'] = IrSequence.create(val).id

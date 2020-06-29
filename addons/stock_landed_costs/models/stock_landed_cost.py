@@ -99,6 +99,14 @@ class StockLandedCost(models.Model):
     @api.model
     def create(self, vals):
         if vals.get('name', _('New')) == _('New'):
+            acc_journal_id = vals.get(
+                'account_journal_id',
+                self.default_get(['account_journal_id']).get('account_journal_id')
+            )
+            if acc_journal_id:
+                self = self.with_company(
+                    self.env['account.journal'].browse(acc_journal_id).company_id
+                )
             vals['name'] = self.env['ir.sequence'].next_by_code('stock.landed.cost')
         return super().create(vals)
 

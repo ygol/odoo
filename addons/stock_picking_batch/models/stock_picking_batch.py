@@ -110,6 +110,8 @@ class StockPickingBatch(models.Model):
     @api.model
     def create(self, vals):
         if vals.get('name', '/') == '/':
+            if vals.get('company_id'):
+                self = self.with_company(vals['company_id'])
             vals['name'] = self.env['ir.sequence'].next_by_code('picking.batch') or '/'
         return super().create(vals)
 

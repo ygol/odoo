@@ -129,6 +129,8 @@ class MrpUnbuild(models.Model):
 
     @api.model
     def create(self, vals):
+        if 'company_id' in vals:
+            self = self.with_company(vals['company_id'])
         if not vals.get('name') or vals['name'] == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('mrp.unbuild') or _('New')
         return super(MrpUnbuild, self).create(vals)

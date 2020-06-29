@@ -132,12 +132,15 @@ class StockScrap(models.Model):
     def do_scrap(self):
         self._check_company()
         for scrap in self:
-            scrap.name = self.env['ir.sequence'].next_by_code('stock.scrap') or _('New')
+            scrap.name = self.env['ir.sequence'].with_company(scrap.company_id).next_by_code('stock.scrap') or _('New')
             move = self.env['stock.move'].create(scrap._prepare_move_values())
             # master: replace context by cancel_backorder
             move.with_context(is_scrap=True)._action_done()
-            scrap.write({'move_id': move.id, 'state': 'done'})
-            scrap.date_done = fields.Datetime.now()
+            scrap.write({
+                'move_id': move.id,
+                'state': 'done',
+                'date_done': fields.Datetime.now()
+            })
         return True
 
     def action_get_stock_picking(self):
