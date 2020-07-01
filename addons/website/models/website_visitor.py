@@ -6,7 +6,7 @@ import uuid
 
 from odoo import fields, models, api, registry, _
 from odoo.addons.base.models.res_partner import _tz_get
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tools.misc import _format_time_ago
 from odoo.http import request
 from odoo.osv import expression
@@ -62,6 +62,12 @@ class WebsiteVisitor(models.Model):
         ('access_token_unique', 'unique(access_token)', 'Access token should be unique.'),
         ('partner_uniq', 'unique(partner_id)', 'A partner is linked to only one visitor.'),
     ]
+
+    @api.model_create_multi
+    def create(self, values_list):
+        if not self.env.is_superuser():
+            raise ValidationError(_("Visitors can not be created manually."))
+        return super().create(values_list)
 
     @api.depends('name')
     def name_get(self):
