@@ -5910,6 +5910,49 @@ QUnit.module('Views', {
         list.destroy();
     });
 
+    QUnit.test('multi edition: many2many_tags in one2many field', async function (assert) {
+        assert.expect(5);
+
+        for (let i = 4; i <= 10; i++) {
+            this.data.bar.records.push({ id: i, display_name: "Value" + i});
+        }
+
+        const list = await createView({
+            View: ListView,
+            model: 'foo',
+            data: this.data,
+            arch: `
+                <tree multi_edit="1">
+                    <field name="foo" required="1"/>
+                    <field name="o2m" widget="many2many_tags"/>
+                </tree>`,
+            archs: {
+                'bar,false,list': '<tree><field name="display_name"/></tree>',
+                'bar,false,search': '<search></search>',
+            },
+        });
+
+        assert.containsN(list, '.o_list_record_selector input:enabled', 5);
+
+        // select two records
+        await testUtils.dom.click(list.$('.o_data_row:eq(0) .o_list_record_selector input'));
+        await testUtils.dom.click(list.$('.o_data_row:eq(1) .o_list_record_selector input'));
+        await testUtils.dom.click(list.$('.o_data_row:eq(0) .o_data_cell:eq(1)'));
+
+        await testUtils.fields.many2one.clickOpenDropdown("o2m");
+        await testUtils.fields.many2one.clickItem("o2m", "Search More");
+        assert.ok($('.modal .o_list_view'), "should have open the modal");
+
+        await testUtils.dom.click($('.modal .o_list_view .o_data_row:first'));
+        assert.ok($(".modal [role='alert']"), "should have open the confirmation modal");
+        assert.strictEqual($(".modal .o_field_many2manytags .badge").length, 1,
+            "should have 1 badge");
+        assert.strictEqual($(".modal .o_field_many2manytags .badge").text().trim(), "Value 1",
+            "should have display_name in badge");
+
+        list.destroy();
+    });
+
     QUnit.test('editable list view: multi edition of many2one: set same value', async function (assert) {
         assert.expect(4);
 
