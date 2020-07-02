@@ -159,19 +159,8 @@ options.registry.newsletter_popup = options.registry.mailing_list_subscribe.exte
      * @override
      */
     onTargetShow: function () {
-        // Open the modal
-        this.$target.data('quick-open', true);
+        this.$target.modal('show');
         return this._refreshPublicWidgets();
-    },
-    /**
-     * @override
-     */
-    onTargetHide: function () {
-        // Close the modal
-        const $modal = this.$('.modal');
-        if ($modal.length && $modal.is('.modal_shown')) {
-            $modal.modal('hide');
-        }
     },
     /**
      * @override
@@ -194,6 +183,7 @@ options.registry.newsletter_popup = options.registry.mailing_list_subscribe.exte
      */
     destroy: function () {
         this.$target.off('.newsletter_popup_option');
+        this.$target.find('.o_newsletter_content').empty();
         this._super.apply(this, arguments);
     },
 
