@@ -2846,3 +2846,163 @@ class TestSelectionOndeleteAdvanced(common.TransactionCase):
 
         with self.assertRaises(ValueError):
             self.registry.setup_models(self.env.cr)
+
+
+def insert(table, columns):
+    """ Return the expected query string to INSERT the given columns. """
+    columns = ['create_uid', 'create_date', 'write_uid', 'write_date'] + sorted(columns)
+    return """
+        INSERT INTO "{}" ("id", {})
+        VALUES (nextval(%s), {})
+        RETURNING id
+    """.format(
+        table,
+        ", ".join('"{}"'.format(column) for column in columns),
+        ", ".join('%s' for column in columns),
+    )
+
+
+def update(table, columns):
+    """ Return the expected query string to UPDATE the given columns. """
+    columns = sorted(columns) + ['write_uid', 'write_date']
+    return """
+        UPDATE "{}"
+        SET {}
+        WHERE id IN %s
+    """.format(
+        table,
+        ", ".join('"{}" = %s'.format(column) for column in columns),
+    )
+
+
+class TestPrecompute(common.TransactionCase):
+
+    def test_compute_readonly(self):
+        model = self.env['test_new_api.precompute.readonly']
+        model.create({})
+        model.flush()
+
+        # no value, no default
+        with self.assertQueries([
+            insert(model._table, ['foo']),
+            update(model._table, ['bar']),
+        ]):
+            record = model.create({'foo': 1})
+            model.flush()
+        self.assertEqual(record.bar, 1)
+
+        # some value, no default
+        with self.assertQueries([
+            insert(model._table, ['foo']),
+            update(model._table, ['bar']),
+        ]):
+            record = model.create({'foo': 1, 'bar': 2})
+            model.flush()
+        self.assertEqual(record.bar, 1)
+
+        model = model.with_context(default_bar=3)
+
+        # no value, some default
+        with self.assertQueries([
+            insert(model._table, ['foo']),
+            update(model._table, ['bar']),
+        ]):
+            record = model.create({'foo': 1})
+            model.flush()
+        self.assertEqual(record.bar, 1)
+
+        # some value, some default
+        with self.assertQueries([
+            insert(model._table, ['foo']),
+            update(model._table, ['bar']),
+        ]):
+            record = model.create({'foo': 1, 'bar': 2})
+            model.flush()
+        self.assertEqual(record.bar, 1)
+
+    def test_compute_readwrite(self):
+        model = self.env['test_new_api.precompute.readwrite']
+        model.create({})
+        model.flush()
+
+        # no value, no default
+        with self.assertQueries([
+            insert(model._table, ['foo']),
+            update(model._table, ['bar']),
+        ]):
+            record = model.create({'foo': 1})
+            model.flush()
+        self.assertEqual(record.bar, 1)
+
+        # some value, no default
+        with self.assertQueries([
+            insert(model._table, ['foo', 'bar']),
+        ]):
+            record = model.create({'foo': 1, 'bar': 2})
+            model.flush()
+        self.assertEqual(record.bar, 2)
+
+        model = model.with_context(default_bar=3)
+
+        # no value, some default
+        with self.assertQueries([
+            insert(model._table, ['foo', 'bar']),
+        ]):
+            record = model.create({'foo': 1})
+            model.flush()
+        self.assertEqual(record.bar, 3)
+
+        # some value, some default
+        with self.assertQueries([
+            insert(model._table, ['foo', 'bar']),
+        ]):
+            record = model.create({'foo': 1, 'bar': 2})
+            model.flush()
+        self.assertEqual(record.bar, 2)
+
+    def test_compute_inverse(self):
+        model = self.env['test_new_api.precompute.inverse']
+        model.create({})
+        model.flush()
+
+        # no value, no default
+        with self.assertQueries([
+            insert(model._table, ['foo']),
+            update(model._table, ['bar']),
+        ]):
+            record = model.create({'foo': 1})
+            model.flush()
+        self.assertEqual(record.foo, 1)
+        self.assertEqual(record.bar, 1)
+
+        # some value, no default
+        with self.assertQueries([
+            insert(model._table, ['foo', 'bar']),
+            update(model._table, ['foo']),
+        ]):
+            record = model.create({'foo': 1, 'bar': 2})
+            model.flush()
+        self.assertEqual(record.foo, 2)
+        self.assertEqual(record.bar, 2)
+
+        model = model.with_context(default_bar=3)
+
+        # no value, some default
+        with self.assertQueries([
+            insert(model._table, ['foo', 'bar']),
+            update(model._table, ['foo']),
+        ]):
+            record = model.create({'foo': 1})
+            model.flush()
+        self.assertEqual(record.foo, 3)
+        self.assertEqual(record.bar, 3)
+
+        # some value, some default
+        with self.assertQueries([
+            insert(model._table, ['foo', 'bar']),
+            update(model._table, ['foo']),
+        ]):
+            record = model.create({'foo': 1, 'bar': 2})
+            model.flush()
+        self.assertEqual(record.foo, 2)
+        self.assertEqual(record.bar, 2)

@@ -3646,6 +3646,8 @@ Record ids: %(records)s
             assert field.column_type
             columns.append((name, field.column_format, val))
 
+        columns = sorted(columns)
+
         if self._log_access:
             if not vals.get('write_uid'):
                 columns.append(('write_uid', '%s', self._uid))
@@ -3817,6 +3819,14 @@ Record ids: %(records)s
             if not(self.env.uid == SUPERUSER_ID and not self.pool.ready):
                 bad_names.update(LOG_ACCESS_COLUMNS)
 
+        # discard values from computed, readonly fields
+        bad_names.update(
+            name
+            for name, field in self._fields.items()
+            if field.compute and field.readonly
+            if field.pre_compute and self._pre_compute
+        )
+
         # classify fields for each record
         data_list = []
         inversed_fields = set()
@@ -3837,12 +3847,6 @@ Record ids: %(records)s
                 field = self._fields.get(key)
                 if not field:
                     raise ValueError("Invalid field %r on model %r" % (key, self._name))
-                if field.compute and field.readonly and field.pre_compute and self._pre_compute:
-                    # If a value is given for a readonly compute
-                    # The pre-computation won't happen
-                    # Do not consider this given value for data_list
-                    # To ensure field is correctly pre-computed
-                    continue
                 if field.company_dependent:
                     irprop_def = self.env['ir.property']._get(key, self._name)
                     cached_def = field.convert_to_cache(irprop_def, self)

@@ -438,6 +438,49 @@ class MultiComputeInverse(models.Model):
             record.write({'foo': '/'.join([record.bar1, record.bar2, record.bar3])})
 
 
+class PrecomputeReadonly(models.Model):
+    _name = 'test_new_api.precompute.readonly'
+    _description = 'Test fields with precompute'
+
+    foo = fields.Integer()
+    bar = fields.Integer(compute='_compute_bar', store=True)
+
+    @api.depends('foo')
+    def _compute_bar(self):
+        for record in self:
+            record.bar = record.foo
+
+
+class PrecomputeReadWrite(models.Model):
+    _name = 'test_new_api.precompute.readwrite'
+    _description = 'Test fields with precompute'
+
+    foo = fields.Integer()
+    bar = fields.Integer(compute='_compute_bar', store=True, readonly=False)
+
+    @api.depends('foo')
+    def _compute_bar(self):
+        for record in self:
+            record.bar = record.foo
+
+
+class PrecomputeInverse(models.Model):
+    _name = 'test_new_api.precompute.inverse'
+    _description = 'Test fields with precompute'
+
+    foo = fields.Integer()
+    bar = fields.Integer(compute='_compute_bar', inverse='_inverse_bar', store=True)
+
+    @api.depends('foo')
+    def _compute_bar(self):
+        for record in self:
+            record.bar = record.foo
+
+    def _inverse_bar(self):
+        for record in self:
+            record.foo = record.bar
+
+
 class Move(models.Model):
     _name = 'test_new_api.move'
     _description = 'Move'
