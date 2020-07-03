@@ -3823,7 +3823,7 @@ Record ids: %(records)s
         bad_names.update(
             name
             for name, field in self._fields.items()
-            if field.compute and field.readonly
+            if field.compute and (field.readonly and not field.states)
             if field.pre_compute and self._pre_compute
         )
 
@@ -3847,6 +3847,8 @@ Record ids: %(records)s
                 field = self._fields.get(key)
                 if not field:
                     raise ValueError("Invalid field %r on model %r" % (key, self._name))
+                if field.states and field.compute and field.pre_compute and self._pre_compute and field._is_protected(vals):
+                    continue
                 if field.company_dependent:
                     irprop_def = self.env['ir.property']._get(key, self._name)
                     cached_def = field.convert_to_cache(irprop_def, self)
@@ -3865,7 +3867,7 @@ Record ids: %(records)s
                     inversed[key] = val
                     inversed_fields.add(field)
                 # protect non-readonly computed fields against (re)computation
-                if field.compute and not field.readonly:
+                if field.compute and not field._is_protected(vals):
                     protected.update(self.pool.field_computed.get(field, [field]))
 
             data_list.append(data)
