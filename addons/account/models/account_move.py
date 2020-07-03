@@ -287,6 +287,7 @@ class AccountMove(models.Model):
         help="Auto-complete from a past bill.")
     invoice_source_email = fields.Char(string='Source Email', tracking=True)
     invoice_partner_display_name = fields.Char(compute='_compute_invoice_partner_display_info', store=True)
+    is_inactive_currency = fields.Boolean(compute="_compute_is_inactive_currency")
 
     # ==== Cash rounding fields ====
     invoice_cash_rounding_id = fields.Many2one('account.cash.rounding', string='Cash Rounding Method',
@@ -1292,6 +1293,13 @@ class AccountMove(models.Model):
                 else:
                     vendor_display_name = _('#Created by: %s') % (move.sudo().create_uid.name or self.env.user.name)
             move.invoice_partner_display_name = vendor_display_name
+
+    @api.depends('currency_id')
+    def _compute_is_inactive_currency(self):
+        for move in self:
+            current_currency = self.env['res.currency'].with_context(active_test=False)\
+                .search([('id', '=', move.currency_id.id)], limit=1)
+            move.is_inactive_currency = not current_currency.active
 
     def _compute_payments_widget_to_reconcile_info(self):
         for move in self:
@@ -2300,6 +2308,10 @@ class AccountMove(models.Model):
             if move.is_invoice(include_receipts=True) and float_compare(move.amount_total, 0.0, precision_rounding=move.currency_id.rounding) < 0:
                 raise UserError(_("You cannot validate an invoice with a negative total amount. You should create a credit note instead. Use the action menu to transform it into a credit note or refund."))
 
+            if move.is_inactive_currency:
+                raise UserError(_("You cannot validate an invoice with an inactive currency: %s",
+                                  move.currency_id.name))
+
             # Handle case when the invoice_date is not set. In that case, the invoice_date is set at today and then,
             # lines are recomputed accordingly.
             # /!\ 'check_move_validity' must be there since the dynamic lines will be recomputed outside the 'onchange'
@@ -2633,6 +2645,17 @@ class AccountMove(models.Model):
         action['views'] = [(self.env.ref('account.view_move_form').id, 'form')]
         action['res_id'] = self.copy().id
         return action
+
+    def action_open_currency(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'res.currency',
+            'view_mode': 'form',
+            'res_id': self.currency_id.id,
+            'target': 'new',
+            'flags': {'mode': 'readonly'}
+        }
 
     @api.model
     def _move_dict_to_preview_vals(self, move_vals, currency_id=None):

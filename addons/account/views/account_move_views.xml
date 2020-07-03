@@ -484,7 +484,7 @@
                                 attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('move_type', '!=', 'entry')]}"/>
                         <button name="action_post" string="Validate" class="oe_highlight"
                                 type="object" groups="account.group_account_invoice"
-                                attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('move_type', '=', 'entry')]}"/>
+                                attrs="{'invisible': ['|', '|', ('state', '!=', 'draft'), ('move_type', '=', 'entry'), ('is_inactive_currency','=',True)]}"/>
                         <!-- Send (only invoices) -->
                         <button name="action_invoice_sent"
                                 type="object"
@@ -537,6 +537,10 @@
                          attrs="{'invisible': ['|', '|', ('move_type', 'not in', ('in_invoice', 'in_refund')), ('invoice_has_outstanding', '=', False), ('payment_state', 'not in', ('not_paid', 'partial'))]}">
                         You have <bold><a class="alert-link" href="#outstanding" role="button">outstanding debits</a></bold> for this supplier. You can allocate them to mark this bill as paid.
                     </div>
+                    <!-- Vendor bill currency consistency -->
+                    <div class="alert alert-warning" role="alert" style="margin-bottom:0px;" attrs="{'invisible': [('is_inactive_currency', '=', False)]}">
+                        In order to validate this invoice, you must activate the <button class="oe_link" type="object" name="action_open_currency" style="padding: 0; vertical-align: baseline;">currency</button> of the bill. The journal entries need to be computed by Odoo before being posted in your company's currency.
+                    </div>
                     <sheet>
                         <div name="button_box" class="oe_button_box">
                             <button name="open_reconcile_view"
@@ -582,6 +586,7 @@
                         <field name="has_reconciled_entries" invisible="1"/>
                         <field name="restrict_mode_hash_table" invisible="1"/>
                         <field name="country_code" invisible="1"/>
+                        <field name="is_inactive_currency" invisible="1"/>
 
                         <div class="oe_title">
                             <!-- Invoice draft header -->
