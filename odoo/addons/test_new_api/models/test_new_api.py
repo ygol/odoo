@@ -441,6 +441,7 @@ class MultiComputeInverse(models.Model):
 class PrecomputeReadonly(models.Model):
     _name = 'test_new_api.precompute.readonly'
     _description = 'Test fields with precompute'
+    _pre_compute = True
 
     foo = fields.Integer()
     bar = fields.Integer(compute='_compute_bar', store=True)
@@ -454,6 +455,7 @@ class PrecomputeReadonly(models.Model):
 class PrecomputeReadWrite(models.Model):
     _name = 'test_new_api.precompute.readwrite'
     _description = 'Test fields with precompute'
+    _pre_compute = True
 
     foo = fields.Integer()
     bar = fields.Integer(compute='_compute_bar', store=True, readonly=False)
@@ -467,6 +469,7 @@ class PrecomputeReadWrite(models.Model):
 class PrecomputeInverse(models.Model):
     _name = 'test_new_api.precompute.inverse'
     _description = 'Test fields with precompute'
+    _pre_compute = True
 
     foo = fields.Integer()
     bar = fields.Integer(compute='_compute_bar', inverse='_inverse_bar', store=True)

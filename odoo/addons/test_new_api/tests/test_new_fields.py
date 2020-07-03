@@ -2884,8 +2884,7 @@ class TestPrecompute(common.TransactionCase):
 
         # no value, no default
         with self.assertQueries([
-            insert(model._table, ['foo']),
-            update(model._table, ['bar']),
+            insert(model._table, ['foo', 'bar']),
         ]):
             record = model.create({'foo': 1})
             model.flush()
@@ -2893,8 +2892,7 @@ class TestPrecompute(common.TransactionCase):
 
         # some value, no default
         with self.assertQueries([
-            insert(model._table, ['foo']),
-            update(model._table, ['bar']),
+            insert(model._table, ['foo', 'bar']),
         ]):
             record = model.create({'foo': 1, 'bar': 2})
             model.flush()
@@ -2904,8 +2902,7 @@ class TestPrecompute(common.TransactionCase):
 
         # no value, some default
         with self.assertQueries([
-            insert(model._table, ['foo']),
-            update(model._table, ['bar']),
+            insert(model._table, ['foo', 'bar']),
         ]):
             record = model.create({'foo': 1})
             model.flush()
@@ -2913,8 +2910,7 @@ class TestPrecompute(common.TransactionCase):
 
         # some value, some default
         with self.assertQueries([
-            insert(model._table, ['foo']),
-            update(model._table, ['bar']),
+            insert(model._table, ['foo', 'bar']),
         ]):
             record = model.create({'foo': 1, 'bar': 2})
             model.flush()
@@ -2927,8 +2923,7 @@ class TestPrecompute(common.TransactionCase):
 
         # no value, no default
         with self.assertQueries([
-            insert(model._table, ['foo']),
-            update(model._table, ['bar']),
+            insert(model._table, ['foo', 'bar']),
         ]):
             record = model.create({'foo': 1})
             model.flush()
@@ -2967,8 +2962,7 @@ class TestPrecompute(common.TransactionCase):
 
         # no value, no default
         with self.assertQueries([
-            insert(model._table, ['foo']),
-            update(model._table, ['bar']),
+            insert(model._table, ['foo', 'bar']),
         ]):
             record = model.create({'foo': 1})
             model.flush()
