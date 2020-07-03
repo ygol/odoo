@@ -2281,7 +2281,7 @@ var SnippetsMenu = Widget.extend({
      * @private
      */
     _onMouseDown: function () {
-        const $blockedArea = $('#wrapwrap'); // TODO should get that element another way
+        const $blockedArea = $('#wrapwrap, jw-shadow::shadow /deep/ .note-editable'); // TODO should get that element another way
         $blockedArea.addClass('o_we_no_pointer_events');
         const reenable = () => $blockedArea.removeClass('o_we_no_pointer_events');
         // Use a setTimeout fallback to avoid locking the editor if the mouseup

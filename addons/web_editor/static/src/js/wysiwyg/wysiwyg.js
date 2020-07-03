@@ -165,7 +165,7 @@ var Wysiwyg = Widget.extend({
         const $mainSidebar = $('<div class="o_main_sidebar">');
         const $snippetManipulators = $('<div id="oe_manipulators" />');
 
-        this.editor = new JWEditorLib.OdooWebsiteEditor({
+        this.editor = new JWEditorLib.OdooWebsiteEditor(Object.assign({}, this.options, {
             snippetMenuElement: $mainSidebar[0],
             snippetManipulators: $snippetManipulators[0],
             customCommands: Object.assign({
@@ -185,7 +185,7 @@ var Wysiwyg = Widget.extend({
             discardButton: this.options.discardButton,
             template: this.options.template,
             mode: this.options.mode,
-        });
+        }));
 
         // if (config.isDebug('assets')) {
         //     this.editor.load(JWEditorLib.DevTools);
