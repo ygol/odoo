@@ -59,6 +59,7 @@ var ListController = BasicController.extend({
         this.isPageSelected = false; // true iff all records of the page are selected
         this.isDomainSelected = false; // true iff the user selected all records matching the domain
         this.isExportEnable = false;
+        console.log('Try to understand: init list controller');
     },
 
     willStart() {

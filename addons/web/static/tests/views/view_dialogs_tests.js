@@ -62,6 +62,92 @@ QUnit.module('Views', {
     },
 }, function () {
 
+    for (let i = 0; i < 100; i++) {
+        QUnit.test(i + ')' + 'SelectCreateDialog use domain, group_by and search default', async function (assert) {
+            assert.expect(3);
+
+            console.log('Try to understand: test begins');
+            var search = 0;
+            var parent = await createParent({
+                data: this.data,
+                archs: {
+                    'partner,false,list':
+                        '<tree string="Partner">' +
+                            '<field name="display_name"/>' +
+                            '<field name="foo"/>' +
+                        '</tree>',
+                    'partner,false,search':
+                        '<search>' +
+                            '<field name="foo" filter_domain="[(\'display_name\',\'ilike\',self), (\'foo\',\'ilike\',self)]"/>' +
+                            '<group expand="0" string="Group By">' +
+                                '<filter name="groupby_bar" context="{\'group_by\' : \'bar\'}"/>' +
+                            '</group>' +
+                        '</search>',
+                },
+                mockRPC: function (route, args) {
+                    if (args.method === 'has_group') {
+                        console.log('Try to understand: mockRPC has_group');
+                        return Promise.resolve(false);
+                    }
+
+                    if (args.method === 'web_read_group') {
+                        assert.deepEqual(args.kwargs, {
+                            context: {},
+                            domain: [["display_name", "like", "a"], "&", ["display_name", "ilike", "piou"], ["foo", "ilike", "piou"]],
+                            fields: ["display_name", "foo", "bar"],
+                            groupby: ["bar"],
+                            orderby: '',
+                            lazy: true,
+                            limit: 80,
+                        }, "should search with the complete domain (domain + search), and group by 'bar'");
+                    }
+                    if (search === 0 && route === '/web/dataset/search_read') {
+                        search++;
+                        assert.deepEqual(args, {
+                            context: {'bin_size': true},  // not part of the test, may change
+                            domain: [["display_name", "like", "a"], "&", ["display_name", "ilike", "piou"], ["foo", "ilike", "piou"]],
+                            fields: ["display_name", "foo"],
+                            model: "partner",
+                            limit: 80,
+                            sort: ""
+                        }, "should search with the complete domain (domain + search)");
+                    } else if (search === 1 && route === '/web/dataset/search_read') {
+                        assert.deepEqual(args, {
+                            context: {'bin_size': true},  // not part of the test, may change
+                            domain: [["display_name", "like", "a"]],
+                            fields: ["display_name", "foo"],
+                            model: "partner",
+                            limit: 80,
+                            sort: ""
+                        }, "should search with the domain");
+                    }
+
+                    return this._super.apply(this, arguments);
+                },
+            });
+
+            var dialog;
+            new dialogs.SelectCreateDialog(parent, {
+                no_create: true,
+                readonly: true,
+                res_model: 'partner',
+                domain: [['display_name', 'like', 'a']],
+                context: {
+                    search_default_groupby_bar: true,
+                    search_default_foo: 'piou',
+                },
+            }).open().then(function (result) {
+                dialog = result;
+            });
+            await testUtils.nextTick();
+            await cpHelpers.removeFacet('.modal', "Bar");
+            await cpHelpers.removeFacet('.modal');
+
+            parent.destroy();
+        });
+    }
+    return;
+
     QUnit.module('view_dialogs');
 
     QUnit.test('formviewdialog buttons in footer are positioned properly', async function (assert) {
@@ -184,7 +270,7 @@ QUnit.module('Views', {
         });
 
         var dialog;
-        await new dialogs.SelectCreateDialog(parent, {
+        new dialogs.SelectCreateDialog(parent, {
             no_create: true,
             readonly: true,
             res_model: 'partner',

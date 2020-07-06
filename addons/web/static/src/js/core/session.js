@@ -134,6 +134,7 @@ var Session = core.Class.extend(mixins.EventDispatcherMixin, {
         return this.rpc("/web/session/destroy", {});
     },
     user_has_group: function (group) {
+        console.log('Try to understand:', this.uid);
         if (!this.uid) {
             return Promise.resolve(false);
         }
