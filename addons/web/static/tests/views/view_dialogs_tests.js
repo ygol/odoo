@@ -184,7 +184,7 @@ QUnit.module('Views', {
         });
 
         var dialog;
-        new dialogs.SelectCreateDialog(parent, {
+        await new dialogs.SelectCreateDialog(parent, {
             no_create: true,
             readonly: true,
             res_model: 'partner',
