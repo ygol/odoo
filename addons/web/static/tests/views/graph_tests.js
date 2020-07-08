@@ -1,4 +1,4 @@
-odoo.define('web.graph_view_tests', function (require) {
+odoo.define('web.graph_view_tests', async function (require) {
 "use strict";
 
 var searchUtils = require('web.searchUtils');
@@ -7,8 +7,19 @@ var testUtils = require('web.test_utils');
 const { sortBy } = require('web.utils');
 
 const cpHelpers = testUtils.controlPanel;
-var createView = testUtils.createView;
 var patchDate = testUtils.mock.patchDate;
+
+async function nextTickForGraph() {
+    await testUtils.nextTick(); // we avoid a flickering by rendering the chart in the next
+    // animation frame after the renderer being mounted/patched (see _renderChart in GraphRenderer).
+    // No need to wait more when a no content helper is rendered (owl is in charge).
+}
+
+async function createView() {
+    const graph = await testUtils.createView(...arguments);
+    await nextTickForGraph();
+    return graph;
+}
 
 const { INTERVAL_OPTIONS, PERIOD_OPTIONS, COMPARISON_OPTIONS } = searchUtils;
 
@@ -55,7 +66,7 @@ QUnit.assert.checkDatasets = function (graph, keys, expectedDatasets) {
     expectedDatasets = expectedDatasets instanceof Array ?
                             expectedDatasets :
                             [expectedDatasets];
-    const datasets = graph.renderer.__owl__.refs.component.chart.data.datasets;
+    const datasets = graph.renderer.componentRef.comp.chart.data.datasets;
     const actualValues = datasets.map(dataset => _.pick(dataset, keys));
     this.pushResult({
         result: _.isEqual(actualValues, expectedDatasets),
@@ -65,7 +76,7 @@ QUnit.assert.checkDatasets = function (graph, keys, expectedDatasets) {
 };
 
 QUnit.assert.checkLabels = function (graph, expectedLabels) {
-    const labels = graph.renderer.__owl__.refs.component.chart.data.labels;
+    const labels = graph.renderer.componentRef.comp.chart.data.labels;
 
     this.pushResult({
         result: _.isEqual(labels, expectedLabels),
@@ -78,7 +89,7 @@ QUnit.assert.checkLegend = function (graph, expectedLegendLabels) {
     expectedLegendLabels = expectedLegendLabels instanceof Array ?
                                 expectedLegendLabels :
                                 [expectedLegendLabels];
-    const chart = graph.renderer.__owl__.refs.component.chart;
+    const chart = graph.renderer.componentRef.comp.chart;
     const actualLegendLabels = chart.config.options.legend.labels.generateLabels(chart).map(o => o.text);
 
     this.pushResult({
@@ -248,6 +259,8 @@ QUnit.module('Views', {
             'line type button should be active');
 
         await testUtils.dom.click(graph.$buttons.find('button[data-mode="bar"]'));
+        await nextTickForGraph();
+
         assert.strictEqual(graph.renderer.props.mode, "bar", "should be in bar chart mode by default");
         assert.doesNotHaveClass(graph.$buttons.find('button[data-mode="line"]'), 'active',
             'line type button should not be active');
@@ -293,10 +306,14 @@ QUnit.module('Views', {
         assert.checkLegend(graph, ['true/Undefined', 'true/red', 'false/Undefined']);
 
         await testUtils.dom.click(graph.$buttons.find('button[data-mode="line"]'));
+        await nextTickForGraph();
+
         assert.checkLabels(graph, [['xphone'], ['xpad']]);
         assert.checkLegend(graph, ['true/Undefined', 'true/red', 'false/Undefined']);
 
         await testUtils.dom.click(graph.$buttons.find('button[data-mode="pie"]'));
+        await nextTickForGraph();
+
         assert.checkLabels(graph, [
             ["xphone", true, "Undefined"],
             ["xphone", true,"red"],
@@ -332,6 +349,7 @@ QUnit.module('Views', {
         });
         await cpHelpers.toggleMenu(graph, "Measures");
         await cpHelpers.toggleMenuItem(graph, "Foo");
+        await nextTickForGraph();
 
         assert.checkLegend(graph, 'Foo');
         assert.strictEqual(rpcCount, 2, "should have done 2 rpcs (2 readgroups)");
@@ -404,6 +422,7 @@ QUnit.module('Views', {
 
         await cpHelpers.toggleComparisonMenu(graph);
         await cpHelpers.toggleMenuItem(graph, 'Date: Previous period');
+        await nextTickForGraph();
 
         assert.containsNone(graph, 'div.o_view_nocontent',
         "should not display the no content helper");
@@ -431,6 +450,7 @@ QUnit.module('Views', {
             "should not display the no content helper");
 
         await testUtils.graph.reload(graph, {domain: [['product_id', '=', 4]]});
+        await nextTickForGraph();
         assert.containsNone(graph, 'div.o_graph_canvas_container canvas',
                     "should not contain a div with a canvas element");
         assert.containsOnce(graph, 'div.o_view_nocontent',
@@ -453,6 +473,7 @@ QUnit.module('Views', {
         assert.checkLabels(graph, [['xphone'], ['xpad']]);
 
         await testUtils.graph.reload(graph, {groupBy: ['color_id']});
+        await nextTickForGraph();
         assert.checkLabels(graph, [['Undefined'], ['red']]);
 
         graph.destroy();
@@ -480,6 +501,7 @@ QUnit.module('Views', {
 
         await cpHelpers.toggleMenu(graph, "Measures");
         await cpHelpers.toggleMenuItem(graph, "Foo");
+        await nextTickForGraph();
 
         assert.deepEqual(graph.getOwnedQueryParams(), {
             context: {
@@ -490,6 +512,7 @@ QUnit.module('Views', {
         }, "context should be correct");
 
         await testUtils.dom.click(graph.$buttons.find('button[data-mode="line"]'));
+        await nextTickForGraph();
         assert.deepEqual(graph.getOwnedQueryParams(), {
             context: {
                 graph_mode: 'line',
@@ -499,6 +522,7 @@ QUnit.module('Views', {
         }, "context should be correct");
 
         await testUtils.graph.reload(graph, {groupBy: ['product_id', 'color_id']}); // change groupbys
+        await nextTickForGraph();
         assert.deepEqual(graph.getOwnedQueryParams(), {
             context: {
                 graph_mode: 'line',
@@ -593,6 +617,7 @@ QUnit.module('Views', {
             },
         };
         await testUtils.graph.reload(graph, reloadParams);
+        await nextTickForGraph();
 
         // check measure
         assert.checkLegend(graph, 'Foo');
@@ -629,6 +654,7 @@ QUnit.module('Views', {
         });
 
         await testUtils.graph.reload(graph, {groupBy: []});
+        await nextTickForGraph();
 
         graph.destroy();
     });
@@ -658,6 +684,7 @@ QUnit.module('Views', {
         assert.checkDatasets(graph, 'data', {data: [82, 157]});
 
         await testUtils.graph.reload(graph, {groupBy: []});
+        await nextTickForGraph();
         assert.checkLabels(graph, [['xphone'], ['xpad']]);
         assert.checkLegend(graph, 'Foo');
         assert.checkDatasets(graph, 'data', {data: [82, 157]});
@@ -728,6 +755,7 @@ QUnit.module('Views', {
         // arch.
         await cpHelpers.toggleMenu(graph, "Measures");
         await cpHelpers.toggleMenuItem(graph, "Product");
+        await nextTickForGraph();
 
         assert.checkLabels(graph, [['xphone'], ['xpad']]);
         assert.checkLegend(graph, 'Product');
@@ -874,15 +902,17 @@ QUnit.module('Views', {
         });
 
         function _indexOf (label) {
-            return graph.renderer.__owl__.refs.component._indexOf(graph.renderer.__owl__.refs.component.chart.data.labels, label);
+            return graph.renderer.componentRef.comp.chart.data.labels.findIndex(l => _.isEqual(l, label));
         }
 
         assert.strictEqual(_indexOf(['Undefined']), -1);
 
         await testUtils.dom.click(graph.$buttons.find('.o_graph_button[data-mode=bar]'));
+        await nextTickForGraph();
         assert.ok(_indexOf(['Undefined']) >= 0);
 
         await testUtils.dom.click(graph.$buttons.find('.o_graph_button[data-mode=pie]'));
+        await nextTickForGraph();
         assert.ok(_indexOf(['Undefined']) >= 0);
 
         graph.destroy();
@@ -902,20 +932,23 @@ QUnit.module('Views', {
         });
 
         function _indexOf (label) {
-            return graph.renderer.__owl__.refs.component._indexOf(graph.renderer.__owl__.refs.component.chart.data.labels, label);
+            return graph.renderer.componentRef.comp.chart.data.labels.findIndex(l => _.isEqual(l, label));
         }
 
         assert.strictEqual(_indexOf(['Undefined']), -1);
 
         await testUtils.dom.click(graph.$buttons.find('.o_graph_button[data-mode=bar]'));
+        await nextTickForGraph();
         assert.ok(_indexOf(['Undefined']) >= 0);
 
         await testUtils.dom.click(graph.$buttons.find('.o_graph_button[data-mode=pie]'));
-        var labels = graph.renderer.__owl__.refs.component.chart.data.labels;
+        await nextTickForGraph();
+        var labels = graph.renderer.componentRef.comp.chart.data.labels;
         assert.ok(labels.filter(label => /Undefined/.test(label.join(''))).length >= 1);
 
         // Undefined should not appear after switching back to line chart
         await testUtils.dom.click(graph.$buttons.find('.o_graph_button[data-mode=line]'));
+        await nextTickForGraph();
         assert.strictEqual(_indexOf(['Undefined']), -1);
 
         graph.destroy();
@@ -939,12 +972,14 @@ QUnit.module('Views', {
         assert.checkDatasets(graph, 'data', {data: [239]});
 
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=line]'));
+        await nextTickForGraph();
         // the labels in line chart is translated in this case to avoid to have a single
         // point at the left of the screen and chart to seem empty.
         assert.checkLabels(graph, [[''], [], ['']]);
         assert.checkLegend(graph, 'Foo');
         assert.checkDatasets(graph, 'data', {data: [undefined, 239]});
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=pie]'));
+        await nextTickForGraph();
         assert.checkLabels(graph, [[]]);
         assert.checkLegend(graph, 'Total');
         assert.checkDatasets(graph, 'data', {data: [239]});
@@ -970,11 +1005,13 @@ QUnit.module('Views', {
         assert.checkDatasets(graph, 'data', {data: [58, 181]});
 
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=line]'));
+        await nextTickForGraph();
         assert.checkLabels(graph, [[true], [false]]);
         assert.checkLegend(graph, 'Foo');
         assert.checkDatasets(graph, 'data', {data: [58, 181]});
 
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=pie]'));
+        await nextTickForGraph();
 
         assert.checkLabels(graph, [[true], [false]]);
         assert.checkLegend(graph, ['true', 'false']);
@@ -1008,6 +1045,7 @@ QUnit.module('Views', {
         ]);
 
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=line]'));
+        await nextTickForGraph();
         assert.checkLabels(graph, [['xphone'], ['xpad']]);
         assert.checkLegend(graph, ['Undefined', 'red']);
         assert.checkDatasets(graph, ['label', 'data'], [
@@ -1022,6 +1060,7 @@ QUnit.module('Views', {
         ]);
 
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=pie]'));
+        await nextTickForGraph();
         assert.checkLabels(graph, [['xphone', 'Undefined'], ['xphone', 'red'], ['xpad', 'Undefined']]);
         assert.checkLegend(graph, ['xphone/Undefined', 'xphone/red', 'xpad/Undefined']);
         assert.checkDatasets(graph, ['label', 'data'], {
@@ -1084,7 +1123,6 @@ QUnit.module('Views', {
                 }
             },
         });
-        await testUtils.nextTick(); // wait for the graph to be rendered
 
         // bar mode
         assert.strictEqual(graph.renderer.props.mode, "bar", "should be in bar chart mode");
@@ -1092,7 +1130,7 @@ QUnit.module('Views', {
             domain: [[["bar", "=", true]], [["bar", "=", false]]],
         });
 
-        let myChart = graph.renderer.__owl__.refs.component.chart;
+        let myChart = graph.renderer.componentRef.comp.chart;
         let meta = myChart.getDatasetMeta(0);
         let rectangle = myChart.canvas.getBoundingClientRect();
         let point = meta.data[0].getCenterPoint();
@@ -1103,9 +1141,10 @@ QUnit.module('Views', {
 
         // pie mode
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=pie]'));
+        await nextTickForGraph();
         assert.strictEqual(graph.renderer.props.mode, "pie", "should be in pie chart mode");
 
-        myChart = graph.renderer.__owl__.refs.component.chart;
+        myChart = graph.renderer.componentRef.comp.chart;
         meta = myChart.getDatasetMeta(0);
         rectangle = myChart.canvas.getBoundingClientRect();
         point = meta.data[0].getCenterPoint();
@@ -1150,14 +1189,12 @@ QUnit.module('Views', {
             },
         });
 
-        await testUtils.nextTick(); // wait for the graph to be rendered
-
         assert.strictEqual(graph.renderer.props.mode, "bar", "should be in bar chart mode");
         assert.checkDatasets(graph, ['domain'], {
             domain: [[["bar", "=", true]], [["bar", "=", false]]],
         });
 
-        let myChart = graph.renderer.__owl__.refs.component.chart;
+        let myChart = graph.renderer.componentRef.comp.chart;
         let meta = myChart.getDatasetMeta(0);
         let rectangle = myChart.canvas.getBoundingClientRect();
         let point = meta.data[0].getCenterPoint();
@@ -1184,14 +1221,12 @@ QUnit.module('Views', {
             },
         });
 
-        await testUtils.nextTick(); // wait for the graph to be rendered
-
         assert.strictEqual(graph.renderer.props.mode, "bar", "should be in bar chart mode");
         assert.checkDatasets(graph, ['domain'], {
             domain: [[["bar", "=", true]], [["bar", "=", false]]],
         });
 
-        let myChart = graph.renderer.__owl__.refs.component.chart;
+        let myChart = graph.renderer.componentRef.comp.chart;
         let meta = myChart.getDatasetMeta(0);
         let rectangle = myChart.canvas.getBoundingClientRect();
         let point = meta.data[0].getCenterPoint();
@@ -1227,23 +1262,27 @@ QUnit.module('Views', {
         assert.checkDatasets(graph, 'data', {data: [4, 3, 1]});
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="asc"]'));
+        await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="asc"]'), 'active',
             "ascending order should be applied");
         assert.checkDatasets(graph, 'data', {data: [1, 3, 4]});
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
+        await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order button should be active");
         assert.checkDatasets(graph, 'data', { data: [4, 3, 1] });
 
         // again click on descending button to deactivate order button
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
+        await nextTickForGraph();
         assert.doesNotHaveClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order button should not be active");
         assert.checkDatasets(graph, 'data', {data: [4, 3, 1]});
 
         // set line mode
         await testUtils.dom.click(graph.$buttons.find('button[data-mode="line"]'));
+        await nextTickForGraph();
         assert.containsN(graph, 'button[data-order]', 2,
             "there should be two order buttons for sorting axis labels in line mode");
         assert.checkLegend(graph, 'Count', 'measure should be by count');
@@ -1252,11 +1291,13 @@ QUnit.module('Views', {
         assert.checkDatasets(graph, 'data', {data: [4, 3, 1]});
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="asc"]'));
+        await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="asc"]'), 'active',
             "ascending order button should be active");
         assert.checkDatasets(graph, 'data', { data: [1, 3, 4] });
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
+        await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order button should be active");
         assert.checkDatasets(graph, 'data', { data: [4, 3, 1] });
@@ -1288,17 +1329,20 @@ QUnit.module('Views', {
         assert.checkDatasets(graph, 'data', [{data: [3, 0, 0]}, {data: [1, 3, 1]}]);
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="asc"]'));
+        await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="asc"]'), 'active',
             "ascending order should be applied by default");
         assert.checkDatasets(graph, 'data', [{ data: [1, 3, 1] }, { data: [0, 0, 3] }]);
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
+        await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="desc"]'), 'active',
             "ascending order button should be active");
         assert.checkDatasets(graph, 'data', [{data: [1, 3, 1]}, {data: [3, 0, 0]}]);
 
         // again click on descending button to deactivate order button
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
+        await nextTickForGraph();
         assert.doesNotHaveClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order button should not be active");
         assert.checkDatasets(graph, 'data', [{ data: [3, 0, 0] }, { data: [1, 3, 1] }]);
@@ -1341,17 +1385,20 @@ QUnit.module('Views', {
         assert.checkDatasets(graph, 'data', [{data: [2, 1, 1, 2]}, {data: [0, 1, 0, 0]}, {data: [1, 0, 0, 0]}]);
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="asc"]'));
+        await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="asc"]'), 'active',
             "ascending order should be applied by default");
         assert.checkDatasets(graph, 'data', [{ data: [1, 1, 2, 2] }, { data: [0, 1, 0, 0] }, { data: [0, 0, 0, 1] }]);
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
+        await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order button should be active");
         assert.checkDatasets(graph, 'data', [{data: [1, 0, 0, 0]}, {data: [2, 2, 1, 1]}, {data: [0, 0, 1, 0]}]);
 
         // again click on descending button to deactivate order button
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
+        await nextTickForGraph();
         assert.doesNotHaveClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order button should not be active");
         assert.checkDatasets(graph, 'data', [{ data: [2, 1, 1, 2] }, { data: [0, 1, 0, 0] }, { data: [1, 0, 0, 0] }]);
@@ -1424,6 +1471,7 @@ QUnit.module('Views', {
                     var combination = combinations[i];
                     if (!checkOnlyToCheck || combination.toString() in self.combinationsToCheck) {
                         await self.setConfig(combination);
+                        await nextTickForGraph();
                     }
                     if (exhaustiveTest) {
                         i++;
@@ -1453,8 +1501,6 @@ QUnit.module('Views', {
                 }
             };
 
-            const GROUPBY_NAMES = ['Date', 'Bar', 'Product', 'Color'];
-
             this.selectTimeRanges = async function (comparisonOptionId, basicDomainId) {
                 const facetEls = graph.el.querySelectorAll('.o_searchview_facet');
                 const facetIndex = [...facetEls].findIndex(el => !!el.querySelector('span.fa-filter'));
@@ -1475,43 +1521,35 @@ QUnit.module('Views', {
 
             // groupby menu is assumed to be closed
             this.selectDateIntervalOption = async function (intervalOption) {
-                intervalOption = intervalOption || 'month';
+                await cpHelpers.toggleGroupByMenu(graph);
+                const productWasSelected = cpHelpers.isItemSelected(graph, 'Product');
+
+                const facetEls = graph.el.querySelectorAll('.o_searchview_facet');
+                const facetIndex = [...facetEls].findIndex(el => !!el.querySelector('span.fa-bars'));
+                if (facetIndex > -1) {
+                    await cpHelpers.removeFacet(graph, facetIndex);
+                    await cpHelpers.toggleGroupByMenu(graph);
+                }
+
+                if (productWasSelected && !this.keepDateFirst) {
+                    await cpHelpers.toggleMenuItem(graph, 'Product');
+                }
+
                 const optionIndex = INTERVAL_OPTION_IDS.indexOf(intervalOption);
+                await cpHelpers.toggleMenuItem(graph, 'Date');
+                await cpHelpers.toggleMenuItemOption(graph, 'Date', optionIndex);
 
-                await cpHelpers.toggleGroupByMenu(graph);
-                let wasSelected = false;
-                if (this.keepFirst) {
-                    if (cpHelpers.isItemSelected(graph, 2)) {
-                        wasSelected = true;
-                        await cpHelpers.toggleMenuItem(graph, 2);
-                    }
-                }
-                await cpHelpers.toggleMenuItem(graph, 0);
-                if (!cpHelpers.isOptionSelected(graph, 0, optionIndex)) {
-                    await cpHelpers.toggleMenuItemOption(graph, 0, optionIndex);
-                }
-                for (let i = 0; i < INTERVAL_OPTION_IDS.length; i++) {
-                    const oId = INTERVAL_OPTION_IDS[i];
-                    if (oId !== intervalOption && cpHelpers.isOptionSelected(graph, 0, i)) {
-                        await cpHelpers.toggleMenuItemOption(graph, 0, i);
-                    }
-                }
-
-                if (this.keepFirst) {
-                    if (wasSelected && !cpHelpers.isItemSelected(graph, 2)) {
-                        await cpHelpers.toggleMenuItem(graph, 2);
-                    }
+                if (productWasSelected && this.keepDateFirst) {
+                    await cpHelpers.toggleMenuItem(graph, 'Product');
                 }
                 await cpHelpers.toggleGroupByMenu(graph);
-
             };
 
             // groupby menu is assumed to be closed
             this.selectGroupBy = async function (groupByName) {
                 await cpHelpers.toggleGroupByMenu(graph);
-                const index = GROUPBY_NAMES.indexOf(groupByName);
-                if (!cpHelpers.isItemSelected(graph, index)) {
-                    await cpHelpers.toggleMenuItem(graph, index);
+                if (!cpHelpers.isItemSelected(graph, groupByName)) {
+                    await cpHelpers.toggleMenuItem(graph, groupByName);
                 }
                 await cpHelpers.toggleGroupByMenu(graph);
             };
@@ -1525,6 +1563,7 @@ QUnit.module('Views', {
 
             this.setMode = async function (mode) {
                 await testUtils.dom.click($(`.o_control_panel .o_graph_button[data-mode="${mode}"]`));
+                await nextTickForGraph();
             };
 
         },
@@ -1711,7 +1750,7 @@ QUnit.module('Views', {
         QUnit.test('comparison with two groupby with first groupby equal to comparison date field', async function (assert) {
             assert.expect(10);
 
-            this.keepFirst = true;
+            this.keepDateFirst = true;
             this.combinationsToCheck = {
                 'previous_period,this_year__this_month,day': {
                     labels: [...Array(6).keys()].map(x => [x]),
@@ -1784,7 +1823,7 @@ QUnit.module('Views', {
 
             assert.ok(true, "No combination causes a crash");
 
-            this.keepFirst = false;
+            this.keepDateFirst = false;
         });
 
         QUnit.test('comparison with two groupby with second groupby equal to comparison date field', async function (assert) {

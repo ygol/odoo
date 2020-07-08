@@ -9508,7 +9508,7 @@ QUnit.module('Views', {
     });
 
     QUnit.test('reload a form view with a pie chart does not crash', async function (assert) {
-        assert.expect(3);
+        assert.expect(2);
 
         const form = await createView({
             View: FormView,
@@ -9519,16 +9519,13 @@ QUnit.module('Views', {
                   </form>`,
         });
 
+
         assert.containsOnce(form, '.o_widget');
-        const canvasId1 = form.el.querySelector('.o_widget canvas').id;
 
         await form.reload();
         await testUtils.nextTick();
 
         assert.containsOnce(form, '.o_widget');
-        const canvasId2 = form.el.querySelector('.o_widget canvas').id;
-        // A new canvas should be found in the dom
-        assert.notStrictEqual(canvasId1, canvasId2);
 
         form.destroy();
         delete widgetRegistry.map.test;
