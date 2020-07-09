@@ -3695,6 +3695,8 @@ Record ids: %(records)s
         if not stored_computed_fields:
             return data_list
 
+        compute_cache = collections.defaultdict(dict)
+
         for data in data_list:
             missing_fields = [
                 field for field in stored_computed_fields
@@ -3730,7 +3732,24 @@ Record ids: %(records)s
                     # computed stored fields with a column
                     # have to be computed before create
                     # s.t. required and constraints can be applied on those fields.
-                    field_value = field.convert_to_write(new_obj[field.name], self)
+                    # field_value = field.convert_to_write(new_obj[field.name], self)
+                    if field.cache_compute:
+                        # TODO add a context key to disable this feature ?
+                        # TODO enforce the depends for cache_computed fields are all on same model...
+                        # And all stored ?
+                        key = tuple([
+                            self._fields.get(fname).convert_to_write(new_obj[fname], self)
+                            for fname in field.depends
+                        ])
+                        if key in compute_cache[field]:
+                            field_value = compute_cache[field][key]
+                            # assign value to enforce no recomputation.
+                            # even if other computed fields depends on this field
+                            new_obj[field.name] = field_value
+                        else:
+                            field_value = compute_cache[field][key] = field.convert_to_write(new_obj[field.name], self)
+                    else:
+                        field_value = field.convert_to_write(new_obj[field.name], self)
                     data['stored'][field.name] = field_value
                     data['protected'].update(
                         self.pool.field_computed.get(field, [field])

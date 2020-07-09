@@ -141,14 +141,14 @@ class SaleOrder(models.Model):
     # Company_id, user_id based
 
     team_id = fields.Many2one(
-        'crm.team', 'Sales Team', check_company=True,
+        'crm.team', 'Sales Team', check_company=True, cache_compute=True,
         compute="_compute_team_id", store=True, readonly=False,
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]")
 
     # Partner_id, company_id, partner_shipping_id
 
     fiscal_position_id = fields.Many2one(
-        'account.fiscal.position', string='Fiscal Position',
+        'account.fiscal.position', string='Fiscal Position', cache_compute=True,
         compute="_compute_fiscal_position_id", store=True, readonly=False,
         domain="[('company_id', '=', company_id)]", check_company=True,
         help="Fiscal positions are used to adapt taxes and accounts for particular customers or sales orders/invoices."
@@ -172,6 +172,7 @@ class SaleOrder(models.Model):
         ], string='Invoice Status', compute='_get_invoice_status', store=True)
     currency_rate = fields.Float(
         "Currency Rate", compute='_compute_currency_rate', compute_sudo=True, store=True, digits=(12, 6),
+        cache_compute=True,
         help='The rate of the currency to the currency of rate 1 applicable at the date of the order')
 
     #################################
