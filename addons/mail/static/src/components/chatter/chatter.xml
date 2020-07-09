@@ -15,6 +15,7 @@
                         composerLocalId="chatter.thread.composer.localId"
                         hasMentionSuggestionsBelowPosition="true"
                         hasTextInputSendOnEnterEnabled="false"
+                        hasFollowers="true"
                         isCompact="false"
                         isExpandable="true"
                         t-on-o-message-posted="_onComposerMessagePosted"

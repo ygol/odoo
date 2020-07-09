@@ -83,6 +83,7 @@ function factory(dependencies) {
         }
 
         showSendMessage() {
+            this.thread.fetchUpdateSuggestedPartners();
             this.update({ isComposerVisible: true });
             this.thread.composer.update({
                 isDoFocus: true,

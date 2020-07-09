@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="mail.ComposerSuggestedPartnersList" owl="1">
+        <!-- List of followers -->
+        <div class="o_ComposerSuggestedPartnersList">
+
+            <t t-foreach="state.isShowMore ? thread.suggestedPartners : thread.suggestedPartners.slice(0,3)" t-as="recipient">
+                <ComposerSuggestedPartner suggestedPartnerLocalId="recipient.localId" />
+            </t>
+
+            <t t-if="thread.suggestedPartners.length > 3">
+                <a href="#" t-if="!state.isShowMore" t-on-click="_onClickShowMore" class="o_suggested_show_more_less o_suggested_toggle">
+                    Show more
+                </a>
+                <a href="#" t-if="state.isShowMore" t-on-click="_onClickShowLess" class="o_suggested_show_more_less o_suggested_toggle">
+                    Show less
+                </a>
+            </t>
+        </div>
+    </t>
+</templates>

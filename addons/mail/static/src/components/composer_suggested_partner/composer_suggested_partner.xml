@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="mail.ComposerSuggestedPartner" owl="1">
+        <div class="o_ComposerSuggestedPartner" t-attf-title="Add as recipient and follower (reason: {{suggestedPartner.reason}})">
+            <div class="custom-control custom-checkbox">
+                <input t-on-change="_onChangeSuggestedPartner" type="checkbox" class="custom-control-input" t-attf-id="o_composer_suggested_partners_p{{suggestedPartner.localId}}" t-att-checked="suggestedPartner.checked ? 'checked' : undefined" />
+                <label t-attf-for="o_composer_suggested_partners_p{{suggestedPartner.localId}}" class="custom-control-label">
+                    <t t-if="suggestedPartner.partner">
+                        <t t-esc="suggestedPartner.partner.name"/>
+                        <t t-if="suggestedPartner.partner.email">
+                            (<t t-esc="suggestedPartner.partner.email"/>)
+                        </t>
+                    </t>
+                    <t t-elif="suggestedPartner.name">
+                        <t t-esc="suggestedPartner.name"></t>
+                    </t>
+                </label>
+            </div>
+        </div>
+    </t>
+</templates>

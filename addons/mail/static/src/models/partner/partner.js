@@ -232,6 +232,12 @@ function factory(dependencies) {
             default: "",
         }),
         email: attr(),
+        /**
+         * This field containt the "mail" format :
+         * name <email@domain>.
+         * @see base/models/res_partner.py
+         */
+        email_formatted: attr(),
         failureNotifications: one2many('mail.notification', {
             related: 'messagesAsAuthor.failureNotifications',
         }),

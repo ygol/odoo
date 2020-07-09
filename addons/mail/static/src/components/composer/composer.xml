@@ -13,6 +13,26 @@
             t-on-keydown="_onKeydown"
         >
             <t t-if="composer">
+                <t t-foreach="checkedSuggestedPartner" t-as="suggestedPartner" t-key="suggestedPartner.localId">
+                    <DialogAdapter
+                        t-ref="{{ suggestedPartner.localId }}"
+                        Component="viewDialogs.FormViewDialog"
+                        params="{
+                               res_model: 'res.partner',
+                               res_id: false,
+                               context: {
+                               active_model: 'mail.compose.message',
+                               active_id: composer.thread.id,
+                               force_email: true,
+                               ref: 'compound_context',
+                               default_name: suggestedPartner.name,
+                               default_email: suggestedPartner.email,
+                               },
+                               title: PLEASE_COMPLETE_CUSTOMER_INFORMATION,
+                               disable_multiple_selection: true
+                               }"
+                    />
+                </t>
                 <t t-if="isDropZoneVisible.value">
                     <DropZone
                         class="o_Composer_dropZone"
@@ -46,6 +66,9 @@
                                     </t>
                                 </b>
                             </small>
+                            <ComposerSuggestedPartnersList
+                                threadLocalId="composer.thread.localId"
+                            />
                         </t>
                     </div>
                 </t>

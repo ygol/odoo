@@ -1,13 +1,22 @@
 odoo.define('mail/static/src/components/composer/composer.js', function (require) {
 'use strict';
 
+const { ComponentAdapter } = require('web.OwlCompatibility');
+class DialogAdapter extends ComponentAdapter {
+    constructor(...args) {
+        super(...args);
+    }
+}
+
 const components = {
     AttachmentList: require('mail/static/src/components/attachment_list/attachment_list.js'),
+    ComposerSuggestedPartnersList: require('mail/static/src/components/composer_suggested_partners_list/composer_suggested_partners_list.js'),
     DropZone: require('mail/static/src/components/drop_zone/drop_zone.js'),
     EmojisPopover: require('mail/static/src/components/emojis_popover/emojis_popover.js'),
     FileUploader: require('mail/static/src/components/file_uploader/file_uploader.js'),
     TextInput: require('mail/static/src/components/composer_text_input/composer_text_input.js'),
     ThreadTextualTypingStatus: require('mail/static/src/components/thread_textual_typing_status/thread_textual_typing_status.js'),
+    DialogAdapter,
 };
 const useDragVisibleDropZone = require('mail/static/src/component_hooks/use_drag_visible_dropzone/use_drag_visible_dropzone.js');
 const useStore = require('mail/static/src/component_hooks/use_store/use_store.js');
@@ -18,6 +27,10 @@ const {
 
 const { Component } = owl;
 const { useRef } = owl.hooks;
+const core = require('web.core');
+const _t = core._t;
+const viewDialogs = require('web.view_dialogs');
+const useRefs = require('mail/static/src/component_hooks/use_refs/use_refs.js');
 
 class Composer extends Component {
 
@@ -56,6 +69,17 @@ class Composer extends Component {
          */
         this._subjectRef = useRef('subject');
         this._onClickCaptureGlobal = this._onClickCaptureGlobal.bind(this);
+        this.viewDialogs = viewDialogs;
+        this._dialogRef = useRef('dial');
+
+        // Only verify checked suggested partners
+        this.checkedSuggestedPartner = [];
+        if (this.thread && this.thread.suggestedPartners) {
+            this.checkedSuggestedPartner = this.composer.thread.suggestedPartners.filter(
+                suggested => suggested.checked && !suggested.partner
+            );
+        }
+        this._getRefs = useRefs();
     }
 
     mounted() {
@@ -168,9 +192,42 @@ class Composer extends Component {
         };
     }
 
+    /**
+     * @returns {string}
+     */
+    get PLEASE_COMPLETE_CUSTOMER_INFORMATION() {
+        return this.env._t("Please complete customer's informations");
+    }
+
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
+
+    /**
+     * Check the additional partners (not necessary registered partners), and
+     * open a popup form view for the ones who informations is missing.
+     * If the partner isn't completed, it will be removed from the recipients
+     *
+     * @private
+     **/
+    _checkSuggestedPartners() {
+        const refs = this._getRefs();
+        const prom = [];
+        for (const partner of this.checkedSuggestedPartner) {
+            const promise = new Promise((resolve) => {
+                const dialog = Object.entries(refs).filter(([refId, ref]) => {
+                    return refId === partner.localId;
+                });
+                dialog[0][1].widget.open();
+                dialog[0][1].widget.on('closed', this, function () {
+                    resolve();
+                });
+            });
+            prom.push(promise);
+        }
+
+        return prom;
+    }
 
     /**
      * Post a message in the composer on related thread.
@@ -190,11 +247,24 @@ class Composer extends Component {
             }
             return;
         }
-        // TODO: take suggested recipients into account (task-2283356)
-        await this.composer.postMessage();
-        // TODO: we might need to remove trigger and use the store to wait for the post rpc to be done
-        // task-2252858
-        this.trigger('o-message-posted');
+        if (this.checkedSuggestedPartner.length > 0) {
+            Promise.all(this._checkSuggestedPartners()).then(async () => {
+
+                await this.composer.thread.fetchUpdateSuggestedPartners();
+
+                // TODO: take suggested recipients into account (task-2283356)
+                await this.composer.postMessage();
+                // TODO: we might need to remove trigger and use the store to wait for the post rpc to be done
+                // task-2252858
+                this.trigger('o-message-posted');
+            });
+        } else {
+            // TODO: take suggested recipients into account (task-2283356)
+            await this.composer.postMessage();
+            // TODO: we might need to remove trigger and use the store to wait for the post rpc to be done
+            // task-2252858
+            this.trigger('o-message-posted');
+        }
     }
 
     /**
@@ -239,7 +309,14 @@ class Composer extends Component {
      * @private
      */
     _onClickFullComposer() {
-        this.composer.openFullComposer();
+        if (this.checkedSuggestedPartner.length > 0) {
+            Promise.all(this._checkSuggestedPartners()).then(async () => {
+                await this.composer.thread.fetchUpdateSuggestedPartners();
+                this.composer.openFullComposer();
+            });
+        } else {
+            this.composer.openFullComposer();
+        }
     }
 
     /**

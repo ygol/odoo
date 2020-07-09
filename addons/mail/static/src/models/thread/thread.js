@@ -386,6 +386,23 @@ function factory(dependencies) {
             this.update({ areAttachmentsLoaded: true });
         }
 
+        async fetchUpdateSuggestedPartners() {
+            const result = await this.async(() => this.env.services.rpc({
+                route: '/mail/get_suggested_recipients',
+                params: {
+                    model: this.model,
+                    res_ids: [this.id],
+                },
+            }));
+            if (result[this.id]) {
+                this.update({
+                    suggestedPartners: [['insert-and-replace', result[this.id].map(data => {
+                        return this.env.models['mail.suggested_partner'].convertData(data);
+                    })]],
+                });
+            }
+        }
+
         /**
          * Add current user to provided thread's followers.
          */
@@ -580,6 +597,7 @@ function factory(dependencies) {
                     followers: [['unlink-all']],
                 });
             }
+            this.fetchUpdateSuggestedPartners();
         }
 
         /**
@@ -1251,6 +1269,9 @@ function factory(dependencies) {
         }),
         followers: one2many('mail.follower', {
             inverse: 'followedThread',
+        }),
+        suggestedPartners: many2many('mail.suggested_partner', {
+            default: []
         }),
         group_based_subscription: attr({
             default: false,

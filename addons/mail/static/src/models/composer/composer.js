@@ -82,6 +82,15 @@ function factory(dependencies) {
             });
         }
 
+        _getRecipients() {
+            const mentionned = this.mentionedPartners.map(partner => partner.id);
+            let suggestedPartners = [];
+            if (this.thread && this.thread.suggestedPartners) {
+                suggestedPartners = this.thread.suggestedPartners.filter(partner => partner.checked && partner.partner).map(partner => partner.partner.id);
+            }
+            return [...new Set([...mentionned, ...suggestedPartners])];;
+        }
+
         /**
          * Open the full composer modal.
          */
@@ -93,8 +102,7 @@ function factory(dependencies) {
                 default_body: mailUtils.escapeAndCompactTextContent(this.textInputContent),
                 default_is_log: this.isLog,
                 default_model: this.thread.model,
-                /* FIXME would need to use suggested_partners here task-2280157 */
-                // default_partner_ids: partnerIds,
+                default_partner_ids: this.recipients,
                 default_res_id: this.thread.id,
                 mail_post_autofollow: true,
             };
@@ -139,8 +147,8 @@ function factory(dependencies) {
             let postData = {
                 attachment_ids: this.attachments.map(attachment => attachment.id),
                 body,
-                partner_ids: this.mentionedPartners.map(partner => partner.id),
                 message_type: 'comment',
+                partner_ids: this.recipients,
             };
             if (this.subjectContent) {
                 postData.subject = this.subjectContent;
@@ -619,6 +627,16 @@ function factory(dependencies) {
         mentionedPartners: many2many('mail.partner', {
             compute: '_computeMentionedPartners',
             dependencies: ['textInputContent'],
+        }),
+        threadSuggestedPartners: many2many('mail.suggested_partner', {
+            related: 'thread.suggestedPartners'
+        }),
+        recipients: attr({
+            compute: '_getRecipients',
+            dependencies: [
+                'thread',
+                'threadSuggestedPartners',
+            ]
         }),
         /**
          * Composer subject input content.
