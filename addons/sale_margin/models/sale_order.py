@@ -6,15 +6,15 @@ from odoo import api, fields, models
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
 
+    purchase_price = fields.Float(
+        string='Cost', compute="_compute_purchase_price",
+        digits='Product Price', store=True, readonly=False,
+        groups="base.group_user")
     margin = fields.Float(
         "Margin", compute='_compute_margin',
         digits='Product Price', store=True, groups="base.group_user")
     margin_percent = fields.Float(
         "Margin (%)", compute='_compute_margin', store=True, groups="base.group_user")
-    purchase_price = fields.Float(
-        string='Cost', compute="_compute_purchase_price",
-        digits='Product Price', store=True, readonly=False,
-        groups="base.group_user")
 
     @api.depends('product_id', 'company_id', 'currency_id', 'product_uom')
     def _compute_purchase_price(self):

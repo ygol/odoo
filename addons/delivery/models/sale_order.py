@@ -8,11 +8,12 @@ from odoo.exceptions import UserError
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
+    # VFE TODO check_company on carrier_id
     carrier_id = fields.Many2one('delivery.carrier', string="Delivery Method", domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]", help="Fill this field if you plan to invoice the shipping based on picking.")
     delivery_message = fields.Char(readonly=True, copy=False)
     delivery_rating_success = fields.Boolean(copy=False)
     delivery_set = fields.Boolean(compute='_compute_delivery_state')
-    recompute_delivery_price = fields.Boolean('Delivery cost should be recomputed')
+    recompute_delivery_price = fields.Boolean('Delivery cost should be recomputed', copy=False)
     is_all_service = fields.Boolean("Service Product", compute="_compute_is_service_products")
 
     @api.depends('order_line')
