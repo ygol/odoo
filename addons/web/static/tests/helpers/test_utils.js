@@ -97,6 +97,18 @@ odoo.define('web.test_utils', async function (require) {
         return testUtilsDom.returnAfterNextAnimationFrame();
     }
 
+    /**
+     * Returns a promise that will be resolved after the tick after the nextAnimationFrame.
+     * This has to be used instead of nextTick if it is sure that the call will be useless when the
+     * situtation will be full owl: at some point all calls to owlCompatibilityExtraNextTick will
+     * be removed.
+     *
+     * @returns {Promise}
+     */
+    async function owlCompatibilityExtraNextTick() {
+        return testUtilsDom.returnAfterNextAnimationFrame();
+    }
+
     // Loading static files cannot be properly simulated when their real content is
     // really needed. This is the case for static XML files so we load them here,
     // before starting the qunit test suite.
@@ -246,6 +258,7 @@ odoo.define('web.test_utils', async function (require) {
         makeTestPromiseWithAssert: makeTestPromiseWithAssert,
         nextMicrotaskTick: nextMicrotaskTick,
         nextTick: nextTick,
+        owlCompatibilityExtraNextTick,
         prepareTarget: testUtilsCreate.prepareTarget,
         returnAfterNextAnimationFrame: testUtilsDom.returnAfterNextAnimationFrame,
 
