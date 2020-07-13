@@ -266,6 +266,14 @@ var ListRenderer = BasicRenderer.extend({
         return $connectedCell;
     },
     /**
+     * Return the jQuery node used to update the checkbox selection
+     * @return {jQuery}
+     * @private
+     */
+    _getListRecordInputNodesForUpdateSelection: function () {
+        return this.$('tbody .o_list_record_selector input:visible:not(:disabled)');
+    },
+    /**
      * return the number of visible columns.  Note that this number depends on
      * the state of the renderer.  For example, in editable mode, it could be
      * one more that in non editable mode, because there may be a visible 'trash
@@ -1170,7 +1178,7 @@ var ListRenderer = BasicRenderer.extend({
     _updateSelection: function () {
         this.selection = [];
         var self = this;
-        var $inputs = this.$('tbody .o_list_record_selector input:visible:not(:disabled)');
+        var $inputs = this._getListRecordInputNodesForUpdateSelection();
         var allChecked = $inputs.length > 0;
         $inputs.each(function (index, input) {
             if (input.checked) {

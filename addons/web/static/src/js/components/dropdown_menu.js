@@ -53,13 +53,18 @@ odoo.define('web.DropdownMenu', function (require) {
         }
 
         /**
-         * In mobile, by default, we display a chevron icon next to the dropdown
-         * button. Note that when 'displayCaret' is true, we display a caret
-         * instead of a chevron, no matter the value of 'displayChevron'.
          * @returns {boolean}
          */
         get displayChevron() {
-            return this.env.device.isMobile;
+            return false;
+        }
+
+        /**
+         * By default, we only display the title in desktop
+         * @return boolean
+         */
+        get displayTitle() {
+            return !this.env.device.isMobile;
         }
 
         /**

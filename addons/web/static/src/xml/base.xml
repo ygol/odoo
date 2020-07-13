@@ -160,7 +160,7 @@
             t-on-keydown="_onButtonKeydown"
             >
             <i t-if="icon" t-att-class="icon"/>
-            <span class="o_dropdown_title" t-esc="title"/>
+            <span t-if="displayTitle" class="o_dropdown_title" t-esc="title"/>
             <i t-if="displayCaret" t-attf-class="o_dropdown_caret fa fa-caret-{{ state.open ? 'down' : 'right' }}"/>
             <i t-elif="displayChevron" t-attf-class="fa fa-chevron-{{ state.open ? 'down' : 'right' }} float-right mt4"/>
         </button>
@@ -830,6 +830,9 @@
 
 <t t-name="ListView.selection">
     <div class="o_list_selection_box">
+        <button class="btn o-unselect-all" t-if="isMobile">
+            <i class="fa fa-close"/>
+        </button>
         <t t-if="isDomainSelected">All <t t-esc="nbTotal"/> selected</t>
         <t t-else="">
             <t t-esc="nbSelected"/> selected

@@ -1,6 +1,7 @@
 odoo.define('web.ActionMenus', function (require) {
     "use strict";
 
+    const config = require('web.config');
     const Context = require('web.Context');
     const DropdownMenu = require('web.DropdownMenu');
     const Registry = require('web.Registry');
@@ -129,6 +130,7 @@ odoo.define('web.ActionMenus', function (require) {
                 action: result,
                 options: {
                     on_close: () => this.trigger('reload'),
+                    fullscreen: config.device.isMobile
                 },
             });
         }
