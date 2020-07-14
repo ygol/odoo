@@ -284,12 +284,7 @@ options.Class.include({
         switch (methodName) {
             case 'customizeWebsiteViews': {
                 const allXmlIDs = this._getXMLIDsFromPossibleValues(params.possibleValues);
-                const enabledXmlIDs = await this._rpc({
-                    route: '/website/theme_customize_get',
-                    params: {
-                        'xml_ids': allXmlIDs,
-                    },
-                });
+                const enabledXmlIDs = await this._getEnabledXmlIDs(allXmlIDs);
                 let mostXmlIDsStr = '';
                 let mostXmlIDsNb = 0;
                 for (const xmlIDsStr of params.possibleValues) {
@@ -401,6 +396,19 @@ options.Class.include({
         const style = window.getComputedStyle(document.documentElement);
         const color = style.getPropertyValue('--' + colorName).trim();
         return ColorpickerWidget.normalizeCSSColor(color);
+    },
+    /**
+     * @private
+     * @param {string[]} xmlIDs
+     * @returns {string[]}
+     */
+    async _getEnabledXmlIDs(xmlIDs) {
+        return this._rpc({
+            route: '/website/theme_customize_get',
+            params: {
+                'xml_ids': xmlIDs,
+            },
+        });
     },
     /**
      * @private
