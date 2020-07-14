@@ -381,7 +381,7 @@ options.Class.include({
      */
     _customizeWebsiteViews: async function (xmlID, params) {
         const allXmlIDs = this._getXMLIDsFromPossibleValues(params.possibleValues);
-        const enableXmlIDs = xmlID.split(/\s*,\s*/);
+        const enableXmlIDs = xmlID ? xmlID.split(/\s*,\s*/) : [];
         const disableXmlIDs = allXmlIDs.filter(xmlID => !enableXmlIDs.includes(xmlID));
 
         return this._rpc({
@@ -408,7 +408,9 @@ options.Class.include({
     _getXMLIDsFromPossibleValues: function (possibleValues) {
         const allXmlIDs = [];
         for (const xmlIDsStr of possibleValues) {
-            allXmlIDs.push(...xmlIDsStr.split(/\s*,\s*/));
+            if (xmlIDsStr) {
+                allXmlIDs.push(...xmlIDsStr.split(/\s*,\s*/));
+            }
         }
         return allXmlIDs.filter((v, i, arr) => arr.indexOf(v) === i);
     },
