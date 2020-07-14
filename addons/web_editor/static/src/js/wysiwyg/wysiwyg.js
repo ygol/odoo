@@ -78,7 +78,21 @@ var Wysiwyg = Widget.extend({
                     {
                         selector: [this.JWEditorLib.DividerNode],
                         breakable: false,
+                        allowEmpty: true,
                     },
+                    {
+                        selector: [
+                            (node) => {
+                                const attributes = node.modifiers.find(this.JWEditorLib.Attributes);
+
+                                const isCountdown = attributes && attributes.classList.has('s_countdown');
+                                const isTextarea = node instanceof this.JWEditorLib.VElement && node.htmlTag === 'TEXTAREA';
+
+                                return isCountdown || isTextarea;
+                            },
+                            this.JWEditorLib.ContainerNode],
+                        allowEmpty: false,
+                    }
                 ],
             };
         }
