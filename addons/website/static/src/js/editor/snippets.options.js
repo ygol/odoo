@@ -3,6 +3,7 @@ odoo.define('website.editor.snippets.options', function (require) {
 
 const {ColorpickerWidget} = require('web.Colorpicker');
 const config = require('web.config');
+var concurrency = require('web.concurrency');
 var core = require('web.core');
 var Dialog = require('web.Dialog');
 const weUtils = require('web_editor.utils');
@@ -403,12 +404,30 @@ options.Class.include({
      * @returns {string[]}
      */
     async _getEnabledXmlIDs(xmlIDs) {
-        return this._rpc({
-            route: '/website/theme_customize_get',
-            params: {
-                'xml_ids': xmlIDs,
-            },
-        });
+        if (!this._xmlIDsQueue) {
+            this._xmlIDsQueue = [];
+        }
+        this._xmlIDsQueue.push(...xmlIDs);
+
+        if (!this._xmlIDsMutex) {
+            this._xmlIDsMutex = new concurrency.Mutex();
+        }
+        this._xmlIDsMutex.exec(() => concurrency.delay()); // Let other potential call to _getEnabledXmlIDs be done...
+        await this._xmlIDsMutex.getUnlockedDef(); // ... and continue each call only once all of them have registered their xml ids.
+
+        if (!this._xmlIDsFetchingProm) { // Only for the first call make the rpc with all xml ids
+            this._xmlIDsFetchingProm = this._rpc({
+                route: '/website/theme_customize_get',
+                params: {
+                    'xml_ids': this._xmlIDsQueue,
+                },
+            });
+        }
+
+        const enabledXmlIDs = await this._xmlIDsFetchingProm; // Wait for the unique rpc result for each call
+        this._xmlIDsQueue = null;
+        this._xmlIDsFetchingProm = null;
+        return enabledXmlIDs.filter(xmlID => xmlIDs.includes(xmlID)); // Filter back on asked xml ids for this call
     },
     /**
      * @private
