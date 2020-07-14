@@ -1606,6 +1606,7 @@ class APIKeys(models.Model):
             id serial primary key,
             name varchar not null,
             user_id integer not null REFERENCES res_users(id),
+            scope varchar,
             index varchar({index_size}) not null CHECK (char_length(index) = {index_size}),
             key varchar not null
         );
@@ -1619,6 +1620,30 @@ class APIKeys(models.Model):
             return {'type': 'ir.actions.act_window_close'}
         raise AccessError(_("You can not remove API keys unless they're yours or you are a system user"))
 
+    def _check_credentials(self, scope, key):
+        index = key[:INDEX_SIZE]
+        self.env.cr.execute('SELECT user_id, key FROM res_users_apikeys WHERE index = %s AND (scope IS NULL OR scope = %s)', [index, scope])
+        for user_id, current_key in self.env.cr.fetchall():
+            if KEY_CRYPT_CONTEXT.verify(key, current_key):
+                return user_id
+
+    def _generate(self, scope, name):
+        """Generates an api key.
+        :param str scope: the scope of the key. If None, the key will give access to any rpc.
+        :param str name: the name of the key, mainly intended to be displayed in the UI.
+        :return: str: the key.
+
+        """
+        # no need to clear the LRU when *adding* a key, only when removing
+        k = binascii.hexlify(os.urandom(API_KEY_SIZE)).decode()
+        self.env.cr.execute("""
+        INSERT INTO res_users_apikeys (name, user_id, scope, key, index)
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING id
+        """, [name, self.env.user.id, scope, hash_api_key(k), k[:INDEX_SIZE]])
+
+        return k
+
 class APIKeyDescription(models.TransientModel):
     _name = _description = 'res.users.apikeys.description'
 
@@ -1629,16 +1654,10 @@ class APIKeyDescription(models.TransientModel):
         # only create keys for users who can delete their keys
         if not self.user_has_groups('base.group_user,base.group_portal'):
             raise AccessError(_("Only employees and portal users can create API keys"))
-        # no need to clear the LRU when *adding* a key, only when removing
-        k = binascii.hexlify(os.urandom(API_KEY_SIZE)).decode()
+
         description = self.sudo()
-        self.env.cr.execute("""
-        INSERT INTO res_users_apikeys (name, user_id, key, index)
-        VALUES (%s, %s, %s, %s)
-        RETURNING id
-        """, [self.sudo().name, self.env.user.id, hash_api_key(k), k[:INDEX_SIZE]])
+        k = self.env['res.users.apikeys']._generate(None, self.sudo().name)
         description.unlink()
-        self.env['res.users.apikeys'].invalidate_cache(ids=self.env.cr.fetchone())
 
         return {
             'type': 'ir.actions.act_window',
