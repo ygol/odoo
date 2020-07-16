@@ -22,9 +22,9 @@ class Repair(models.Model):
 
     name = fields.Char(
         'Repair Reference',
-        default=lambda self: self.env['ir.sequence'].next_by_code('repair.order'),
-        copy=False, required=True,
-        states={'confirmed': [('readonly', True)]})
+        default=lambda self: _('New'),
+        copy=False, required=True, readonly=True,
+    )
     product_id = fields.Many2one(
         'product.product', string='Product to Repair',
         domain="[('type', 'in', ['product', 'consu']), '|', ('company_id', '=', company_id), ('company_id', '=', False)]",
@@ -194,6 +194,16 @@ class Repair(models.Model):
             self.location_id = warehouse.lot_stock_id
         else:
             self.location_id = False
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if 'company_id' in vals:
+                self = self.with_company(vals['company_id'])
+            if vals.get('name', _('New')) == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('repair.order')
+
+        return super().create(vals_list)
 
     def unlink(self):
         for order in self:
