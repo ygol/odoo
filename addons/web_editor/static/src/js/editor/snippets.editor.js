@@ -2125,7 +2125,15 @@ var SnippetsMenu = Widget.extend({
         $(ev.currentTarget).find('.fa')
             .toggleClass('fa-eye', isVisible)
             .toggleClass('fa-eye-slash', !isVisible);
-        return this._activateSnippet(isVisible ? $snippet : false);
+        return this._activateSnippet(isVisible ? $snippet : false).then (() => {
+            if (!isVisible) {
+                //If snippet is invisible switch to block tab 
+                this._updateLeftPanelContent({
+                    content: [],
+                    tab: this.tabs.BLOCKS,
+                });
+            }
+        });
     },
     /**
      * @private
