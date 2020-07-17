@@ -412,6 +412,123 @@ QUnit.test('show message subject if thread is mailing channel', async function (
     );
 });
 
+QUnit.test('new messages separator on posting message', async function (assert) {
+    assert.expect(4);
+
+    this.data['mail.channel'].records = [{
+        channel_type: 'channel',
+        id: 20,
+        is_pinned: true,
+        message_unread_counter: 0,
+        last_known_message_id: 1,
+        name: "General",
+    }];
+    await this.start();
+    const thread = this.env.models['mail.thread'].find(t => t.id === 20);
+    const threadViewer = this.env.models['mail.thread_viewer'].create({ thread: [['link', thread]] });
+    await this.createThreadViewerComponent(threadViewer, { hasComposer: true });
+
+    assert.containsNone(
+        document.body,
+        '.o_MessageList_message',
+        "should have no messages"
+    );
+    assert.containsNone(
+        document.body,
+        '.o_MessageList_separatorNewMessages',
+        "should not display 'new messages' separator"
+    );
+
+    document.querySelector('.o_ComposerTextInput_textarea').focus();
+    await afterNextRender(() => document.execCommand('insertText', false, "hey !"));
+    await afterNextRender(() =>
+        document.querySelector('.o_Composer_buttonSend').click()
+    );
+    assert.containsOnce(
+        document.body,
+        '.o_Message',
+        "should have the message I just posted"
+    );
+    assert.containsNone(
+        document.body,
+        '.o_MessageList_separatorNewMessages',
+        "still no separator shown when I posted a message"
+    );
+});
+
+QUnit.test('new messages separator on receiving new message', async function (assert) {
+    assert.expect(6);
+
+    this.data['mail.channel'].records = [{
+        channel_type: 'channel',
+        id: 20,
+        is_pinned: true,
+        message_unread_counter: 0,
+        last_known_message_id: 1,
+        name: "General",
+    }];
+    await this.start();
+    this.data['mail.message'].records.push({
+        body: "blah",
+        channel_ids: [20],
+        id: 1,
+    });
+    const thread = this.env.models['mail.thread'].find(t => t.id === 20);
+    const threadViewer = this.env.models['mail.thread_viewer'].create({ thread: [['link', thread]] });
+    await this.createThreadViewerComponent(threadViewer, { hasComposer: true });
+
+    assert.containsOnce(
+        document.body,
+        '.o_MessageList_message',
+        "should have an initial message"
+    );
+    assert.containsNone(
+        document.body,
+        '.o_MessageList_separatorNewMessages',
+        "should not display 'new messages' separator"
+    );
+
+    await afterNextRender(() => {
+        document.querySelector('.o_ComposerTextInput_textarea').blur();
+        // simulate receiving a message
+        const data = {
+            author_id: [42, "Him"],
+            body: "hu",
+            channel_ids: [20],
+            id: 2,
+            model: 'mail.channel',
+            res_id: 20,
+        };
+        const notifications = [[['my-db', 'mail.channel', 20], data]];
+        this.widget.call('bus_service', 'trigger', 'notification', notifications);
+    });
+    assert.containsN(
+        document.body,
+        '.o_Message',
+        2,
+        "should now have 2 messages after receiving a new message"
+    );
+    assert.containsOnce(
+        document.body,
+        '.o_MessageList_separatorNewMessages',
+        "'new messages' separator should be shown"
+    );
+    assert.containsOnce(
+        document.body,
+        `.o_MessageList_separatorNewMessages ~ .o_Message[data-message-local-id="${
+            this.env.models['mail.message'].find(msg => msg.id === 2).localId
+        }"]`,
+        "'new messages' separator should be shown above new message received"
+    );
+
+    await afterNextRender(() => document.querySelector('.o_ComposerTextInput_textarea').focus());
+    assert.containsNone(
+        document.body,
+        '.o_MessageList_separatorNewMessages',
+        "'new messages' separator should no longer be shown as last message has been seen"
+    );
+});
+
 });
 });
 });

@@ -79,6 +79,7 @@ class MockModels {
                     is_moderator: { string: "Is current partner moderator?", type: "boolean", default: false },
                     // In python this belongs to mail.channel.partner. Here for simplicity.
                     is_pinned: { string: "isPinned", type: "boolean", default: true },
+                    last_known_message_id: { string: "lastKnowMessageId", type: "integer" },
                     // In python: email_send.
                     mass_mailing: { string: "Send messages by email", type: "boolean", default: false },
                     members: { string: "Members", type: 'many2many', relation: 'res.partner', default() { return [this.currentPartnerId]; } },

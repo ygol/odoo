@@ -1760,7 +1760,11 @@ QUnit.test('new messages separator [REQUIRE FOCUS]', async function (assert) {
 
     // channel expected to be rendered, with a random unique id that will be
     // referenced in the test and the seen_message_id value set to last message
-    this.data['mail.channel'].records.push({ id: 20, seen_message_id: 125 });
+    this.data['mail.channel'].records.push({
+        id: 20,
+        last_known_message_id: 125,
+        seen_message_id: 125
+    });
     for (let i = 1; i <= 25; i++) {
         this.data['mail.message'].records.push({
             channel_ids: [20],
@@ -1808,6 +1812,7 @@ QUnit.test('new messages separator [REQUIRE FOCUS]', async function (assert) {
         26,
         "should have 26 messages"
     );
+
     assert.containsOnce(
         document.body,
         '.o_MessageList_separatorNewMessages',

@@ -151,7 +151,9 @@ MockServer.include({
             return;
         }
         if (args.model === 'mail.channel' && args.method === 'channel_seen') {
-            return;
+            const channel_id = args.args[0][0] || args.kwargs.channel_id;
+            const { last_message_id } = args.kwargs;
+            return this._mockMailChannelChannelSeen(channel_id, last_message_id);
         }
         if (args.model === 'mail.channel' && args.method === 'channel_set_custom_name') {
             const channel_id = args.args[0] || args.kwargs.channel_id;
@@ -317,7 +319,7 @@ MockServer.include({
         };
     },
     /**
-     * Simulates the `/mail/read_followers` route.
+     * Simulates the '/mail/read_followers' route
      *
      * @private
      * @param {integer[]} follower_ids
@@ -594,6 +596,27 @@ MockServer.include({
                 message_needaction_counter: messageNeedactionCounter,
             });
         });
+    },
+    /**
+     * Simulate the 'channel_seen' route of of mail.channel
+     * In particular sends a notification on the bus
+     *
+     * @private
+     * @param {integer} channel_id
+     * @param {integer} [last_message_id]
+     */
+     _mockMailChannelChannelSeen(channel_id, last_message_id) {
+        const notification = [
+            ["dbName", 'res.partner', undefined],
+            {
+                info: 'channel_seen',
+                channel_id,
+                partner_id: this.currentPartnerId,
+                last_message_id,
+            },
+        ];
+        this._widget.call('bus_service', 'trigger', 'notification', [notification]);
+        return Promise.resolve();
     },
     /**
      * Simulates `channel_set_custom_name` on `mail.channel`.

@@ -186,7 +186,7 @@ var LivechatButton = Widget.extend({
                     channel_uuid: this._livechat.getUUID(),
                     page_history: history,
                 });
-            } else { // normal message
+            } else if (notification[1].id) { // normal message
                 // If message from notif is already in chatter messages, stop handling
                 if (this._messages.some(message => message.getID() === notification[1].id)) {
                     return;

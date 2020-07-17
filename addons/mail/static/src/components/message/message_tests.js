@@ -524,14 +524,14 @@ QUnit.test('do not show messaging seen indicator if not authored by me', async f
         id: 11,
         partnerSeenInfos: [['create', [
             {
-                id: this.env.session.partner_id,
-                lastFetchedMessage: [['insert', {id: 100}]],
-                partner: [['insert', {id: this.env.messaging.currentPartner.id}]],
+                channel_id: 11,
+                lastFetchedMessage: [['insert', { id: 100 }]],
+                partner_id: this.env.messaging.currentPartner.id,
             },
             {
-                id: 100,
-                lastFetchedMessage: [['insert', {id: 100}]],
-                partner: [['link', author]],
+                channel_id: 11,
+                lastFetchedMessage: [['insert', { id: 100 }]],
+                partner_id: author.id,
             },
         ]]],
         model: 'mail.channel',
@@ -589,14 +589,14 @@ QUnit.test('do not show messaging seen indicator if before last seen by all mess
     thread.update({
        partnerSeenInfos: [['create', [
             {
-                id: currentPartner.id,
+                channel_id: 11,
                 lastSeenMessage: [['link', lastSeenMessage]],
-                partner: [['link', currentPartner]],
+                partner_id: this.env.messaging.currentPartner.id,
             },
             {
-                id: 100,
+                channel_id: 11,
                 lastSeenMessage: [['link', lastSeenMessage]],
-                partner: [['insert', {id: 100}]],
+                partner_id: this.env.messaging.currentPartner.id,
             },
         ]]],
     });
@@ -631,20 +631,20 @@ QUnit.test('only show messaging seen indicator if authored by me, after last see
         id: 11,
         partnerSeenInfos: [['create', [
             {
-                id: currentPartner.id,
-                lastSeenMessage: [['insert', {id: 100}]],
-                partner: [['link', currentPartner]],
+                channel_id: 11,
+                lastSeenMessage: [['insert', { id: 100 }]],
+                partner_id: this.env.messaging.currentPartner.id,
             },
             {
-                id: 100,
-                partner: [['insert', {id: 100}]],
-                lastFetchedMessage: [['insert', {id: 100}]],
-                lastSeenMessage: [['insert', {id: 99}]],
+                channel_id: 11,
+                lastFetchedMessage: [['insert', { id: 100 }]],
+                lastSeenMessage: [['insert', { id: 99 }]],
+                partner_id: 100,
             },
         ]]],
         messageSeenIndicators: [['insert', {
             id: this.env.models['mail.message_seen_indicator'].computeId(100, 11),
-            message: [['insert', {id: 100}]],
+            message: [['insert', { id: 100 }]],
         }]],
         model: 'mail.channel',
     });

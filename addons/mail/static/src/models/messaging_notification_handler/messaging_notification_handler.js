@@ -152,14 +152,12 @@ function factory(dependencies) {
                 // knowledge of the channel
                 return;
             }
+            this.env.models['mail.thread_partner_seen_info'].insert({
+                channel_id: channel.id,
+                lastFetchedMessage: [['insert', { id: last_message_id }]],
+                partner_id,
+            });
             channel.update({
-                partnerSeenInfos: [['insert',
-                    {
-                        lastFetchedMessage: [['insert', {id: last_message_id}]],
-                        id,
-                        partner: [['insert', {id: partner_id}]],
-                    }
-                ]],
                 messageSeenIndicators: [['insert',
                     {
                         id: this.env.models['mail.message_seen_indicator'].computeId(last_message_id, channel.id),
@@ -253,13 +251,12 @@ function factory(dependencies) {
             if (channel.model === 'mail.channel') {
                 channel.markAsFetched();
             }
-            channel.update({ message_unread_counter: channel.message_unread_counter + 1 });
             // manually force recompute of counter
             this.messaging.messagingMenu.update();
         }
 
         /**
-         * Called when a channel has been seen, and the server responses with the
+         * Called when a channel has been seen, and the server responds with the
          * last message seen. Useful in order to track last message seen.
          *
          * @private
@@ -284,15 +281,12 @@ function factory(dependencies) {
                 return;
             }
             const lastMessage = this.env.models['mail.message'].insert({id: last_message_id});
+            this.env.models['mail.thread_partner_seen_info'].insert({
+                channel_id: channel.id,
+                lastSeenMessage: [['link', lastMessage]],
+                partner_id,
+            });
             const updateData = {
-                partnerSeenInfos: [['insert',
-                    {
-                        id,
-                        lastFetchedMessage: [['link', lastMessage]],
-                        lastSeenMessage: [['link', lastMessage]],
-                        partner: [['insert', {id: partner_id}]],
-                    }],
-                ],
                 messageSeenIndicators: [['insert',
                     {
                         id: this.env.models['mail.message_seen_indicator'].computeId(last_message_id, channel.id),
@@ -302,7 +296,7 @@ function factory(dependencies) {
             };
             if (this.env.messaging.currentPartner.id === partner_id) {
                 Object.assign(updateData, {
-                    message_unread_counter: 0,
+                    pendingSeenMessageId: undefined,
                     seen_message_id: last_message_id,
                 });
             }

@@ -14,7 +14,7 @@ function factory(dependencies) {
         static create(data) {
             const chatWindow = super.create(data);
             chatWindow._onShowHomeMenu.bind(chatWindow);
-            chatWindow._onHideHomeMenu.bind(chatWindow)
+            chatWindow._onHideHomeMenu.bind(chatWindow);
 
             chatWindow.env.messagingBus.on(
                 'hide_home_menu',
