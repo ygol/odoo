@@ -52,7 +52,7 @@ tour.register('rte_translator', {
     }
 }, {
     content: "save",
-    trigger: 'button[data-action=save]',
+    trigger: 'button[name=save]',
     extra_trigger: '#wrap p:first b',
 }, {
     content : "click language dropdown",
@@ -61,7 +61,7 @@ tour.register('rte_translator', {
 }, {
     content: "click on french version",
     trigger: '.js_language_selector a[data-url_code="fr_BE"]',
-    extra_trigger: 'html[lang*="en"]:not(:has(button[data-action=save]))',
+    extra_trigger: 'html[lang*="en"]:not(:has(button[name=save]))',
 }, {
     content: "translate",
     trigger: 'html:not(:has(#wrap p span)) .o_menu_systray a[data-action="translate"]',
@@ -105,7 +105,7 @@ tour.register('rte_translator', {
     extra_trigger: '.modal input:propValue(test french placeholder)',
 }, {
     content: "save translation",
-    trigger: 'button[data-action=save]',
+    trigger: 'button[name=save]',
 }, {
     content: "check: content is translated",
     trigger: '#wrap p font:first:contains(translated french text)',
@@ -152,7 +152,7 @@ tour.register('rte_translator', {
     trigger: '.note-air-popover button[data-event="underline"]',
 }, {
     content: "save new change",
-    trigger: 'button[data-action=save]',
+    trigger: 'button[name=save]',
     extra_trigger: '#wrap.o_dirty p u',
 
     }, {
@@ -165,7 +165,7 @@ tour.register('rte_translator', {
 }, {
     content: "check bis: content is translated",
     trigger: '#wrap p font:first:contains(translated french text)',
-    extra_trigger: 'html[lang*="fr"] body:not(:has(button[data-action=save]))',
+    extra_trigger: 'html[lang*="fr"] body:not(:has(button[name=save]))',
 }, {
     content: "check bis: placeholder translation",
     trigger: 'input[placeholder="test french placeholder"]',

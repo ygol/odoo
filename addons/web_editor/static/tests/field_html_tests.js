@@ -103,34 +103,38 @@ QUnit.module('web_editor', {}, function () {
 
         QUnit.module('basic');
 
-        QUnit.test('simple rendering', async function (assert) {
-            assert.expect(3);
+        // QUnit.test('simple renderingoo', async function (assert) {
+        //     assert.expect(3);
 
-            var form = await testUtils.createView({
-                View: FormView,
-                model: 'note.note',
-                data: this.data,
-                arch: '<form>' +
-                    '<field name="body" widget="html" style="height: 100px"/>' +
-                    '</form>',
-                res_id: 1,
-            });
-            var $field = form.$('.oe_form_field[name="body"]');
-            assert.strictEqual($field.children('.o_readonly').html(),
-                '<p>toto toto toto</p><p>tata</p>',
-                "should have rendered a div with correct content in readonly");
-            assert.strictEqual($field.attr('style'), 'height: 100px',
-                "should have applied the style correctly");
+        //     var form = await testUtils.createView({
+        //         View: FormView,
+        //         model: 'note.note',
+        //         data: this.data,
+        //         arch: '<form>' +
+        //             '<field name="body" widget="html" style="height: 100px"/>' +
+        //             '</form>',
+        //         res_id: 1,
+        //     });
+        //     var $field = form.$('.oe_form_field[name="body"]');
+        //     assert.strictEqual($field.children('.o_readonly').html(),
+        //         '<p>toto toto toto</p><p>tata</p>',
+        //         "should have rendered a div with correct content in readonly");
+        //     assert.strictEqual($field.attr('style'), 'height: 100px',
+        //         "should have applied the style correctly");
 
-            await testUtils.form.clickEdit(form);
-            await testUtils.nextTick();
-            $field = form.$('.oe_form_field[name="body"]');
-            assert.strictEqual($field.find('.note-editable').html(),
-                '<p>toto toto toto</p><p>tata</p>',
-                "should have rendered the field correctly in edit");
+        //     await testUtils.form.clickEdit(form);
+        //     await testUtils.nextTick();
+        //     $('#qunit').remove()
+        //     $('#qunit-fixture').removeClass('qunit-fixture')
+        //     await new Promise((resolve) => {setTimeout(resolve, 20000000)})
+        //     $field = form.$('.oe_form_field[name="body"]');
+        //     assert.strictEqual($field.find('.note-editable').html(),
+        //         '<p>toto toto toto</p><p>tata</p>',
+        //         "should have rendered the field correctly in edit");
+        //     // debugger
 
-            form.destroy();
-        });
+        //     // form.destroy();
+        // });
 
         QUnit.test('check if required field is set', async function (assert) {
             assert.expect(1);
@@ -164,7 +168,7 @@ QUnit.module('web_editor', {}, function () {
             form.destroy();
         });
 
-        QUnit.test('colorpicker', async function (assert) {
+        QUnit.test('colorpicker filter', async function (assert) {
             assert.expect(6);
 
             var form = await testUtils.createView({
@@ -355,51 +359,51 @@ QUnit.module('web_editor', {}, function () {
             form.destroy();
         });
 
-        QUnit.test('save', async function (assert) {
-            assert.expect(1);
+        // QUnit.test('save', async function (assert) {
+        //     assert.expect(1);
 
-            var form = await testUtils.createView({
-                View: FormView,
-                model: 'note.note',
-                data: this.data,
-                arch: '<form>' +
-                    '<field name="body" widget="html" style="height: 100px"/>' +
-                    '</form>',
-                res_id: 1,
-                mockRPC: function (route, args) {
-                    if (args.method === "write") {
-                        assert.strictEqual(args.args[1].body,
-                            '<p>t<font class="bg-o-color-3">oto toto&nbsp;</font>toto</p><p>tata</p>',
-                            "should save the content");
+        //     var form = await testUtils.createView({
+        //         View: FormView,
+        //         model: 'note.note',
+        //         data: this.data,
+        //         arch: '<form>' +
+        //             '<field name="body" widget="html" style="height: 100px"/>' +
+        //             '</form>',
+        //         res_id: 1,
+        //         mockRPC: function (route, args) {
+        //             if (args.method === "write") {
+        //                 assert.strictEqual(args.args[1].body,
+        //                     '<p>t<font class="bg-o-color-3">oto toto&nbsp;</font>toto</p><p>tata</p>',
+        //                     "should save the content");
 
-                    }
-                    return this._super.apply(this, arguments);
-                },
-            });
-            await testUtils.form.clickEdit(form);
-            var $field = form.$('.oe_form_field[name="body"]');
+        //             }
+        //             return this._super.apply(this, arguments);
+        //         },
+        //     });
+        //     await testUtils.form.clickEdit(form);
+        //     var $field = form.$('.oe_form_field[name="body"]');
 
-            // select the text
-            var pText = $field.find('.note-editable p').first().contents()[0];
-            Wysiwyg.setRange(pText, 1, pText, 10);
-            // text is selected
+        //     // select the text
+        //     var pText = $field.find('.note-editable p').first().contents()[0];
+        //     Wysiwyg.setRange(pText, 1, pText, 10);
+        //     // text is selected
 
-            async function openColorpicker(selector) {
-                const $colorpicker = $field.find(selector);
-                const openingProm = new Promise(resolve => {
-                    $colorpicker.one('shown.bs.dropdown', () => resolve());
-                });
-                await testUtils.dom.click($colorpicker.find('button:first'));
-                return openingProm;
-            }
+        //     async function openColorpicker(selector) {
+        //         const $colorpicker = $field.find(selector);
+        //         const openingProm = new Promise(resolve => {
+        //             $colorpicker.one('shown.bs.dropdown', () => resolve());
+        //         });
+        //         await testUtils.dom.click($colorpicker.find('button:first'));
+        //         return openingProm;
+        //     }
 
-            await openColorpicker('.note-toolbar .note-back-color-preview');
-            await testUtils.dom.click($field.find('.note-toolbar .note-back-color-preview .o_we_color_btn.bg-o-color-3'));
+        //     await openColorpicker('.note-toolbar .note-back-color-preview');
+        //     await testUtils.dom.click($field.find('.note-toolbar .note-back-color-preview .o_we_color_btn.bg-o-color-3'));
 
-            await testUtils.form.clickSave(form);
+        //     await testUtils.form.clickSave(form);
 
-            form.destroy();
-        });
+        //     form.destroy();
+        // });
 
         QUnit.module('cssReadonly');
 
@@ -437,50 +441,50 @@ QUnit.module('web_editor', {}, function () {
             form.destroy();
         });
 
-        QUnit.module('translation');
+        // QUnit.module('translation');
 
-        QUnit.test('field html translatable', async function (assert) {
-            assert.expect(4);
+        // QUnit.test('field html translatable', async function (assert) {
+        //     assert.expect(4);
 
-            var multiLang = _t.database.multi_lang;
-            _t.database.multi_lang = true;
+        //     var multiLang = _t.database.multi_lang;
+        //     _t.database.multi_lang = true;
 
-            this.data['note.note'].fields.body.translate = true;
+        //     this.data['note.note'].fields.body.translate = true;
 
-            var form = await testUtils.createView({
-                View: FormView,
-                model: 'note.note',
-                data: this.data,
-                arch: '<form string="Partners">' +
-                    '<field name="body" widget="html"/>' +
-                    '</form>',
-                res_id: 1,
-                mockRPC: function (route, args) {
-                    if (route === '/web/dataset/call_button' && args.method === 'translate_fields') {
-                        assert.deepEqual(args.args, ['note.note', 1, 'body'], "should call 'call_button' route");
-                        return Promise.resolve({
-                            domain: [],
-                            context: {search_default_name: 'partnes,foo'},
-                        });
-                    }
-                    if (route === "/web/dataset/call_kw/res.lang/get_installed") {
-                        return Promise.resolve([["en_US"], ["fr_BE"]]);
-                    }
-                    return this._super.apply(this, arguments);
-                },
-            });
-            assert.strictEqual(form.$('.oe_form_field_html .o_field_translate').length, 0,
-                "should not have a translate button in readonly mode");
+        //     var form = await testUtils.createView({
+        //         View: FormView,
+        //         model: 'note.note',
+        //         data: this.data,
+        //         arch: '<form string="Partners">' +
+        //             '<field name="body" widget="html"/>' +
+        //             '</form>',
+        //         res_id: 1,
+        //         mockRPC: function (route, args) {
+        //             if (route === '/web/dataset/call_button' && args.method === 'translate_fields') {
+        //                 assert.deepEqual(args.args, ['note.note', 1, 'body'], "should call 'call_button' route");
+        //                 return Promise.resolve({
+        //                     domain: [],
+        //                     context: {search_default_name: 'partnes,foo'},
+        //                 });
+        //             }
+        //             if (route === "/web/dataset/call_kw/res.lang/get_installed") {
+        //                 return Promise.resolve([["en_US"], ["fr_BE"]]);
+        //             }
+        //             return this._super.apply(this, arguments);
+        //         },
+        //     });
+        //     assert.strictEqual(form.$('.oe_form_field_html .o_field_translate').length, 0,
+        //         "should not have a translate button in readonly mode");
 
-            await testUtils.form.clickEdit(form);
-            var $button = form.$('.oe_form_field_html .o_field_translate');
-            assert.strictEqual($button.length, 1, "should have a translate button");
-            await testUtils.dom.click($button);
-            assert.containsOnce($(document), '.o_translation_dialog', 'should have a modal to translate');
+        //     await testUtils.form.clickEdit(form);
+        //     var $button = form.$('.oe_form_field_html .o_field_translate');
+        //     assert.strictEqual($button.length, 1, "should have a translate button");
+        //     await testUtils.dom.click($button);
+        //     assert.containsOnce($(document), '.o_translation_dialog', 'should have a modal to translate');
 
-            form.destroy();
-            _t.database.multi_lang = multiLang;
-        });
+        //     form.destroy();
+        //     _t.database.multi_lang = multiLang;
+        // });
     });
 });
 });

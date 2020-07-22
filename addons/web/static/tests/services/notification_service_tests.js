@@ -124,24 +124,24 @@ QUnit.module('Services', {
     });
 
     // FIXME skip because the feature is unused and do not understand why the test even worked before
-    QUnit.skip('Display a simple notification with onClose callback when automatically close', async function (assert) {
-        assert.expect(2);
+    // QUnit.skip('Display a simple notification with onClose callback when automatically close', async function (assert) {
+    //     assert.expect(2);
 
-        var close = 0;
-        var view = await createView(this.viewParams);
-        view.call('notification', 'notify', {
-            title: 'a',
-            message: 'b',
-            onClose: function () {
-                close++;
-            }
-        });
-        await testUtils.nextMicrotaskTick();
-        view.destroy();
-        assert.strictEqual(close, 0, "should wait to call onClose method once");
-        await testUtils.nextTick();
-        assert.strictEqual(close, 1, "should call onClose method once");
-    });
+    //     var close = 0;
+    //     var view = await createView(this.viewParams);
+    //     view.call('notification', 'notify', {
+    //         title: 'a',
+    //         message: 'b',
+    //         onClose: function () {
+    //             close++;
+    //         }
+    //     });
+    //     await testUtils.nextMicrotaskTick();
+    //     view.destroy();
+    //     assert.strictEqual(close, 0, "should wait to call onClose method once");
+    //     await testUtils.nextTick();
+    //     assert.strictEqual(close, 1, "should call onClose method once");
+    // });
 
     QUnit.test('Display a sticky notification with onClose callback', async function (assert) {
         assert.expect(2);
