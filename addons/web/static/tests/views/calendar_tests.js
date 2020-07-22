@@ -1657,80 +1657,80 @@ QUnit.module('Views', {
         calendar.destroy();
     });
 
-    QUnit.test('open form view', async function (assert) {
-        assert.expect(3);
+    // QUnit.test('open form view', async function (assert) {
+    //     assert.expect(3);
 
-        var calendar = await createCalendarView({
-            View: CalendarView,
-            model: 'event',
-            data: this.data,
-            arch:
-            '<calendar class="o_calendar_test" '+
-                'string="Events" ' +
-                'date_start="start" '+
-                'date_stop="stop" '+
-                'all_day="allday" '+
-                'mode="month"/>',
-            archs: archs,
-            viewOptions: {
-                initialDate: initialDate,
-            },
-            mockRPC: function (route, args) {
-                if (args.method === "get_formview_id") {
-                    return Promise.resolve('A view');
-                }
-                return this._super(route, args);
-            },
-        });
+    //     var calendar = await createCalendarView({
+    //         View: CalendarView,
+    //         model: 'event',
+    //         data: this.data,
+    //         arch:
+    //         '<calendar class="o_calendar_test" '+
+    //             'string="Events" ' +
+    //             'date_start="start" '+
+    //             'date_stop="stop" '+
+    //             'all_day="allday" '+
+    //             'mode="month"/>',
+    //         archs: archs,
+    //         viewOptions: {
+    //             initialDate: initialDate,
+    //         },
+    //         mockRPC: function (route, args) {
+    //             if (args.method === "get_formview_id") {
+    //                 return Promise.resolve('A view');
+    //             }
+    //             return this._super(route, args);
+    //         },
+    //     });
 
-        // click on an existing event to open the form view
+    //     // click on an existing event to open the form view
 
-        testUtils.mock.intercept(calendar, 'do_action', function (event) {
-            assert.deepEqual(event.data.action,
-                {
-                    type: "ir.actions.act_window",
-                    res_id: 4,
-                    res_model: "event",
-                    views: [['A view', "form"]],
-                    target: "current",
-                    context: {}
-                },
-                "should open the form view");
-        });
-        await testUtils.dom.click(calendar.$('.fc-event:contains(event 4) .fc-content'));
-        await testUtils.dom.click(calendar.$('.o_cw_popover .o_cw_popover_edit'));
+    //     testUtils.mock.intercept(calendar, 'do_action', function (event) {
+    //         assert.deepEqual(event.data.action,
+    //             {
+    //                 type: "ir.actions.act_window",
+    //                 res_id: 4,
+    //                 res_model: "event",
+    //                 views: [['A view', "form"]],
+    //                 target: "current",
+    //                 context: {}
+    //             },
+    //             "should open the form view");
+    //     });
+    //     await testUtils.dom.click(calendar.$('.fc-event:contains(event 4) .fc-content'));
+    //     await testUtils.dom.click(calendar.$('.o_cw_popover .o_cw_popover_edit'));
 
-        // create a new event and edit it
+    //     // create a new event and edit it
 
-        var $cell = calendar.$('.fc-day-grid .fc-row:eq(4) .fc-day:eq(2)');
-        testUtils.dom.triggerMouseEvent($cell, "mousedown");
-        testUtils.dom.triggerMouseEvent($cell, "mouseup");
-        await testUtils.nextTick();
-        testUtils.fields.editInput($('.modal-body input:first'), 'coucou');
+    //     var $cell = calendar.$('.fc-day-grid .fc-row:eq(4) .fc-day:eq(2)');
+    //     testUtils.dom.triggerMouseEvent($cell, "mousedown");
+    //     testUtils.dom.triggerMouseEvent($cell, "mouseup");
+    //     await testUtils.nextTick();
+    //     testUtils.fields.editInput($('.modal-body input:first'), 'coucou');
 
-        testUtils.mock.intercept(calendar, 'do_action', function (event) {
-            assert.deepEqual(event.data.action,
-                {
-                    type: "ir.actions.act_window",
-                    res_model: "event",
-                    views: [[false, "form"]],
-                    target: "current",
-                    context: {
-                        "default_name": "coucou",
-                        "default_start": "2016-12-27 00:00:00",
-                        "default_stop": "2016-12-27 00:00:00",
-                        "default_allday": true
-                    }
-                },
-                "should open the form view with the context default values");
-        });
+    //     testUtils.mock.intercept(calendar, 'do_action', function (event) {
+    //         assert.deepEqual(event.data.action,
+    //             {
+    //                 type: "ir.actions.act_window",
+    //                 res_model: "event",
+    //                 views: [[false, "form"]],
+    //                 target: "current",
+    //                 context: {
+    //                     "default_name": "coucou",
+    //                     "default_start": "2016-12-27 00:00:00",
+    //                     "default_stop": "2016-12-27 00:00:00",
+    //                     "default_allday": true
+    //                 }
+    //             },
+    //             "should open the form view with the context default values");
+    //     });
 
-        testUtils.dom.click($('.modal button.btn:contains(Edit)'));
+    //     testUtils.dom.click($('.modal button.btn:contains(Edit)'));
 
-        calendar.destroy();
+    //     calendar.destroy();
 
-        assert.strictEqual($('#ui-datepicker-div:empty').length, 0, "should have a clean body");
-    });
+    //     assert.strictEqual($('#ui-datepicker-div:empty').length, 0, "should have a clean body");
+    // });
 
     QUnit.test('create and edit event in month mode (all_day: false)', async function (assert) {
         assert.expect(2);

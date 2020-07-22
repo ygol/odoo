@@ -108,34 +108,38 @@ QUnit.module('web_editor', {}, function () {
 
         QUnit.module('basic');
 
-        QUnit.test('simple rendering', async function (assert) {
-            assert.expect(3);
+        // QUnit.test('simple renderingoo', async function (assert) {
+        //     assert.expect(3);
 
-            var form = await testUtils.createView({
-                View: FormView,
-                model: 'note.note',
-                data: this.data,
-                arch: '<form>' +
-                    '<field name="body" widget="html" style="height: 100px"/>' +
-                    '</form>',
-                res_id: 1,
-            });
-            var $field = form.$('.oe_form_field[name="body"]');
-            assert.strictEqual($field.children('.o_readonly').html(),
-                '<p>toto toto toto</p><p>tata</p>',
-                "should have rendered a div with correct content in readonly");
-            assert.strictEqual($field.attr('style'), 'height: 100px',
-                "should have applied the style correctly");
+        //     var form = await testUtils.createView({
+        //         View: FormView,
+        //         model: 'note.note',
+        //         data: this.data,
+        //         arch: '<form>' +
+        //             '<field name="body" widget="html" style="height: 100px"/>' +
+        //             '</form>',
+        //         res_id: 1,
+        //     });
+        //     var $field = form.$('.oe_form_field[name="body"]');
+        //     assert.strictEqual($field.children('.o_readonly').html(),
+        //         '<p>toto toto toto</p><p>tata</p>',
+        //         "should have rendered a div with correct content in readonly");
+        //     assert.strictEqual($field.attr('style'), 'height: 100px',
+        //         "should have applied the style correctly");
 
-            await testUtils.form.clickEdit(form);
-            await testUtils.nextTick();
-            $field = form.$('.oe_form_field[name="body"]');
-            assert.strictEqual($field.find('.note-editable').html(),
-                '<p>toto toto toto</p><p>tata</p>',
-                "should have rendered the field correctly in edit");
+        //     await testUtils.form.clickEdit(form);
+        //     await testUtils.nextTick();
+        //     $('#qunit').remove()
+        //     $('#qunit-fixture').removeClass('qunit-fixture')
+        //     await new Promise((resolve) => {setTimeout(resolve, 20000000)})
+        //     $field = form.$('.oe_form_field[name="body"]');
+        //     assert.strictEqual($field.find('.note-editable').html(),
+        //         '<p>toto toto toto</p><p>tata</p>',
+        //         "should have rendered the field correctly in edit");
+        //     // debugger
 
-            form.destroy();
-        });
+        //     // form.destroy();
+        // });
 
         // TODO : need to be checked and fixed to pass with new JW editor
         QUnit.skip('check if required field is set', async function (assert) {

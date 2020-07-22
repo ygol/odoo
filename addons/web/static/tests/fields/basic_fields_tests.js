@@ -2060,7 +2060,10 @@ QUnit.module('basic_fields', {
         });
 
         var $field = form.$('.o_field_text');
-
+        // console.log('$field[0]:', $field[0])
+        // $('#qunit').remove();
+        // debugger
+        // throw new Error('foo')
         assert.strictEqual($field[0].offsetHeight, $field[0].scrollHeight,
             "text field should not have a scroll bar");
 

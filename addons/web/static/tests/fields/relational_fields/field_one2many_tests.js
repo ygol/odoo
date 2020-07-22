@@ -1549,98 +1549,98 @@ QUnit.module('fields', {}, function () {
             form.destroy();
         });
 
-        QUnit.test('embedded one2many with handle widget with minimum setValue calls', async function (assert) {
-            var done = assert.async();
-            assert.expect(20);
+        // QUnit.test('embedded one2many with handle widget with minimum setValue calls', async function (assert) {
+        //     var done = assert.async();
+        //     assert.expect(20);
 
 
-            this.data.turtle.records[0].turtle_int = 6;
-            this.data.turtle.records.push({
-                id: 4,
-                turtle_int: 20,
-                turtle_foo: "a1",
-            }, {
-                    id: 5,
-                    turtle_int: 9,
-                    turtle_foo: "a2",
-                }, {
-                    id: 6,
-                    turtle_int: 2,
-                    turtle_foo: "a3",
-                }, {
-                    id: 7,
-                    turtle_int: 11,
-                    turtle_foo: "a4",
-                });
-            this.data.partner.records[0].turtles = [1, 2, 3, 4, 5, 6, 7];
+        //     this.data.turtle.records[0].turtle_int = 6;
+        //     this.data.turtle.records.push({
+        //         id: 4,
+        //         turtle_int: 20,
+        //         turtle_foo: "a1",
+        //     }, {
+        //             id: 5,
+        //             turtle_int: 9,
+        //             turtle_foo: "a2",
+        //         }, {
+        //             id: 6,
+        //             turtle_int: 2,
+        //             turtle_foo: "a3",
+        //         }, {
+        //             id: 7,
+        //             turtle_int: 11,
+        //             turtle_foo: "a4",
+        //         });
+        //     this.data.partner.records[0].turtles = [1, 2, 3, 4, 5, 6, 7];
 
-            var form = await createView({
-                View: FormView,
-                model: 'partner',
-                data: this.data,
-                arch: '<form string="Partners">' +
-                    '<sheet>' +
-                    '<notebook>' +
-                    '<page string="P page">' +
-                    '<field name="turtles">' +
-                    '<tree default_order="turtle_int">' +
-                    '<field name="turtle_int" widget="handle"/>' +
-                    '<field name="turtle_foo"/>' +
-                    '</tree>' +
-                    '</field>' +
-                    '</page>' +
-                    '</notebook>' +
-                    '</sheet>' +
-                    '</form>',
-                res_id: 1,
-            });
+        //     var form = await createView({
+        //         View: FormView,
+        //         model: 'partner',
+        //         data: this.data,
+        //         arch: '<form string="Partners">' +
+        //             '<sheet>' +
+        //             '<notebook>' +
+        //             '<page string="P page">' +
+        //             '<field name="turtles">' +
+        //             '<tree default_order="turtle_int">' +
+        //             '<field name="turtle_int" widget="handle"/>' +
+        //             '<field name="turtle_foo"/>' +
+        //             '</tree>' +
+        //             '</field>' +
+        //             '</page>' +
+        //             '</notebook>' +
+        //             '</sheet>' +
+        //             '</form>',
+        //         res_id: 1,
+        //     });
 
-            testUtils.mock.intercept(form, "field_changed", function (event) {
-                assert.step(String(form.model.get(event.data.changes.turtles.id).res_id));
-            }, true);
+        //     testUtils.mock.intercept(form, "field_changed", function (event) {
+        //         assert.step(String(form.model.get(event.data.changes.turtles.id).res_id));
+        //     }, true);
 
-            await testUtils.form.clickEdit(form);
+        //     await testUtils.form.clickEdit(form);
 
-            var positions = [
-                [6, 0, 'top', ['3', '6', '1', '2', '5', '7', '4']], // move the last to the first line
-                [5, 1, 'top', ['7', '6', '1', '2', '5']], // move the penultimate to the second line
-                [2, 5, 'center', ['1', '2', '5', '6']], // move the third to the penultimate line
-            ];
-            async function dragAndDrop() {
-                var pos = positions.shift();
+        //     var positions = [
+        //         [6, 0, 'top', ['3', '6', '1', '2', '5', '7', '4']], // move the last to the first line
+        //         [5, 1, 'top', ['7', '6', '1', '2', '5']], // move the penultimate to the second line
+        //         [2, 5, 'center', ['1', '2', '5', '6']], // move the third to the penultimate line
+        //     ];
+        //     async function dragAndDrop() {
+        //         var pos = positions.shift();
 
-                await testUtils.dom.dragAndDrop(
-                    form.$('.ui-sortable-handle').eq(pos[0]),
-                    form.$('tbody tr').eq(pos[1]),
-                    { position: pos[2] }
-                );
+        //         await testUtils.dom.dragAndDrop(
+        //             form.$('.ui-sortable-handle').eq(pos[0]),
+        //             form.$('tbody tr').eq(pos[1]),
+        //             { position: pos[2] }
+        //         );
 
-                assert.verifySteps(pos[3],
-                    "sequences values should be apply from the begin index to the drop index");
+        //         assert.verifySteps(pos[3],
+        //             "sequences values should be apply from the begin index to the drop index");
 
-                if (positions.length) {
+        //         if (positions.length) {
 
-                    setTimeout(dragAndDrop, 10);
+        //             setTimeout(dragAndDrop, 10);
 
-                } else {
+        //         } else {
 
-                    assert.deepEqual(_.pluck(form.model.get(form.handle).data.turtles.data, 'data'), [
-                        { id: 3, turtle_foo: "kawa", turtle_int: 2 },
-                        { id: 7, turtle_foo: "a4", turtle_int: 3 },
-                        { id: 1, turtle_foo: "yop", turtle_int: 4 },
-                        { id: 2, turtle_foo: "blip", turtle_int: 5 },
-                        { id: 5, turtle_foo: "a2", turtle_int: 6 },
-                        { id: 6, turtle_foo: "a3", turtle_int: 7 },
-                        { id: 4, turtle_foo: "a1", turtle_int: 8 }
-                    ], "sequences must be apply correctly");
+        //             assert.deepEqual(_.pluck(form.model.get(form.handle).data.turtles.data, 'data'), [
+        //                 { id: 3, turtle_foo: "kawa", turtle_int: 2 },
+        //                 { id: 7, turtle_foo: "a4", turtle_int: 3 },
+        //                 { id: 1, turtle_foo: "yop", turtle_int: 4 },
+        //                 { id: 2, turtle_foo: "blip", turtle_int: 5 },
+        //                 { id: 5, turtle_foo: "a2", turtle_int: 6 },
+        //                 { id: 6, turtle_foo: "a3", turtle_int: 7 },
+        //                 { id: 4, turtle_foo: "a1", turtle_int: 8 }
+        //             ], "sequences must be apply correctly");
 
-                    form.destroy();
-                    done();
-                }
-            }
+        //             form.destroy();
+        //             done();
+        //         }
+        //     }
 
-            dragAndDrop();
-        });
+        //     dragAndDrop();
+        // });
 
         QUnit.test('embedded one2many (editable list) with handle widget', async function (assert) {
             assert.expect(8);
@@ -9118,50 +9118,50 @@ QUnit.module('fields', {}, function () {
             form.destroy();
         });
 
-        QUnit.skip('one2many with many2many_tags in list and list in form with a limit', async function (assert) {
-            // This test is skipped for now, as it doesn't work, and it can't be fixed in the current
-            // architecture (without large changes). However, this is unlikely to happen as the default
-            // limit is 80, and it would be useless to display so many records with a many2many_tags
-            // widget. So it would be nice if we could make it work in the future, but it's no big
-            // deal for now.
-            assert.expect(6);
+        // QUnit.skip('one2many with many2many_tags in list and list in form with a limit', async function (assert) {
+        //     // This test is skipped for now, as it doesn't work, and it can't be fixed in the current
+        //     // architecture (without large changes). However, this is unlikely to happen as the default
+        //     // limit is 80, and it would be useless to display so many records with a many2many_tags
+        //     // widget. So it would be nice if we could make it work in the future, but it's no big
+        //     // deal for now.
+        //     assert.expect(6);
 
-            this.data.partner.records[0].p = [1];
-            this.data.partner.records[0].turtles = [1, 2, 3];
+        //     this.data.partner.records[0].p = [1];
+        //     this.data.partner.records[0].turtles = [1, 2, 3];
 
-            const form = await createView({
-                View: FormView,
-                model: 'partner',
-                data: this.data,
-                arch: `
-                    <form>
-                        <field name="bar"/>
-                        <field name="p">
-                            <tree>
-                                <field name="turtles" widget="many2many_tags"/>
-                            </tree>
-                            <form>
-                                <field name="turtles">
-                                    <tree limit="2"><field name="display_name"/></tree>
-                                </field>
-                            </form>
-                        </field>
-                    </form>`,
-                res_id: 1,
-            });
+        //     const form = await createView({
+        //         View: FormView,
+        //         model: 'partner',
+        //         data: this.data,
+        //         arch: `
+        //             <form>
+        //                 <field name="bar"/>
+        //                 <field name="p">
+        //                     <tree>
+        //                         <field name="turtles" widget="many2many_tags"/>
+        //                     </tree>
+        //                     <form>
+        //                         <field name="turtles">
+        //                             <tree limit="2"><field name="display_name"/></tree>
+        //                         </field>
+        //                     </form>
+        //                 </field>
+        //             </form>`,
+        //         res_id: 1,
+        //     });
 
-            assert.containsOnce(form, '.o_field_widget[name=p] .o_data_row');
-            assert.containsN(form, '.o_data_row .o_field_many2manytags .badge', 3);
+        //     assert.containsOnce(form, '.o_field_widget[name=p] .o_data_row');
+        //     assert.containsN(form, '.o_data_row .o_field_many2manytags .badge', 3);
 
-            await testUtils.dom.click(form.$('.o_data_row'));
+        //     await testUtils.dom.click(form.$('.o_data_row'));
 
-            assert.containsOnce(document.body, '.modal .o_form_view');
-            assert.containsN(document.body, '.modal .o_field_widget[name=turtles] .o_data_row', 2);
-            assert.isVisible($('.modal .o_field_x2many_list .o_pager'));
-            assert.strictEqual($(".modal .o_field_x2many_list .o_pager").text().trim(), '1-2 / 3');
+        //     assert.containsOnce(document.body, '.modal .o_form_view');
+        //     assert.containsN(document.body, '.modal .o_field_widget[name=turtles] .o_data_row', 2);
+        //     assert.isVisible($('.modal .o_field_x2many_list .o_pager'));
+        //     assert.strictEqual($(".modal .o_field_x2many_list .o_pager").text().trim(), '1-2 / 3');
 
-            form.destroy();
-        });
+        //     form.destroy();
+        // });
 
         QUnit.test('one2many with many2many_tags in list and list in form, and onchange', async function (assert) {
             assert.expect(8);

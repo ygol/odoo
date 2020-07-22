@@ -4541,56 +4541,56 @@ QUnit.module('Views', {
         kanban.destroy();
     });
 
-    QUnit.skip('empty grouped kanban with sample data: fold/unfold a column', async function (assert) {
-        // folding/unfolding of grouped kanban with sample data is currently disabled
-        assert.expect(8);
+    // QUnit.skip('empty grouped kanban with sample data: fold/unfold a column', async function (assert) {
+    //     // folding/unfolding of grouped kanban with sample data is currently disabled
+    //     assert.expect(8);
 
-        const kanban = await createView({
-            arch: `
-                <kanban sample="1">
-                    <field name="product_id"/>
-                    <templates>
-                        <div t-name="kanban-box">
-                            <field name="foo"/>
-                        </div>
-                    </templates>
-                </kanban>`,
-            data: this.data,
-            groupBy: ['product_id'],
-            model: 'partner',
-            View: KanbanView,
-            async mockRPC(route, { kwargs, method }) {
-                const result = await this._super(...arguments);
-                if (method === 'web_read_group') {
-                    // override read_group to return a single, empty group
-                    result.groups = result.groups.slice(0, 1);
-                    result.groups[0][`${kwargs.groupby[0]}_count`] = 0;
-                    result.length = 1;
-                }
-                return result;
-            },
-        });
+    //     const kanban = await createView({
+    //         arch: `
+    //             <kanban sample="1">
+    //                 <field name="product_id"/>
+    //                 <templates>
+    //                     <div t-name="kanban-box">
+    //                         <field name="foo"/>
+    //                     </div>
+    //                 </templates>
+    //             </kanban>`,
+    //         data: this.data,
+    //         groupBy: ['product_id'],
+    //         model: 'partner',
+    //         View: KanbanView,
+    //         async mockRPC(route, { kwargs, method }) {
+    //             const result = await this._super(...arguments);
+    //             if (method === 'web_read_group') {
+    //                 // override read_group to return a single, empty group
+    //                 result.groups = result.groups.slice(0, 1);
+    //                 result.groups[0][`${kwargs.groupby[0]}_count`] = 0;
+    //                 result.length = 1;
+    //             }
+    //             return result;
+    //         },
+    //     });
 
-        assert.hasClass(kanban, 'o_view_sample_data');
-        assert.containsOnce(kanban, '.o_kanban_group');
-        assert.ok(kanban.$('.o_kanban_record').length > 0, 'should contain sample records');
+    //     assert.hasClass(kanban, 'o_view_sample_data');
+    //     assert.containsOnce(kanban, '.o_kanban_group');
+    //     assert.ok(kanban.$('.o_kanban_record').length > 0, 'should contain sample records');
 
-        // Fold the column
-        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_config > a'));
-        await testUtils.dom.click(kanban.el.querySelector('.dropdown-item.o_kanban_toggle_fold'));
+    //     // Fold the column
+    //     await testUtils.dom.click(kanban.el.querySelector('.o_kanban_config > a'));
+    //     await testUtils.dom.click(kanban.el.querySelector('.dropdown-item.o_kanban_toggle_fold'));
 
-        assert.containsOnce(kanban, '.o_kanban_group');
-        assert.hasClass(kanban.$('.o_kanban_group'), 'o_column_folded');
+    //     assert.containsOnce(kanban, '.o_kanban_group');
+    //     assert.hasClass(kanban.$('.o_kanban_group'), 'o_column_folded');
 
-        // Unfold the column
-        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_group.o_column_folded'));
+    //     // Unfold the column
+    //     await testUtils.dom.click(kanban.el.querySelector('.o_kanban_group.o_column_folded'));
 
-        assert.containsOnce(kanban, '.o_kanban_group');
-        assert.doesNotHaveClass(kanban.$('.o_kanban_group'), 'o_column_folded');
-        assert.ok(kanban.$('.o_kanban_record').length > 0, 'should contain sample records');
+    //     assert.containsOnce(kanban, '.o_kanban_group');
+    //     assert.doesNotHaveClass(kanban.$('.o_kanban_group'), 'o_column_folded');
+    //     assert.ok(kanban.$('.o_kanban_record').length > 0, 'should contain sample records');
 
-        kanban.destroy();
-    });
+    //     kanban.destroy();
+    // });
 
     QUnit.test('empty grouped kanban with sample data: delete a column', async function (assert) {
         assert.expect(5);
