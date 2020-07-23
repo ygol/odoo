@@ -232,8 +232,8 @@ class MrpProduction(models.Model):
     priority = fields.Selection([('0', 'Not urgent'), ('1', 'Normal'), ('2', 'Urgent'), ('3', 'Very Urgent')], 'Priority',
                                 readonly=True, states={'draft': [('readonly', False)]}, default='1')
     is_locked = fields.Boolean('Is Locked', default=_get_default_is_locked, copy=False)
-    is_planned = fields.Boolean('Its Operations are Planned', compute="_compute_is_planned")
-    is_partially_planned = fields.Boolean('One operation is Planned', compute="_compute_is_planned")
+    is_planned = fields.Boolean('Its Operations are Planned', compute="_compute_is_planned", store=True)
+    is_partially_planned = fields.Boolean('One operation is Planned', compute="_compute_is_planned", store=True)
 
     show_final_lots = fields.Boolean('Show Final Lots', compute='_compute_show_lots')
     production_location_id = fields.Many2one('stock.location', "Production Location", compute="_compute_production_location", store=True)
@@ -301,6 +301,7 @@ class MrpProduction(models.Model):
         if self.date_planned_finished:
             self.move_finished_ids.write({'date_expected': self.date_planned_finished})
 
+    @api.depends("workorder_ids", "state")
     def _compute_is_planned(self):
         for production in self:
             if production.workorder_ids:
