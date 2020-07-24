@@ -31,21 +31,19 @@ class SaleOrderTemplateLine(models.Model):
             self.website_description = self.product_id.quotation_description
         return ret
 
-    @api.model
-    def create(self, values):
-        values = self._inject_quotation_description(values)
-        return super(SaleOrderTemplateLine, self).create(values)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for values in vals_list:
+            if not values.get('website_description') and values.get('product_id'):
+                product = self.env['product.product'].browse(values['product_id'])
+                values['website_description'] = product.quotation_description
+        return super().create(vals_list)
 
     def write(self, values):
-        values = self._inject_quotation_description(values)
-        return super(SaleOrderTemplateLine, self).write(values)
-
-    def _inject_quotation_description(self, values):
-        values = dict(values or {})
         if not values.get('website_description') and values.get('product_id'):
             product = self.env['product.product'].browse(values['product_id'])
             values['website_description'] = product.quotation_description
-        return values
+        return super(SaleOrderTemplateLine, self).write(values)
 
 
 class SaleOrderTemplateOption(models.Model):

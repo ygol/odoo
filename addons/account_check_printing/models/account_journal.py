@@ -40,12 +40,11 @@ class AccountJournal(models.Model):
     check_printing_payment_method_selected = fields.Boolean(compute='_compute_check_printing_payment_method_selected',
         help="Technical feature used to know whether check printing was enabled as payment method.")
 
-    @api.model
-    def create(self, vals):
-        rec = super(AccountJournal, self).create(vals)
-        if not rec.check_sequence_id:
-            rec._create_check_sequence()
-        return rec
+    @api.model_create_multi
+    def create(self, vals_list):
+        recs = super(AccountJournal, self).create(vals_list)
+        recs.filtered(lambda j: not j.check_sequence_id)._create_check_sequence()
+        return recs
 
     @api.returns('self', lambda value: value.id)
     def copy(self, default=None):

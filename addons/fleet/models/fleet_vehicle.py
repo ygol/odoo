@@ -198,18 +198,17 @@ class FleetVehicle(models.Model):
         res.append(('id', search_operator, res_ids))
         return res
 
-    @api.model
-    def create(self, vals):
-        res = super(FleetVehicle, self).create(vals)
-        if 'driver_id' in vals and vals['driver_id']:
-            res.create_driver_history(vals['driver_id'])
-        if 'future_driver_id' in vals and vals['future_driver_id']:
-            state_waiting_list = self.env.ref('fleet.fleet_vehicle_state_waiting_list', raise_if_not_found=False)
-            states = res.mapped('state_id').ids
-            if not state_waiting_list or state_waiting_list.id not in states:
-                future_driver = self.env['res.partner'].browse(vals['future_driver_id'])
-                future_driver.sudo().write({'plan_to_change_car': True})
-        return res
+    @api.model_create_multi
+    def create(self, vals_list):
+        vehicles = super(FleetVehicle, self).create(vals_list)
+        state_waiting_list = self.env.ref('fleet.fleet_vehicle_state_waiting_list', raise_if_not_found=False)
+        for vehicle in vehicles:
+            if vehicle.driver_id:
+                vehicle.create_driver_history(vehicle.driver_id.id)
+            if vehicle.future_driver_id:
+                if not state_waiting_list or vehicle.state_id != state_waiting_list:
+                    vehicle.future_driver_id.sudo().write({'plan_to_change_car': True})
+        return vehicles
 
     def write(self, vals):
         if 'driver_id' in vals and vals['driver_id']:
