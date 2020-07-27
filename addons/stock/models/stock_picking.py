@@ -71,8 +71,6 @@ class PickingType(models.Model):
     count_picking_waiting = fields.Integer(compute='_compute_picking_count')
     count_picking_late = fields.Integer(compute='_compute_picking_count')
     count_picking_backorders = fields.Integer(compute='_compute_picking_count')
-    rate_picking_late = fields.Integer(compute='_compute_picking_count')
-    rate_picking_backorders = fields.Integer(compute='_compute_picking_count')
     barcode = fields.Char('Barcode', copy=False)
     company_id = fields.Many2one(
         'res.company', 'Company', required=True,
@@ -139,9 +137,6 @@ class PickingType(models.Model):
             }
             for record in self:
                 record[field] = count.get(record.id, 0)
-        for record in self:
-            record.rate_picking_late = record.count_picking and record.count_picking_late * 100 / record.count_picking or 0
-            record.rate_picking_backorders = record.count_picking and record.count_picking_backorders * 100 / record.count_picking or 0
 
     def name_get(self):
         """ Display 'Warehouse_name: PickingType_name' """

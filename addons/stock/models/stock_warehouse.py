@@ -75,7 +75,6 @@ class Warehouse(models.Model):
     crossdock_route_id = fields.Many2one('stock.location.route', 'Crossdock Route', ondelete='restrict')
     reception_route_id = fields.Many2one('stock.location.route', 'Receipt Route', ondelete='restrict')
     delivery_route_id = fields.Many2one('stock.location.route', 'Delivery Route', ondelete='restrict')
-    warehouse_count = fields.Integer(compute='_compute_warehouse_count')
     resupply_wh_ids = fields.Many2many(
         'stock.warehouse', 'stock_wh_resupply_table', 'supplied_wh_id', 'supplier_wh_id',
         'Resupply From', help="Routes will be created automatically to resupply this warehouse from the warehouses ticked")
@@ -90,14 +89,10 @@ class Warehouse(models.Model):
         ('warehouse_code_uniq', 'unique(code, company_id)', 'The code of the warehouse must be unique per company!'),
     ]
 
-    @api.depends('name')
-    def _compute_warehouse_count(self):
-        for warehouse in self:
-            warehouse.warehouse_count = self.env['stock.warehouse'].search_count([('id', 'not in', warehouse.ids)])
-
     def _compute_show_resupply(self):
+        multi_wh = self.env["stock.warehouse"].search_count([]) > 1
         for warehouse in self:
-            warehouse.show_resupply = warehouse.user_has_groups("stock.group_stock_multi_warehouses") and warehouse.warehouse_count
+            warehouse.show_resupply = warehouse.user_has_groups("stock.group_stock_multi_warehouses") and multi_wh
 
     @api.model
     def create(self, vals):
