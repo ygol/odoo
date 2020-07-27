@@ -107,9 +107,6 @@ class StockMove(models.Model):
         'Done', compute='_compute_is_done',
         store=True,
         help='Technical Field to order moves')
-    needs_lots = fields.Boolean('Tracking', compute='_compute_needs_lots')
-    order_finished_lot_ids = fields.Many2many('stock.production.lot', compute='_compute_order_finished_lot_ids')
-    finished_lots_exist = fields.Boolean('Finished Lots Exist', compute='_compute_order_finished_lot_ids')
     should_consume_qty = fields.Float('Quantity To Consume', compute='_compute_should_consume_qty')
 
     def _unreserve_initial_demand(self, new_move):
@@ -118,21 +115,6 @@ class StockMove(models.Model):
         .mapped('move_line_ids')\
         .filtered(lambda ml: ml.qty_done == 0.0)\
         .write({'move_id': new_move, 'product_uom_qty': 0})
-
-    @api.depends('raw_material_production_id.move_finished_ids.move_line_ids.lot_id')
-    def _compute_order_finished_lot_ids(self):
-        for move in self:
-            if move.raw_material_production_id.move_finished_ids:
-                finished_lots_ids = move.raw_material_production_id.move_finished_ids.mapped('move_line_ids.lot_id').ids
-                if finished_lots_ids:
-                    move.order_finished_lot_ids = finished_lots_ids
-                    move.finished_lots_exist = True
-                else:
-                    move.order_finished_lot_ids = False
-                    move.finished_lots_exist = False
-            else:
-                move.order_finished_lot_ids = False
-                move.finished_lots_exist = False
 
     @api.depends('raw_material_production_id.bom_id')
     def _compute_allowed_operation_ids(self):
@@ -151,11 +133,6 @@ class StockMove(models.Model):
                         ('company_id', '=', False)
                 ]
                 move.allowed_operation_ids = self.env['mrp.routing.workcenter'].search(operation_domain)
-
-    @api.depends('product_id.tracking')
-    def _compute_needs_lots(self):
-        for move in self:
-            move.needs_lots = move.product_id.tracking != 'none'
 
     @api.depends('raw_material_production_id.is_locked', 'production_id.is_locked')
     def _compute_is_locked(self):
