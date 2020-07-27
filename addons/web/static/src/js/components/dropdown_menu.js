@@ -1,6 +1,7 @@
 odoo.define('web.DropdownMenu', function (require) {
     "use strict";
 
+    const config = require('web.config');
     const DropdownMenuItem = require('web.DropdownMenuItem');
 
     const { Component, hooks } = owl;
@@ -59,6 +60,18 @@ odoo.define('web.DropdownMenu', function (require) {
          */
         get displayChevron() {
             return this.env.device.isMobile;
+        }
+
+        /**
+         * By default on mobile, we use the half of the screen as a threshold value to choice the display direction
+         * of the open dropdown
+         *
+         * @return boolean
+         */
+        get displayDropDownAtLeft() {
+            const left = this.el.offsetLeft + this.el.clientLeft;
+            const threshold = screen.width / 2;
+            return config.device.isMobile && left > threshold;
         }
 
         /**
