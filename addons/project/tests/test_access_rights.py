@@ -126,8 +126,24 @@ class TestCRUDVisibilityPortal(TestAccessRights):
 
     @users('Portal user')
     def test_task_allowed_portal_read(self):
-        self.project_pigs.allowed_user_ids = self.env.user
         self.task.invalidate_cache()
+        self.project_pigs.allowed_user_ids = self.env.user
+        self.task.with_user(self.env.user).name
+
+    @users('Portal user')
+    def test_task_not_allowed_portal_read(self):
+        self.task.invalidate_cache()
+        with self.assertRaises(AccessError,
+                               msg="%s should not be able to read the task if his company does not match the"
+                                   "customer company" % self.env.user.name):
+            self.task.with_user(self.env.user).name
+
+    @users('Portal user')
+    def test_task_allowed_company_portal_read(self):
+        self.task.invalidate_cache()
+        self.env.user.commercial_partner_id = (6, 0, self.project_pigs.partner_id.commercial_partner_id.id)
+        # trigger the _compute_allowed_user_ids
+        self.project_pigs.privacy_visibility = 'portal'
         self.task.with_user(self.env.user).name
 
     @users('Internal user')
@@ -182,7 +198,8 @@ class TestAllowedUsers(TestAccessRights):
     def test_project_permission_removed(self):
         self.project_pigs.allowed_user_ids = self.user
         self.project_pigs.allowed_user_ids -= self.user
-        self.assertNotIn(self.user, self.task.allowed_user_ids)
+        # arj: dummy test. is it what we want ?
+        self.assertNotIn(self.user, self.project_pigs.allowed_user_ids)
 
     def test_project_specific_permission(self):
         self.project_pigs.allowed_user_ids = self.user
@@ -197,10 +214,13 @@ class TestAllowedUsers(TestAccessRights):
         task = self.create_task('task')
         self.task.allowed_user_ids |= john
         self.project_pigs.allowed_user_ids -= self.user
+        # arj question: is it what we want ?
+        # John remains on task because task and project allowed user are independent
         self.assertIn(john, self.task.allowed_user_ids)
         self.assertNotIn(john, task.allowed_user_ids)
-        self.assertNotIn(self.user, task.allowed_user_ids)
-        self.assertNotIn(self.user, self.task.allowed_user_ids)
+        # User remains on task because it is no longer correlated with project user
+        self.assertIn(self.user, task.allowed_user_ids)
+        self.assertIn(self.user, self.task.allowed_user_ids)
 
     def test_no_portal_allowed(self):
         with self.assertRaises(ValidationError, msg="It should not allow to add portal users"):

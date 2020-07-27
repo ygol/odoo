@@ -28,6 +28,7 @@ class CustomerPortal(CustomerPortal):
         values = {
             'page_name': 'project',
             'project': project,
+            'task_count': request.env['project.task'].search_count([('project_id', '=', project.id)])
         }
         return self._get_page_view_values(project, access_token, values, 'my_projects_history', False, **kwargs)
 

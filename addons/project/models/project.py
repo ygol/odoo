@@ -238,17 +238,26 @@ class Project(models.Model):
         for project in self:
             project.alias_enabled = project.alias_domain and project.alias_id.alias_name
 
-    @api.depends('allowed_internal_user_ids', 'allowed_portal_user_ids')
+    @api.depends('allowed_internal_user_ids', 'allowed_portal_user_ids', 'privacy_visibility', 'task_ids.partner_id')
     def _compute_allowed_users(self):
         for project in self:
-            users = project.allowed_internal_user_ids | project.allowed_portal_user_ids
+            allowed_portal_user_ids = project.allowed_portal_user_ids
+            if project.privacy_visibility == 'portal':
+                # The project visibility must be coherent with the task visibility on portal:
+                # - Only display the project belonging to the portal user who are partner of task.
+                # - If the partner is a person linked to a company, display all the tasks of this company.
+                allowed_portal_user_ids = project.task_ids.mapped('allowed_user_ids')
+            users = project.allowed_internal_user_ids | allowed_portal_user_ids
             project.allowed_user_ids = users
 
     def _inverse_allowed_user(self):
         for project in self:
             allowed_users = project.allowed_user_ids
-            project.allowed_portal_user_ids = allowed_users.filtered('share')
-            project.allowed_internal_user_ids = allowed_users - project.allowed_portal_user_ids
+            allowed_portal_user_ids = allowed_users.filtered('share')
+            customer_company_ids = allowed_portal_user_ids.partner_id.commercial_partner_id
+            same_company_users = self.env['res.users'].search([('partner_id', 'child_of', customer_company_ids.ids)])
+            project.allowed_portal_user_ids = same_company_users
+            project.allowed_internal_user_ids = allowed_users - same_company_users
 
     def _compute_access_url(self):
         super(Project, self)._compute_access_url()
@@ -318,13 +327,21 @@ class Project(models.Model):
         if not vals.get('subtask_project_id'):
             project.subtask_project_id = project.id
         if project.privacy_visibility == 'portal' and project.partner_id.user_ids:
-            project.allowed_user_ids |= project.partner_id.user_ids
+            allowed_portal_user_ids = project.allowed_portal_user_ids
+            customer_company_ids = allowed_portal_user_ids.partner_id.commercial_partner_id
+            same_company_users = self.env['res.users'].search([('partner_id', 'child_of', customer_company_ids.ids)])
+            project.allowed_user_ids |= same_company_users
         return project
 
     def write(self, vals):
         allowed_users_changed = 'allowed_portal_user_ids' in vals or 'allowed_internal_user_ids' in vals
         if allowed_users_changed:
-            allowed_users = {project: project.allowed_user_ids for project in self}
+            allowed_users = {}
+            for project in self:
+                allowed_portal_user_ids = project.allowed_portal_user_ids
+                customer_company_ids = allowed_portal_user_ids.partner_id.commercial_partner_id
+                same_company_users = self.env['res.users'].search([('partner_id', 'child_of', customer_company_ids.ids)])
+                allowed_users[project] = same_company_users
         # directly compute is_favorite to dodge allow write access right
         if 'is_favorite' in vals:
             vals.pop('is_favorite')
@@ -344,7 +361,10 @@ class Project(models.Model):
             self.with_context(active_test=False).mapped('tasks').write({'active': vals['active']})
         if vals.get('partner_id') or vals.get('privacy_visibility'):
             for project in self.filtered(lambda project: project.privacy_visibility == 'portal'):
-                project.allowed_user_ids |= project.partner_id.user_ids
+                customer_company_ids = project.partner_id.commercial_partner_id
+                same_company_users = self.env['res.users'].search(
+                    [('partner_id', 'child_of', customer_company_ids.id)])
+                project.allowed_user_ids |= same_company_users
 
         return res
 
@@ -652,7 +672,7 @@ class Task(models.Model):
             message_attachment_ids = task.mapped('message_ids.attachment_ids').ids  # from mail_thread
             task.attachment_ids = [(6, 0, list(set(attachment_ids) - set(message_attachment_ids)))]
 
-    @api.depends('project_id.allowed_user_ids', 'project_id.privacy_visibility')
+    @api.depends('project_id.allowed_user_ids', 'project_id.privacy_visibility', 'partner_id')
     def _compute_allowed_user_ids(self):
         for task in self:
             portal_users = task.allowed_user_ids.filtered('share')
@@ -661,7 +681,16 @@ class Task(models.Model):
                 task.allowed_user_ids |= task.project_id.allowed_internal_user_ids
                 task.allowed_user_ids -= portal_users
             elif task.project_id.privacy_visibility == 'portal':
-                task.allowed_user_ids |= task.project_id.allowed_portal_user_ids
+                # Only display the tasks belonging to the partner linked to the portal user.
+                # If the partner is a person linked to a company, display all the tasks of this company.
+                customer_company_id = task.partner_id.commercial_partner_id
+                if customer_company_id:
+                # partner of the same company than the customer:
+                    allowed_users = self.env['res.users'].search([('partner_id', 'child_of', customer_company_id.id)])
+                else:
+                    # There is no customer for the task. All the allowed user can see it.
+                    allowed_users = task.project_id.allowed_portal_user_ids
+                task.allowed_user_ids = allowed_users
             if task.project_id.privacy_visibility != 'portal':
                 task.allowed_user_ids -= portal_users
             elif task.project_id.privacy_visibility != 'followers':
@@ -821,7 +850,6 @@ class Task(models.Model):
     # ------------------------------------------------
     # CRUD overrides
     # ------------------------------------------------
-
     @api.model_create_multi
     def create(self, vals_list):
         default_stage = dict()
