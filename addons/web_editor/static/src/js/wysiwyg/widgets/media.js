@@ -474,12 +474,34 @@ var FileWidget = SearchableMediaWidget.extend({
                 this.$media = $('<img/>', {class: 'img-fluid o_we_custom_image'});
                 this.media = this.$media[0];
             }
+<<<<<<< HEAD
             this.$media.attr('src', src);
         } else {
             if (!this.$media.is('a')) {
                 $('.note-control-selection').hide();
                 this.$media = $('<a/>');
                 this.media = this.$media[0];
+=======
+
+            if (self.options.onUpload) {
+                // We consider that when selecting an image it is as if we upload it in the html content.
+                self.options.onUpload(img);
+            }
+
+            // Remove crop related attributes
+            if (self.$media.attr('data-aspect-ratio')) {
+                var attrs = ['aspect-ratio', 'x', 'y', 'width', 'height', 'rotate', 'scale-x', 'scale-y'];
+                Object.keys(self.$media.data()).forEach(function (key) {
+                    if (_.str.startsWith(key, 'crop:')) {
+                        attrs.push(key);
+                    }
+                });
+                self.$media.removeClass('o_cropped_img_to_save');
+                _.each(attrs, function (attr) {
+                    self.$media.removeData(attr);
+                    self.$media.removeAttr('data-' + attr);
+                });
+>>>>>>> 00f875bf749... temp
             }
             var href = '/web/content/' + img.id + '?';
             if (!img.public && img.access_token) {
