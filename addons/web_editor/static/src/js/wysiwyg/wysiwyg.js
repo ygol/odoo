@@ -7,6 +7,7 @@ var JWEditorLib = require('web_editor.jabberwock');
 var SnippetsMenu = require('web_editor.snippet.editor').SnippetsMenu;
 var weWidgets = require('wysiwyg.widgets');
 var AttributeTranslateDialog = require('web_editor.wysiwyg.translate_attributes');
+var config = require('web.config');
 
 var core = require('web.core');
 var _t = core._t;
@@ -185,7 +186,9 @@ var Wysiwyg = Widget.extend({
             mode: this.options.mode,
         });
 
-        this.editor.load(JWEditorLib.DevTools);
+        if (config.isDebug('assets')) {
+            this.editor.load(JWEditorLib.DevTools);
+        }
         await this.editor.start();
         this._bindAfterStart();
         $('#wrapwrap').data('wysiwyg', this);
