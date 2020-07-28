@@ -1150,17 +1150,18 @@ snippetOptions.registry.CarouselItem = snippetOptions.SnippetOptionWidget.extend
     addSlide: async function (previewMode) {
         const $items = this.$carousel.find('.carousel-item');
         this.$controls.removeClass('d-none');
-        const $li = $('<li>', {
+        this.$indicators.append($('<li>', {
             'data-target': '#' + this.$target.attr('id'),
             'data-slide-to': $items.length,
-        });
-        await this.editorHelpers.insertHtml($li[0].outerHTML, this.$indicators[0], 'INSIDE');
-
+        }));
+        this.$indicators.append(' ');
         // Need to remove editor data from the clone so it gets its own.
         const $active = $items.filter('.active');
-        const $clone = $active.clone(false).removeClass('active');
-        await this.editorHelpers.insertHtml($clone[0].outerHTML, $active[0], 'AFTER');
+        $active.clone(false)
+            .removeClass('active')
+            .insertAfter($active);
         this.$carousel.carousel('next');
+        this._refreshTarget();
     },
     /**
      * Removes the current slide.
