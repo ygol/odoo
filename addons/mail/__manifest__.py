@@ -10,7 +10,6 @@
     'depends': ['base', 'base_setup', 'bus', 'web_tour'],
     'data': [
         'views/assets.xml',
-        'views/mail_menus.xml',
         'wizard/invite_view.xml',
         'wizard/mail_blacklist_remove_view.xml',
         'wizard/mail_compose_message_view.xml',
@@ -41,6 +40,7 @@
         'views/ir_model_views.xml',
         'views/res_partner_views.xml',
         'views/mail_blacklist_views.xml',
+        'views/mail_menus.xml',
     ],
     'demo': [
         'data/mail_channel_demo.xml',

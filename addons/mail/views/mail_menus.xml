@@ -1,11 +1,101 @@
 <?xml version="1.0"?>
-<odoo><data>
-	<record id="base.menu_email" model="ir.ui.menu">
+<odoo>
+    <!-- Settings/Email -->
+    <record id="base.menu_email" model="ir.ui.menu">
         <field name="sequence">3</field>
-	</record>
+    </record>
+
+    <menuitem name="Emails"
+        id="menu_mail_mail"
+        action="action_view_mail_mail"
+        parent="base.menu_email"
+        sequence="1"/>
+
+    <menuitem id="menu_email_templates"
+        action="action_email_template_tree_all"
+        parent="base.menu_email"
+        sequence="10"/>
+
+    <menuitem id="mail_alias_menu"
+        action="action_view_mail_alias"
+        parent="base.menu_email"
+        groups="base.group_no_one"
+        sequence="11"/>
+
+    <menuitem id="mail_channel_menu_settings"
+        name="Channels"
+        action="mail_channel_action_view"
+        parent="base.menu_email"
+        groups="base.group_no_one"
+        sequence="20"/>
+
+    <menuitem id="mail_channel_partner_menu"
+        name="Channels/Partner"
+        action="mail_channel_partner_action"
+        parent="base.menu_email"
+        groups="base.group_no_one"
+        sequence="21"/>
+
+    <menuitem name="Channel Moderation"
+        id="mail_moderation_menu"
+        action="mail_moderation_action"
+        parent="base.menu_email"
+        sequence="22"/>
 
     <menuitem name="Discuss"
         id="mail_menu_technical"
         parent="base.menu_custom"
+        sequence="1">
+
+        <menuitem name="Messages"
+            id="menu_mail_message"
+            action="action_view_mail_message"
+            sequence="1"/>
+        <menuitem id="menu_message_subtype"
+            name="Subtypes"
+            action="action_view_message_subtype"
+            sequence="4"/>
+        <menuitem id="menu_mail_tracking_value"
+            name="Tracking Values"
+            action="action_view_mail_tracking_value"
+            sequence="5"/>
+        <menuitem id="menu_mail_activity_type"
+            action="mail_activity_type_action"
+            sequence="10"/>
+        <menuitem id="menu_mail_activities"
+            action="mail_activity_action"
+            sequence="11"/>
+        <menuitem id="mail_notification_menu"
+            name="Notifications"
+            action="mail_notification_action"
+            groups="base.group_no_one"
+            sequence="20"/>
+        <menuitem id="menu_email_followers"
+            name="Followers"
+            action="action_view_followers"
+            groups="base.group_no_one"
+            sequence="21"/>
+        <menuitem id="mail_blacklist_menu"
+            name="Email Blacklist"
+            action="mail_blacklist_action"
+            sequence="22"/>
+    </menuitem>
+
+    <menuitem id="mail.menu_root_discuss"
+        name="Discuss"
+        action="action_discuss"
+        web_icon="mail,static/description/icon.png"
+        groups="base.group_user"
         sequence="1"/>
-</data></odoo>
+
+    <!--
+        Used in enterprise/mail_github
+        This menuitem will be activated by integrations modules (like github, twitter, ...). It
+        is a hook to ease other modules to plug into mail.
+    -->
+    <record id="mail.mail_channel_integrations_menu" model="ir.ui.menu">
+        <field name="name">Integrations</field>
+        <field name="parent_id" ref="mail.menu_root_discuss"/>
+        <field name="active" eval="False"/>
+    </record>
+</odoo>
