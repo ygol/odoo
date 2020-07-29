@@ -256,8 +256,7 @@ var Dialog = Widget.extend({
 
         $('.tooltip').remove(); //remove open tooltip if any to prevent them staying when modal has disappeared
         if (this.$modal) {
-            this.$modal.modal('hide');
-            this.$modal.remove();
+            this._hideModal();
         }
 
         var modals = $('body > .modal').filter(':visible');
@@ -279,6 +278,14 @@ var Dialog = Widget.extend({
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
+    /**
+     * Hides the modal of dialog and removes it from the DOM
+     *
+     */
+    _hideModal: function () {
+        this.$modal.modal('hide');
+        this.$modal.remove();
+    },
     /**
      * Manages the focus when the dialog closes. The default behavior is to set the focus on the top-most opened popup.
      * The goal of this function is to be overridden by all children of the dialog class.
