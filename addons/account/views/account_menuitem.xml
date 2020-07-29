@@ -81,6 +81,7 @@
                 <menuitem id="account_analytic_def_account" action="analytic.action_account_analytic_account_form" groups="analytic.group_analytic_accounting" sequence="1"/>
                 <menuitem id="account_analytic_group_menu" name="Analytic Account Groups" action="analytic.account_analytic_group_action" groups="analytic.group_analytic_accounting" sequence="2"/>
                 <menuitem id="account_analytic_tag_menu" name="Analytic Tags" action="analytic.account_analytic_tag_action" groups="analytic.group_analytic_tags"/>
+                <menuitem id="menu_analytic_default_list" action="action_analytic_default_list"/>
             </menuitem>
         </menuitem>
     </menuitem>
