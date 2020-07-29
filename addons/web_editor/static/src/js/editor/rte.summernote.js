@@ -38,6 +38,32 @@ var range = $.summernote.core.range;
 var eventHandler = $.summernote.eventHandler;
 var renderer = $.summernote.renderer;
 
+// Summernote uses execCommand and, worth, obsolete queryCommandState function
+// to customize the edited content. Here we try to hack the function to solve
+// some problems by making the DOM and style easier to understand for the
+// base function for the duration of their executions. This won't obviously
+// solves all problems but this is an improvement while waiting for the new
+// Odoo editor coming in future versions.
+
+var baseExecCommand = document.execCommand;
+document.execCommand = function () {
+    var rng = range.create();
+    var $editable = rng.sc ? $(rng.sc).parents(':o_editable').last() : $();
+    $editable.addClass('o_we_command_protector');
+    var ret = baseExecCommand.apply(this, arguments);
+    $editable.removeClass('o_we_command_protector');
+    return ret;
+};
+var baseQueryCommandState = document.queryCommandState;
+document.queryCommandState = function () {
+    var rng = range.create();
+    var $editable = rng.sc ? $(rng.sc).parents(':o_editable').last() : $();
+    $editable.addClass('o_we_command_protector');
+    var ret = baseQueryCommandState.apply(this, arguments);
+    $editable.removeClass('o_we_command_protector');
+    return ret;
+};
+
 var tplButton = renderer.getTemplate().button;
 var tplIconButton = renderer.getTemplate().iconButton;
 var tplDropdown = renderer.getTemplate().dropdown;
