@@ -1,99 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-        <!-- Top menu item -->
-        <menuitem name="Purchase"
-            id="menu_purchase_root"
-            groups="group_purchase_manager,group_purchase_user"
-            web_icon="purchase,static/description/icon.png"
-            sequence="25"/>
-
-        <menuitem id="menu_procurement_management" name="Orders"
-            parent="menu_purchase_root" sequence="1" />
-
-        <!--Supplier menu-->
-        <menuitem id="menu_procurement_management_supplier_name" name="Vendors"
-            parent="menu_procurement_management"
-            action="account.res_partner_action_supplier" sequence="15"/>
-
-        <menuitem id="menu_purchase_config" name="Configuration" parent="menu_purchase_root" sequence="100" groups="group_purchase_manager"/>
-
-        <menuitem
-           action="product.product_supplierinfo_type_action" id="menu_product_pricelist_action2_purchase"
-           parent="menu_purchase_config" sequence="1"/>
-
-        <menuitem
-            id="menu_product_in_config_purchase" name="Products"
-            parent="menu_purchase_config" sequence="30"/>
-
-        <record model="ir.ui.menu" id="menu_product_in_config_purchase">
-            <field name="groups_id" eval="False"/>
-        </record>
-
-        <menuitem id="menu_product_attribute_action"
-            action="product.attribute_action" name="Product Attributes"
-            parent="purchase.menu_product_in_config_purchase"  groups="product.group_product_variant" sequence="1"/>
-
-        <menuitem
-            action="product.product_category_action_form" id="menu_product_category_config_purchase"
-            parent="purchase.menu_product_in_config_purchase" sequence="3" />
-
-         <menuitem
-            id="menu_unit_of_measure_in_config_purchase" name="Units of Measures"
-            parent="menu_purchase_config" sequence="40" groups="uom.group_uom" />
-
-        <menuitem
-              action="uom.product_uom_form_action" id="menu_purchase_uom_form_action"
-              parent="purchase.menu_unit_of_measure_in_config_purchase" sequence="5" groups="uom.group_uom"/>
-
-        <menuitem
-             action="uom.product_uom_categ_form_action" id="menu_purchase_uom_categ_form_action"
-             parent="purchase.menu_unit_of_measure_in_config_purchase" sequence="10" groups="uom.group_uom"/>
-
-    <!-- Products Control Menu -->
-    <menuitem id="menu_purchase_products" name="Products" parent="purchase.menu_purchase_root" sequence="5"/>
-
-    <record id="product_normal_action_puchased" model="ir.actions.act_window">
-        <field name="name">Products</field>
-        <field name="type">ir.actions.act_window</field>
-        <field name="res_model">product.template</field>
-        <field name="view_mode">kanban,tree,form,activity</field>
-        <field name="context">{"search_default_filter_to_purchase":1, "purchase_product_template": 1}</field>
-        <field name="search_view_id" ref="product.product_template_search_view"/>
-        <field name="view_id" eval="False"/> <!-- Force empty -->
-        <field name="help" type="html">
-          <p class="o_view_nocontent_smiling_face">
-            Create a new product
-          </p><p>
-            You must define a product for everything you sell or purchase,
-            whether it's a storable product, a consumable or a service.
-          </p>
-        </field>
-    </record>
-
-      <!-- Product menu-->
-      <menuitem name="Products" id="menu_procurement_partner_contact_form" action="product_normal_action_puchased"
-          parent="menu_purchase_products" sequence="20"/>
-
-        <record id="product_product_action" model="ir.actions.act_window">
-            <field name="name">Product Variants</field>
-            <field name="res_model">product.product</field>
-            <field name="view_mode">tree,kanban,form,activity</field>
-            <field name="search_view_id" ref="product.product_search_form_view"/>
-            <field name="context">{"search_default_filter_to_purchase": 1}</field>
-            <field name="help" type="html">
-              <p class="o_view_nocontent_smiling_face">
-                Create a new product variant
-              </p><p>
-                You must define a product for everything you sell or purchase,
-                whether it's a storable product, a consumable or a service.
-              </p>
-            </field>
-        </record>
-
-        <menuitem id="product_product_menu" name="Product Variants" action="product_product_action"
-            parent="menu_purchase_products" sequence="21" groups="product.group_product_variant"/>
-
         <record model="ir.ui.view" id="purchase_order_calendar">
             <field name="name">purchase.order.calendar</field>
             <field name="model">purchase.order</field>
@@ -625,9 +532,6 @@
               </p>
             </field>
         </record>
-        <menuitem action="purchase_rfq" id="menu_purchase_rfq"
-            parent="menu_procurement_management"
-            sequence="0"/>
 
         <record id="purchase_form_action" model="ir.actions.act_window">
             <field name="name">Purchase Orders</field>
@@ -646,7 +550,6 @@
               </p>
             </field>
         </record>
-        <menuitem action="purchase_form_action" id="menu_purchase_form_action" parent="menu_procurement_management" sequence="6"/>
 
         <record id="purchase_order_line_tree" model="ir.ui.view">
             <field name="name">purchase.order.line.tree</field>
