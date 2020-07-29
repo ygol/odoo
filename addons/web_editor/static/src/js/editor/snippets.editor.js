@@ -9,6 +9,7 @@ var Widget = require('web.Widget');
 var snippetOptions = require('web_editor.snippets.options');
 const {ColorPaletteWidget} = require('web_editor.ColorPalette');
 const SmoothScrollOnDrag = require('web/static/src/js/core/smooth_scroll_on_drag.js');
+const ToolbarWidget = require('web_editor/static/src/js/editor/toolbar_widget.js');
 
 var _t = core._t;
 
@@ -953,6 +954,8 @@ var SnippetsMenu = Widget.extend({
             this.nodeToEditor = new Map();
             this.editorHelpers = this.wysiwyg.editorHelpers;
         }
+
+        this.toolbar = new ToolbarWidget(this, this.wysiwyg);
 
         this._notActivableElementsSelector = [
             '#web_editor-top-edit',
@@ -2015,6 +2018,8 @@ var SnippetsMenu = Widget.extend({
             while (this.customizePanel.firstChild) {
                 this.customizePanel.removeChild(this.customizePanel.firstChild);
             }
+            const toolbar = new ToolbarWidget(this, this.wysiwyg);
+            toolbar.appendTo(this.customizePanel);
             $(this.customizePanel).append(content);
         }
 

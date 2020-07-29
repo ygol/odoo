@@ -457,6 +457,9 @@ var Wysiwyg = Widget.extend({
             window.location.reload();
         });
     },
+    getFormatInfo: function() {
+        return this.editor.plugins.get(JWEditorLib.Odoo).formatInfo;
+    },
 
     //--------------------------------------------------------------------------
     // Private

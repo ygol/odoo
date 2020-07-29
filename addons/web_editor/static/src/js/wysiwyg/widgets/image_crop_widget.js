@@ -57,6 +57,7 @@ const ImageCropWidget = Widget.extend({
      * @override
      */
     async start() {
+        console.warn('imgcrop')
         if (this.uncroppable) {
             this.displayNotification({
               type: 'warning',
