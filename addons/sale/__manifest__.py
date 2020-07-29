@@ -13,15 +13,21 @@ This module contains all the common features of Sales Management and eCommerce.
     'data': [
         'security/sale_security.xml',
         'security/ir.model.access.csv',
+
         'report/sale_report.xml',
         'report/sale_report_views.xml',
         'report/sale_report_templates.xml',
         'report/invoice_report_templates.xml',
         'report/report_all_channels_sales_views.xml',
+
         'data/ir_sequence_data.xml',
         'data/mail_data.xml',
         'data/sale_data.xml',
+
         'wizard/sale_make_invoice_advance_views.xml',
+        'wizard/sale_order_cancel_views.xml',
+        'wizard/sale_payment_link_views.xml',
+
         'views/sale_views.xml',
         'views/sales_team_views.xml',
         'views/res_partner_views.xml',
@@ -35,8 +41,7 @@ This module contains all the common features of Sales Management and eCommerce.
         'views/product_attribute_views.xml',
         'views/product_views.xml',
         'views/utm_campaign_views.xml',
-        'wizard/sale_order_cancel_views.xml',
-        'wizard/sale_payment_link_views.xml',
+        'views/sale_menus.xml',
     ],
     'demo': [
         'data/product_product_demo.xml',
