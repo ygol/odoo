@@ -33,11 +33,11 @@
         'report/hr_employee_badge.xml',
         'views/hr_employee_views.xml',
         'views/hr_department_views.xml',
-        'views/hr_views.xml',
         'views/hr_templates.xml',
         'views/res_config_settings_views.xml',
         'views/mail_channel_views.xml',
         'views/res_users.xml',
+        'views/hr_menus.xml',
         'data/hr_data.xml',
     ],
     'demo': [

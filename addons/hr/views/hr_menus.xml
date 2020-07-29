@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_hr_root"
+        name="Employees"
+        groups="group_hr_manager,group_hr_user,base.group_user"
+        web_icon="hr,static/description/icon.png"
+        sequence="75">
+
+        <menuitem id="menu_hr_main"
+            name="Human Resources"
+            sequence="0"/>
+
+        <menuitem id="menu_hr_employee_payroll"
+            name="Employees"
+            groups="group_hr_user"
+            sequence="3">
+            <menuitem id="menu_hr_employee_user"
+                name="Employees"
+                action="open_view_employee_list_my"
+                sequence="1"/>
+        </menuitem>
+
+        <menuitem id="menu_hr_employee"
+            name="Employee Directory"
+            action="hr_employee_public_action"
+            sequence="4"/>
+
+        <menuitem id="menu_hr_department_kanban"
+            action="hr_department_kanban_action"
+            groups="group_hr_user"/>
+        <!-- VFE TODO specify a sequence ? -->
+
+        <menuitem id="hr_menu_hr_reports"
+            name="Reporting"
+            sequence="95"/>
+
+        <menuitem id="menu_hr_reporting_timesheet"
+            name="Reporting"
+            groups="group_hr_manager,group_hr_user"
+            sequence="99"/>
+
+        <menuitem id="menu_human_resources_configuration"
+            name="Configuration"
+            groups="group_hr_manager"
+            sequence="100">
+            <menuitem id="hr_menu_configuration"
+                name="Settings"
+                action="hr_config_settings_action"
+                groups="base.group_system"
+                sequence="0"/>
+
+            <menuitem id="menu_view_hr_job"
+                action="action_hr_job"
+                sequence="1"/>
+
+            <menuitem id="menu_human_resources_configuration_employee"
+                name="Employee"
+                groups="base.group_no_one"
+                sequence="1">
+                <menuitem id="menu_view_employee_category_form"
+                    name="Tags"
+                    action="open_view_categ_form"
+                    groups="base.group_no_one"
+                    sequence="1"/>
+            </menuitem>
+
+            <menuitem id="menu_hr_department_tree"
+                action="hr_department_tree_action"
+                sequence="2"
+                groups="group_hr_user"/>
+
+            <menuitem id="menu_config_plan"
+                name="Activity Planning"
+                groups="group_hr_manager"
+                sequence="100">
+                <menuitem id="menu_config_plan_types"
+                    name="Planning Types"
+                    action="hr_plan_activity_type_action"
+                    groups="base.group_no_one"
+                    sequence="99"/>
+                <menuitem id="menu_config_plan_plan"
+                    name="Plans"
+                    action="hr_plan_action"
+                    groups="group_hr_manager"
+                    sequence="100"/>
+            </menuitem>
+        </menuitem>
+    </menuitem>
+</odoo>
