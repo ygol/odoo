@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <odoo>
-    <data>
         <!-- EVENT.TAG.CATEGORY VIEWS -->
         <record id="event_tag_category_view_tree" model="ir.ui.view">
             <field name="name">event.tag.category.view.tree</field>
@@ -73,9 +72,4 @@
             </field>
         </record>
 
-        <record id="menu_event_category" model="ir.ui.menu">
-            <field name="action" ref="event.event_tag_category_action_tree"/>
-        </record>
-
-    </data>
 </odoo>

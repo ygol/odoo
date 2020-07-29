@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <odoo>
-<data>
+
     <record id="event_stage_view_form" model="ir.ui.view">
         <field name="name">event.stage.view.form</field>
         <field name="model">event.stage</field>
@@ -56,6 +56,4 @@
         <field name="view_mode">tree,form</field>
     </record>
 
-    <menuitem id="event_stage_menu" name="Event Stages" action="event_stage_action" parent="menu_event_configuration"/>
-</data>
 </odoo>
