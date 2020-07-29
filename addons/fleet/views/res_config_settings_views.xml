@@ -48,8 +48,5 @@
             <field name="context">{'module' : 'fleet'}</field>
         </record>
 
-        <menuitem id="fleet_config_settings_menu" name="Settings"
-            parent="fleet.fleet_configuration" sequence="0" action="fleet_config_settings_action"
-            groups="base.group_system"/>
     </data>
 </odoo>

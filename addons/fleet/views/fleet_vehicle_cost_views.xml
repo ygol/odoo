@@ -196,8 +196,6 @@
         </field>
     </record>
 
-    <menuitem action="fleet_vehicle_log_contract_action" parent="fleet_vehicles" id="fleet_vehicle_log_contract_menu" groups="fleet_group_user" sequence="2"/>
-
     <record id='fleet_vehicle_log_services_view_form' model='ir.ui.view'>
         <field name="name">fleet.vehicle.log.services.form</field>
         <field name="model">fleet.vehicle.log.services</field>
@@ -328,7 +326,5 @@
           </p>
         </field>
     </record>
-
-    <menuitem action="fleet_vehicle_log_services_action" parent="fleet_vehicles" id="fleet_vehicle_log_services_menu" groups="fleet_group_user" sequence="3"/>
 
 </odoo>

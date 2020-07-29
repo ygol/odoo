@@ -8,9 +8,4 @@
         <field name="domain">['|', ('res_model_id', '=', False), ('res_model_id.model', '=', 'fleet.vehicle.log.contract')]</field>
         <field name="context">{'default_res_model': 'fleet.vehicle.log.contract'}</field>
     </record>
-    <menuitem id="fleet_menu_config_activity_type"
-        action="mail_activity_type_action_config_fleet"
-        parent="fleet_configuration"
-        sequence="99"
-        groups="base.group_no_one"/>
 </odoo>

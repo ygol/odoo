@@ -293,9 +293,6 @@
         </field>
     </record>
 
-    <menuitem name="Vehicles" parent="menu_root" id="fleet_vehicles" sequence="2" groups="fleet_group_user"/>
-    <menuitem action="fleet_vehicle_action" parent="fleet_vehicles" id="fleet_vehicle_menu" groups="fleet_group_user" sequence="1"/>
-
    <record id='fleet_vehicle_odometer_view_form' model='ir.ui.view'>
         <field name="name">fleet.vehicle.odometer.form</field>
         <field name="model">fleet.vehicle.odometer</field>
@@ -393,8 +390,6 @@
         </field>
     </record>
 
-    <menuitem action="fleet_vehicle_odometer_action" parent="fleet_vehicles" id="fleet_vehicle_odometer_menu" groups="fleet_group_user" sequence="10"/>
-
     <record id='fleet_vehicle_service_types_view_tree' model='ir.ui.view'>
         <field name="name">fleet.service.type.tree</field>
         <field name="model">fleet.service.type</field>
@@ -417,7 +412,6 @@
           </p>
         </field>
     </record>
-    <menuitem action="fleet_vehicle_service_types_action" parent="fleet_configuration" id="fleet_vehicle_service_types_menu" sequence="3" groups="base.group_no_one"/>
 
     <record id='fleet_vehicle_state_view_tree' model='ir.ui.view'>
         <field name="name">fleet.vehicle.state.tree</field>
@@ -443,8 +437,6 @@
           </p>
         </field>
     </record>
-
-    <menuitem action="fleet_vehicle_state_action" parent="fleet_configuration" id="fleet_vehicle_state_menu" groups="base.group_no_one"/>
 
     <record id="fleet_vehicle_tag_view_view_form" model="ir.ui.view">
         <field name="name">fleet.vehicle.tag.form</field>
@@ -479,8 +471,6 @@
             </p>
         </field>
     </record>
-
-    <menuitem id="fleet_vehicle_tag_menu" parent="fleet_configuration" action="fleet_vehicle_tag_action" sequence="89" groups="base.group_no_one"/>
 
     <record id="fleet_vehicle_assignation_log_view_list" model="ir.ui.view">
         <field name="name">fleet.vehicle.assignation.log.view.tree</field>
