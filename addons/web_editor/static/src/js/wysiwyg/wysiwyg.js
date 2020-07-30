@@ -6,6 +6,7 @@ var Widget = require('web.Widget');
 var JWEditorLib = require('web_editor.jabberwock');
 var SnippetsMenu = require('web_editor.snippet.editor').SnippetsMenu;
 var weWidgets = require('wysiwyg.widgets');
+var ColorPaletteWidget = require('web_editor.ColorPalette').ColorPaletteWidget;
 var AttributeTranslateDialog = require('web_editor.wysiwyg.translate_attributes');
 var config = require('web.config');
 
@@ -40,6 +41,7 @@ var Wysiwyg = Widget.extend({
         this._super.apply(this, arguments);
         this.value = options.value || '';
         this.options = options;
+        this.colorPickers = [];
         this.JWEditorLib = JWEditorLib;
         if (this.options.enableTranslation) {
             this.options.snippets = null;
@@ -164,7 +166,7 @@ var Wysiwyg = Widget.extend({
         const $snippetManipulators = $('<div id="oe_manipulators" />');
 
         this.editor = new JWEditorLib.OdooWebsiteEditor({
-            afterRender: async ()=> {
+            afterRender: async () => {
                 const $wrapwrap = $('#wrapwrap');
                 $wrapwrap.removeClass('o_editable'); // clean the dom before edition
                 this._getEditable($wrapwrap).addClass('o_editable');
@@ -173,6 +175,8 @@ var Wysiwyg = Widget.extend({
             snippetManipulators: $snippetManipulators[0],
             customCommands: Object.assign({
                 openMedia: {handler: this.openMediaDialog.bind(this)},
+                openTextColorPicker: {handler: this.toggleTextColorPicker.bind(this)},
+                openBackgroundColorPicker: {handler: this.toggleBackgroundColorPicker.bind(this)},
                 openLinkDialog: {handler: this.openLinkDialog.bind(this)},
                 discardOdoo: {handler: this.discardEditions.bind(this)},
                 saveOdoo: {handler: this.saveToServer.bind(this)}
@@ -308,6 +312,61 @@ var Wysiwyg = Widget.extend({
             });
             mediaDialog.on('cancel', this, resolve);
         });
+    },
+    _setColor(colorPickerId, setCommandId, unsetCommandId, color, $dropDownToToggle = undefined) {
+        if(color === "") {
+            this.editor.execCommand(unsetCommandId);
+        } else {
+            if (this.colorPickers[colorPickerId].colorNames.indexOf(color) !== -1) {
+                // todo : find a better way to detect and send css variable
+                color = "var(--" + color + ")";
+            }
+            this.editor.execCommand(setCommandId, {color: color});
+        }
+        if($dropDownToToggle !== undefined) {
+            $dropDownToToggle.find(".dropdown-toggle").dropdown("toggle");
+        }
+    },
+    async initColorPicker(colorPickerid, setCommandId, unsetCommandId, $dropdownNode) {
+        if (!this.colorPickers[colorPickerid]) {
+            // Init the colorPalete for this color picker Dropdown.
+            this.colorPickers[colorPickerid] = new ColorPaletteWidget(this, {});
+
+            // Prevent the dropdown to be closed when click inside it
+            $dropdownNode.on('click', (e)=> {
+                e.stopImmediatePropagation();
+                e.preventDefault();
+            })
+            $dropdownNode.find('.dropdown-menu').empty();
+            await this.colorPickers[colorPickerid].appendTo($dropdownNode.find('.dropdown-menu'));
+            // Events listeners to trigger color changes
+            this.colorPickers[colorPickerid].on('custom_color_picked', this, (e) => {
+                this._setColor(colorPickerid, setCommandId, unsetCommandId, e.data.color);
+            });
+            this.colorPickers[colorPickerid].on('color_picked', this, (e) => {
+                this._setColor(colorPickerid, setCommandId, unsetCommandId, e.data.color, $dropdownNode);
+            });
+        }
+    },
+    async toggleTextColorPicker() {
+        const $textColorDropdown = this.$("jw-toolbar .jw-dropdown-textcolor");
+        await this.initColorPicker(
+            "textColorPicker",
+            "colorText",
+            "uncolorText",
+            $textColorDropdown);
+
+        $textColorDropdown.find(".dropdown-toggle").dropdown("toggle");
+    },
+    async toggleBackgroundColorPicker() {
+        const $backgroundColorDropdown = this.$("jw-toolbar .jw-dropdown-backgroundcolor");
+        await this.initColorPicker(
+            "backgroundColorPicker",
+            "colorBackground",
+            "uncolorBackground",
+            $backgroundColorDropdown);
+
+        $backgroundColorDropdown.find(".dropdown-toggle").dropdown("toggle");
     },
 
     /**
