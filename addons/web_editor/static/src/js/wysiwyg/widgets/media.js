@@ -975,6 +975,7 @@ var VideoWidget = MediaWidget.extend({
         'change .o_video_dialog_options input': '_onUpdateVideoOption',
         'input textarea#o_video_text': '_onVideoCodeInput',
         'change textarea#o_video_text': '_onVideoCodeChange',
+        'click .o_sample_video': '_onSampleVideoClick',
     }),
 
     /**
@@ -984,6 +985,8 @@ var VideoWidget = MediaWidget.extend({
         this._super.apply(this, arguments);
         this.isForBgVideo = !!options.isForBgVideo;
         this._onVideoCodeInput = _.debounce(this._onVideoCodeInput, 1000);
+        // list of videoIds from vimeo.
+        this._videoPreviewIds = options.videoPreviewIds;
     },
     /**
      * @override
@@ -1006,6 +1009,23 @@ var VideoWidget = MediaWidget.extend({
 
             this._updateVideo();
         }
+
+        // loads the thumbnail of vimeo video previews.
+        this.$('.o_sample_video').each((index, node) => {
+            const $node = $(node);
+            const videoId = $node.attr('data-vimeo');
+            if (!videoId) {
+                return;
+            }
+            fetch(`https://vimeo.com/api/oembed.json?url=http%3A//vimeo.com/${videoId}`)
+                .then(response=>response.json())
+                .then((response) => {
+                    $node.append($('<img>', {
+                        src: response.thumbnail_url,
+                        class: 'mw-100 mh-100 p-1',
+                    }));
+                });
+        });
 
         return this._super.apply(this, arguments);
     },
@@ -1175,6 +1195,17 @@ var VideoWidget = MediaWidget.extend({
      * @private
      */
     _onUpdateVideoOption: function () {
+        this._updateVideo();
+    },
+    /**
+     * changes the video preview when clicking on the thumbnail of a suggested video
+     *
+     * @private
+     * @param {OdooEvent} ev
+     */
+    _onSampleVideoClick(ev) {
+        const vimeoId = ev.currentTarget.getAttribute('data-vimeo');
+        this.$('#o_video_text').val(`https://player.vimeo.com/video/${vimeoId}`);
         this._updateVideo();
     },
     /**

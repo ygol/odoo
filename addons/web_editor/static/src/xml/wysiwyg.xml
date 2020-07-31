@@ -421,6 +421,14 @@
                         <label class="o_switch mb0"><input id="o_video_hide_dm_share" type="checkbox"/><span/>Hide sharing button</label>
                     </div>
                 </div>
+                <t t-if="widget._videoPreviewIds">
+                    <span class="font-weight-bold">Suggestions</span>
+                    <div id="video-suggestion" class="mt-4 d-flex flex-wrap mh-75 overflow-auto">
+                        <t t-foreach="widget._videoPreviewIds" t-as="vimeoId">
+                            <div class="o_sample_video w-25 mh-100" t-att-data-vimeo="vimeoId"/>
+                        </t>
+                    </div>
+                </t>
             </div>
             <div class="col-md-6">
                 <div id="video-preview" class="p-3">
