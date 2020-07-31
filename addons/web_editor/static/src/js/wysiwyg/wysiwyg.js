@@ -92,6 +92,33 @@ var Wysiwyg = Widget.extend({
             };
         } else if (this.options.enableWebsite) {
             this.options.plugins = [[this.JWEditorLib.OdooField]];
+            this.options.toolbarLayout = [
+                [
+                    [
+                        'ParagraphButton',
+                        'Heading1Button',
+                        'Heading2Button',
+                        'Heading3Button',
+                        'Heading4Button',
+                        'Heading5Button',
+                        'Heading6Button',
+                        'PreButton',
+                    ],
+                ],
+                [
+                    'BoldButton',
+                    'ItalicButton',
+                    'UnderlineButton',
+                    'OdooTextColorButton',
+                    'OdooBackgroundColorButton',
+                    'RemoveFormatButton',
+                ],
+                ['AlignLeftButton', 'AlignCenterButton', 'AlignRightButton', 'AlignJustifyButton'],
+                ['OrderedListButton', 'UnorderedListButton', 'ChecklistButton'],
+                ['IndentButton', 'OutdentButton'],
+                ['OdooLinkButton'],
+                ['OdooMediaButton'],
+            ],
             this.options.mode = {
                 id: 'edit',
                 rules: [
@@ -359,6 +386,7 @@ var Wysiwyg = Widget.extend({
         $textColorDropdown.find(".dropdown-toggle").dropdown("toggle");
     },
     async toggleBackgroundColorPicker() {
+        console.log('toggleBackgroundColorPicker')
         const $backgroundColorDropdown = this.$("jw-toolbar .jw-dropdown-backgroundcolor");
         await this.initColorPicker(
             "backgroundColorPicker",
