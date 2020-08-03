@@ -349,7 +349,8 @@ var Wysiwyg = Widget.extend({
         }
     },
     async toggleTextColorPicker() {
-        const $textColorDropdown = this.$("jw-toolbar .jw-dropdown-textcolor");
+        // Only work if textcolor dropdown is unique. todo : find a better way
+        const $textColorDropdown = $("jw-toolbar .jw-dropdown-textcolor");
         await this.initColorPicker(
             "textColorPicker",
             "colorText",
@@ -359,7 +360,8 @@ var Wysiwyg = Widget.extend({
         $textColorDropdown.find(".dropdown-toggle").dropdown("toggle");
     },
     async toggleBackgroundColorPicker() {
-        const $backgroundColorDropdown = this.$("jw-toolbar .jw-dropdown-backgroundcolor");
+        // Only work if background dropdown is unique. todo : find a better way
+        const $backgroundColorDropdown = $("jw-toolbar .jw-dropdown-backgroundcolor");
         await this.initColorPicker(
             "backgroundColorPicker",
             "colorBackground",

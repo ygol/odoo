@@ -186,13 +186,13 @@ var FieldHtml = basic_fields.DebouncedField.extend(TranslatableFieldMixin, {
             value: this.value || '<p><br/></p>',
             location: [this.el, 'append'],
             wrapperClass: 'note-editable',
-            template: `<t-dialog><t t-zone="default"/></t-dialog><div class="d-flex flex-column">
+            template: `
+                <t-dialog><t t-zone="default"/></t-dialog>
+                <t-range><t t-zone="tools"/></t-range>
+                <div class="d-flex flex-column">
                     <div class="d-flex flex-row overflow-auto">
                         <t t-zone="main_sidebar"/>
                         <div class="d-flex flex-column overflow-auto o_editor_center">
-                            <div class="o_toolbar">
-                                <t t-zone="tools"/>
-                            </div>
                             <div class="d-flex overflow-auto note-editing-area">
                                 <t t-zone="snippetManipulators"/>
                                 ` + main + `
