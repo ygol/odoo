@@ -99,16 +99,25 @@ class MailController(http.Controller):
             else:
                 record_action = record_sudo.get_access_action(access_uid=uid)
         else:
-            record_action = record_sudo.get_access_action()
-            if record_action['type'] == 'ir.actions.act_url' and record_action.get('target_type') != 'public':
-                return cls._redirect_to_messaging()
+            act = record_action = record_sudo.get_access_action()
+            # for an unlogged user, anything other than a public url should
+            # bounce through the login page
+            if (act['type'], act.get('target_type')) != ('ir.actions.act_url', 'public'):
+                return werkzeug.utils.redirect(
+                    '/web/login?' + url_encode({
+                        'redirect': '/mail/view?' + url_encode({
+                            'model': model,
+                            'res_id': res_id,
+                        })
+                    })
+                )
 
         record_action.pop('target_type', None)
         # the record has an URL redirection: use it directly
         if record_action['type'] == 'ir.actions.act_url':
             return werkzeug.utils.redirect(record_action['url'])
         # other choice: act_window (no support of anything else currently)
-        elif not record_action['type'] == 'ir.actions.act_window':
+        elif record_action['type'] != 'ir.actions.act_window':
             return cls._redirect_to_messaging()
 
         url_params = {
