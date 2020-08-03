@@ -272,13 +272,12 @@ class ModelField {
             return this.read(record);
         }
         if (this.fieldType === 'relation') {
-            const OtherModel = this.env.models[this.to];
             if (['one2one', 'many2one'].includes(this.relationType)) {
-                return OtherModel.get(this.read(record));
+                return this.read(record);
             }
             const res = [];
-            for (const localId of this.read(record)) {
-                res.push(OtherModel.get(localId));
+            for (const otherRecord of this.read(record)) {
+                res.push(otherRecord);
             }
             return res;
         }
@@ -357,9 +356,6 @@ class ModelField {
      *   useless potentially heavy computation, like when setting default values.
      */
     write(record, newVal, { registerDependents = true } = {}) {
-        if (this._containsRecords(newVal)) {
-            throw new Error("Forbidden write operation with records!!");
-        }
         record.__values[this.fieldName] = newVal;
         record.__state++;
 
@@ -471,57 +467,22 @@ class ModelField {
     }
 
     /**
-     * Determines whether the provided value contains some records. Useful to
-     * prevent writing records directly in state of this field, which should be
-     * treated as buggy design. Indeed, state of field should only contain
-     * either a primitive type or a simple datastructure containing itself
-     * simple datastructures too.
-     *
-     * @private
-     * @param {any} val
-     * @returns {boolean}
-     */
-    _containsRecords(val) {
-        if (!val) {
-            return false;
-        }
-        if (val instanceof this.env.models['mail.model']) {
-            return true;
-        }
-        if (!(val instanceof Array)) {
-            return false;
-        }
-        if (val.length > 0 && val[0] instanceof this.env.models['mail.model']) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
      * Converts given value to expected format for x2many processing, which is
-     * an array of localId.
+     * an iterable of records.
      *
      * @private
-     * @param {string|mail.model|<mail.model|string>[]} newValue
-     * @returns {string[]}
+     * @param {mail.model|mail.model[]} newValue
+     * @returns {mail.model[]}
      */
     _setRelationConvertX2ManyValue(newValue) {
-        if (newValue instanceof Array) {
-            return newValue.map(v => this._setRelationConvertX2OneValue(v));
+        if (typeof newValue[Symbol.iterator] === 'function') {
+            for (const value of newValue) {
+                this._verifyRelationalValue(value);
+            }
+            return newValue;
         }
-        return [this._setRelationConvertX2OneValue(newValue)];
-    }
-
-    /**
-     * Converts given value to expected format for x2one processing, which is
-     * a localId.
-     *
-     * @private
-     * @param {string|mail.model} newValue
-     * @returns {string}
-     */
-    _setRelationConvertX2OneValue(newValue) {
-        return newValue instanceof this.env.models['mail.model'] ? newValue.localId : newValue;
+        this._verifyRelationalValue(newValue);
+        return [newValue];
     }
 
     /**
@@ -536,16 +497,7 @@ class ModelField {
      */
     _setRelationCreate(record, data) {
         const OtherModel = this.env.models[this.to];
-        let other;
-        if (['one2one', 'many2one'].includes(this.relationType)) {
-            other = OtherModel.create(data);
-        } else {
-            if (data instanceof Array) {
-                other = data.map(d => OtherModel.create(d));
-            } else {
-                other = OtherModel.create(data);
-            }
-        }
+        const other = OtherModel.create(data);
         this._setRelationLink(record, other);
     }
 
@@ -561,16 +513,7 @@ class ModelField {
      */
     _setRelationInsert(record, data) {
         const OtherModel = this.env.models[this.to];
-        let other;
-        if (['one2one', 'many2one'].includes(this.relationType)) {
-            other = OtherModel.insert(data);
-        } else {
-            if (data instanceof Array) {
-                other = data.map(d => OtherModel.insert(d));
-            } else {
-                other = OtherModel.insert(data);
-            }
-        }
+        const other = OtherModel.insert(data);
         this._setRelationLink(record, other);
     }
 
@@ -598,23 +541,17 @@ class ModelField {
      * Set a 'link' operation on this relational field.
      *
      * @private
-     * @param {string|string[]|mail.model|mail.model[]} newValue
+     * @param {mail.model|mail.model[]} newValue
      */
     _setRelationLink(record, newValue) {
-        if (!record.exists()) {
-            // current record may be deleted due to causality
-            return;
-        }
         switch (this.relationType) {
             case 'many2many':
             case 'one2many':
                 this._setRelationLinkX2Many(record, newValue);
                 break;
             case 'many2one':
-                this._setRelationLinkMany2One(record, newValue);
-                break;
             case 'one2one':
-                this._setRelationLinkOne2One(record, newValue);
+                this._setRelationLinkX2One(record, newValue);
                 break;
         }
     }
@@ -624,137 +561,70 @@ class ModelField {
      *
      * @private
      * @param {mail.model} record
-     * @param {string|mail.model|<mail.model|string>[]} newValue
+     * @param {mail.model|mail.model[]} newValue
      */
     _setRelationLinkX2Many(record, newValue) {
-        // convert newValue to array of localId
-        const newLocalIds = this._setRelationConvertX2ManyValue(newValue);
-        const OtherModel = this.env.models[this.to];
+        const newOtherRecords = this._setRelationConvertX2ManyValue(newValue);
+        const otherRecords = this.read(record);
 
-        const prevLocalIds = this.read(record);
-        const newOtherRecords = newLocalIds
-            .map(newLocalId => OtherModel.get(newLocalId))
-            .filter(newOtherRecord => {
-                // other record may be deleted due to causality, avoid linking
-                // deleted records
-                if (!newOtherRecord) {
-                    return false;
-                }
-                // other record already linked, avoid linking twice
-                if (prevLocalIds.has(newOtherRecord.localId)) {
-                    return false;
-                }
-                return true;
-            });
-        if (newOtherRecords.length === 0) {
-            return;
-        }
-        // link other records to current record
+        let isAdding = false;
         for (const newOtherRecord of newOtherRecords) {
-            prevLocalIds.add(newOtherRecord.localId);
-        }
-        this.write(record, prevLocalIds);
-
-        // link current record to other records
-        for (const newOtherRecord of newOtherRecords) {
-            newOtherRecord.update({
-                [this.inverse]: [['link', record]],
-            });
-        }
-    }
-
-    /**
-     * Handling of a `set` 'link' of a many2one relational field.
-     *
-     * @private
-     * @param {mail.model} record
-     * @param {string|mail.model} newValue
-     */
-    _setRelationLinkMany2One(record, newValue) {
-        // convert newValue to localId
-        const newLocalId = this._setRelationConvertX2OneValue(newValue);
-        const OtherModel = this.env.models[this.to];
-        const prevLocalId = this.read(record);
-
-        // other record already linked, avoid linking twice
-        if (prevLocalId === newLocalId) {
-            return;
-        }
-
-        // unlink previous other record from current record
-        this.write(record, undefined);
-
-        const prevOtherRecord = OtherModel.get(prevLocalId);
-        // there may be no previous other record or the previous other record
-        // may be deleted due to causality
-        if (prevOtherRecord) {
-            // unlink current record from previous other record
-            prevOtherRecord.update({
-                [this.inverse]: [['unlink', record]],
-            });
-        }
-
-        const newOtherRecord = OtherModel.get(newLocalId);
-        // other record may be deleted due to causality, avoid linking
-        // deleted records
-        if (!newOtherRecord) {
-            return;
-        }
-
-        // link other record to current records
-        this.write(record, newLocalId);
-
-        // link current record to other record
-        newOtherRecord.update({
-            [this.inverse]: [['link', record]],
-        });
-    }
-
-    /**
-     * Handling of a `set` 'link' of an one2one relational field.
-     *
-     * @private
-     * @param {mail.model} record
-     * @param {string|mail.model} value
-     */
-    _setRelationLinkOne2One(record, newValue) {
-        // convert newValue to localId
-        const newLocalId = this._setRelationConvertX2OneValue(newValue);
-        const prevLocalId = this.read(record);
-        const OtherModel = this.env.models[this.to];
-
-        // other record already linked, avoid linking twice
-        if (prevLocalId === newLocalId) {
-            return;
-        }
-
-        // unlink previous other record from current record
-        this.write(record, undefined);
-
-        const prevOtherRecord = OtherModel.get(prevLocalId);
-        // there may be no previous other record or the previous other record
-        // may be deleted due to causality
-        if (prevOtherRecord) {
-            // unlink current record from previous other record
-            prevOtherRecord.update({
-                [this.inverse]: [['unlink', record]],
-            });
-            // apply causality
-            if (this.isCausal) {
-                prevOtherRecord.delete();
+            // other record may be deleted due to causality, avoid linking
+            // deleted records
+            if (!newOtherRecord.exists()) {
+                throw Error(`Attempt to link deleted record ${newOtherRecord.localId} to ${this.fieldName}`);
+            }
+            // other record already linked, avoid linking twice
+            if (otherRecords.has(newOtherRecord)) {
+                continue;
+            }
+            isAdding = true;
+            // link other records to current record
+            otherRecords.add(newOtherRecord);
+            // link current record to other records
+            for (const newOtherRecord of newOtherRecords) {
+                newOtherRecord.update({
+                    [this.inverse]: [['link', record]],
+                });
             }
         }
+        if (!isAdding) {
+            return;
+        }
+        // register dependents
+        this.write(record, otherRecords);
+    }
 
-        const newOtherRecord = OtherModel.get(newLocalId);
+    /**
+     * Handling of a `set` 'link' of an x2one relational field.
+     *
+     * @private
+     * @param {mail.model} record
+     * @param {mail.model} newOtherRecord
+     */
+    _setRelationLinkX2One(record, newOtherRecord) {
+        this._verifyRelationalValue(newOtherRecord);
+        const prevOtherRecord = this.read(record);
+
+        // other record already linked, avoid linking twice
+        if (prevOtherRecord === newOtherRecord) {
+            return;
+        }
+
+        // unlink to properly update previous inverse before linking new value
+        this._setRelationUnlinkX2One(record);
+
+        if (!newOtherRecord) {
+            throw Error(`Attempt to link non-record ${newOtherRecord} to ${this.fieldName}`);
+        }
         // other record may be deleted due to causality, avoid linking deleted
         // records
-        if (!newOtherRecord) {
-            return;
+        if (!newOtherRecord.exists()) {
+            throw Error(`Attempt to link deleted record ${newOtherRecord.localId} to ${this.fieldName}`);
         }
 
         // link other record to current record
-        this.write(record, newLocalId);
-
+        this.write(record, newOtherRecord);
         // link current record to other record
         newOtherRecord.update({
             [this.inverse]: [['link', record]],
@@ -766,23 +636,17 @@ class ModelField {
      *
      * @private
      * @param {mail.model} record
-     * @param {string|string[]|mail.model|mail.model[]|null} newValue
+     * @param {mail.model|mail.model[]|null} newValue
      */
     _setRelationUnlink(record, newValue) {
-        if (!record.exists()) {
-            // current record may be deleted due to causality
-            return;
-        }
         switch (this.relationType) {
             case 'many2many':
             case 'one2many':
                 this._setRelationUnlinkX2Many(record, newValue);
                 break;
             case 'many2one':
-                this._setRelationUnlinkMany2One(record);
-                break;
             case 'one2one':
-                this._setRelationUnlinkOne2One(record);
+                this._setRelationUnlinkX2One(record);
                 break;
         }
     }
@@ -792,97 +656,81 @@ class ModelField {
      *
      * @private
      * @param {mail.model} record
-     * @param {string|mail.model|<string|mail.model>[]|null} newValue
+     * @param {mail.model|mail.model[]|null} newValue
      */
     _setRelationUnlinkX2Many(record, newValue) {
-        // convert newValue to array of localId, null is considered unlink all
-        const otherLocalIds = newValue === null
-            ? [...this.read(record)]
+        // null is considered unlink all
+        const deleteOtherRecords = newValue === null
+            ? this.read(record)
             : this._setRelationConvertX2ManyValue(newValue);
-        const OtherModel = this.env.models[this.to];
+        const otherRecords = this.read(record);
 
-        const prevLocalIds = this.read(record);
         let isDeleting = false;
-        for (const otherLocalId of otherLocalIds) {
-            const wasDeleted = prevLocalIds.delete(otherLocalId);
+        for (const deleteOtherRecord of deleteOtherRecords) {
+            // unlink other record from current record
+            const wasDeleted = otherRecords.delete(deleteOtherRecord);
             if (wasDeleted) {
                 isDeleting = true;
+                // unlink current record from other records
+                deleteOtherRecord.update({
+                    [this.inverse]: [['unlink', record]],
+                });
+                // apply causality
+                if (this.isCausal) {
+                    deleteOtherRecord.delete();
+                }
             }
         }
         if (!isDeleting) {
             return;
         }
-        // unlink other record from current record
-        this.write(record, prevLocalIds);
-
-        for (const otherLocalId of otherLocalIds) {
-            const otherRecord = OtherModel.get(otherLocalId);
-            // other record may be deleted due to causality, avoid useless
-            // processing
-            if (otherRecord) {
-                // unlink current record from other record
-                otherRecord.update({
-                    [this.inverse]: [['unlink', record]],
-                });
-            }
-        }
+        // register dependents
+        this.write(record, otherRecords);
     }
 
     /**
-     * Handling of a `set` 'unlink' of a many2one relational field.
+     * Handling of a `set` 'unlink' of a x2one relational field.
      *
      * @private
      * @param {mail.model} record
      */
-    _setRelationUnlinkMany2One(record) {
-        const otherLocalId = this.read(record);
-        const OtherModel = this.env.models[this.to];
-
+    _setRelationUnlinkX2One(record) {
+        const deleteOtherRecord = this.read(record);
         // other record already unlinked, avoid useless processing
-        if (!otherLocalId) {
+        if (!deleteOtherRecord) {
             return;
         }
-
         // unlink other record from current record
         this.write(record, undefined);
-
-        const otherRecord = OtherModel.get(otherLocalId);
-        // other record may be deleted due to causality, avoid useless
-        // processing
-        if (otherRecord) {
-            // unlink current record from other record
-            otherRecord.update({
-                [this.inverse]: [['unlink', record]],
-            });
+        // unlink current record from other record
+        deleteOtherRecord.update({
+            [this.inverse]: [['unlink', record]],
+        });
+        // apply causality
+        if (this.isCausal) {
+            deleteOtherRecord.delete();
         }
     }
 
     /**
-     * Handling of a `set` 'unlink' of an one2one relational field.
+     * Verifies the given relational value makes sense for the current field.
      *
      * @private
      * @param {mail.model} record
+     * @throws {Error} if record does not satisfy related model
      */
-    _setRelationUnlinkOne2One(record) {
-        const otherLocalId = this.read(record);
-        const OtherModel = this.env.models[this.to];
-
-        // other record already unlinked, avoid useless processing
-        if (!otherLocalId) {
+    _verifyRelationalValue(record) {
+        if (record === undefined) {
+            // ignored value, often result of compute methods
             return;
         }
-
-        // unlink other record from current record
-        this.write(record, undefined);
-
-        const otherRecord = OtherModel.get(otherLocalId);
-        // other record may be deleted due to causality, avoid useless
-        // processing
-        if (otherRecord) {
-            // unlink current record from other record
-            otherRecord.update({
-                [this.inverse]: [['unlink', record]],
-            });
+        if (record === null) {
+            // "unlink-all" value
+            return;
+        }
+        const OtherModel = this.env.models[this.to];
+        if (!OtherModel.get(record.localId)) {
+            throw Error(`Record ${record.localId} is not valid for relational field ${this.fieldName}.`);
         }
     }
 

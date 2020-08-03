@@ -206,33 +206,16 @@ class ModelManager {
         this._updateCycle(() => {
             const Model = record.constructor;
             if (!record.exists()) {
-                // Record has already been deleted.
-                // (e.g. unlinking one of its reverse relation was causal)
-                return;
+                throw Error(`Attempt to delete already deleted record ${record.localId}.`);
             }
-            const data = {};
-            const recordRelations = Object.values(Model.fields)
-                .filter(field => field.fieldType === 'relation');
-            for (const relation of recordRelations) {
-                if (relation.isCausal) {
-                    switch (relation.relationType) {
-                        case 'one2one':
-                        case 'many2one':
-                            if (record[relation.fieldName]) {
-                                record[relation.fieldName].delete();
-                            }
-                            break;
-                        case 'one2many':
-                        case 'many2many':
-                            for (const relatedRecord of record[relation.fieldName]) {
-                                relatedRecord.delete();
-                            }
-                            break;
-                    }
+            for (const field of Object.values(Model.fields)) {
+                if (field.fieldType === 'relation') {
+                    // ensure inverses are properly unlinked
+                    field.set(record, [['unlink-all']]);
                 }
-                data[relation.fieldName] = [['unlink-all']];
             }
-            record.update(data);
+            this._toComputeFields.delete(record);
+            this._toUpdateAfters.delete(record);
             delete Model.__records[record.localId];
         });
     }
@@ -342,6 +325,9 @@ class ModelManager {
      */
     update(record, data) {
         this._updateCycle(() => {
+            if (!record.exists()) {
+                throw Error(`Attempt to update already deleted record ${record.localId}.`);
+            }
             this._updateDirect(record, data);
         });
     }
@@ -890,7 +876,7 @@ class ModelManager {
             for (const [record, fields] of this._toComputeFields) {
                 this._toComputeFields.delete(record);
                 if (!record.exists()) {
-                    continue;
+                    throw Error(`Attempt to execute computes for already deleted record ${record.localId}.`);
                 }
                 while (fields.size > 0) {
                     for (const field of fields) {
@@ -924,9 +910,10 @@ class ModelManager {
             while (this._toUpdateAfters.size > 0) {
                 for (const [record, previous] of this._toUpdateAfters) {
                     this._toUpdateAfters.delete(record);
-                    if (record.exists()) {
-                        record._updateAfter(previous);
+                    if (!record.exists()) {
+                        throw Error(`Attempt to _updateAfter for already deleted record ${record.localId}.`);
                     }
+                    record._updateAfter(previous);
                 }
             }
             this._isHandlingToUpdateAfters = false;

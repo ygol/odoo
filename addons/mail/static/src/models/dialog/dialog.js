@@ -12,10 +12,10 @@ function factory(dependencies) {
          * @override
          */
         delete() {
+            super.delete();
             if (this.manager) {
                 this.manager.unregister(this);
             }
-            super.delete();
         }
 
         //----------------------------------------------------------------------

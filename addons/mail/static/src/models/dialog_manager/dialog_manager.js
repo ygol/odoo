@@ -17,7 +17,6 @@ function factory(dependencies) {
          */
         close(dialog) {
             this.unregister(dialog);
-            dialog.delete();
         }
 
         /**
@@ -45,9 +44,6 @@ function factory(dependencies) {
          * @param {mail.dialog} dialog
          */
         unregister(dialog) {
-            if (!this.allOrdered.includes(dialog)) {
-                return;
-            }
             this.update({
                 _ordered: this._ordered.filter(
                     dialogLocalId => dialogLocalId !== dialog.localId
