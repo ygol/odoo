@@ -313,11 +313,11 @@ var Wysiwyg = Widget.extend({
             mediaDialog.on('cancel', this, resolve);
         });
     },
-    _setColor(colorPickerId, setCommandId, unsetCommandId, color, $dropDownToToggle = undefined) {
+    _setColor(colorpicker, setCommandId, unsetCommandId, color, $dropDownToToggle = undefined) {
         if(color === "") {
             this.editor.execCommand(unsetCommandId);
         } else {
-            if (this.colorPickers[colorPickerId].colorNames.indexOf(color) !== -1) {
+            if (colorpicker.colorNames.indexOf(color) !== -1) {
                 // todo : find a better way to detect and send css variable
                 color = "var(--" + color + ")";
             }
@@ -327,10 +327,11 @@ var Wysiwyg = Widget.extend({
             $dropDownToToggle.find(".dropdown-toggle").dropdown("toggle");
         }
     },
-    async initColorPicker(colorPickerid, setCommandId, unsetCommandId, $dropdownNode) {
-        if (!this.colorPickers[colorPickerid]) {
+    async initColorPicker($dropdownNode, setCommandId, unsetCommandId) {
+        if (!$dropdownNode.hasClass("colorpicker-initalized")) {
+            $dropdownNode.addClass("colorpicker-initalized");
             // Init the colorPalete for this color picker Dropdown.
-            this.colorPickers[colorPickerid] = new ColorPaletteWidget(this, {});
+            const colorpicker = new ColorPaletteWidget(this, {});
 
             // Prevent the dropdown to be closed when click inside it
             $dropdownNode.on('click', (e)=> {
@@ -338,35 +339,33 @@ var Wysiwyg = Widget.extend({
                 e.preventDefault();
             })
             $dropdownNode.find('.dropdown-menu').empty();
-            await this.colorPickers[colorPickerid].appendTo($dropdownNode.find('.dropdown-menu'));
+            await colorpicker.appendTo($dropdownNode.find('.dropdown-menu'));
             // Events listeners to trigger color changes
-            this.colorPickers[colorPickerid].on('custom_color_picked', this, (e) => {
-                this._setColor(colorPickerid, setCommandId, unsetCommandId, e.data.color);
+            colorpicker.on('custom_color_picked', this, (e) => {
+                this._setColor(colorpicker, setCommandId, unsetCommandId, e.data.color);
             });
-            this.colorPickers[colorPickerid].on('color_picked', this, (e) => {
-                this._setColor(colorPickerid, setCommandId, unsetCommandId, e.data.color, $dropdownNode);
+            colorpicker.on('color_picked', this, (e) => {
+                this._setColor(colorpicker, setCommandId, unsetCommandId, e.data.color, $dropdownNode);
             });
         }
     },
     async toggleTextColorPicker() {
-        // Only work if textcolor dropdown is unique. todo : find a better way
-        const $textColorDropdown = $("jw-toolbar .jw-dropdown-textcolor");
+        // event.target equal the current toggle button clicked.
+        const $textColorDropdown = $(event.target).parent();
         await this.initColorPicker(
-            "textColorPicker",
+            $textColorDropdown,
             "colorText",
-            "uncolorText",
-            $textColorDropdown);
+            "uncolorText");
 
         $textColorDropdown.find(".dropdown-toggle").dropdown("toggle");
     },
     async toggleBackgroundColorPicker() {
-        // Only work if background dropdown is unique. todo : find a better way
-        const $backgroundColorDropdown = $("jw-toolbar .jw-dropdown-backgroundcolor");
+        // event.target equal the current toggle button clicked.
+        const $backgroundColorDropdown = $(event.target).parent();
         await this.initColorPicker(
-            "backgroundColorPicker",
+            $backgroundColorDropdown,
             "colorBackground",
-            "uncolorBackground",
-            $backgroundColorDropdown);
+            "uncolorBackground");
 
         $backgroundColorDropdown.find(".dropdown-toggle").dropdown("toggle");
     },
