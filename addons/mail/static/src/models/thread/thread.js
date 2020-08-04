@@ -468,7 +468,7 @@ function factory(dependencies) {
          */
         async markNeedactionMessagesAsRead() {
             await this.async(() =>
-                this.env.models['mail.message'].markAsRead(this.needactionMessages)
+                this.env.models['mail.message'].markAsRead([...this.needactionMessages])
             );
         }
 
@@ -778,7 +778,7 @@ function factory(dependencies) {
          * @returns {mail.attachment[]}
          */
         _computeAllAttachments() {
-            const allAttachments = [...new Set(this.originThreadAttachments.concat(this.attachments))]
+            const allAttachments = [...this.originThreadAttachments].concat([...this.attachments])
                 .sort((a1, a2) => a1.id < a2.id ? 1 : -1);
             return [['replace', allAttachments]];
         }
@@ -906,7 +906,7 @@ function factory(dependencies) {
             const {
                 length: l,
                 [l - 1]: lastMessage,
-            } = this.orderedMessages;
+            } = [...this.orderedMessages];
             return [['replace', lastMessage]];
         }
 
@@ -915,7 +915,7 @@ function factory(dependencies) {
          * @returns {mail.message|undefined}
          */
         _computeLastNeedactionMessage() {
-            const orderedNeedactionMessages = this.needactionMessages.sort(
+            const orderedNeedactionMessages = [...this.needactionMessages].sort(
                 (m1, m2) => m1.id < m2.id ? -1 : 1
             );
             const {
@@ -946,7 +946,7 @@ function factory(dependencies) {
          * @returns {mail.message[]}
          */
         _computeNeedactionMessages() {
-            return [['replace', this.messages.filter(message => message.isNeedaction)]];
+            return [['replace', [...this.messages].filter(message => message.isNeedaction)]];
         }
 
         /**
@@ -954,7 +954,7 @@ function factory(dependencies) {
          * @returns {mail.message[]}
          */
         _computeOrderedMessages() {
-            return [['replace', this.messages.sort((m1, m2) => m1.id < m2.id ? -1 : 1)]];
+            return [['replace', [...this.messages].sort((m1, m2) => m1.id < m2.id ? -1 : 1)]];
         }
 
         /**
@@ -964,7 +964,7 @@ function factory(dependencies) {
         _computeOrderedOtherTypingMembers() {
             return [[
                 'replace',
-                this.orderedTypingMembers.filter(
+                [...this.orderedTypingMembers].filter(
                     member => member !== this.env.messaging.currentPartner
                 ),
             ]];
@@ -977,7 +977,7 @@ function factory(dependencies) {
         _computeOrderedTypingMembers() {
             return [[
                 'replace',
-                this.orderedTypingMemberLocalIds
+                [...this.orderedTypingMemberLocalIds]
                     .map(localId => this.env.models['mail.partner'].get(localId))
                     .filter(member => !!member),
             ]];
@@ -988,26 +988,27 @@ function factory(dependencies) {
          * @returns {string}
          */
         _computeTypingStatusText() {
-            if (this.orderedOtherTypingMembers.length === 0) {
+            const orderedOtherTypingMembers = [...this.orderedOtherTypingMembers];
+            if (orderedOtherTypingMembers.length === 0) {
                 return this.constructor.fields.typingStatusText.default;
             }
-            if (this.orderedOtherTypingMembers.length === 1) {
+            if (orderedOtherTypingMembers.length === 1) {
                 return _.str.sprintf(
                     this.env._t("%s is typing..."),
-                    this.orderedOtherTypingMembers[0].nameOrDisplayName
+                    orderedOtherTypingMembers[0].nameOrDisplayName
                 );
             }
-            if (this.orderedOtherTypingMembers.length === 2) {
+            if (orderedOtherTypingMembers.length === 2) {
                 return _.str.sprintf(
                     this.env._t("%s and %s are typing..."),
-                    this.orderedOtherTypingMembers[0].nameOrDisplayName,
-                    this.orderedOtherTypingMembers[1].nameOrDisplayName
+                    orderedOtherTypingMembers[0].nameOrDisplayName,
+                    orderedOtherTypingMembers[1].nameOrDisplayName
                 );
             }
             return _.str.sprintf(
                 this.env._t("%s, %s and more are typing..."),
-                this.orderedOtherTypingMembers[0].nameOrDisplayName,
-                this.orderedOtherTypingMembers[1].nameOrDisplayName
+                orderedOtherTypingMembers[0].nameOrDisplayName,
+                orderedOtherTypingMembers[1].nameOrDisplayName
             );
         }
 

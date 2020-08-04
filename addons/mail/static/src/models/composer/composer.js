@@ -208,11 +208,11 @@ function factory(dependencies) {
         }
 
         setFirstSuggestedPartnerActive() {
-            if (!this.allSuggestedPartners[0]) {
+            if (this.allSuggestedPartners.length === 0) {
                 return;
             }
             this.update({
-                activeSuggestedPartner: [['link', this.allSuggestedPartners[0]]],
+                activeSuggestedPartner: [['link', this.allSuggestedPartners.first()]],
             });
         }
 
@@ -221,57 +221,56 @@ function factory(dependencies) {
                 return;
             }
             this.update({
-                activeSuggestedPartner: [[
-                    'link',
-                    this.allSuggestedPartners[this.allSuggestedPartners.length - 1]
-                ]],
+                activeSuggestedPartner: [['link', this.allSuggestedPartners.last()]],
             });
         }
 
         setNextSuggestedPartnerActive() {
+            const allSuggestedPartners = [...this.allSuggestedPartners];
             if (this.allSuggestedPartners.length === 0) {
                 return;
             }
-            const activeSuggestedPartnerIndex = this.allSuggestedPartners.findIndex(
+            const activeSuggestedPartnerIndex = allSuggestedPartners.findIndex(
                 suggestedPartner => suggestedPartner === this.activeSuggestedPartner
             );
-            if (activeSuggestedPartnerIndex !== this.allSuggestedPartners.length - 1) {
+            if (activeSuggestedPartnerIndex !== allSuggestedPartners.length - 1) {
                 this.update({
                     activeSuggestedPartner: [[
                         'link',
-                        this.allSuggestedPartners[activeSuggestedPartnerIndex + 1]
+                        allSuggestedPartners[activeSuggestedPartnerIndex + 1]
                     ]],
                 });
             } else {
                 this.update({
-                    activeSuggestedPartner: [['link', this.allSuggestedPartners[0]]],
+                    activeSuggestedPartner: [['link', allSuggestedPartners[0]]],
                 });
             }
         }
 
         setPreviousSuggestedPartnerActive() {
-            if (this.allSuggestedPartners.length === 0) {
+            const allSuggestedPartners = [...this.allSuggestedPartners];
+            if (allSuggestedPartners.length === 0) {
                 return;
             }
-            const activeSuggestedPartnerIndex = this.allSuggestedPartners.findIndex(
+            const activeSuggestedPartnerIndex = allSuggestedPartners.findIndex(
                 suggestedPartner => suggestedPartner === this.activeSuggestedPartner
             );
             if (activeSuggestedPartnerIndex === -1) {
                 this.update({
-                    activeSuggestedPartner: [['link', this.allSuggestedPartners[0]]]
+                    activeSuggestedPartner: [['link', allSuggestedPartners[0]]]
                 });
             } else if (activeSuggestedPartnerIndex !== 0) {
                 this.update({
                     activeSuggestedPartner: [[
                         'link',
-                        this.allSuggestedPartners[activeSuggestedPartnerIndex - 1]
+                        allSuggestedPartners[activeSuggestedPartnerIndex - 1]
                     ]],
                 });
             } else {
                 this.update({
                     activeSuggestedPartner: [[
                         'link',
-                        this.allSuggestedPartners[this.allSuggestedPartners.length - 1]
+                        allSuggestedPartners[allSuggestedPartners.length - 1]
                     ]],
                 });
             }

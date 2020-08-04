@@ -63,6 +63,10 @@ class ModelField {
          */
         this.dependents = dependents;
         /**
+         * The messaging env.
+         */
+        this.env = modelManager.env;
+        /**
          * Name of the field in the definition of fields on model.
          */
         this.fieldName = fieldName;
@@ -252,36 +256,13 @@ class ModelField {
     }
 
     /**
-     * Get the env with messaging.
-     *
-     * @returns {mail/static/src/env/env.js}
-     */
-    get env() {
-        return this.modelManager.env;
-    }
-
-    /**
-     * Get the value associated to this field. Relations must convert record
-     * local ids to records.
+     * Get the value associated to this field.
      *
      * @param {mail.model} record
      * @returns {any}
      */
     get(record) {
-        if (this.fieldType === 'attribute') {
-            return this.read(record);
-        }
-        if (this.fieldType === 'relation') {
-            if (['one2one', 'many2one'].includes(this.relationType)) {
-                return this.read(record);
-            }
-            const res = [];
-            for (const otherRecord of this.read(record)) {
-                res.push(otherRecord);
-            }
-            return res;
-        }
-        throw new Error(`cannot get field with unsupported type ${this.fieldType}.`);
+        return record[this.fieldName];
     }
 
     /**
@@ -292,7 +273,7 @@ class ModelField {
      * @returns {any}
      */
     read(record) {
-        return record.__values[this.fieldName];
+        return record[this.fieldName];
     }
 
     /**
@@ -304,7 +285,7 @@ class ModelField {
      */
     set(record, newVal) {
         if (this.fieldType === 'attribute') {
-            if (this.read(record) === newVal) {
+            if (record[this.fieldName] === newVal) {
                 return;
             }
             this.write(record, newVal);
@@ -356,7 +337,7 @@ class ModelField {
      *   useless potentially heavy computation, like when setting default values.
      */
     write(record, newVal, { registerDependents = true } = {}) {
-        record.__values[this.fieldName] = newVal;
+        record[this.fieldName] = newVal;
         record.__state++;
 
         if (!registerDependents) {
@@ -427,11 +408,9 @@ class ModelField {
         if (['one2many', 'many2many'].includes(relationField.relationType)) {
             const newVal = [];
             for (const otherRecord of record[relationName]) {
-                const OtherModel = otherRecord.constructor;
-                const otherField = OtherModel.fields[relatedFieldName];
-                const otherValue = otherField.get(otherRecord);
+                const otherValue = otherRecord[relatedFieldName];
                 if (otherValue) {
-                    if (otherValue instanceof Array) {
+                    if (typeof otherValue[Symbol.iterator] === 'function') {
                         // avoid nested array if otherField is x2many too
                         // TODO IMP task-2261221
                         for (const v of otherValue) {
@@ -449,9 +428,7 @@ class ModelField {
         }
         const otherRecord = record[relationName];
         if (otherRecord) {
-            const OtherModel = otherRecord.constructor;
-            const otherField = OtherModel.fields[relatedFieldName];
-            const newVal = otherField.get(otherRecord);
+            const newVal = otherRecord[relatedFieldName];
             if (this.fieldType === 'relation') {
                 if (newVal) {
                     return [['replace', newVal]];
@@ -565,7 +542,7 @@ class ModelField {
      */
     _setRelationLinkX2Many(record, newValue) {
         const newOtherRecords = this._setRelationConvertX2ManyValue(newValue);
-        const otherRecords = this.read(record);
+        const otherRecords = record[this.fieldName];
 
         let isAdding = false;
         for (const newOtherRecord of newOtherRecords) {
@@ -604,7 +581,7 @@ class ModelField {
      */
     _setRelationLinkX2One(record, newOtherRecord) {
         this._verifyRelationalValue(newOtherRecord);
-        const prevOtherRecord = this.read(record);
+        const prevOtherRecord = record[this.fieldName];
 
         // other record already linked, avoid linking twice
         if (prevOtherRecord === newOtherRecord) {
@@ -661,9 +638,9 @@ class ModelField {
     _setRelationUnlinkX2Many(record, newValue) {
         // null is considered unlink all
         const deleteOtherRecords = newValue === null
-            ? this.read(record)
+            ? record[this.fieldName]
             : this._setRelationConvertX2ManyValue(newValue);
-        const otherRecords = this.read(record);
+        const otherRecords = record[this.fieldName];
 
         let isDeleting = false;
         for (const deleteOtherRecord of deleteOtherRecords) {
@@ -695,7 +672,7 @@ class ModelField {
      * @param {mail.model} record
      */
     _setRelationUnlinkX2One(record) {
-        const deleteOtherRecord = this.read(record);
+        const deleteOtherRecord = record[this.fieldName];
         // other record already unlinked, avoid useless processing
         if (!deleteOtherRecord) {
             return;

@@ -3,6 +3,7 @@ odoo.define('mail/static/src/model/model_manager.js', function (require) {
 
 const { registry } = require('mail/static/src/model/model_core.js');
 const ModelField = require('mail/static/src/model/model_field.js');
+const { RecordSet } = require('mail/static/src/model/model_recordset.js');
 const { patchClassMethods, patchInstanceMethods } = require('mail/static/src/utils/utils.js');
 
 /**
@@ -119,35 +120,12 @@ class ModelManager {
             for (const data of dataList) {
                 // Make proxified record, so that access to field redirects
                 // to field getter.
-                const record = new Proxy(new Model({ valid: true }), {
-                    get: (target, k) => {
-                        if (!(fieldNames.has(k))) {
-                            // No crash, we allow these reads due to patch()
-                            // implementation details that read on `this._super` even
-                            // if not set before-hand.
-                            return target[k];
-                        }
-                        return Model.fields[k].get(target);
-                    },
-                    set: (target, k, newVal) => {
-                        if (fieldNames.has(k)) {
-                            throw new Error("Forbidden to write on record field without .update()!!");
-                        } else {
-                            // No crash, we allow these writes due to following concerns:
-                            // - patch() implementation details that write on `this._super`
-                            // - record listeners that need setting on this with `.bind(this)`
-                            target[k] = newVal;
-                        }
-                        return true;
-                    },
-                });
+                const record = new Model({ valid: true });
                 record.env = this.env;
                 record.localId = Model._createRecordLocalId(data);
                 if (Model.get(record.localId)) {
                     throw Error(`A record already exists for model "${Model.modelName}" with localId "${record.localId}".`);
                 }
-                // Contains field values of record.
-                record.__values = {};
                 // Contains revNumber of record for checking record update in useStore.
                 record.__state = 0;
 
@@ -161,8 +139,8 @@ class ModelManager {
                     }
                     if (field.fieldType === 'relation') {
                         if (['one2many', 'many2many'].includes(field.relationType)) {
-                            // Ensure X2many relations are Set by defaults.
-                            field.write(record, new Set(), { registerDependents: false });
+                            // Ensure X2many relations are RecordSet by defaults.
+                            field.write(record, new RecordSet(), { registerDependents: false });
                         } else {
                             field.write(record, undefined, { registerDependents: false });
                         }
