@@ -1,13 +1,13 @@
-odoo.define('web.graph_view_tests', async function (require) {
+odoo.define('web.graph_view_tests', function (require) {
 "use strict";
 
-var searchUtils = require('web.searchUtils');
-var GraphView = require('web.GraphView');
-var testUtils = require('web.test_utils');
+const searchUtils = require('web.searchUtils');
+const GraphView = require('web.GraphView');
+const testUtils = require('web.test_utils');
 const { sortBy } = require('web.utils');
 
 const cpHelpers = testUtils.controlPanel;
-var patchDate = testUtils.mock.patchDate;
+const patchDate = testUtils.mock.patchDate;
 
 async function nextTickForGraph() {
     await testUtils.nextTick(); // we avoid a flickering by rendering the chart in the next
@@ -22,8 +22,7 @@ async function createView() {
 }
 
 const { INTERVAL_OPTIONS, PERIOD_OPTIONS, COMPARISON_OPTIONS } = searchUtils;
-
-var INTERVAL_OPTION_IDS = Object.keys(INTERVAL_OPTIONS);
+const INTERVAL_OPTION_IDS = Object.keys(INTERVAL_OPTIONS);
 
 const yearIds = [];
 const otherIds = [];
@@ -43,87 +42,73 @@ for (const yearId of yearIds) {
     }
 }
 const GENERATOR_INDEXES = {};
-let index = 0;
-for (const id of Object.keys(PERIOD_OPTIONS)) {
-    GENERATOR_INDEXES[id] = index++;
-}
+Object.keys(PERIOD_OPTIONS).forEach((id, index) => {
+    GENERATOR_INDEXES[id] = index;
+});
 
 const COMPARISON_OPTION_IDS = Object.keys(COMPARISON_OPTIONS);
 const COMPARISON_OPTION_INDEXES = {};
-index = 0;
-for (const comparisonOptionId of COMPARISON_OPTION_IDS) {
-    COMPARISON_OPTION_INDEXES[comparisonOptionId] = index++;
-}
+COMPARISON_OPTION_IDS.forEach((id, index) => {
+    COMPARISON_OPTION_INDEXES[id] = index;
+});
 
-var f = (a, b) => [].concat(...a.map(d => b.map(e => [].concat(d, e))));
-var cartesian = (a, b, ...c) => (b ? cartesian(f(a, b), ...c) : a);
+const f = (a, b) => [].concat(...a.map(d => b.map(e => [].concat(d, e))));
+const cartesian = (a, b, ...c) => (b ? cartesian(f(a, b), ...c) : a);
 
-var COMBINATIONS = cartesian(COMPARISON_OPTION_IDS, BASIC_DOMAIN_IDS);
-var COMBINATIONS_WITH_DATE = cartesian(COMPARISON_OPTION_IDS, BASIC_DOMAIN_IDS, INTERVAL_OPTION_IDS);
+const COMBINATIONS = cartesian(COMPARISON_OPTION_IDS, BASIC_DOMAIN_IDS);
+const COMBINATIONS_WITH_DATE = cartesian(COMPARISON_OPTION_IDS, BASIC_DOMAIN_IDS, INTERVAL_OPTION_IDS);
 
-QUnit.assert.checkDatasets = function (graph, keys, expectedDatasets) {
+function checkDatasets(assert, graph, keys, expectedDatasets) {
     keys = keys instanceof Array ? keys : [keys];
     expectedDatasets = expectedDatasets instanceof Array ?
-                            expectedDatasets :
-                            [expectedDatasets];
+        expectedDatasets :
+        [expectedDatasets];
     const datasets = graph.renderer.componentRef.comp.chart.data.datasets;
     const actualValues = datasets.map(dataset => _.pick(dataset, keys));
-    this.pushResult({
-        result: _.isEqual(actualValues, expectedDatasets),
-        actual: actualValues,
-        expected: expectedDatasets,
-    });
-};
+    assert.deepEqual(actualValues, expectedDatasets);
+}
 
-QUnit.assert.checkLabels = function (graph, expectedLabels) {
+function checkLabels(assert, graph, expectedLabels) {
     const labels = graph.renderer.componentRef.comp.chart.data.labels;
 
-    this.pushResult({
-        result: _.isEqual(labels, expectedLabels),
-        actual: labels,
-        expected: expectedLabels,
-    });
-};
+    assert.deepEqual(labels, expectedLabels);
+}
 
-QUnit.assert.checkLegend = function (graph, expectedLegendLabels) {
+function checkLegend(assert, graph, expectedLegendLabels) {
     expectedLegendLabels = expectedLegendLabels instanceof Array ?
-                                expectedLegendLabels :
-                                [expectedLegendLabels];
+        expectedLegendLabels :
+        [expectedLegendLabels];
     const chart = graph.renderer.componentRef.comp.chart;
     const actualLegendLabels = chart.config.options.legend.labels.generateLabels(chart).map(o => o.text);
 
-    this.pushResult({
-        result: _.isEqual(actualLegendLabels, expectedLegendLabels),
-        actual: actualLegendLabels,
-        expected: expectedLegendLabels,
-    });
-};
+    assert.deepEqual(actualLegendLabels, expectedLegendLabels);
+}
 
 QUnit.module('Views', {
     beforeEach: function () {
         this.data = {
             foo: {
                 fields: {
-                    foo: {string: "Foo", type: "integer", store: true},
-                    bar: {string: "bar", type: "boolean"},
-                    product_id: {string: "Product", type: "many2one", relation: 'product', store: true},
-                    color_id: {string: "Color", type: "many2one", relation: 'color'},
-                    date: {string: "Date", type: 'date', store: true, sortable: true},
+                    foo: { string: "Foo", type: "integer", store: true },
+                    bar: { string: "bar", type: "boolean" },
+                    product_id: { string: "Product", type: "many2one", relation: 'product', store: true },
+                    color_id: { string: "Color", type: "many2one", relation: 'color' },
+                    date: { string: "Date", type: 'date', store: true, sortable: true },
                 },
                 records: [
-                    {id: 1, foo: 3, bar: true, product_id: 37, date: "2016-01-01"},
-                    {id: 2, foo: 53, bar: true, product_id: 37, color_id: 7, date: "2016-01-03"},
-                    {id: 3, foo: 2, bar: true, product_id: 37, date: "2016-03-04"},
-                    {id: 4, foo: 24, bar: false, product_id: 37, date: "2016-03-07"},
-                    {id: 5, foo: 4, bar: false, product_id: 41, date: "2016-05-01"},
-                    {id: 6, foo: 63, bar: false, product_id: 41},
-                    {id: 7, foo: 42, bar: false, product_id: 41},
-                    {id: 8, foo: 48, bar: false, product_id: 41, date: "2016-04-01"},
+                    { id: 1, foo: 3, bar: true, product_id: 37, date: "2016-01-01" },
+                    { id: 2, foo: 53, bar: true, product_id: 37, color_id: 7, date: "2016-01-03" },
+                    { id: 3, foo: 2, bar: true, product_id: 37, date: "2016-03-04" },
+                    { id: 4, foo: 24, bar: false, product_id: 37, date: "2016-03-07" },
+                    { id: 5, foo: 4, bar: false, product_id: 41, date: "2016-05-01" },
+                    { id: 6, foo: 63, bar: false, product_id: 41 },
+                    { id: 7, foo: 42, bar: false, product_id: 41 },
+                    { id: 8, foo: 48, bar: false, product_id: 41, date: "2016-04-01" },
                 ]
             },
             product: {
                 fields: {
-                    name: {string: "Product Name", type: "char"}
+                    name: { string: "Product Name", type: "char" }
                 },
                 records: [{
                     id: 37,
@@ -135,7 +120,7 @@ QUnit.module('Views', {
             },
             color: {
                 fields: {
-                    name: {string: "Color", type: "char"}
+                    name: { string: "Color", type: "char" }
                 },
                 records: [{
                     id: 7,
@@ -159,27 +144,27 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners">' +
-                        '<field name="bar"/>' +
+                '<field name="bar"/>' +
                 '</graph>',
         });
 
         assert.containsOnce(graph, 'div.o_graph_canvas_container canvas',
-                    "should contain a div with a canvas element");
+            "should contain a div with a canvas element");
         assert.strictEqual(graph.renderer.props.mode, "bar",
             "should be in bar chart mode by default");
 
-        assert.checkLabels(graph, [[true], [false]]);
-        assert.checkDatasets(graph,
+        checkLabels(assert, graph, [[true], [false]]);
+        checkDatasets(assert, graph,
             ['backgroundColor', 'data', 'label', 'originIndex', 'stack'],
             {
                 backgroundColor: "#1f77b4",
-                data: [3,5],
+                data: [3, 5],
                 label: "Count",
                 originIndex: 0,
                 stack: "",
             }
         );
-        assert.checkLegend(graph, 'Count');
+        checkLegend(assert, graph, 'Count');
 
         graph.destroy();
     });
@@ -192,7 +177,7 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners" type="pie">' +
-                        '<field name="bar"/>' +
+                '<field name="bar"/>' +
                 '</graph>',
         });
 
@@ -209,7 +194,7 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph title="Partners" type="pie">' +
-                        '<field name="bar"/>' +
+                '<field name="bar"/>' +
                 '</graph>',
         });
 
@@ -227,7 +212,7 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners">' +
-                        '<field name="id"/>' +
+                '<field name="id"/>' +
                 '</graph>',
             mockRPC: function (route, args) {
                 if (args.method === 'read_group') {
@@ -243,19 +228,19 @@ QUnit.module('Views', {
     QUnit.test('switching mode', async function (assert) {
         assert.expect(6);
 
-        var graph = await createView({
+        const graph = await createView({
             View: GraphView,
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners" type="line">' +
-                        '<field name="bar"/>' +
+                '<field name="bar"/>' +
                 '</graph>',
         });
 
         assert.strictEqual(graph.renderer.props.mode, "line", "should be in line chart mode by default");
         assert.doesNotHaveClass(graph.$buttons.find('button[data-mode="bar"]'), 'active',
             'bar type button should not be active');
-        assert.hasClass(graph.$buttons.find('button[data-mode="line"]'),'active',
+        assert.hasClass(graph.$buttons.find('button[data-mode="line"]'), 'active',
             'line type button should be active');
 
         await testUtils.dom.click(graph.$buttons.find('button[data-mode="bar"]'));
@@ -264,7 +249,7 @@ QUnit.module('Views', {
         assert.strictEqual(graph.renderer.props.mode, "bar", "should be in bar chart mode by default");
         assert.doesNotHaveClass(graph.$buttons.find('button[data-mode="line"]'), 'active',
             'line type button should not be active');
-        assert.hasClass(graph.$buttons.find('button[data-mode="bar"]'),'active',
+        assert.hasClass(graph.$buttons.find('button[data-mode="bar"]'), 'active',
             'bar type button should be active');
 
         graph.destroy();
@@ -272,15 +257,15 @@ QUnit.module('Views', {
 
     QUnit.test('displaying line chart with only 1 data point', async function (assert) {
         assert.expect(1);
-         // this test makes sure the line chart does not crash when only one data
+        // this test makes sure the line chart does not crash when only one data
         // point is displayed.
-        this.data.foo.records = this.data.foo.records.slice(0,1);
+        this.data.foo.records = this.data.foo.records.slice(0, 1);
         const graph = await createView({
             View: GraphView,
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners" type="line">' +
-                        '<field name="bar"/>' +
+                '<field name="bar"/>' +
                 '</graph>',
         });
 
@@ -302,25 +287,25 @@ QUnit.module('Views', {
             groupBy: ['product_id', 'bar', 'color_id'],
         });
 
-        assert.checkLabels(graph, [['xphone'], ['xpad']]);
-        assert.checkLegend(graph, ['true/Undefined', 'true/red', 'false/Undefined']);
+        checkLabels(assert, graph, [['xphone'], ['xpad']]);
+        checkLegend(assert, graph, ['true/Undefined', 'true/red', 'false/Undefined']);
 
         await testUtils.dom.click(graph.$buttons.find('button[data-mode="line"]'));
         await nextTickForGraph();
 
-        assert.checkLabels(graph, [['xphone'], ['xpad']]);
-        assert.checkLegend(graph, ['true/Undefined', 'true/red', 'false/Undefined']);
+        checkLabels(assert, graph, [['xphone'], ['xpad']]);
+        checkLegend(assert, graph, ['true/Undefined', 'true/red', 'false/Undefined']);
 
         await testUtils.dom.click(graph.$buttons.find('button[data-mode="pie"]'));
         await nextTickForGraph();
 
-        assert.checkLabels(graph, [
+        checkLabels(assert, graph, [
             ["xphone", true, "Undefined"],
-            ["xphone", true,"red"],
+            ["xphone", true, "red"],
             ["xphone", false, "Undefined"],
             ["xpad", false, "Undefined"]
         ]);
-        assert.checkLegend(graph, [
+        checkLegend(assert, graph, [
             'xphone/true/Undefined',
             'xphone/true/red',
             'xphone/false/Undefined',
@@ -340,7 +325,7 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Gloups">' +
-                        '<field name="product_id"/>' +
+                '<field name="product_id"/>' +
                 '</graph>',
             mockRPC: function (route, args) {
                 rpcCount++;
@@ -351,7 +336,7 @@ QUnit.module('Views', {
         await cpHelpers.toggleMenuItem(graph, "Foo");
         await nextTickForGraph();
 
-        assert.checkLegend(graph, 'Foo');
+        checkLegend(assert, graph, 'Foo');
         assert.strictEqual(rpcCount, 2, "should have done 2 rpcs (2 readgroups)");
 
         graph.destroy();
@@ -366,11 +351,11 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Gloups">' +
-                        '<field name="product_id"/>' +
+                '<field name="product_id"/>' +
                 '</graph>',
         });
         assert.containsNone(graph, 'div.o_graph_canvas_container canvas',
-                    "should not contain a div with a canvas element");
+            "should not contain a div with a canvas element");
         assert.containsOnce(graph, 'div.o_view_nocontent',
             "should display the no content helper");
 
@@ -379,14 +364,14 @@ QUnit.module('Views', {
 
     QUnit.test('no content helper (pie chart)', async function (assert) {
         assert.expect(2);
-        this.data.foo.records =  [];
+        this.data.foo.records = [];
 
         const graph = await createView({
             View: GraphView,
             model: "foo",
             data: this.data,
             arch: '<graph type="pie">' +
-                        '<field name="product_id"/>' +
+                '<field name="product_id"/>' +
                 '</graph>',
         });
 
@@ -409,14 +394,14 @@ QUnit.module('Views', {
             data: this.data,
             context: { search_default_date_filter: 1, },
             arch: '<graph type="pie">' +
-                        '<field name="product_id"/>' +
+                '<field name="product_id"/>' +
                 '</graph>',
             archs: {
                 'foo,false,search': `
-                    <search>
-                        <filter name="date_filter" domain="[]" date="date" default_period="third_quarter"/>
-                    </search>
-                `,
+                <search>
+                    <filter name="date_filter" domain="[]" date="date" default_period="third_quarter"/>
+                </search>
+            `,
             },
         });
 
@@ -425,8 +410,8 @@ QUnit.module('Views', {
         await nextTickForGraph();
 
         assert.containsNone(graph, 'div.o_view_nocontent',
-        "should not display the no content helper");
-        assert.checkLegend(graph, 'No data');
+            "should not display the no content helper");
+        checkLegend(assert, graph, 'No data');
 
         unpatchDate();
         graph.destroy();
@@ -440,19 +425,19 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Gloups">' +
-                        '<field name="product_id"/>' +
+                '<field name="product_id"/>' +
                 '</graph>',
         });
 
         assert.containsOnce(graph, 'div.o_graph_canvas_container canvas',
-                    "should contain a div with a canvas element");
+            "should contain a div with a canvas element");
         assert.containsNone(graph, 'div.o_view_nocontent',
             "should not display the no content helper");
 
-        await testUtils.graph.reload(graph, {domain: [['product_id', '=', 4]]});
+        await testUtils.graph.reload(graph, { domain: [['product_id', '=', 4]] });
         await nextTickForGraph();
         assert.containsNone(graph, 'div.o_graph_canvas_container canvas',
-                    "should not contain a div with a canvas element");
+            "should not contain a div with a canvas element");
         assert.containsOnce(graph, 'div.o_view_nocontent',
             "should display the no content helper");
         graph.destroy();
@@ -466,15 +451,15 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Gloups">' +
-                        '<field name="product_id"/>' +
+                '<field name="product_id"/>' +
                 '</graph>',
         });
 
-        assert.checkLabels(graph, [['xphone'], ['xpad']]);
+        checkLabels(assert, graph, [['xphone'], ['xpad']]);
 
-        await testUtils.graph.reload(graph, {groupBy: ['color_id']});
+        await testUtils.graph.reload(graph, { groupBy: ['color_id'] });
         await nextTickForGraph();
-        assert.checkLabels(graph, [['Undefined'], ['red']]);
+        checkLabels(assert, graph, [['Undefined'], ['red']]);
 
         graph.destroy();
     });
@@ -487,7 +472,7 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Gloups">' +
-                        '<field name="product_id"/>' +
+                '<field name="product_id"/>' +
                 '</graph>',
         });
 
@@ -521,7 +506,7 @@ QUnit.module('Views', {
             },
         }, "context should be correct");
 
-        await testUtils.graph.reload(graph, {groupBy: ['product_id', 'color_id']}); // change groupbys
+        await testUtils.graph.reload(graph, { groupBy: ['product_id', 'color_id'] }); // change groupbys
         await nextTickForGraph();
         assert.deepEqual(graph.getOwnedQueryParams(), {
             context: {
@@ -537,7 +522,7 @@ QUnit.module('Views', {
     QUnit.test('correctly uses graph_ keys from the context', async function (assert) {
         assert.expect(5);
 
-        const lastOne = _.last(this.data.foo.records);
+        const lastOne = this.data.foo.records[this.data.foo.records.length - 1];
         lastOne.color_id = 14;
 
         const graph = await createView({
@@ -554,15 +539,15 @@ QUnit.module('Views', {
             },
         });
         // check measure name is present in legend
-        assert.checkLegend(graph, 'Foo');
+        checkLegend(assert, graph, 'Foo');
         // check mode
         assert.strictEqual(graph.renderer.props.mode, "line", "should be in line chart mode");
         assert.doesNotHaveClass(graph.$buttons.find('button[data-mode="bar"]'), 'active',
             'bar chart button should not be active');
-        assert.hasClass(graph.$buttons.find('button[data-mode="line"]'),'active',
+        assert.hasClass(graph.$buttons.find('button[data-mode="line"]'), 'active',
             'line chart button should be active');
         // check groupby values ('Undefined' is rejected in line chart) are in labels
-        assert.checkLabels(graph, [['red'], ['black']]);
+        checkLabels(assert, graph, [['red'], ['black']]);
 
         graph.destroy();
     });
@@ -570,7 +555,7 @@ QUnit.module('Views', {
     QUnit.test('correctly use group_by key from the context', async function (assert) {
         assert.expect(1);
 
-        const lastOne = _.last(this.data.foo.records);
+        const lastOne = this.data.foo.records[this.data.foo.records.length - 1];
         lastOne.color_id = 14;
 
         const graph = await createView({
@@ -587,7 +572,7 @@ QUnit.module('Views', {
             },
         });
         // check groupby values ('Undefined' is rejected in line chart) are in labels
-        assert.checkLabels(graph, [['red'], ['black']]);
+        checkLabels(assert, graph, [['red'], ['black']]);
 
         graph.destroy();
     });
@@ -595,7 +580,7 @@ QUnit.module('Views', {
     QUnit.test('correctly uses graph_ keys from the context (at reload)', async function (assert) {
         assert.expect(7);
 
-        const lastOne = _.last(this.data.foo.records);
+        const lastOne = this.data.foo.records[this.data.foo.records.length - 1];
         lastOne.color_id = 14;
 
         const graph = await createView({
@@ -606,7 +591,7 @@ QUnit.module('Views', {
         });
 
         assert.strictEqual(graph.renderer.props.mode, "bar", "should be in bar chart mode");
-        assert.hasClass(graph.$buttons.find('button[data-mode="bar"]'),'active',
+        assert.hasClass(graph.$buttons.find('button[data-mode="bar"]'), 'active',
             'bar chart button should be active');
 
         const reloadParams = {
@@ -620,15 +605,15 @@ QUnit.module('Views', {
         await nextTickForGraph();
 
         // check measure
-        assert.checkLegend(graph, 'Foo');
+        checkLegend(assert, graph, 'Foo');
         // check mode
         assert.strictEqual(graph.renderer.props.mode, "line", "should be in line chart mode");
         assert.doesNotHaveClass(graph.$buttons.find('button[data-mode="bar"]'), 'active',
             'bar chart button should not be active');
-        assert.hasClass(graph.$buttons.find('button[data-mode="line"]'),'active',
+        assert.hasClass(graph.$buttons.find('button[data-mode="line"]'), 'active',
             'line chart button should be active');
         // check groupby values ('Undefined' is rejected in line chart) are in labels
-        assert.checkLabels(graph, [['red'], ['black']]);
+        checkLabels(assert, graph, [['red'], ['black']]);
 
         graph.destroy();
     });
@@ -641,8 +626,8 @@ QUnit.module('Views', {
             model: 'foo',
             data: this.data,
             arch: '<graph>' +
-                    '<field name="product_id" type="row"/>' +
-                    '<field name="foo" type="measure"/>' +
+                '<field name="product_id" type="row"/>' +
+                '<field name="foo" type="measure"/>' +
                 '</graph>',
             mockRPC: function (route, args) {
                 if (args.method === 'read_group') {
@@ -653,7 +638,7 @@ QUnit.module('Views', {
             },
         });
 
-        await testUtils.graph.reload(graph, {groupBy: []});
+        await testUtils.graph.reload(graph, { groupBy: [] });
         await nextTickForGraph();
 
         graph.destroy();
@@ -667,8 +652,8 @@ QUnit.module('Views', {
             model: 'foo',
             data: this.data,
             arch: '<graph>' +
-                    '<field name="product_id" type="row"/>' +
-                    '<field name="foo" type="measure"/>' +
+                '<field name="product_id" type="row"/>' +
+                '<field name="foo" type="measure"/>' +
                 '</graph>',
             mockRPC: function (route, args) {
                 if (args.method === 'read_group') {
@@ -679,15 +664,15 @@ QUnit.module('Views', {
             },
         });
 
-        assert.checkLabels(graph, [['xphone'], ['xpad']]);
-        assert.checkLegend(graph, 'Foo');
-        assert.checkDatasets(graph, 'data', {data: [82, 157]});
+        checkLabels(assert, graph, [['xphone'], ['xpad']]);
+        checkLegend(assert, graph, 'Foo');
+        checkDatasets(assert, graph, 'data', { data: [82, 157] });
 
-        await testUtils.graph.reload(graph, {groupBy: []});
+        await testUtils.graph.reload(graph, { groupBy: [] });
         await nextTickForGraph();
-        assert.checkLabels(graph, [['xphone'], ['xpad']]);
-        assert.checkLegend(graph, 'Foo');
-        assert.checkDatasets(graph, 'data', {data: [82, 157]});
+        checkLabels(assert, graph, [['xphone'], ['xpad']]);
+        checkLegend(assert, graph, 'Foo');
+        checkDatasets(assert, graph, 'data', { data: [82, 157] });
 
         graph.destroy();
     });
@@ -700,14 +685,14 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners">' +
-                        '<field name="product_id" type="measure"/>' +
+                '<field name="product_id" type="measure"/>' +
                 '</graph>',
         });
         assert.containsOnce(graph, 'div.o_graph_canvas_container canvas',
-                    "should contain a div with a canvas element");
-        assert.checkLabels(graph, [[]]);
-        assert.checkLegend(graph, 'Product');
-        assert.checkDatasets(graph, 'data', {data: [2]});
+            "should contain a div with a canvas element");
+        checkLabels(assert, graph, [[]]);
+        checkLegend(assert, graph, 'Product');
+        checkDatasets(assert, graph, 'data', { data: [2] });
 
         graph.destroy();
     });
@@ -715,23 +700,23 @@ QUnit.module('Views', {
     QUnit.test('use a many2one as a measure should work (with groupBy)', async function (assert) {
         assert.expect(5);
 
-        var graph = await createView({
+        const graph = await createView({
             View: GraphView,
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners">' +
-                        '<field name="bar" type="row"/>' +
-                        '<field name="product_id" type="measure"/>' +
+                '<field name="bar" type="row"/>' +
+                '<field name="product_id" type="measure"/>' +
                 '</graph>',
         });
         assert.containsOnce(graph, 'div.o_graph_canvas_container canvas',
-                    "should contain a div with a canvas element");
+            "should contain a div with a canvas element");
 
         assert.strictEqual(graph.renderer.props.mode, "bar",
             "should be in bar chart mode by default");
-        assert.checkLabels(graph, [[true], [false]]);
-        assert.checkLegend(graph, 'Product');
-        assert.checkDatasets(graph, 'data', {data: [1, 2]});
+        checkLabels(assert, graph, [[true], [false]]);
+        checkLegend(assert, graph, 'Product');
+        checkDatasets(assert, graph, 'data', { data: [1, 2] });
 
         graph.destroy();
     });
@@ -744,7 +729,7 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners">' +
-                        '<field name="product_id" type="row"/>' +
+                '<field name="product_id" type="row"/>' +
                 '</graph>',
             viewOptions: {
                 additionalMeasures: ['product_id'],
@@ -757,9 +742,9 @@ QUnit.module('Views', {
         await cpHelpers.toggleMenuItem(graph, "Product");
         await nextTickForGraph();
 
-        assert.checkLabels(graph, [['xphone'], ['xpad']]);
-        assert.checkLegend(graph, 'Product');
-        assert.checkDatasets(graph, 'data', {data: [1, 1]});
+        checkLabels(assert, graph, [['xphone'], ['xpad']]);
+        checkLegend(assert, graph, 'Product');
+        checkDatasets(assert, graph, 'data', { data: [1, 1] });
 
         graph.destroy();
     });
@@ -772,7 +757,7 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners">' +
-                        '<field name="product_id"/>' +
+                '<field name="product_id"/>' +
                 '</graph>',
         });
         assert.notOk(graph.measures.product_id,
@@ -788,7 +773,7 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners">' +
-                        '<field name="product_id"/>' +
+                '<field name="product_id"/>' +
                 '</graph>',
             viewOptions: {
                 additionalMeasures: ['product_id'],
@@ -855,11 +840,11 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners" type="pie">' +
-                        '<field name="bar"/>' +
+                '<field name="bar"/>' +
                 '</graph>',
         });
         graph._giveFocus();
-        assert.ok(true,"should not generate any error");
+        assert.ok(true, "should not generate any error");
         graph.destroy();
     });
 
@@ -867,16 +852,16 @@ QUnit.module('Views', {
         assert.expect(2);
 
         const data = this.data;
-        data.foo.fields.bouh = {string: "bouh", type: "integer"};
+        data.foo.fields.bouh = { string: "bouh", type: "integer" };
 
-        var graph = await createView({
+        const graph = await createView({
             View: GraphView,
             model: "foo",
             data: data,
             arch: '<graph string="Partners">' +
-                        '<field name="foo" type="measure"/>' +
-                        '<field name="bouh" type="measure"/>' +
-                  '</graph>',
+                '<field name="foo" type="measure"/>' +
+                '<field name="bouh" type="measure"/>' +
+                '</graph>',
         });
 
         await cpHelpers.toggleMenu(graph, "Measures");
@@ -894,26 +879,28 @@ QUnit.module('Views', {
         const graph = await createView({
             View: GraphView,
             model: "foo",
-            groupBy:['date'],
+            groupBy: ['date'],
             data: this.data,
             arch: '<graph string="Partners" type="line">' +
-                        '<field name="bar"/>' +
+                '<field name="bar"/>' +
                 '</graph>',
         });
 
-        function _indexOf (label) {
-            return graph.renderer.componentRef.comp.chart.data.labels.findIndex(l => _.isEqual(l, label));
+        function indexOf(label) {
+            return graph.renderer.componentRef.comp.chart.data.labels.findIndex(
+                (lab) => JSON.stringify(lab) === JSON.stringify(label)
+            );
         }
 
-        assert.strictEqual(_indexOf(['Undefined']), -1);
+        assert.strictEqual(indexOf(['Undefined']), -1);
 
         await testUtils.dom.click(graph.$buttons.find('.o_graph_button[data-mode=bar]'));
         await nextTickForGraph();
-        assert.ok(_indexOf(['Undefined']) >= 0);
+        assert.ok(indexOf(['Undefined']) >= 0);
 
         await testUtils.dom.click(graph.$buttons.find('.o_graph_button[data-mode=pie]'));
         await nextTickForGraph();
-        assert.ok(_indexOf(['Undefined']) >= 0);
+        assert.ok(indexOf(['Undefined']) >= 0);
 
         graph.destroy();
     });
@@ -924,32 +911,34 @@ QUnit.module('Views', {
         const graph = await createView({
             View: GraphView,
             model: "foo",
-            groupBy:['date', 'color_id'],
+            groupBy: ['date', 'color_id'],
             data: this.data,
             arch: '<graph string="Partners" type="line">' +
-                        '<field name="bar"/>' +
+                '<field name="bar"/>' +
                 '</graph>',
         });
 
-        function _indexOf (label) {
-            return graph.renderer.componentRef.comp.chart.data.labels.findIndex(l => _.isEqual(l, label));
+        function indexOf(label) {
+            return graph.renderer.componentRef.comp.chart.data.labels.findIndex(
+                (lab) => JSON.stringify(lab) === JSON.stringify(label)
+            );
         }
 
-        assert.strictEqual(_indexOf(['Undefined']), -1);
+        assert.strictEqual(indexOf(['Undefined']), -1);
 
         await testUtils.dom.click(graph.$buttons.find('.o_graph_button[data-mode=bar]'));
         await nextTickForGraph();
-        assert.ok(_indexOf(['Undefined']) >= 0);
+        assert.ok(indexOf(['Undefined']) >= 0);
 
         await testUtils.dom.click(graph.$buttons.find('.o_graph_button[data-mode=pie]'));
         await nextTickForGraph();
-        var labels = graph.renderer.componentRef.comp.chart.data.labels;
+        const labels = graph.renderer.componentRef.comp.chart.data.labels;
         assert.ok(labels.filter(label => /Undefined/.test(label.join(''))).length >= 1);
 
         // Undefined should not appear after switching back to line chart
         await testUtils.dom.click(graph.$buttons.find('.o_graph_button[data-mode=line]'));
         await nextTickForGraph();
-        assert.strictEqual(_indexOf(['Undefined']), -1);
+        assert.strictEqual(indexOf(['Undefined']), -1);
 
         graph.destroy();
     });
@@ -962,27 +951,27 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners" type="bar">' +
-                        '<field name="foo" type="measure"/>' +
+                '<field name="foo" type="measure"/>' +
                 '</graph>',
         });
 
 
-        assert.checkLabels(graph, [[]]);
-        assert.checkLegend(graph, 'Foo');
-        assert.checkDatasets(graph, 'data', {data: [239]});
+        checkLabels(assert, graph, [[]]);
+        checkLegend(assert, graph, 'Foo');
+        checkDatasets(assert, graph, 'data', { data: [239] });
 
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=line]'));
         await nextTickForGraph();
         // the labels in line chart is translated in this case to avoid to have a single
         // point at the left of the screen and chart to seem empty.
-        assert.checkLabels(graph, [[''], [], ['']]);
-        assert.checkLegend(graph, 'Foo');
-        assert.checkDatasets(graph, 'data', {data: [undefined, 239]});
+        checkLabels(assert, graph, [[''], [], ['']]);
+        checkLegend(assert, graph, 'Foo');
+        checkDatasets(assert, graph, 'data', { data: [undefined, 239] });
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=pie]'));
         await nextTickForGraph();
-        assert.checkLabels(graph, [[]]);
-        assert.checkLegend(graph, 'Total');
-        assert.checkDatasets(graph, 'data', {data: [239]});
+        checkLabels(assert, graph, [[]]);
+        checkLegend(assert, graph, 'Total');
+        checkDatasets(assert, graph, 'data', { data: [239] });
 
         graph.destroy();
     });
@@ -995,27 +984,27 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners" type="bar">' +
-                        '<field name="foo" type="measure"/>' +
-                        '<field name="bar" type="row"/>' +
+                '<field name="foo" type="measure"/>' +
+                '<field name="bar" type="row"/>' +
                 '</graph>',
         });
 
-        assert.checkLabels(graph, [[true], [false]]);
-        assert.checkLegend(graph, 'Foo');
-        assert.checkDatasets(graph, 'data', {data: [58, 181]});
+        checkLabels(assert, graph, [[true], [false]]);
+        checkLegend(assert, graph, 'Foo');
+        checkDatasets(assert, graph, 'data', { data: [58, 181] });
 
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=line]'));
         await nextTickForGraph();
-        assert.checkLabels(graph, [[true], [false]]);
-        assert.checkLegend(graph, 'Foo');
-        assert.checkDatasets(graph, 'data', {data: [58, 181]});
+        checkLabels(assert, graph, [[true], [false]]);
+        checkLegend(assert, graph, 'Foo');
+        checkDatasets(assert, graph, 'data', { data: [58, 181] });
 
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=pie]'));
         await nextTickForGraph();
 
-        assert.checkLabels(graph, [[true], [false]]);
-        assert.checkLegend(graph, ['true', 'false']);
-        assert.checkDatasets(graph, 'data', {data: [58, 181]});
+        checkLabels(assert, graph, [[true], [false]]);
+        checkLegend(assert, graph, ['true', 'false']);
+        checkDatasets(assert, graph, 'data', { data: [58, 181] });
 
         graph.destroy();
     });
@@ -1026,14 +1015,14 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: '<graph string="Partners" type="bar">' +
-                        '<field name="foo" type="measure"/>' +
+                '<field name="foo" type="measure"/>' +
                 '</graph>',
             groupBy: ['product_id', 'color_id'],
         });
 
-        assert.checkLabels(graph, [['xphone'], ['xpad']]);
-        assert.checkLegend(graph, ['Undefined', 'red']);
-        assert.checkDatasets(graph, ['label', 'data'], [
+        checkLabels(assert, graph, [['xphone'], ['xpad']]);
+        checkLegend(assert, graph, ['Undefined', 'red']);
+        checkDatasets(assert, graph, ['label', 'data'], [
             {
                 label: 'Undefined',
                 data: [29, 157],
@@ -1046,9 +1035,9 @@ QUnit.module('Views', {
 
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=line]'));
         await nextTickForGraph();
-        assert.checkLabels(graph, [['xphone'], ['xpad']]);
-        assert.checkLegend(graph, ['Undefined', 'red']);
-        assert.checkDatasets(graph, ['label', 'data'], [
+        checkLabels(assert, graph, [['xphone'], ['xpad']]);
+        checkLegend(assert, graph, ['Undefined', 'red']);
+        checkDatasets(assert, graph, ['label', 'data'], [
             {
                 label: 'Undefined',
                 data: [29, 157],
@@ -1061,11 +1050,11 @@ QUnit.module('Views', {
 
         await testUtils.dom.click(graph.$('.o_graph_button[data-mode=pie]'));
         await nextTickForGraph();
-        assert.checkLabels(graph, [['xphone', 'Undefined'], ['xphone', 'red'], ['xpad', 'Undefined']]);
-        assert.checkLegend(graph, ['xphone/Undefined', 'xphone/red', 'xpad/Undefined']);
-        assert.checkDatasets(graph, ['label', 'data'], {
-                label: '',
-                data: [29, 53, 157],
+        checkLabels(assert, graph, [['xphone', 'Undefined'], ['xphone', 'red'], ['xpad', 'Undefined']]);
+        checkLegend(assert, graph, ['xphone/Undefined', 'xphone/red', 'xpad/Undefined']);
+        checkDatasets(assert, graph, ['label', 'data'], {
+            label: '',
+            data: [29, 53, 157],
         });
 
         graph.destroy();
@@ -1077,17 +1066,17 @@ QUnit.module('Views', {
         const graph = await createView({
             View: GraphView,
             model: "foo",
-            groupBy:['date:year','product_id', 'date', 'date:quarter'],
+            groupBy: ['date:year', 'product_id', 'date', 'date:quarter'],
             data: this.data,
             arch: '<graph string="Partners" type="line">' +
-                        '<field name="bar"/>' +
+                '<field name="bar"/>' +
                 '</graph>',
         });
 
-        assert.checkLabels(graph, [["January 2016"], ["March 2016"], ["May 2016"], ["April 2016"]]);
+        checkLabels(assert, graph, [["January 2016"], ["March 2016"], ["May 2016"], ["April 2016"]]);
         // mockReadGroup does not always sort groups -> May 2016 is before April 2016 for that reason.
-        assert.checkLegend(graph, ["xphone","xpad"]);
-        assert.checkDatasets(graph, ['label', 'data'], [
+        checkLegend(assert, graph, ["xphone", "xpad"]);
+        checkDatasets(assert, graph, ['label', 'data'], [
             {
                 label: 'xphone',
                 data: [2, 2, 0, 0],
@@ -1126,7 +1115,7 @@ QUnit.module('Views', {
 
         // bar mode
         assert.strictEqual(graph.renderer.props.mode, "bar", "should be in bar chart mode");
-        assert.checkDatasets(graph, ['domain'], {
+        checkDatasets(assert, graph, ['domain'], {
             domain: [[["bar", "=", true]], [["bar", "=", false]]],
         });
 
@@ -1190,7 +1179,7 @@ QUnit.module('Views', {
         });
 
         assert.strictEqual(graph.renderer.props.mode, "bar", "should be in bar chart mode");
-        assert.checkDatasets(graph, ['domain'], {
+        checkDatasets(assert, graph, ['domain'], {
             domain: [[["bar", "=", true]], [["bar", "=", false]]],
         });
 
@@ -1222,7 +1211,7 @@ QUnit.module('Views', {
         });
 
         assert.strictEqual(graph.renderer.props.mode, "bar", "should be in bar chart mode");
-        assert.checkDatasets(graph, ['domain'], {
+        checkDatasets(assert, graph, ['domain'], {
             domain: [[["bar", "=", true]], [["bar", "=", false]]],
         });
 
@@ -1242,7 +1231,7 @@ QUnit.module('Views', {
         assert.expect(18);
 
         // change first record from foo as there are 4 records count for each product
-        this.data.product.records.push({ id: 38, display_name: "zphone"});
+        this.data.product.records.push({ id: 38, display_name: "zphone" });
         this.data.foo.records[7].product_id = 38;
 
         const graph = await createView({
@@ -1250,57 +1239,57 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: `<graph string="Partners" order="desc">
-                        <field name="product_id"/>
-                </graph>`,
+                    <field name="product_id"/>
+            </graph>`,
         });
 
         assert.containsN(graph, 'button[data-order]', 2,
             "there should be two order buttons for sorting axis labels in bar mode");
-        assert.checkLegend(graph, 'Count', 'measure should be by count');
+        checkLegend(assert, graph, 'Count', 'measure should be by count');
         assert.hasClass(graph.$('button[data-order="desc"]'), 'active',
             'sorting should be applie on descending order by default when sorting="desc"');
-        assert.checkDatasets(graph, 'data', {data: [4, 3, 1]});
+        checkDatasets(assert, graph, 'data', { data: [4, 3, 1] });
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="asc"]'));
         await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="asc"]'), 'active',
             "ascending order should be applied");
-        assert.checkDatasets(graph, 'data', {data: [1, 3, 4]});
+        checkDatasets(assert, graph, 'data', { data: [1, 3, 4] });
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
         await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order button should be active");
-        assert.checkDatasets(graph, 'data', { data: [4, 3, 1] });
+        checkDatasets(assert, graph, 'data', { data: [4, 3, 1] });
 
         // again click on descending button to deactivate order button
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
         await nextTickForGraph();
         assert.doesNotHaveClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order button should not be active");
-        assert.checkDatasets(graph, 'data', {data: [4, 3, 1]});
+        checkDatasets(assert, graph, 'data', { data: [4, 3, 1] });
 
         // set line mode
         await testUtils.dom.click(graph.$buttons.find('button[data-mode="line"]'));
         await nextTickForGraph();
         assert.containsN(graph, 'button[data-order]', 2,
             "there should be two order buttons for sorting axis labels in line mode");
-        assert.checkLegend(graph, 'Count', 'measure should be by count');
+        checkLegend(assert, graph, 'Count', 'measure should be by count');
         assert.doesNotHaveClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order should be applied");
-        assert.checkDatasets(graph, 'data', {data: [4, 3, 1]});
+        checkDatasets(assert, graph, 'data', { data: [4, 3, 1] });
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="asc"]'));
         await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="asc"]'), 'active',
             "ascending order button should be active");
-        assert.checkDatasets(graph, 'data', { data: [1, 3, 4] });
+        checkDatasets(assert, graph, 'data', { data: [1, 3, 4] });
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
         await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order button should be active");
-        assert.checkDatasets(graph, 'data', { data: [4, 3, 1] });
+        checkDatasets(assert, graph, 'data', { data: [4, 3, 1] });
 
         graph.destroy();
 
@@ -1318,34 +1307,34 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: `<graph string="Partners">
-                        <field name="product_id"/>
-                        <field name="bar"/>
-                </graph>`,
+                    <field name="product_id"/>
+                    <field name="bar"/>
+            </graph>`,
         });
 
-        assert.checkLegend(graph, ["true","false"], 'measure should be by count');
+        checkLegend(assert, graph, ["true", "false"], 'measure should be by count');
         assert.containsN(graph, 'button[data-order]', 2,
             "there should be two order buttons for sorting axis labels");
-        assert.checkDatasets(graph, 'data', [{data: [3, 0, 0]}, {data: [1, 3, 1]}]);
+        checkDatasets(assert, graph, 'data', [{ data: [3, 0, 0] }, { data: [1, 3, 1] }]);
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="asc"]'));
         await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="asc"]'), 'active',
             "ascending order should be applied by default");
-        assert.checkDatasets(graph, 'data', [{ data: [1, 3, 1] }, { data: [0, 0, 3] }]);
+        checkDatasets(assert, graph, 'data', [{ data: [1, 3, 1] }, { data: [0, 0, 3] }]);
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
         await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="desc"]'), 'active',
             "ascending order button should be active");
-        assert.checkDatasets(graph, 'data', [{data: [1, 3, 1]}, {data: [3, 0, 0]}]);
+        checkDatasets(assert, graph, 'data', [{ data: [1, 3, 1] }, { data: [3, 0, 0] }]);
 
         // again click on descending button to deactivate order button
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
         await nextTickForGraph();
         assert.doesNotHaveClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order button should not be active");
-        assert.checkDatasets(graph, 'data', [{ data: [3, 0, 0] }, { data: [1, 3, 1] }]);
+        checkDatasets(assert, graph, 'data', [{ data: [3, 0, 0] }, { data: [1, 3, 1] }]);
 
         graph.destroy();
 
@@ -1360,10 +1349,10 @@ QUnit.module('Views', {
 
         // add few more records to data to have grouped data date wise
         const data = [
-            {id: 9, foo: 48, bar: false, product_id: 41, date: "2016-04-01"},
-            {id: 10, foo: 49, bar: false, product_id: 41, date: "2016-04-01"},
-            {id: 11, foo: 50, bar: true, product_id: 37, date: "2016-01-03"},
-            {id: 12, foo: 50, bar: true, product_id: 41, date: "2016-01-03"},
+            { id: 9, foo: 48, bar: false, product_id: 41, date: "2016-04-01" },
+            { id: 10, foo: 49, bar: false, product_id: 41, date: "2016-04-01" },
+            { id: 11, foo: 50, bar: true, product_id: 37, date: "2016-01-03" },
+            { id: 12, foo: 50, bar: true, product_id: 41, date: "2016-01-03" },
         ];
 
         Object.assign(this.data.foo.records, data);
@@ -1373,35 +1362,35 @@ QUnit.module('Views', {
             model: "foo",
             data: this.data,
             arch: `<graph string="Partners">
-                        <field name="product_id"/>
-                        <field name="date"/>
-                </graph>`,
+                    <field name="product_id"/>
+                    <field name="date"/>
+            </graph>`,
             groupBy: ['date', 'product_id']
         });
 
-        assert.checkLegend(graph, ["xpad","xphone","zphone"], 'measure should be by count');
+        checkLegend(assert, graph, ["xpad", "xphone", "zphone"], 'measure should be by count');
         assert.containsN(graph, 'button[data-order]', 2,
             "there should be two order buttons for sorting axis labels");
-        assert.checkDatasets(graph, 'data', [{data: [2, 1, 1, 2]}, {data: [0, 1, 0, 0]}, {data: [1, 0, 0, 0]}]);
+        checkDatasets(assert, graph, 'data', [{ data: [2, 1, 1, 2] }, { data: [0, 1, 0, 0] }, { data: [1, 0, 0, 0] }]);
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="asc"]'));
         await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="asc"]'), 'active',
             "ascending order should be applied by default");
-        assert.checkDatasets(graph, 'data', [{ data: [1, 1, 2, 2] }, { data: [0, 1, 0, 0] }, { data: [0, 0, 0, 1] }]);
+        checkDatasets(assert, graph, 'data', [{ data: [1, 1, 2, 2] }, { data: [0, 1, 0, 0] }, { data: [0, 0, 0, 1] }]);
 
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
         await nextTickForGraph();
         assert.hasClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order button should be active");
-        assert.checkDatasets(graph, 'data', [{data: [1, 0, 0, 0]}, {data: [2, 2, 1, 1]}, {data: [0, 0, 1, 0]}]);
+        checkDatasets(assert, graph, 'data', [{ data: [1, 0, 0, 0] }, { data: [2, 2, 1, 1] }, { data: [0, 0, 1, 0] }]);
 
         // again click on descending button to deactivate order button
         await testUtils.dom.click(graph.$buttons.find('button[data-order="desc"]'));
         await nextTickForGraph();
         assert.doesNotHaveClass(graph.$('button[data-order="desc"]'), 'active',
             "descending order button should not be active");
-        assert.checkDatasets(graph, 'data', [{ data: [2, 1, 1, 2] }, { data: [0, 1, 0, 0] }, { data: [1, 0, 0, 0] }]);
+        checkDatasets(assert, graph, 'data', [{ data: [2, 1, 1, 2] }, { data: [0, 1, 0, 0] }, { data: [1, 0, 0, 0] }]);
 
         graph.destroy();
     });
@@ -1417,18 +1406,18 @@ QUnit.module('Views', {
             this.data.foo.records[6].date = '2016-12-15';
             this.data.foo.records[7].date = undefined;
 
-            this.data.foo.records.push({id: 9, foo: 48, bar: false, product_id: 41, color_id: 7, date: "2016-12-01"});
-            this.data.foo.records.push({id: 10, foo: 17, bar: true, product_id: 41, color_id: 7, date: "2016-12-01"});
-            this.data.foo.records.push({id: 11, foo: 45, bar: true, product_id: 37, color_id: 14, date: "2016-12-01"});
-            this.data.foo.records.push({id: 12, foo: 48, bar: false, product_id: 37, color_id: 7, date: "2016-12-10"});
-            this.data.foo.records.push({id: 13, foo: 48, bar: false, product_id: undefined, color_id: 14, date: "2016-11-30"});
-            this.data.foo.records.push({id: 14, foo: -50, bar: true, product_id: 41, color_id: 14, date: "2016-12-15"});
-            this.data.foo.records.push({id: 15, foo: 53, bar: false, product_id: 41, color_id: 14, date: "2016-11-01"});
-            this.data.foo.records.push({id: 16, foo: 53, bar: true, product_id: undefined, color_id: 7, date: "2016-09-01"});
-            this.data.foo.records.push({id: 17, foo: 48, bar: false, product_id: 41, color_id: undefined, date: "2016-08-01"});
-            this.data.foo.records.push({id: 18, foo: -156, bar: false, product_id: 37, color_id: undefined, date: "2016-07-15"});
-            this.data.foo.records.push({id: 19, foo: 31, bar: false, product_id: 41, color_id: 14, date: "2016-12-15"});
-            this.data.foo.records.push({id: 20, foo: 109, bar: true, product_id: 41, color_id: 7, date: "2015-06-01"});
+            this.data.foo.records.push({ id: 9, foo: 48, bar: false, product_id: 41, color_id: 7, date: "2016-12-01" });
+            this.data.foo.records.push({ id: 10, foo: 17, bar: true, product_id: 41, color_id: 7, date: "2016-12-01" });
+            this.data.foo.records.push({ id: 11, foo: 45, bar: true, product_id: 37, color_id: 14, date: "2016-12-01" });
+            this.data.foo.records.push({ id: 12, foo: 48, bar: false, product_id: 37, color_id: 7, date: "2016-12-10" });
+            this.data.foo.records.push({ id: 13, foo: 48, bar: false, product_id: undefined, color_id: 14, date: "2016-11-30" });
+            this.data.foo.records.push({ id: 14, foo: -50, bar: true, product_id: 41, color_id: 14, date: "2016-12-15" });
+            this.data.foo.records.push({ id: 15, foo: 53, bar: false, product_id: 41, color_id: 14, date: "2016-11-01" });
+            this.data.foo.records.push({ id: 16, foo: 53, bar: true, product_id: undefined, color_id: 7, date: "2016-09-01" });
+            this.data.foo.records.push({ id: 17, foo: 48, bar: false, product_id: 41, color_id: undefined, date: "2016-08-01" });
+            this.data.foo.records.push({ id: 18, foo: -156, bar: false, product_id: 37, color_id: undefined, date: "2016-07-15" });
+            this.data.foo.records.push({ id: 19, foo: 31, bar: false, product_id: 41, color_id: 14, date: "2016-12-15" });
+            this.data.foo.records.push({ id: 20, foo: 109, bar: true, product_id: 41, color_id: 7, date: "2015-06-01" });
 
             this.data.foo.records = sortBy(this.data.foo.records, 'date');
 
@@ -1439,20 +1428,20 @@ QUnit.module('Views', {
                 model: "foo",
                 data: this.data,
                 arch: `
-                    <graph string="Partners" type="bar">
-                        <field name="foo" type="measure"/>
-                    </graph>
-                `,
+                <graph string="Partners" type="bar">
+                    <field name="foo" type="measure"/>
+                </graph>
+            `,
                 archs: {
                     'foo,false,search': `
-                        <search>
-                            <filter name="date" string="Date" context="{'group_by': 'date'}"/>
-                            <filter name="date_filter" string="Date Filter" date="date"/>
-                            <filter name="bar" string="Bar" context="{'group_by': 'bar'}"/>
-                            <filter name="product_id" string="Product" context="{'group_by': 'product_id'}"/>
-                            <filter name="color_id" string="Color" context="{'group_by': 'color_id'}"/>
-                        </search>
-                    `,
+                    <search>
+                        <filter name="date" string="Date" context="{'group_by': 'date'}"/>
+                        <filter name="date_filter" string="Date Filter" date="date"/>
+                        <filter name="bar" string="Bar" context="{'group_by': 'bar'}"/>
+                        <filter name="product_id" string="Product" context="{'group_by': 'product_id'}"/>
+                        <filter name="color_id" string="Color" context="{'group_by': 'color_id'}"/>
+                    </search>
+                `,
                 },
                 viewOptions: {
                     additionalMeasures: ['product_id'],
@@ -1461,14 +1450,14 @@ QUnit.module('Views', {
 
             this.graph = graph;
 
-            var checkOnlyToCheck = true;
-            var exhaustiveTest = false || checkOnlyToCheck;
+            const checkOnlyToCheck = true;
+            const exhaustiveTest = false || checkOnlyToCheck;
 
-            var self = this;
+            const self = this;
             async function* graphGenerator(combinations) {
-                var i = 0;
+                let i = 0;
                 while (i < combinations.length) {
-                    var combination = combinations[i];
+                    const combination = combinations[i];
                     if (!checkOnlyToCheck || combination.toString() in self.combinationsToCheck) {
                         await self.setConfig(combination);
                         await nextTickForGraph();
@@ -1483,25 +1472,25 @@ QUnit.module('Views', {
             }
 
             this.combinationsToCheck = {};
-            this.testCombinations = async function (combinations, assert) {
-                for await (var combination of graphGenerator(combinations)) {
+            this.testCombinations = async (combinations, assert) => {
+                for await (const combination of graphGenerator(combinations)) {
                     // we can check particular combinations here
-                    if (combination.toString() in self.combinationsToCheck) {
-                        if (self.combinationsToCheck[combination].errorMessage) {
+                    if (combination.toString() in this.combinationsToCheck) {
+                        if (this.combinationsToCheck[combination].errorMessage) {
                             assert.strictEqual(
                                 graph.$('.o_nocontent_help p').eq(1).text().trim(),
-                                self.combinationsToCheck[combination].errorMessage
+                                this.combinationsToCheck[combination].errorMessage
                             );
                         } else {
-                            assert.checkLabels(graph, self.combinationsToCheck[combination].labels);
-                            assert.checkLegend(graph, self.combinationsToCheck[combination].legend);
-                            assert.checkDatasets(graph, ['label', 'data'], self.combinationsToCheck[combination].datasets);
+                            checkLabels(assert, graph, this.combinationsToCheck[combination].labels);
+                            checkLegend(assert, graph, this.combinationsToCheck[combination].legend);
+                            checkDatasets(assert, graph, ['label', 'data'], this.combinationsToCheck[combination].datasets);
                         }
                     }
                 }
             };
 
-            this.selectTimeRanges = async function (comparisonOptionId, basicDomainId) {
+            this.selectTimeRanges = async (comparisonOptionId, basicDomainId) => {
                 const facetEls = graph.el.querySelectorAll('.o_searchview_facet');
                 const facetIndex = [...facetEls].findIndex(el => !!el.querySelector('span.fa-filter'));
                 if (facetIndex > -1) {
@@ -1520,7 +1509,7 @@ QUnit.module('Views', {
             };
 
             // groupby menu is assumed to be closed
-            this.selectDateIntervalOption = async function (intervalOption) {
+            this.selectDateIntervalOption = async (intervalOption) => {
                 await cpHelpers.toggleGroupByMenu(graph);
                 const productWasSelected = cpHelpers.isItemSelected(graph, 'Product');
 
@@ -1546,7 +1535,7 @@ QUnit.module('Views', {
             };
 
             // groupby menu is assumed to be closed
-            this.selectGroupBy = async function (groupByName) {
+            this.selectGroupBy = async (groupByName) => {
                 await cpHelpers.toggleGroupByMenu(graph);
                 if (!cpHelpers.isItemSelected(graph, groupByName)) {
                     await cpHelpers.toggleMenuItem(graph, groupByName);
@@ -1554,14 +1543,14 @@ QUnit.module('Views', {
                 await cpHelpers.toggleGroupByMenu(graph);
             };
 
-            this.setConfig = async function (combination) {
+            this.setConfig = async (combination) => {
                 await this.selectTimeRanges(combination[0], combination[1]);
                 if (combination.length === 3) {
-                    await self.selectDateIntervalOption(combination[2]);
+                    await this.selectDateIntervalOption(combination[2]);
                 }
             };
 
-            this.setMode = async function (mode) {
+            this.setMode = async (mode) => {
                 await testUtils.dom.click($(`.o_control_panel .o_graph_button[data-mode="${mode}"]`));
                 await nextTickForGraph();
             };
@@ -1592,7 +1581,7 @@ QUnit.module('Views', {
                 }
             };
 
-            var combinations = COMBINATIONS_WITH_DATE;
+            const combinations = COMBINATIONS_WITH_DATE;
             await this.testCombinations(combinations, assert);
             await this.setMode('line');
             await this.testCombinations(combinations, assert);
@@ -1608,11 +1597,11 @@ QUnit.module('Views', {
                 ],
                 datasets: [
                     {
-                        data: [ 110, 48, 26, 53, 63, 4],
+                        data: [110, 48, 26, 53, 63, 4],
                         label: "December 2016",
                     },
                     {
-                        data: [ 53, 24, 2, 48, 0, 0],
+                        data: [53, 24, 2, 48, 0, 0],
                         label: "November 2016",
                     }
                 ],
@@ -1646,7 +1635,7 @@ QUnit.module('Views', {
                 }
             };
 
-            var combinations = COMBINATIONS;
+            const combinations = COMBINATIONS;
             await this.testCombinations(combinations, assert);
 
             this.combinationsToCheck['previous_period,this_year__this_month'] = {
@@ -1666,7 +1655,7 @@ QUnit.module('Views', {
             await this.setMode('line');
             await this.testCombinations(combinations, assert);
 
-            this.combinationsToCheck['previous_period,this_year__this_month'] =  {
+            this.combinationsToCheck['previous_period,this_year__this_month'] = {
                 labels: [[]],
                 legend: ["Total"],
                 datasets: [
@@ -1691,22 +1680,22 @@ QUnit.module('Views', {
 
             this.combinationsToCheck = {
                 'previous_period,this_year__this_month': {
-                    labels: [["xpad"], ["xphone"],["Undefined"]],
+                    labels: [["xpad"], ["xphone"], ["Undefined"]],
                     legend: ["December 2016", "November 2016"],
                     datasets: [
                         {
-                            data: [ 155, 149, 0],
+                            data: [155, 149, 0],
                             label: "December 2016",
                         },
                         {
-                            data: [ 53, 26, 48],
+                            data: [53, 26, 48],
                             label: "November 2016",
                         }
                     ],
                 }
             };
 
-            var combinations = COMBINATIONS;
+            const combinations = COMBINATIONS;
             await this.selectGroupBy('Product');
             await this.testCombinations(combinations, assert);
 
@@ -1732,11 +1721,11 @@ QUnit.module('Views', {
                 legend: ["xpad", "xphone", "Undefined"],
                 datasets: [
                     {
-                        data: [ 155, 149, 0],
+                        data: [155, 149, 0],
                         label: "December 2016",
                     },
                     {
-                        data: [ 53, 26, 48],
+                        data: [53, 26, 48],
                         label: "November 2016",
                     }
                 ],
@@ -1763,30 +1752,30 @@ QUnit.module('Views', {
                     ],
                     datasets: [
                         {
-                          data: [ 65, 0, 23, 0, 63, 4],
-                          label: "December 2016/xpad"
+                            data: [65, 0, 23, 0, 63, 4],
+                            label: "December 2016/xpad"
                         },
                         {
-                          data: [ 45, 48, 3, 53, 0, 0],
-                          label: "December 2016/xphone"
+                            data: [45, 48, 3, 53, 0, 0],
+                            label: "December 2016/xphone"
                         },
                         {
-                          data: [ 53, 0, 0, 0],
-                          label: "November 2016/xpad"
+                            data: [53, 0, 0, 0],
+                            label: "November 2016/xpad"
                         },
                         {
-                          data: [ 0, 24, 2, 0],
-                          label: "November 2016/xphone"
+                            data: [0, 24, 2, 0],
+                            label: "November 2016/xphone"
                         },
                         {
-                          data: [ 0, 0, 0, 48],
-                          label: "November 2016/Undefined"
+                            data: [0, 0, 0, 48],
+                            label: "November 2016/Undefined"
                         }
-                      ]
+                    ]
                 }
             };
 
-            var combinations = COMBINATIONS_WITH_DATE;
+            const combinations = COMBINATIONS_WITH_DATE;
             await this.selectGroupBy('Product');
             await this.testCombinations(combinations, assert);
             await this.setMode('line');
@@ -1808,14 +1797,14 @@ QUnit.module('Views', {
                 ],
                 datasets: [
                     {
-                      "data": [ 65, 45, 48, 3, 23, 53, 63, 4, 0],
-                      "label": "December 2016"
+                        "data": [65, 45, 48, 3, 23, 53, 63, 4, 0],
+                        "label": "December 2016"
                     },
                     {
-                      "data": [ 53, 0, 24, 2, 0, 0, 0, 0, 48],
-                      "label": "November 2016"
+                        "data": [53, 0, 24, 2, 0, 0, 0, 0, 48],
+                        "label": "November 2016"
                     }
-                  ],
+                ],
             };
 
             await this.setMode('pie');
@@ -1831,7 +1820,7 @@ QUnit.module('Views', {
 
             this.combinationsToCheck = {
                 'previous_period,this_year,quarter': {
-                    labels: [["xphone"], ["xpad"],["Undefined"]],
+                    labels: [["xphone"], ["xpad"], ["Undefined"]],
                     legend: [
                         "2016/Q3 2016",
                         "2016/Q4 2016",
@@ -1885,7 +1874,7 @@ QUnit.module('Views', {
 
             this.combinationsToCheck['previous_period,this_year,quarter'] = {
                 errorMessage: 'Pie chart cannot mix positive and negative numbers. ' +
-                                'Try to change your domain to only display positive results'
+                    'Try to change your domain to only display positive results'
             };
             await this.setMode('pie');
             await this.testCombinations(combinations, assert);
@@ -1897,7 +1886,7 @@ QUnit.module('Views', {
 
             this.combinationsToCheck = {
                 'previous_year,this_year__last_month': {
-                    labels: [["xpad"], ["xphone"],["Undefined"] ],
+                    labels: [["xpad"], ["xphone"], ["Undefined"]],
                     legend: ["November 2016/false", "November 2016/true"],
                     datasets: [
                         {
@@ -1912,13 +1901,13 @@ QUnit.module('Views', {
                 }
             };
 
-            var combinations = COMBINATIONS;
+            const combinations = COMBINATIONS;
             await this.selectGroupBy('Product');
             await this.selectGroupBy('Bar');
             await this.testCombinations(combinations, assert);
 
             this.combinationsToCheck['previous_year,this_year__last_month'] = {
-                labels: [["xpad"], ["xphone"] ],
+                labels: [["xpad"], ["xphone"]],
                 legend: ["November 2016/false", "November 2016/true"],
                 datasets: [
                     {
@@ -1936,7 +1925,7 @@ QUnit.module('Views', {
 
             this.combinationsToCheck['previous_year,this_year__last_month'] = {
                 labels:
-                [["xpad", false], ["xphone", false], ["xphone", true], ["Undefined", false], ["No data"]],
+                    [["xpad", false], ["xphone", false], ["xphone", true], ["Undefined", false], ["No data"]],
                 legend: [
                     "xpad/false",
                     "xphone/false",
@@ -1946,14 +1935,14 @@ QUnit.module('Views', {
                 ],
                 datasets: [
                     {
-                      "data": [ 53, 24, 2, 48],
-                      "label": "November 2016"
+                        "data": [53, 24, 2, 48],
+                        "label": "November 2016"
                     },
                     {
-                      "data": [ undefined, undefined, undefined, undefined, 1],
-                      "label": "November 2015"
+                        "data": [undefined, undefined, undefined, undefined, 1],
+                        "label": "November 2015"
                     }
-                  ],
+                ],
             };
             await this.setMode('pie');
             await this.testCombinations(combinations, assert);

@@ -8,27 +8,25 @@ odoo.define('web.GraphRenderer', function (require) {
     const patchMixin = require('web.patchMixin');
     const { sortBy } = require('web.utils');
 
-    const COLORS = ["#1f77b4", "#ff7f0e", "#aec7e8", "#ffbb78", "#2ca02c", "#98df8a", "#d62728",
-    "#ff9896", "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", "#e377c2", "#f7b6d2",
-    "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d", "#17becf", "#9edae5"];
-
+    const COLORS = [
+        "#1f77b4", "#ff7f0e", "#aec7e8", "#ffbb78", "#2ca02c", "#98df8a", "#d62728",
+        "#ff9896", "#9467bd", "#c5b0d5", "#8c564b", "#c49c94", "#e377c2", "#f7b6d2",
+        "#7f7f7f", "#c7c7c7", "#bcbd22", "#dbdb8d", "#17becf", "#9edae5",
+    ];
+    const DEFAULT_BG = "#d3d3d3";
     // used to format values in tooltips and yAxes.
     const FORMAT_OPTIONS = {
         // allow to decide if utils.human_number should be used
-        humanReadable: value => {
-            return Math.abs(value) >= 1000;
-        },
+        humanReadable: value => Math.abs(value) >= 1000,
         // with the choices below, 1236 is represented by 1.24k
         minDigits: 1,
         decimals: 2,
         // avoid comma separators for thousands in numbers when human_number is used
-        formatterCallback: str => {
-            return str;
-        },
+        formatterCallback: str => str,
     };
-
     // hide top legend when too many items for device size
-    const MAX_LEGEND_LENGTH = 4 * (Math.max(1, config.device.size_class));
+    const MAX_LEGEND_LENGTH = 4 * Math.max(1, config.device.size_class);
+    const RGB_REGEX = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
 
     /**
      * @param {number} index
@@ -39,64 +37,77 @@ odoo.define('web.GraphRenderer', function (require) {
     }
 
     /**
+     * @param {Object} chartArea
+     * @returns {string}
+     */
+    function getMaxWidth({ left, right }) {
+        return Math.floor((right - left) / 1.618) + "px";
+    }
+
+    /**
      * @param {string} hex
      * @param {number} opacity
      * @returns {string}
      */
     function hexToRGBA(hex, opacity) {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        const rgb = result.slice(1, 4).map(n => {
-            return parseInt(n, 16);
-        }).join(',');
-        return 'rgba(' + rgb + ',' + opacity + ')';
+        const rgb = RGB_REGEX
+            .exec(hex)
+            .slice(1, 4)
+            .map(n => parseInt(n, 16))
+            .join(',');
+        return `rgba(${rgb},${opacity})`;
     }
 
     class GraphRenderer extends OwlAbstractRenderer {
         constructor() {
             super(...arguments);
+
             this.noDataLabel = [this.env._t("No data")];
         }
 
         mounted() {
+            this._computeDerivedProps(this.props);
             this._renderGraphMainContent();
         }
 
         patched() {
+            this._computeDerivedProps(this.props);
             this._renderGraphMainContent();
         }
 
-        //----------------------------------------------------------------------
+        //---------------------------------------------------------------------
         // Getters
-        //----------------------------------------------------------------------
+        //---------------------------------------------------------------------
 
-        get canvas() {
-            return this.el.querySelector('canvas');
-        }
-
+        /**
+         * @returns {HTMLDivElement | null}
+         */
         get container() {
             return this.el.querySelector('div.o_graph_canvas_container');
         }
 
-        //----------------------------------------------------------------------
+        //---------------------------------------------------------------------
         // Private
-        //----------------------------------------------------------------------
+        //---------------------------------------------------------------------
 
         /**
-         * This function aims to remove a suitable number of lines from the tooltip in order to make
-         * it reasonably visible. A message indicating the number of lines is added if necessary.
+         * This function aims to remove a suitable number of lines from the
+         * tooltip in order to make it reasonably visible. A message indicating
+         * the number of lines is added if necessary.
          * @private
          * @param {Number} maxTooltipHeight this the max height in pixels of the tooltip
          */
         _adjustTooltipHeight(maxTooltipHeight) {
             const sizeOneLine = this.tooltip.querySelector('tbody tr').clientHeight;
             const tbodySize = this.tooltip.querySelector('tbody').clientHeight;
-            let toKeep = Math.floor((maxTooltipHeight - (this.tooltip.clientHeight - tbodySize)) / sizeOneLine) - 1;
-            toKeep = Math.max(0, toKeep); // used to avoid toKeep = -1
+            const toKeep = Math.max(0, Math.floor(
+                (maxTooltipHeight - (this.tooltip.clientHeight - tbodySize)
+                ) / sizeOneLine) - 1); // used to avoid toKeep = -1
             const lines = this.tooltip.querySelectorAll('tbody tr');
             const toRemove = lines.length - toKeep;
             if (toRemove > 0) {
-                for (let i = toKeep; i < lines.length; ++i) {
-                    lines[i].remove();
+                for (let index = toKeep; index < lines.length; ++index) {
+                    lines[index].remove();
                 }
                 const tr = document.createElement('tr');
                 const td = document.createElement('td');
@@ -108,36 +119,32 @@ odoo.define('web.GraphRenderer', function (require) {
         }
 
         /**
-         * Compute various objects based on the param props.
+         * Computes various objects based on the param props.
+         * @private
          * @param {Object} props
          */
-        _computeDerivedProps(props = this.props) {
-            this.propsCopy = props;
+        _computeDerivedProps(props) {
+            this.propsCopy = Object.assign({}, props);
             const filteredDataPoints = this._filterDataPoints();
             this.processedDataPoints = this._sortDataPoints(filteredDataPoints);
 
             this._setNoContentHelper();
 
-            if (!this.noContentHelperData) {
-                if (this.propsCopy.comparisonFieldIndex === 0) {
-                    this.dateClasses = this._getDateClasses(this.processedDataPoints);
-                }
-                switch (this.propsCopy.mode) {
-                    case 'bar':
-                        this._prepareBarChartConfig();
-                        break;
-                    case 'line':
-                        this._prepareLineChartConfig();
-                        break;
-                    case 'pie':
-                        this._preparePieChartConfig();
-                        break;
-                }
+            if (this.noContentHelperData) {
+                return;
+            }
+            if (this.propsCopy.comparisonFieldIndex === 0) {
+                this.dateClasses = this._getDateClasses(this.processedDataPoints);
+            }
+            switch (this.propsCopy.mode) {
+                case 'bar': this._prepareBarChartConfig(); break;
+                case 'line': this._prepareLineChartConfig(); break;
+                case 'pie': this._preparePieChartConfig(); break;
             }
         }
 
         /**
-         * This function creates a custom HTML tooltip.
+         * Creates a custom HTML tooltip.
          * @private
          * @param {Object} tooltipModel see chartjs documentation
          */
@@ -146,40 +153,28 @@ odoo.define('web.GraphRenderer', function (require) {
             if (this.tooltip) {
                 this.tooltip.remove();
             }
-            if (tooltipModel.opacity === 0) {
-                return;
-            }
-            if (tooltipModel.dataPoints.length === 0) {
+            if (tooltipModel.opacity === 0 || tooltipModel.dataPoints.length === 0) {
                 return;
             }
             if (this._isRedirectionEnabled()) {
                 this.el.style.cursor = 'pointer';
             }
 
-            const chartArea = this.chart.chartArea;
-            const chartAreaLeft = chartArea.left;
-            const chartAreaRight = chartArea.right;
-            const chartAreaTop = chartArea.top;
+            const chartAreaTop = this.chart.chartArea.top;
             const rendererTop = this.el.getBoundingClientRect().top;
 
-            const maxTooltipLabelWidth = Math.floor((chartAreaRight - chartAreaLeft) / 1.618) + 'px';
-            const tooltipItems = this._getTooltipItems(tooltipModel);
-
-            const template = document.createElement('template');
-            const tooltipHtml = this.env.qweb.renderToString('GraphRenderer.CustomTooltip', {
+            this.tooltip = this._renderTemplate("web.GraphRenderer.CustomTooltip", {
+                maxWidth: getMaxWidth(this.chart.chartArea),
                 measure: this.propsCopy.fields[this.propsCopy.measure].string,
-                tooltipItems: tooltipItems,
-                maxWidth: maxTooltipLabelWidth,
+                tooltipItems: this._getTooltipItems(tooltipModel),
             });
-            template.innerHTML = tooltipHtml;
-            this.tooltip = template.content.firstChild;
 
             this.container.prepend(this.tooltip);
 
             let top;
             const tooltipHeight = this.tooltip.clientHeight;
             const minTopAllowed = Math.floor(chartAreaTop);
-            const maxTopAllowed = Math.floor(window.innerHeight - rendererTop - tooltipHeight) - 2;
+            const maxTopAllowed = Math.floor(window.innerHeight - (rendererTop + tooltipHeight)) - 2;
             const y = Math.floor(tooltipModel.y);
 
             if (minTopAllowed <= maxTopAllowed) {
@@ -204,7 +199,7 @@ odoo.define('web.GraphRenderer', function (require) {
                 // so we position the tooltip at the minimal position and
                 // cut it the minimum possible.
                 top = minTopAllowed;
-                const maxTooltipHeight = window.innerHeight - (rendererTop + chartAreaTop) -2;
+                const maxTooltipHeight = window.innerHeight - (rendererTop + chartAreaTop) - 2;
                 this._adjustTooltipHeight(maxTooltipHeight);
             }
 
@@ -213,7 +208,7 @@ odoo.define('web.GraphRenderer', function (require) {
         }
 
         /**
-         * Filter out some dataPoints because they would lead to bad graphics.
+         * Filters out some dataPoints because they would lead to bad graphics.
          * The filtering is done with respect to the graph view mode.
          * Note that the method does not alter this.state.dataPoints, since we
          * want to be able to change of mode without fetching data again:
@@ -224,29 +219,29 @@ odoo.define('web.GraphRenderer', function (require) {
          */
         _filterDataPoints() {
             let dataPoints = [];
-            if (['bar', 'pie'].includes(this.propsCopy.mode)) {
-                dataPoints = this.propsCopy.dataPoints.filter(dataPt => {
-                    return dataPt.count > 0;
-                });
-            } else if (this.propsCopy.mode === 'line') {
+            if (this.propsCopy.mode === "line") {
                 let counts = 0;
-                for (const dataPt of this.propsCopy.dataPoints) {
-                    if (dataPt.labels[0] !== this.env._t("Undefined")) {
-                        dataPoints.push(dataPt);
+                for (const dataPoint of this.propsCopy.dataPoints) {
+                    if (dataPoint.labels[0] !== this.env._t("Undefined")) {
+                        dataPoints.push(dataPoint);
                     }
-                    counts += dataPt.count;
+                    counts += dataPoint.count;
                 }
                 // data points with zero count might have been created on purpose
                 // we only remove them if there are no data point with positive count
                 if (counts === 0) {
                     dataPoints = [];
                 }
+            } else {
+                dataPoints = this.propsCopy.dataPoints.filter(
+                    dataPoint => dataPoint.count > 0
+                );
             }
             return dataPoints;
         }
 
         /**
-         * Sets best left position of a tooltip approaching the proposal x
+         * Sets best left position of a tooltip approaching the proposal x.
          * @private
          * @param {DOMElement} tooltip
          * @param {number} x, left offset proposed
@@ -270,7 +265,7 @@ odoo.define('web.GraphRenderer', function (require) {
         }
 
         /**
-         * Used to format correctly the values in tooltips and yAxes
+         * Used to format correctly the values in tooltips and yAxes.
          * @private
          * @param {number} value
          * @returns {string} The value formatted using fieldUtils.format.float
@@ -283,39 +278,41 @@ odoo.define('web.GraphRenderer', function (require) {
         }
 
         /**
-         * Determines the initial section of the labels array
-         * over a dataset has to be completed. The section only depends
-         * on the datasets origins.
+         * Determines the initial section of the labels array over a dataset
+         * has to be completed. The section only depends on the datasets
+         * origins.
          * @private
          * @param {number} originIndex
          * @param {number} defaultLength
          * @returns {number}
          */
         _getDatasetDataLength(originIndex, defaultLength) {
-            if (['bar', 'line'].includes(this.propsCopy.mode) && this.propsCopy.comparisonFieldIndex === 0) {
+            if (this.propsCopy.mode !== "pie" && this.propsCopy.comparisonFieldIndex === 0) {
                 return this.dateClasses.dateSets[originIndex].length;
             }
             return defaultLength;
         }
 
         /**
-         * Determines the dataset to which belong the data point.
+         * Determines the dataset to which the data point belongs.
          * @private
-         * @param {Object} dataPt
+         * @param {Object} dataPoint
          * @returns {string}
          */
-        _getDatasetLabel(dataPt) {
-            if (['bar', 'line'].includes(this.propsCopy.mode)) {
+        _getDatasetLabel({ labels, originIndex }) {
+            const { fields, measure, mode, origins } = this.propsCopy;
+            if (mode !== "pie") {
                 // ([origin] + second to last groupBys) or measure
-                let datasetLabel = dataPt.labels.slice(1).join("/");
-                if (this.propsCopy.origins.length > 1) {
-                    datasetLabel = this.propsCopy.origins[dataPt.originIndex] +
-                        (datasetLabel ? ('/' + datasetLabel) : '');
+                let datasetLabel = labels.slice(1).join("/");
+                if (origins.length > 1) {
+                    datasetLabel = origins[originIndex] + (
+                        datasetLabel ? ('/' + datasetLabel) : ''
+                    );
                 }
-                datasetLabel = datasetLabel || this.propsCopy.fields[this.propsCopy.measure].string;
+                datasetLabel = datasetLabel || fields[measure].string;
                 return datasetLabel;
             }
-            return this.propsCopy.origins[dataPt.originIndex];
+            return origins[originIndex];
         }
 
         /**
@@ -325,24 +322,23 @@ odoo.define('web.GraphRenderer', function (require) {
          * @returns {DateClasses}
          */
         _getDateClasses(dataPoints) {
-            const dateSets = this.propsCopy.origins.map(() => {
-                return [];
-            });
-            for (const dataPt of dataPoints) {
-                dateSets[dataPt.originIndex].push(dataPt.labels[this.propsCopy.comparisonFieldIndex]);
+            const dateSets = this.propsCopy.origins.map(() => []);
+            for (const { labels, originIndex } of dataPoints) {
+                dateSets[originIndex].push(labels[this.propsCopy.comparisonFieldIndex]);
             }
-            return new DateClasses(dateSets.map(dateSet => [...(new Set(dateSet))]));
+            return new DateClasses(dateSets.map(dateSet => [...new Set(dateSet)]));
         }
 
         /**
-         * Returns an object used to style chart elements independently from the datasets.
+         * Returns an object used to style chart elements independently from
+         * the datasets.
          * @private
          * @returns {Object}
          */
         _getElementOptions() {
             const elementOptions = {};
             if (this.propsCopy.mode === 'bar') {
-                elementOptions.rectangle = {borderWidth: 1};
+                elementOptions.rectangle = { borderWidth: 1 };
             } else if (this.propsCopy.mode === 'line') {
                 elementOptions.line = {
                     tension: 0,
@@ -353,26 +349,26 @@ odoo.define('web.GraphRenderer', function (require) {
         }
 
         /**
-         * Determines the label over which the data point is.
+         * Gets the label over which the data point is.
          * @private
-         * @param {Object} dataPt
+         * @param {Object} dataPoint
          * @returns {Array}
          */
-        _getLabel(dataPt) {
-            const i = this.propsCopy.comparisonFieldIndex;
-            if (['bar', 'line'].includes(this.propsCopy.mode)) {
-                if (i === 0) {
-                    return [this.dateClasses.dateClass(dataPt.originIndex, dataPt.labels[i])];
+        _getLabel({ labels, originIndex }) {
+            const index = this.propsCopy.comparisonFieldIndex;
+            if (this.propsCopy.mode !== "pie") {
+                if (index === 0) {
+                    return [this.dateClasses.dateClass(originIndex, labels[index])];
                 } else {
-                    return dataPt.labels.slice(0, 1);
+                    return labels.slice(0, 1);
                 }
-            } else if (i === 0) {
+            } else if (index === 0) {
                 return Array.prototype.concat.apply([], [
-                            this.dateClasses.dateClass(dataPt.originIndex, dataPt.labels[i]),
-                            dataPt.labels.slice(i + 1)
-                        ]);
+                    this.dateClasses.dateClass(originIndex, labels[index]),
+                    labels.slice(index + 1)
+                ]);
             } else {
-                return dataPt.labels;
+                return labels;
             }
         }
 
@@ -389,7 +385,7 @@ odoo.define('web.GraphRenderer', function (require) {
                 onHover: this._onlegendTooltipHover.bind(this),
                 onLeave: this._onLegendTootipLeave.bind(this),
             };
-            if (['bar', 'line'].includes(this.propsCopy.mode)) {
+            if (this.propsCopy.mode !== "pie") {
                 let referenceColor;
                 if (this.propsCopy.mode === 'bar') {
                     referenceColor = 'backgroundColor';
@@ -399,12 +395,12 @@ odoo.define('web.GraphRenderer', function (require) {
                 legendOptions.labels = {
                     generateLabels: chart => {
                         const data = chart.data;
-                        return data.datasets.map((dataset, i) => {
+                        return data.datasets.map((dataset, index) => {
                             return {
                                 text: this._shortenLabel(dataset.label),
                                 fullText: dataset.label,
                                 fillStyle: dataset[referenceColor],
-                                hidden: !chart.isDatasetVisible(i),
+                                hidden: !chart.isDatasetVisible(index),
                                 lineCap: dataset.borderCapStyle,
                                 lineDash: dataset.borderDash,
                                 lineDashOffset: dataset.borderDashOffset,
@@ -412,7 +408,7 @@ odoo.define('web.GraphRenderer', function (require) {
                                 lineWidth: dataset.borderWidth,
                                 strokeStyle: dataset[referenceColor],
                                 pointStyle: dataset.pointStyle,
-                                datasetIndex: i,
+                                datasetIndex: index,
                             };
                         });
                     },
@@ -421,26 +417,19 @@ odoo.define('web.GraphRenderer', function (require) {
                 legendOptions.labels = {
                     generateLabels: chart => {
                         const data = chart.data;
-                        const metaData = data.datasets.map((dataset, index) => {
-                            return chart.getDatasetMeta(index).data;
-                        });
-                        return data.labels.map((label, i) => {
-                            let hidden = false;
-                            for (const data of metaData) {
-                                if (data[i] && data[i].hidden) {
-                                    hidden = true;
-                                    break;
-                                }
-                            }
+                        const metaData = data.datasets.map(
+                            (dataset, index) => chart.getDatasetMeta(index).data
+                        );
+                        return data.labels.map((label, index) => {
+                            const hidden = metaData.some(
+                                data => data[index] && data[index].hidden
+                            );
                             const fullText = this._relabelling(label);
                             const text = this._shortenLabel(fullText);
-                            return {
-                                text: text,
-                                fullText: fullText,
-                                fillStyle: label === this.noDataLabel ? '#d3d3d3' : getColor(i),
-                                hidden: hidden,
-                                index: i,
-                            };
+                            const fillStyle = label === this.noDataLabel ?
+                                DEFAULT_BG :
+                                getColor(index);
+                            return { text, fullText, fillStyle, hidden, index };
                         });
                     },
                 };
@@ -454,43 +443,39 @@ odoo.define('web.GraphRenderer', function (require) {
          * @returns {Object}
          */
         _getScaleOptions() {
-            if (['bar', 'line'].includes(this.propsCopy.mode)) {
-                return {
-                    xAxes: [{
-                        type: 'category',
-                        scaleLabel: {
-                            display: this.propsCopy.processedGroupBy.length && !this.propsCopy.isEmbedded,
-                            labelString: this.propsCopy.processedGroupBy.length ?
-                                this.propsCopy.fields[this.propsCopy.processedGroupBy[0].split(':')[0]].string : '',
-                        },
-                        ticks: {
-                            // don't use bind:  callback is called with 'index' as second parameter
-                            // with value labels.indexOf(label)!
-                            callback: label => {
-                                return this._relabelling(label);
-                            },
-                        },
-                    }],
-                    yAxes: [{
-                        type: 'linear',
-                        scaleLabel: {
-                            display: !this.propsCopy.isEmbedded,
-                            labelString: this.propsCopy.fields[this.propsCopy.measure].string,
-                        },
-                        ticks: {
-                            callback: this._formatValue.bind(this),
-                            suggestedMax: 0,
-                            suggestedMin: 0,
-                        }
-                    }],
-                };
+            if (this.propsCopy.mode === "pie") {
+                return {};
             }
-            return {};
+            const { fields, isEmbedded, measure, processedGroupBy } = this.propsCopy;
+            const xAxes = [{
+                type: 'category',
+                scaleLabel: {
+                    display: processedGroupBy.length && !isEmbedded,
+                    labelString: processedGroupBy.length ?
+                        fields[processedGroupBy[0].split(':')[0]].string :
+                        '',
+                },
+                ticks: { callback: label => this._relabelling(label) },
+            }];
+            const yAxes = [{
+                type: 'linear',
+                scaleLabel: {
+                    display: !isEmbedded,
+                    labelString: fields[measure].string,
+                },
+                ticks: {
+                    callback: this._formatValue.bind(this),
+                    suggestedMax: 0,
+                    suggestedMin: 0,
+                },
+            }];
+            return { xAxes, yAxes };
         }
 
         /**
-         * Extracts the important information from a tooltipItem generated by Charts.js
-         * (a tooltip item corresponds to a line (different from measure name) of a tooltip)
+         * Extracts the important information from a tooltipItem generated by
+         * Charts.js (a tooltip item corresponds to a line (different from
+         * measure name) of a tooltip).
          * @private
          * @param {Object} item
          * @param {Object} data
@@ -498,24 +483,11 @@ odoo.define('web.GraphRenderer', function (require) {
          */
         _getTooltipItemContent(item, data) {
             const dataset = data.datasets[item.datasetIndex];
+            const id = item.index;
             let label = data.labels[item.index];
             let value;
             let boxColor;
-            if (this.propsCopy.mode === 'bar') {
-                label = this._relabelling(label, dataset.originIndex);
-                if (this.propsCopy.processedGroupBy.length > 1 || this.propsCopy.origins.length > 1) {
-                    label = label + "/" + dataset.label;
-                }
-                value = this._formatValue(item.yLabel);
-                boxColor = dataset.backgroundColor;
-            } else if (this.propsCopy.mode === 'line') {
-                label = this._relabelling(label, dataset.originIndex);
-                if (this.propsCopy.processedGroupBy.length > 1 || this.propsCopy.origins.length > 1) {
-                    label = label + "/" + dataset.label;
-                }
-                value = this._formatValue(item.yLabel);
-                boxColor = dataset.borderColor;
-            } else {
+            if (this.propsCopy.mode === "pie") {
                 if (label === this.noDataLabel) {
                     value = this._formatValue(0);
                 } else {
@@ -526,34 +498,37 @@ odoo.define('web.GraphRenderer', function (require) {
                     label = dataset.label + "/" + label;
                 }
                 boxColor = dataset.backgroundColor[item.index];
+            } else {
+                label = this._relabelling(label, dataset.originIndex);
+                if (
+                    this.propsCopy.processedGroupBy.length > 1 ||
+                    this.propsCopy.origins.length > 1
+                ) {
+                    label = `${label}/${dataset.label}`;
+                }
+                value = this._formatValue(item.yLabel);
+                boxColor = this.propsCopy.mode === "bar" ?
+                    dataset.backgroundColor :
+                    dataset.borderColor;
             }
-            return {
-                label: label,
-                value: value,
-                boxColor: boxColor,
-            };
+            return { id, label, value, boxColor };
         }
 
         /**
-         * This function extracts the information from the data points in tooltipModel.dataPoints
-         * (corresponding to datapoints over a given label determined by the mouse position)
-         * that will be displayed in a custom tooltip.
+         * This function extracts the information from the data points in
+         * tooltipModel.dataPoints (corresponding to datapoints over a given
+         * label determined by the mouse position) that will be displayed in a
+         * custom tooltip.
          * @private
          * @param {Object} tooltipModel see chartjs documentation
          * @return {Object[]}
          */
         _getTooltipItems(tooltipModel) {
-            const data = this.chart.config.data;
-
-            const orderedItems = tooltipModel.dataPoints.sort((dPt1, dPt2) => {
-                return dPt2.yLabel - dPt1.yLabel;
-            });
-
-            const tooltipItems = [];
-            for (const item of orderedItems) {
-                tooltipItems.push(this._getTooltipItemContent(item, data));
-            }
-            return tooltipItems;
+            const { data } = this.chart.config;
+            const sortedDataPoints = sortBy(tooltipModel.dataPoints, "yLabel", false);
+            return sortedDataPoints.map(
+                item => this._getTooltipItemContent(item, data)
+            );
         }
 
         /**
@@ -575,18 +550,17 @@ odoo.define('web.GraphRenderer', function (require) {
         }
 
         /**
-         * Returns true iff the current graph can be clicked on to redirect to the
-         * list of records.
+         * Returns true iff the current graph can be clicked on to redirect to
+         * the list of records.
          * @private
          * @returns {boolean}
          */
         _isRedirectionEnabled() {
-            return !this.propsCopy.disableLinking &&
-                   (this.propsCopy.mode === 'bar' || this.propsCopy.mode === 'pie');
+            return !this.propsCopy.disableLinking && this.propsCopy.mode !== 'line';
         }
 
         /**
-         * Create bar chart config.
+         * Creates a bar chart config.
          * @private
          */
         _prepareBarChartConfig() {
@@ -596,10 +570,11 @@ odoo.define('web.GraphRenderer', function (require) {
             for (let index = 0; index < data.datasets.length; ++index) {
                 const dataset = data.datasets[index];
                 // used when stacked
-                dataset.stack = this.propsCopy.stacked ? this.propsCopy.origins[dataset.originIndex] : undefined;
+                if (this.propsCopy.stacked) {
+                    dataset.stack = this.propsCopy.origins[dataset.originIndex];
+                }
                 // set dataset color
-                const color = getColor(index);
-                dataset.backgroundColor = color;
+                dataset.backgroundColor = getColor(index);
             }
 
             // prepare options
@@ -610,8 +585,9 @@ odoo.define('web.GraphRenderer', function (require) {
         }
 
         /**
-         * Separate dataPoints coming from the read_group(s) into different datasets.
-         * This function returns the parameters data and labels used to produce the charts.
+         * Separates dataPoints coming from the read_group(s) into different
+         * datasets. This function returns the parameters data and labels used
+         * to produce the charts.
          * @param {Object[]} dataPoints
          * @returns {Object}
          */
@@ -620,7 +596,7 @@ odoo.define('web.GraphRenderer', function (require) {
             const labels = [];
             for (const dataPt of dataPoints) {
                 const label = this._getLabel(dataPt);
-                const labelKey = dataPt.resId + ':' + JSON.stringify(label);
+                const labelKey = `${dataPt.resId}:${JSON.stringify(label)}`;
                 const index = labelMap[labelKey];
                 if (index === undefined) {
                     labelMap[labelKey] = dataPt.labelIndex = labels.length;
@@ -630,40 +606,30 @@ odoo.define('web.GraphRenderer', function (require) {
                 }
             }
 
-            const newDataset = (datasetLabel, originIndex) => {
-                const data = new Array(this._getDatasetDataLength(originIndex, labels.length)).fill(0);
-                const domain = new Array(this._getDatasetDataLength(originIndex, labels.length)).fill([]);
-                return {
-                    label: datasetLabel,
-                    data: data,
-                    domain: domain,
-                    originIndex: originIndex,
-                };
-            };
-
             // dataPoints --> datasets
             const datasetsTmp = {};
             for (const dp of dataPoints) {
                 const datasetLabel = this._getDatasetLabel(dp);
                 if (!(datasetLabel in datasetsTmp)) {
-                    datasetsTmp[datasetLabel] = newDataset(datasetLabel, dp.originIndex);
+                    const dataLength = this._getDatasetDataLength(dp.originIndex, labels.length);
+                    datasetsTmp[datasetLabel] = {
+                        data: new Array(dataLength).fill(0),
+                        domain: new Array(dataLength).fill([]),
+                        label: datasetLabel,
+                        originIndex: dp.originIndex,
+                    };
                 }
                 const labelIndex = dp.labelIndex;
                 datasetsTmp[datasetLabel].data[labelIndex] = dp.value;
                 datasetsTmp[datasetLabel].domain[labelIndex] = dp.domain;
             }
-            const datasets = Object.values(datasetsTmp);
-
             // sort by origin
-            datasets.sort((dataset1, dataset2) => {
-                return dataset1.originIndex - dataset2.originIndex;
-            });
-
+            const datasets = sortBy(Object.values(datasetsTmp), "originIndex");
             return { datasets, labels };
         }
 
         /**
-         * Create line chart config.
+         * Creates a line chart config.
          * @private
          */
         _prepareLineChartConfig() {
@@ -671,7 +637,10 @@ odoo.define('web.GraphRenderer', function (require) {
             const data = this._prepareData(this.processedDataPoints);
             for (let index = 0; index < data.datasets.length; ++index) {
                 const dataset = data.datasets[index];
-                if (this.propsCopy.processedGroupBy.length <= 1 && this.propsCopy.origins.length > 1) {
+                if (
+                    this.propsCopy.processedGroupBy.length <= 1 &&
+                    this.propsCopy.origins.length > 1
+                ) {
                     if (dataset.originIndex === 0) {
                         dataset.fill = 'origin';
                         dataset.backgroundColor = hexToRGBA(COLORS[0], 0.4);
@@ -685,8 +654,9 @@ odoo.define('web.GraphRenderer', function (require) {
                     dataset.borderColor = getColor(index);
                 }
                 if (data.labels.length === 1) {
-                    // shift of the real value to right. This is done to center the points in the chart
-                    // See data.labels below in Chart parameters
+                    // shift of the real value to right. This is done to
+                    // center the points in the chart. See data.labels below in
+                    // Chart parameters
                     dataset.data.unshift(undefined);
                 }
                 dataset.pointBackgroundColor = dataset.borderColor;
@@ -699,10 +669,11 @@ odoo.define('web.GraphRenderer', function (require) {
                 dataset.backgroundColor = hexToRGBA(COLORS[0], 0.4);
             }
 
-            // center the points in the chart (without that code they are put on the left and the graph seems empty)
+            // center the points in the chart (without that code they are put
+            // on the left and the graph seems empty)
             data.labels = data.labels.length > 1 ?
                 data.labels :
-                Array.prototype.concat.apply([], [[['']], data.labels, [['']]]);
+                [[''], ...data.labels, ['']];
 
             // prepare options
             const options = this._prepareOptions(data.datasets.length);
@@ -712,8 +683,9 @@ odoo.define('web.GraphRenderer', function (require) {
         }
 
         /**
-         * Prepare options for the chart according to the current mode (= chart type).
-         * This function returns the parameter options used to instantiate the chart
+         * Prepares options for the chart according to the current mode
+         * (= chart type). This function returns the parameter options used to
+         * instantiate the chart.
          * @private
          * @param {number} datasetsCount
          * @returns {Object} the chart options used for the current mode
@@ -727,20 +699,21 @@ odoo.define('web.GraphRenderer', function (require) {
                 elements: this._getElementOptions(),
             };
             if (this._isRedirectionEnabled()) {
-                options.onClick = this._onGraphClicked.bind(this);
+                options.onClick = ev => this._onGraphClicked(ev);
             }
             return options;
         }
 
         /**
-         * Create pie chart config
+         * Creates a pie chart config.
          * @private
          */
         _preparePieChartConfig() {
             // prepare data
             let data = {};
-            let colors = [];
-            const allZero = this.processedDataPoints.every(datapt => datapt.value === 0);
+            const allZero = this.processedDataPoints.every(
+                datapt => datapt.value === 0
+            );
             if (allZero) {
                 // add fake data to display a pie chart with a grey zone associated
                 // with every origin
@@ -749,33 +722,31 @@ odoo.define('web.GraphRenderer', function (require) {
                     return {
                         label: origin,
                         data: [1],
-                        backgroundColor: ['#d3d3d3'],
+                        backgroundColor: [DEFAULT_BG],
                     };
                 });
             } else {
                 data = this._prepareData(this.processedDataPoints);
                 // give same color to same groups from different origins
-                colors = data.labels.map((_, index) => {
-                    return getColor(index);
-                });
+                const colors = data.labels.map((_, index) => getColor(index));
                 for (const dataset of data.datasets) {
                     dataset.backgroundColor = colors;
                     dataset.borderColor = 'rgba(255,255,255,0.6)';
                 }
                 // make sure there is a zone associated with every origin
-                const representedOriginIndexes = data.datasets.map(dataset => {
-                    return dataset.originIndex;
-                });
+                const representedOriginIndexes = data.datasets.map(
+                    dataset => dataset.originIndex
+                );
                 let addNoDataToLegend = false;
-                const fakeData = (new Array(data.labels.length)).concat([1]);
+                const fakeData = new Array(data.labels.length).concat([1]);
 
-                for (let originIndex = 0; originIndex < this.propsCopy.origins.length; ++originIndex) {
-                    const origin = this.propsCopy.origins[originIndex];
-                    if (!representedOriginIndexes.includes(originIndex)) {
-                        data.datasets.splice(originIndex, 0, {
+                for (let index = 0; index < this.propsCopy.origins.length; ++index) {
+                    const origin = this.propsCopy.origins[index];
+                    if (!representedOriginIndexes.includes(index)) {
+                        data.datasets.splice(index, 0, {
                             label: origin,
                             data: fakeData,
-                            backgroundColor: colors.concat(['#d3d3d3']),
+                            backgroundColor: [...colors, DEFAULT_BG],
                         });
                         addNoDataToLegend = true;
                     }
@@ -793,30 +764,33 @@ odoo.define('web.GraphRenderer', function (require) {
         }
 
         /**
-         * Determine how to relabel a label according to a given origin.
-         * The idea is that the getLabel function is in general not invertible but
-         * it is when restricted to the set of dataPoints coming from a same origin.
+         * Determines how to relabel a label according to a given origin. The
+         * idea is that the getLabel function is in general not invertible but
+         * it is when restricted to the set of dataPoints coming from a same
+         * origin.
          * @private
          * @param {Array} label
-         * @param {Array} originIndex
+         * @param {Array} [originIndex]
          * @returns {string}
          */
         _relabelling(label, originIndex) {
             if (label === this.noDataLabel) {
                 return label[0];
             }
-            const i = this.propsCopy.comparisonFieldIndex;
-            if (['bar', 'line'].includes(this.propsCopy.mode) && i === 0) {
+            const index = this.propsCopy.comparisonFieldIndex;
+            if (this.propsCopy.mode !== "pie" && index === 0) {
                 // here label is an array of length 1 and contains a number
                 return this.dateClasses.representative(label, originIndex) || '';
-            } else if (this.propsCopy.mode === 'pie' && i === 0) {
+            } else if (this.propsCopy.mode === 'pie' && index === 0) {
                 // here label is an array of length at least one containing string or numbers
-                const labelCopy = label.slice(0);
-                if (originIndex !== undefined) {
-                    labelCopy.splice(i, 1, this.dateClasses.representative(label[i], originIndex));
+                const labelCopy = label.slice();
+                let newLabel;
+                if (originIndex === undefined) {
+                    newLabel = this.dateClasses.dateClassMembers(label[index]);
                 } else {
-                    labelCopy.splice(i, 1, this.dateClasses.dateClassMembers(label[i]));
+                    newLabel = this.dateClasses.representative(label[index], originIndex);
                 }
+                labelCopy.splice(index, 1, newLabel);
                 return labelCopy.join('/');
             }
             // here label is an array containing strings or numbers.
@@ -824,14 +798,16 @@ odoo.define('web.GraphRenderer', function (require) {
         }
 
         /**
-         * Instantiate a Chart (Chart.js lib) to render the graph according to the
-         * current config. Chart.js performs the rendering in a nextAnimationFrame,
-         * so we wait for a tick before destroying/instantiating the chart, so
-         * that both are done in the same frame, and there is no flickering.
-         * Indeed, nested nextAnimationFrame callbacks are executed in successive
-         * frames, and when we reach this function, we already are in a
-         * requestAnimationFrame callback (see Owl internals).
+         * Instantiate a Chart (Chart.js lib) to render the graph according to
+         * the current config. Chart.js performs the rendering in a
+         * nextAnimationFrame, so we wait for a tick before destroying/
+         * instantiating the chart, so that both are done in the same frame,
+         * and there is no flickering. Indeed, nested nextAnimationFrame
+         * callbacks are executed in successive frames, and when we reach this
+         * function, we already are in a requestAnimationFrame callback (see
+         * Owl internals).
          * @private
+         * @returns {Promise}
          */
         async _renderGraphMainContent() {
             await new Promise(setTimeout);
@@ -842,24 +818,40 @@ odoo.define('web.GraphRenderer', function (require) {
             if (this.mainContent) {
                 this.mainContent.remove();
             }
-            this._computeDerivedProps();
 
-            const template = document.createElement('template');
-            const content = this.env.qweb.renderToString('GraphRenderer.MainContent', {
-                noContentHelperData: this.noContentHelperData,
-            });
-            template.innerHTML = content;
-            this.mainContent = template.content.firstChild;
+            if (!this.el) {
+                // Element could have been destroyed in the interval. Rendering
+                // is aborted in that case.
+                return;
+            }
+
+            this.mainContent = this._renderTemplate("web.GraphRenderer.MainContent", this);
             this.el.append(this.mainContent);
 
             if (!this.noContentHelperData) {
-                const ctx = this.canvas.getContext('2d');
+                const canvas = this.el.querySelector("canvas");
+                const ctx = canvas.getContext('2d');
                 this.chart = new Chart(ctx, this.config);
             }
         }
 
         /**
-         * Determine whether the data are good, and display an error message
+         * Renders the given template name with the given props and return the
+         * generated node.
+         * @private
+         * @param {string} name
+         * @param {Object} props
+         * @returns {HTMLElement}
+         */
+        _renderTemplate(name, props) {
+            const template = Object.assign(document.createElement("template"), {
+                innerHTML: this.env.qweb.renderToString(name, props),
+            });
+            return template.content.firstChild;
+        }
+
+        /**
+         * Determines whether the data are good, and displays an error message
          * if this is not the case.
          * @private
          */
@@ -880,17 +872,22 @@ odoo.define('web.GraphRenderer', function (require) {
                 }
                 if (someNegative && !allNegative) {
                     const title = this.env._t("Invalid data");
-                    const description = this.env._t("Pie chart cannot mix positive and negative numbers. ") +
-                              this.env._t("Try to change your domain to only display positive results");
+                    const description = [
+                        this.env._t("Pie chart cannot mix positive and negative numbers. "),
+                        this.env._t("Try to change your domain to only display positive results"),
+                    ].join("");
                     this.noContentHelperData = { title, description };
-                    return;
-                }
-                if (allZero && !this.propsCopy.isEmbedded && this.propsCopy.origins.length === 1) {
-                    const title = _("Invalid data");
-                    const description = this.env._t("Pie chart cannot display all zero numbers. ") +
-                            this.env._t("Try to change your domain to display positive results");
+                } else if (
+                    allZero &&
+                    !this.propsCopy.isEmbedded &&
+                    this.propsCopy.origins.length === 1
+                ) {
+                    const title = this.env._t("Invalid data");
+                    const description = [
+                        this.env._t("Pie chart cannot display all zero numbers. "),
+                        this.env._t("Try to change your domain to display positive results"),
+                    ].join("");
                     this.noContentHelperData = { title, description };
-                    return;
                 }
             }
         }
@@ -914,87 +911,87 @@ odoo.define('web.GraphRenderer', function (require) {
         }
 
         /**
-         * Sort datapoints according to the current order (ASC or DESC).
+         * Sorts datapoints according to the current order (ASC or DESC).
          * Note: this should be moved to the model at some point.
          * @private
          * @param {Object[]} dataPoints
          * @returns {Object[]} sorted dataPoints if orderby set on state
          */
         _sortDataPoints(dataPoints) {
-            if (this.propsCopy.domains.length === 1 && this.propsCopy.orderBy &&
-                ['bar', 'line'].includes(this.propsCopy.mode) && this.propsCopy.processedGroupBy.length) {
+            if (
+                this.propsCopy.domains.length === 1 &&
+                this.propsCopy.orderBy &&
+                this.propsCopy.mode !== "pie" &&
+                this.propsCopy.processedGroupBy.length
+            ) {
                 // group data by their x-axis value, and then sort datapoints
                 // based on the sum of values by group in ascending/descending order
-                const groupByFieldName = this.propsCopy.processedGroupBy[0].split(':')[0];
-                const groupedByMany2One = this.propsCopy.fields[groupByFieldName].type === 'many2one';
+                const [groupByFieldName] = this.propsCopy.processedGroupBy[0].split(':');
+                const { type } = this.propsCopy.fields[groupByFieldName];
                 const groupedDataPoints = {};
                 for (const dataPt of dataPoints) {
-                    const key = groupedByMany2One ? dataPt.resId : dataPt.labels[0];
+                    const key = type === 'many2one' ? dataPt.resId : dataPt.labels[0];
                     if (!groupedDataPoints[key]) {
                         groupedDataPoints[key] = [];
                     }
                     groupedDataPoints[key].push(dataPt);
                 }
-                dataPoints = sortBy(Object.values(groupedDataPoints),
-                    group => group.reduce((sum, dataPoint) => sum + dataPoint.value, 0)
-                ).flat();
+                const groupTotal = group => group.reduce((sum, { value }) => sum + value, 0);
+                dataPoints = sortBy(Object.values(groupedDataPoints), groupTotal).flat();
                 if (this.propsCopy.orderBy === 'desc') {
-                    dataPoints.reverse('value');
+                    dataPoints.reverse();
                 }
             }
             return dataPoints;
         }
 
-        //----------------------------------------------------------------------
+        //---------------------------------------------------------------------
         // Handlers
-        //----------------------------------------------------------------------
+        //---------------------------------------------------------------------
 
         /**
          * @private
          * @param {MouseEvent} ev
          */
         _onGraphClicked(ev) {
-            const activeElement = this.chart.getElementAtEvent(ev);
-            if (activeElement.length === 0) {
+            const [activeElement] = this.chart.getElementAtEvent(ev);
+            if (!activeElement) {
                 return;
             }
-            const domain = this.chart.data.datasets[activeElement[0]._datasetIndex].domain;
-            if (!domain) {
-                return; // empty dataset
+            const { _datasetIndex, _index } = activeElement;
+            const { domain } = this.chart.data.datasets[_datasetIndex];
+            if (domain) {
+                this.trigger('open_view', { domain: domain[_index] });
             }
-            this.trigger('open_view', {
-                domain: domain[activeElement[0]._index],
-            });
         }
 
         /**
-         * If the text of a legend item has been shortened and the user mouse over
-         * that item (actually the event type is mousemove), a tooltip with the item
-         * full text is displayed.
-         *
+         * If the text of a legend item has been shortened and the user mouse
+         * hovers that item (actually the event type is mousemove), a tooltip
+         * with the item full text is displayed.
          * @private
          * @param {MouseEvent} ev
          * @param {Object} legendItem
          */
         _onlegendTooltipHover(ev, legendItem) {
             ev.target.style.cursor = 'pointer';
-            // The string legendItem.text is an initial segment of legendItem.fullText.
-            // If the two coincide, no need to generate a tooltip.
-            // If a tooltip for the legend already exists, it is already good and don't need
-            // to be recreated.
+            /**
+             * The string legendItem.text is an initial segment of legendItem.fullText.
+             * If the two coincide, no need to generate a tooltip. If a tooltip
+             * for the legend already exists, it is already good and doesn't
+             * need to be recreated.
+             */
             if (legendItem.text === legendItem.fullText || this.legendTooltip) {
                 return;
             }
 
-            const chartAreaLeft = this.chart.chartArea.left;
-            const chartAreaRight = this.chart.chartArea.right;
             const rendererTop = this.el.getBoundingClientRect().top;
 
             this.legendTooltip = document.createElement('div');
             this.legendTooltip.className = 'o_tooltip_legend';
             this.legendTooltip.innerText = legendItem.fullText;
             this.legendTooltip.style.top = (ev.clientY - rendererTop) + 'px';
-            this.legendTooltip.style.maxWidth = Math.floor((chartAreaRight - chartAreaLeft) / 1.618) + 'px';
+            this.legendTooltip.style.maxWidth = getMaxWidth(this.chart.chartArea);
 
             this.container.appendChild(this.legendTooltip);
 
@@ -1002,9 +999,8 @@ odoo.define('web.GraphRenderer', function (require) {
         }
 
         /**
-         * If there's a legend tooltip and the user mouse out of the corresponding
-         * legend item, the tooltip is removed.
-         *
+         * If there's a legend tooltip and the user mouse out of the
+         * corresponding legend item, the tooltip is removed.
          * @private
          * @param {MouseEvent} ev
          */
@@ -1019,31 +1015,30 @@ odoo.define('web.GraphRenderer', function (require) {
 
     GraphRenderer.template = 'web.GraphRenderer';
     GraphRenderer.props = {
-        arch: { type: Object, shape: {
-            children: { type: Array, element: { type: Object } },
-            attrs: Object,
-            tag: { validate: s => s === 'graph' },
-        }},
+        arch: {
+            type: Object, shape: {
+                children: { type: Array, element: Object },
+                attrs: Object,
+                tag: { validate: t => t === 'graph' },
+            },
+        },
         comparisonFieldIndex: Number,
         context: Object,
-        dataPoints: { type: Array, element: { type: Object }},
+        dataPoints: { type: Array, element: Object },
         disableLinking: Boolean,
-        domain: { type: Array, element: { validate: s => s instanceof Array || typeof s === 'string' } },
-        domains: { type: Array, element: {
-            type: Array,
-            element: { validate: s => s instanceof Array || typeof s === 'string' }
-        }},
+        domain: [Array, String],
+        domains: { type: Array, element: [Array, String] },
         fields: Object,
         groupBy: { type: Array, element: String },
         isEmbedded: Boolean,
         measure: String,
-        mode: { validate: s => ['bar', 'line', 'pie'].includes(s) },
+        mode: { validate: m => ['bar', 'line', 'pie'].includes(m) },
         origins: { type: Array, element: String },
         processedGroupBy: { type: Array, element: String },
         stacked: Boolean,
         timeRanges: Object,
         noContentHelp: { type: String, optional: 1 },
-        orderBy: { type: { validate: s => ['string', 'boolean'].includes(typeof s) }, optional: 1 },
+        orderBy: { type: [String, Boolean], optional: 1 },
         title: { type: String, optional: 1 },
         withSearchPanel: { type: Boolean, optional: 1 },
     };
