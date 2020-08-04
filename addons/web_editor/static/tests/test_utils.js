@@ -288,17 +288,15 @@ function wysiwygData(data) {
 
 /**
  * Create the wysiwyg instance for test (contains patch, usefull ir.ui.view, snippets).
- *
- * @param {object} params
  */
-async function createWysiwyg(params) {
+async function createWysiwyg() {
     patch();
-    params.data = wysiwygData(params.data);
+    var params = {data: wysiwygData({})};
 
     var parent = new Widget();
     await testUtils.mock.addMockEnvironment(parent, params);
 
-    var wysiwygOptions = _.extend({}, params.wysiwygOptions, {
+    var wysiwygOptions = _.extend(this._getWysiwygOptions(), params.wysiwygOptions, {
         recordInfo: {
             context: {},
             res_model: 'module.test',
@@ -306,28 +304,19 @@ async function createWysiwyg(params) {
         },
         useOnlyTestUnbreakable: params.useOnlyTestUnbreakable,
     });
+    this.wysiwyg = new WysiwygTest(this, wysiwygOptions);
+    this.wysiwyg._parentToDestroyForTest = this;
 
-    var wysiwyg = new WysiwygTest(parent, wysiwygOptions);
-    wysiwyg._parentToDestroyForTest = parent;
-
-    var $textarea = $('<textarea/>');
-    if (wysiwygOptions.value) {
-        $textarea.val(wysiwygOptions.value);
-    }
-    var selector = params.debug ? 'body' : '#qunit-fixture';
-    $textarea.prependTo($(selector));
-    if (params.debug) {
-        $('body').addClass('debug');
-    }
-    return wysiwyg.attachTo($textarea).then(function () {
+    var self = this
+    return this.wysiwyg.attachTo(this).then(function () {
         if (wysiwygOptions.snippets) {
             var defSnippets = testUtils.makeTestPromise();
-            testUtils.mock.intercept(wysiwyg, "snippets_loaded", function () {
-                defSnippets.resolve(wysiwyg);
+            testUtils.mock.intercept(self.wysiwyg, "snippets_loaded", function () {
+                defSnippets.resolve(self.wysiwyg);
             });
             return defSnippets;
         }
-        return wysiwyg;
+        return self.wysiwyg;
     });
 }
 

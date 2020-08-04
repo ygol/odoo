@@ -1013,5 +1013,44 @@ var Wysiwyg = Widget.extend({
     _bindAfterStart() {},
 });
 
+//--------------------------------------------------------------------------
+// Public helper
+//--------------------------------------------------------------------------
+/**
+ * @param {Node} node (editable or node inside)
+ * @returns {Object}
+ * @returns {Node} sc - start container
+ * @returns {Number} so - start offset
+ * @returns {Node} ec - end container
+ * @returns {Number} eo - end offset
+ */
+Wysiwyg.getRange = function (node) {
+    const selection = window.getSelection();
+    const range = selection.getRangeAt(0);
+    var result = range && {
+        sc: range.startContainer,
+        so: range.startOffset,
+        ec: range.endContainer,
+        eo: range.endOffset,
+    };
+    return result;
+};
+/**
+ * @param {Node} startNode
+ * @param {Number} startOffset
+ * @param {Node} endNode
+ * @param {Number} endOffset
+ */
+Wysiwyg.setRange = async function (wysiwyg, startNode, startOffset, endNode, endOffset) {
+    endNode = endNode || startNode;
+    endOffset = endOffset || startOffset-1;
+
+    await wysiwyg.editor.execCustomCommand(async () => {
+        const startVNode = wysiwyg.editorHelpers.getNodes(startNode);
+        const endVNode = wysiwyg.editorHelpers.getNodes(endNode);
+        wysiwyg.editor.selection.select(startVNode[startOffset], endVNode[endOffset]);
+    });
+};
+
 return Wysiwyg;
 });
