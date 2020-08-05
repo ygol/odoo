@@ -267,6 +267,7 @@ $o-base-website-values-palette: (
     'hamburger-type': 'default', // 'default' / 'off-canvas'
     'hamburger-position': 'right', // 'right' / 'left' / 'center'
     'sidebar-width': 18.75rem, // 300px
+    'header-default-alignment-opt': 'left',
 
     'footer-template': 'default',
     'footer-effect': null, // null / 'slideout_slide_hover' / 'slideout_shadow'
@@ -281,10 +282,10 @@ $o-font-aliases-to-keys: (
 $o-website-values-palettes: (
     (
         'header-font-size': 1rem,
-        'font-size-base': 0.875rem,
-        'headings-font': 'Gothic A1',
-        'navbar-font': 'Gothic A1',
-        'buttons-font': 'Gothic A1',
+        'font-size-base': 1rem,
+        'headings-font': 'Source Sans Pro',
+        'navbar-font': 'Source Sans Pro',
+        'buttons-font': 'Source Sans Pro',
     ),
 ) !default;
 $o-website-values-palette-number: 1 !default;
