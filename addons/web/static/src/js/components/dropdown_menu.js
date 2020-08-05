@@ -121,6 +121,9 @@ odoo.define('web.DropdownMenu', function (require) {
          * @param {MouseEvent} ev
          */
         _onWindowClick(ev) {
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                return;
+            }
             if (this.state.open && !this.el.contains(ev.target)) {
                 this.state.open = false;
             }

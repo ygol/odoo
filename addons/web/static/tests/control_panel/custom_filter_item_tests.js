@@ -324,6 +324,34 @@ odoo.define('web.filter_menu_generator_tests', function (require) {
             cfi.destroy();
         });
 
+        QUnit.test('dropdown doesnt get close on mouseup outside dropdown', async function (assert) {
+            assert.expect(1);
+
+            const cfi = await createComponent(CustomFilterItem, {
+                props: {
+                    fields: this.fields,
+                },
+                env: {
+                    searchModel: new ActionModel(),
+                },
+            });
+
+            await cpHelpers.toggleAddCustomFilter(cfi);
+            cfi.el.style.width = "120px";
+            await testUtils.nextTick();
+            debugger
+
+            await testUtils.dom.triggerEvents(cfi.el.querySelector(".o_generator_menu_value .o_datepicker_input"), 'mousedown');
+            await testUtils.dom.triggerEvents(document.body, 'focus');
+            window.dispatchEvent(new MouseEvent('mouseup'));
+
+            await testUtils.nextTick();
+            assert.containsOnce(cfi, ".o_add_custom_filter",
+                "should contain dropdown on mouseup outside the dropdown");
+
+            cfi.destroy();
+        });
+
         QUnit.test('add custom filter with multiple values', async function (assert) {
             assert.expect(2);
 
