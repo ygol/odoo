@@ -365,10 +365,12 @@ class View(models.Model):
                     error = werkzeug.exceptions.Forbidden('website_visibility_password_required')
 
             # elif self.visibility == 'restricted_group' and self.groups_id: or if groups_id set from backend
-            try:
-                self._check_view_access()
-            except AccessError:
-                error = werkzeug.exceptions.Forbidden()
+            # no need to call 'check_view_access' if view is password protected
+            if self.visibility != 'password':
+                try:
+                    self._check_view_access()
+                except AccessError:
+                    error = werkzeug.exceptions.Forbidden()
 
         if error:
             if do_raise:
