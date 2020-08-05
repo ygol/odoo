@@ -174,7 +174,9 @@ var Wysiwyg = Widget.extend({
                 openBackgroundColorPicker: {handler: this.toggleBackgroundColorPicker.bind(this)},
                 openLinkDialog: {handler: this.openLinkDialog.bind(this)},
                 discardOdoo: {handler: this.discardEditions.bind(this)},
-                saveOdoo: {handler: this.saveToServer.bind(this)}
+                saveOdoo: {handler: this.saveToServer.bind(this)},
+                cropImage: {handler: this.cropImage.bind(this)},
+                transformImage: {handler: this.transformImage.bind(this)},
             }, this.options.customCommands),
             source: elementToParse,
             location: this.options.location || [this.el, 'replace'],
@@ -453,6 +455,62 @@ var Wysiwyg = Widget.extend({
             window.onbeforeunload = null;
             window.location.reload();
         });
+    },
+    cropImage: async function (params) {
+        const imageNodes = params.context.range.targetedNodes(JWEditorLib.ImageNode);
+        const imageNode = imageNodes.length === 1 && imageNodes[0];
+        if (imageNode) {
+            const domEngine = this.editor.plugins.get(JWEditorLib.Layout).engines.dom;
+            const $node = $(domEngine.getDomNodes(imageNode)[0]);
+            $node.off('image_cropped');
+            $node.on('image_cropped', () => this._updateAttributes($node[0]));
+            new weWidgets.ImageCropWidget(this, $node[0]).appendTo($('#wrap'));
+        }
+    },
+    _updateAttributes(node) {
+        const attributes = {}
+        for (const attr of node.attributes){
+            attributes[attr.name] = attr.value;
+        }
+        this.editorHelpers.updateAttributes(node, attributes);
+    },
+    transformImage: async function (params) {
+        const imageNodes = params.context.range.targetedNodes(JWEditorLib.ImageNode);
+        const imageNode = imageNodes.length === 1 && imageNodes[0];
+        if (imageNode) {
+            const domEngine = this.editor.plugins.get(JWEditorLib.Layout).engines.dom;
+            const $node = $(domEngine.getDomNodes(imageNode)[0]);
+            this._transform($node);
+        }
+    },
+    _transform($image) {
+        if ($image.data('transfo-destroy')) {
+            $image.removeData('transfo-destroy');
+            return;
+        }
+
+        $image.transfo();
+
+        const mouseup = (event) => {
+            $('.note-popover button[data-event="transform"]').toggleClass('active', $image.is('[style*="transform"]'));
+        };
+        $(document).on('mouseup', mouseup);
+
+        const mousedown = (event) => {
+            if (!$(event.target).closest('.transfo-container').length) {
+                $image.transfo('destroy');
+                $(document).off('mousedown', mousedown).off('mouseup', mouseup);
+            }
+            if ($(event.target).closest('.note-popover').length) {
+                $image.data('transfo-destroy', true).attr('style', ($image.attr('style') || '').replace(/[^;]*transform[\w:]*;?/g, ''));
+            }
+            this._updateAttributes($image[0])
+        };
+        $(document).on('mousedown', mousedown);
+    },
+
+    getFormatInfo: function() {
+        return this.editor.plugins.get(JWEditorLib.Odoo).formatInfo;
     },
 
     //--------------------------------------------------------------------------
