@@ -191,14 +191,28 @@ var KanbanModel = BasicModel.extend({
         return this._super(params);
     },
     /**
-     * Load more records in a group.
+     * Load records in a group
      *
      * @param {string} groupID localID of the group
+     * @param {string|boolean} options.activeFilter added to the domain (false if none)
+     * @param {boolean} options.loadMore compute offset and skip records when fetching
      * @returns {Promise<string>} resolves to the localID of the group
      */
-    loadMore: function (groupID) {
-        var group = this.localData[groupID];
-        var offset = group.loadMoreOffset + group.limit;
+    loadRecords(groupID, options = { activeFilter: false, loadMore: false }) {
+        let group = this.localData[groupID];
+
+        delete group.activeFilterDomain;
+        if (options.activeFilter) {
+            const field = group.progressBarValues.field;
+            const values =
+                Object.keys(group.progressBarValues.colors).filter(el => el !== '_false');
+            group.activeFilterDomain = (options.activeFilter === '__false')
+                ? ['!', [field, 'in', values]]
+                : [[field, '=', options.activeFilter]];
+        }
+
+        const offset = options.loadMore ? group.loadMoreOffset + group.limit : 0;
+
         return this.reload(group.id, {
             loadMoreOffset: offset,
         });
@@ -292,6 +306,23 @@ var KanbanModel = BasicModel.extend({
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
+
+    /**
+     * @override
+     */
+    _getGroupedListPropsToKeep(list) {
+        return Object.assign(this._super(...arguments), {
+            activeFilterDomain: list.activeFilterDomain
+        });
+    },
+
+    /**
+     * @override
+     */
+    _getUngroupedListDomain(list) {
+        const moreDomain = list.activeFilterDomain || [];
+        return [...this._super(...arguments), ...moreDomain];
+    },
 
     /**
      * @override

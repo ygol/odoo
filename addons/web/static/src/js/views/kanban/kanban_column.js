@@ -63,7 +63,6 @@ var KanbanColumn = Widget.extend({
         this.recordsDraggable = options.recordsDraggable;
         this.relation = options.relation;
         this.offset = 0;
-        this.remaining = data.count - this.data_records.length;
         this.canBeFolded = this.folded;
 
         if (options.hasProgressBar) {
@@ -71,7 +70,14 @@ var KanbanColumn = Widget.extend({
                 columnID: this.db_id,
                 progressBarStates: options.progressBarStates,
             };
+
+            this.columnState = this.barOptions.progressBarStates[this.barOptions.columnID] || false;
         }
+
+        const columnMaxCount = (this.columnState && this.columnState.activeFilter)
+            ? this.columnState.subgroupCounts[this.columnState.activeFilter]
+            : data.count;
+        this.remaining = columnMaxCount - this.data_records.length;
 
         this.record_options = _.clone(recordOptions);
 

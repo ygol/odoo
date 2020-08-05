@@ -5748,6 +5748,43 @@ QUnit.module('Views', {
         kanban.destroy();
     });
 
+    QUnit.test('column progressbars with an active filter are working with load more', async function (assert) {
+        assert.expect(1);
+
+        this.data.partner.records.push(
+            { id: 5, bar: true, foo: "yop" },
+            { id: 6, bar: true, foo: "blip" },
+            { id: 7, bar: true, foo: "yop" }
+        );
+
+        const kanban = await createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            domain: [['bar', '=', true]],
+            arch:
+                `<kanban limit="1">
+                    <progressbar field="foo" colors='{"yop": "success", "gnap": "warning", "blip": "danger"}'/>
+                    <templates><t t-name="kanban-box">
+                        <div><field name="id"/></div>
+                    </t></templates>
+                </kanban>`,
+            groupBy: ['bar'],
+        });
+
+        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_counter_progress .progress-bar[data-filter="yop"]'));
+
+        // we have 1 record shown, load 2 more and check it worked
+        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_group .o_kanban_load_more'));
+        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_group .o_kanban_load_more'));
+        assert.deepEqual(
+            [...kanban.el.querySelectorAll('.o_kanban_record')].map(el => parseInt(el.innerText)),
+            [1, 5, 7]
+        );
+
+        kanban.destroy();
+    });
+
     QUnit.test('column progressbars on archiving records update counter', async function (assert) {
         assert.expect(4);
 
@@ -5950,32 +5987,67 @@ QUnit.module('Views', {
     QUnit.test('progress bar subgroup count recompute', async function (assert) {
         assert.expect(2);
 
-        var kanban = await createView({
+        const kanban = await createView({
             View: KanbanView,
             model: 'partner',
             data: this.data,
             arch:
-                '<kanban>' +
-                    '<progressbar field="foo" colors=\'{"yop": "success", "gnap": "warning", "blip": "danger"}\'/>' +
-                    '<templates><t t-name="kanban-box">' +
-                        '<div>' +
-                            '<field name="foo"/>' +
-                        '</div>' +
-                    '</t></templates>' +
-                '</kanban>',
+                `<kanban>
+                    <progressbar field="foo" colors='{"yop": "success", "gnap": "warning", "blip": "danger"}'/>
+                    <templates><t t-name="kanban-box">
+                        <div>
+                            <field name="foo"/>
+                        </div>
+                    </t></templates>
+                </kanban>`,
             groupBy: ['bar'],
         });
 
-        var $secondGroup = kanban.$('.o_kanban_group:eq(1)');
-        var initialCount = parseInt($secondGroup.find('.o_kanban_counter_side').text());
-        assert.strictEqual(initialCount, 3,
+        let secondCounter = kanban.el.querySelector('.o_kanban_group:nth-child(2) .o_kanban_counter_side');
+        assert.strictEqual(parseInt(secondCounter.innerText), 3,
             "Initial count should be Three");
-        await testUtils.dom.click($secondGroup.find('.bg-success-full'));
-        var lastCount = parseInt($secondGroup.find('.o_kanban_counter_side').text());
-        assert.strictEqual(lastCount, 1,
+
+        await testUtils.dom.click(kanban.el.querySelector('.o_kanban_group:nth-child(2) .bg-success-full'));
+
+        secondCounter = kanban.el.querySelector('.o_kanban_group:nth-child(2) .o_kanban_counter_side');
+        assert.strictEqual(parseInt(secondCounter.innerText), 1,
             "kanban counters should vary according to what subgroup is selected");
 
         kanban.destroy();
+    });
+
+    QUnit.only('progress bar subgroup count recompute after drag&drop to and from other column', async function (assert) {
+        assert.expect(2);
+
+        const view = await createView({
+            debug: true,
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            arch:
+                `<kanban>
+                    <progressbar field="foo" colors='{"yop": "success", "gnap": "warning", "blip": "danger"}'/>
+                    <templates><t t-name="kanban-box">
+                        <div>
+                            <field name="foo"/>
+                        </div>
+                    </t></templates>
+                </kanban>`,
+            groupBy: ['bar'],
+        });
+
+        // let secondCounter = kanban.el.querySelector('.o_kanban_group:nth-child(2) .o_kanban_counter_side');
+        // assert.strictEqual(parseInt(secondCounter.innerText), 3,
+        //     "Initial count should be Three");
+
+        // await testUtils.dom.click(kanban.el.querySelector('.o_kanban_group:nth-child(2) .bg-success-full'));
+        // await testUtils.dom.dragAndDrop($groups.first().find('.o_kanban_record:first'), $groups.eq(1));
+
+        // secondCounter = kanban.el.querySelector('.o_kanban_group:nth-child(2) .o_kanban_counter_side');
+        // assert.strictEqual(parseInt(secondCounter.innerText), 1,
+        //     "kanban counters should vary according to what subgroup is selected");
+
+        // kanban.destroy();
     });
 
     QUnit.test('column progressbars on quick create with quick_create_view are updated', async function (assert) {

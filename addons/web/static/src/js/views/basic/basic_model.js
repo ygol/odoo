@@ -3735,6 +3735,19 @@ var BasicModel = AbstractModel.extend({
         return Object.keys(fieldsInfo && fieldsInfo[viewType] || {});
     },
     /**
+     * Get a subset of a list resource keeping only the props to keep.
+     * This permits to a web_read_group to keep some of the properties
+     * of a previous list if it is still in its results.
+     *
+     * @private
+     * @param {Object} list
+     * @returns {Object} subset of list
+     */
+    _getGroupedListPropsToKeep(list) {
+        const { isOpen, offset, id } = list;
+        return { isOpen, offset, id };
+    },
+    /**
      * Get many2one fields names in a datapoint. This is useful in order to
      * fetch their names in the case of a default_get.
      *
@@ -3818,6 +3831,16 @@ var BasicModel = AbstractModel.extend({
 
         }
         return context;
+    },
+    /**
+     * Get the domain for a list resource.
+     *
+     * @private
+     * @param {Object} list
+     * @returns {Array[]} list domain
+     */
+    _getUngroupedListDomain(list) {
+        return list.domain || [];
     },
     /**
      * Invalidates the DataManager's cache if the main model (i.e. the model of
@@ -4698,15 +4721,15 @@ var BasicModel = AbstractModel.extend({
                     if (oldGroup) {
                         delete self.localData[newGroup.id];
                         // restore the internal state of the group
-                        var updatedProps = _.pick(oldGroup, 'isOpen', 'offset', 'id');
+                        let oldPropsToKeep = self._getGroupedListPropsToKeep(oldGroup);
                         if (options.onlyGroups || oldGroup.isOpen && newGroup.groupedBy.length) {
                             // If the group is opened and contains subgroups,
                             // also keep its data to keep internal state of
                             // sub-groups
                             // Also keep data if we only reload groups' own data
-                            updatedProps.data = oldGroup.data;
+                            oldPropsToKeep.data = oldGroup.data;
                         }
-                        _.extend(newGroup, updatedProps);
+                        Object.assign(newGroup, oldPropsToKeep);
                         // set the limit such that all previously loaded records
                         // (e.g. if we are coming back to the kanban view from a
                         // form view) are reloaded
@@ -4966,7 +4989,7 @@ var BasicModel = AbstractModel.extend({
                 model: list.model,
                 fields: fieldNames,
                 context: _.extend({}, list.getContext(), {bin_size: true}),
-                domain: list.domain || [],
+                domain: this._getUngroupedListDomain(list),
                 limit: list.limit,
                 offset: list.loadMoreOffset + list.offset,
                 orderBy: list.orderedBy,

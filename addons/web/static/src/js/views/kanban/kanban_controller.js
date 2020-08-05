@@ -34,6 +34,7 @@ var KanbanController = BasicController.extend({
         kanban_load_more: '_onLoadMore',
         column_toggle_fold: '_onToggleColumn',
         kanban_column_records_toggle_active: '_onToggleActiveRecords',
+        load_column_active_filter: '_onLoadColumnActiveFilter',
     }),
     /**
      * @override
@@ -131,6 +132,15 @@ var KanbanController = BasicController.extend({
             return null;
         }
         return this._super(...arguments);
+    },
+    /**
+     * @param {string} columnID local id of the column
+     * @param {Object} options see model.loadRecords options
+     */
+    async _loadColumnRecords(columnID, options) {
+        const dbID = await this.model.loadRecords(columnID, options);
+        const data = this.model.get(dbID);
+        return this.renderer.updateColumn(dbID, data);
     },
     /**
      * @private
@@ -389,13 +399,23 @@ var KanbanController = BasicController.extend({
     /**
      * @private
      * @param {OdooEvent} ev
+     * @param {KanbanColumn} ev.target the column from which the records should be filtered
      */
-    _onLoadMore: function (ev) {
-        var self = this;
-        var column = ev.target;
-        this.model.loadMore(column.db_id).then(function (db_id) {
-            var data = self.model.get(db_id);
-            self.renderer.updateColumn(db_id, data);
+    async _onLoadColumnActiveFilter(ev) {
+        const column = ev.target;
+        await this._loadColumnRecords(column.columnID, {
+            activeFilter: column.activeFilter
+        });
+    },
+    /**
+     * @private
+     * @param {OdooEvent} ev
+     */
+    async _onLoadMore(ev) {
+        const column = ev.target;
+        await this._loadColumnRecords(column.db_id, {
+            activeFilter: column.columnState && column.columnState.activeFilter,
+            loadMore: true
         });
     },
     /**

@@ -93,12 +93,9 @@ var KanbanColumnProgressBar = Widget.extend({
         let allSubgroupCount = 0;
         for (const key of Object.keys(this.colors)) {
             const subgroupCount = this.columnState.progressBarValues.counts[key] || 0;
-            if (this.activeFilter === key && subgroupCount === 0) {
-                this.activeFilter = false;
-            }
             subgroupCounts[key] = subgroupCount;
             allSubgroupCount += subgroupCount;
-        };
+        }
         subgroupCounts.__false = this.columnState.count - allSubgroupCount;
 
         this.groupCount = this.columnState.count;
@@ -134,12 +131,17 @@ var KanbanColumnProgressBar = Widget.extend({
         });
         this.trigger_up('tweak_column_records', {
             callback: function ($el, recordData) {
-                var categoryValue = recordData[self.fieldName] ? recordData[self.fieldName] : '__false';
+                const categoryValue = recordData[self.fieldName] ? recordData[self.fieldName] : '__false';
+                const isColorDefined = Object.keys(self.colors).includes(categoryValue);
+
                 _.each(self.colors, function (val, key) {
                     $el.removeClass('oe_kanban_card_' + val);
                 });
-                if (self.colors[categoryValue]) {
+
+                if (isColorDefined) {
                     $el.addClass('oe_kanban_card_' + self.colors[categoryValue]);
+                } else if (self.activeFilter === '__false') {
+                    $el.addClass('oe_kanban_card_' + self.colors.__false);
                 }
             },
         });
@@ -212,10 +214,10 @@ var KanbanColumnProgressBar = Widget.extend({
                 end = this.subgroupCounts[this.activeFilter];
             }
         }
-        this.prevTotalCounterValue = end;
+        this.totalCounterValue = end;
         var animationClass = start > 999 ? 'o_kanban_grow' : 'o_kanban_grow_huge';
 
-        if (start !== undefined && (end > start || this.activeFilter) && this.ANIMATE) {
+        if (start !== undefined && end !== start && this.ANIMATE) {
             $({currentValue: start}).animate({currentValue: end}, {
                 duration: 1000,
                 start: function () {
@@ -232,6 +234,8 @@ var KanbanColumnProgressBar = Widget.extend({
         } else {
             this.$number.html(_getCounterHTML(end));
         }
+
+        this._notifyState();
 
         function _getCounterHTML(value) {
             return utils.human_number(value, 0, 3);
@@ -269,7 +273,7 @@ var KanbanColumnProgressBar = Widget.extend({
         var filter = this.$clickedBar.data('filter');
         this.activeFilter = (this.activeFilter === filter ? false : filter);
         this._notifyState();
-        this._render();
+        this.trigger_up('load_column_active_filter');
     },
     /**
      * @private
