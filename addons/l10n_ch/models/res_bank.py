@@ -186,26 +186,11 @@ class ResPartnerBank(models.Model):
         else:
             return ''
 
-    @api.model
-    def build_swiss_code_url(self, amount, currency_name, not_used_anymore_1, debtor_partner, not_used_anymore_2, structured_communication, free_communication):
-        comment = ""
-        if free_communication:
-            comment = (free_communication[:137] + '...') if len(free_communication) > 140 else free_communication
-
+    def _prepare_swiss_code_url_vals(self, amount, currency_name, debtor_partner, reference_type, reference, comment):
         creditor_addr_1, creditor_addr_2 = self._get_partner_address_lines(self.partner_id)
         debtor_addr_1, debtor_addr_2 = self._get_partner_address_lines(debtor_partner)
 
-        # Compute reference type (empty by default, only mandatory for QR-IBAN,
-        # and must then be 27 characters-long, with mod10r check digit as the 27th one,
-        # just like ISR number for invoices)
-        reference_type = 'NON'
-        reference = ''
-        if self._is_qr_iban():
-            # _check_for_qr_code_errors ensures we can't have a QR-IBAN without a QR-reference here
-            reference_type = 'QRR'
-            reference = structured_communication
-
-        qr_code_vals =  [
+        return [
             'SPC',                                                # QR Type
             '0200',                                               # Version
             '1',                                                  # Coding Type
@@ -239,6 +224,24 @@ class ResPartnerBank(models.Model):
             'EPD',                                                # Mandatory trailer part
         ]
 
+    @api.model
+    def build_swiss_code_url(self, amount, currency_name, not_used_anymore_1, debtor_partner, not_used_anymore_2, structured_communication, free_communication):
+        comment = ""
+        if free_communication:
+            comment = (free_communication[:137] + '...') if len(free_communication) > 140 else free_communication
+
+        # Compute reference type (empty by default, only mandatory for QR-IBAN,
+        # and must then be 27 characters-long, with mod10r check digit as the 27th one,
+        # just like ISR number for invoices)
+        reference_type = 'NON'
+        reference = ''
+        if self._is_qr_iban():
+            # _check_for_qr_code_errors ensures we can't have a QR-IBAN without a QR-reference here
+            reference_type = 'QRR'
+            reference = structured_communication
+
+        qr_code_vals = self._prepare_swiss_code_url_vals(amount, currency_name, debtor_partner, reference_type, reference, comment)
+
         # use quiet to remove blank around the QR and make it easier to place it
         return '/report/barcode/?type=%s&value=%s&width=%s&height=%s&quiet=1' % ('QR', werkzeug.urls.url_quote_plus('\n'.join(qr_code_vals)), 256, 256)
 
@@ -251,6 +254,15 @@ class ResPartnerBank(models.Model):
         line_1 = ' '.join(filter(None, streets))
         line_2 = partner.zip + ' ' + partner.city
         return line_1[:70], line_2[:70]
+
+    def _validate_qr_iban(self, iban):
+        if not iban or len(iban) < 9:
+            return False
+        iid_start_index = 4
+        iid_end_index = 8
+        iid = iban[iid_start_index : iid_end_index+1]
+        return re.match('\d+', iid) \
+               and 30000 <= int(iid) <= 31999 # Those values for iid are reserved for QR-IBANs only
 
     def _is_qr_iban(self):
         """ Tells whether or not this bank account has a QR-IBAN account number.
@@ -265,12 +277,8 @@ class ResPartnerBank(models.Model):
 
         self.ensure_one()
 
-        iid_start_index = 4
-        iid_end_index = 8
-        iid = self.sanitized_acc_number[iid_start_index : iid_end_index+1]
         return self.acc_type == 'iban' \
-               and re.match('\d+', iid) \
-               and 30000 <= int(iid) <= 31999 # Those values for iid are reserved for QR-IBANs only
+               and self._validate_qr_iban(self.sanitized_acc_number)
 
     @api.model
     def _is_qr_reference(self, reference):
