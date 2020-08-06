@@ -1128,11 +1128,11 @@ class TestMrpOrder(TestMrpCommon):
         mo_form.product_id = binocular
         mo_form.bom_id = bom_binocular
         mo_form.product_uom_id = unit
-        mo_form.product_qty = 1
+        mo_form.product_qty = 2
         mo = mo_form.save()
 
         mo.action_confirm()
-        self.assertEqual(mo.move_raw_ids.product_uom_qty, 1, 'Quantity should be 1.')
+        self.assertEqual(mo.move_raw_ids.product_uom_qty, 2, 'Quantity should be 2.')
         self.assertEqual(mo.move_raw_ids.product_uom, paire, 'Move UoM should be "Paire".')
 
         # produce product
@@ -1141,7 +1141,7 @@ class TestMrpOrder(TestMrpCommon):
             'active_ids': [mo.id],
         }))
         product_produce = produce_form.save()
-        self.assertEqual(product_produce.qty_producing, 1)
+        self.assertEqual(product_produce.qty_producing, 2)
         self.assertEqual(len(product_produce.raw_workorder_line_ids), 2, 'Should be 2 lines since the component tracking is serial and quantity 2.')
         self.assertEqual(product_produce.raw_workorder_line_ids[0].qty_to_consume, 1, 'Should be 1 unit since the tracking is serial and quantity 2.')
         self.assertEqual(product_produce.raw_workorder_line_ids[0].product_uom_id, unit, 'Should be the product uom so "unit"')

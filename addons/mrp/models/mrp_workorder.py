@@ -44,7 +44,7 @@ class MrpWorkorder(models.Model):
         'Production State', readonly=True,
         related='production_id.state',
         help='Technical: used in views only.')
-    qty_production = fields.Float('Original Production Quantity', readonly=True, related='production_id.product_qty')
+    qty_production = fields.Float('Original Production Quantity', readonly=True, related='production_id.product_uom_qty')
     qty_remaining = fields.Float('Quantity To Be Produced', compute='_compute_qty_remaining', digits='Product Unit of Measure')
     qty_produced = fields.Float(
         'Quantity', default=0.0,
@@ -205,7 +205,7 @@ class MrpWorkorder(models.Model):
                 if finished_workorder_line.lot_id:
                     qties_done_per_lot[finished_workorder_line.lot_id.id].append(finished_workorder_line.qty_done)
 
-            qty_to_produce = production.product_qty
+            qty_to_produce = production.product_uom_qty
             allowed_lot_ids = self.env['stock.production.lot']
             qty_produced = sum([max(qty_dones) for qty_dones in qties_done_per_lot.values()])
             if float_compare(qty_produced, qty_to_produce, precision_rounding=rounding) < 0:
@@ -235,12 +235,12 @@ class MrpWorkorder(models.Model):
         self.mapped('leave_id').unlink()
         return super(MrpWorkorder, self).unlink()
 
-    @api.depends('production_id.product_qty', 'qty_produced')
+    @api.depends('production_id.product_uom_qty', 'qty_produced')
     def _compute_is_produced(self):
         self.is_produced = False
         for order in self.filtered(lambda p: p.production_id):
             rounding = order.production_id.product_uom_id.rounding
-            order.is_produced = float_compare(order.qty_produced, order.production_id.product_qty, precision_rounding=rounding) >= 0
+            order.is_produced = float_compare(order.qty_produced, order.production_id.product_uom_qty, precision_rounding=rounding) >= 0
 
     @api.depends('time_ids.duration', 'qty_produced')
     def _compute_duration(self):
@@ -335,6 +335,11 @@ class MrpWorkorder(models.Model):
         )
         for move in moves:
             qty_to_consume = self._prepare_component_quantity(move, self.qty_producing)
+            qty_to_consume = self.product_uom_id._compute_quantity(
+                qty_to_consume,
+                self.production_id.product_uom_id,
+                round=False
+            )
             line_values = self._generate_lines_values(move, qty_to_consume)
             self.env['mrp.workorder.line'].create(line_values)
 
@@ -433,7 +438,7 @@ class MrpWorkorder(models.Model):
 
         # Test if the production is done
         rounding = self.production_id.product_uom_id.rounding
-        if float_compare(self.qty_produced, self.production_id.product_qty, precision_rounding=rounding) < 0:
+        if float_compare(self.qty_produced, self.production_id.product_uom_qty, precision_rounding=rounding) < 0:
             previous_wo = self.env['mrp.workorder']
             if self.product_tracking != 'none':
                 previous_wo = self.env['mrp.workorder'].search([
