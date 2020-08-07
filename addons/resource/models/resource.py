@@ -729,12 +729,6 @@ class ResourceResource(models.Model):
         ('check_time_efficiency', 'CHECK(time_efficiency>0)', 'Time efficiency must be strictly positive'),
     ]
 
-    @api.constrains('time_efficiency')
-    def _check_time_efficiency(self):
-        for record in self:
-            if record.time_efficiency == 0:
-                raise ValidationError(_('The efficiency factor cannot be equal to 0.'))
-
     @api.model
     def create(self, values):
         if values.get('company_id') and not values.get('calendar_id'):
