@@ -116,13 +116,12 @@ class MailActivity(models.Model):
     @api.model
     def default_get(self, fields):
         res = super(MailActivity, self).default_get(fields)
-        if not fields or 'res_model_id' in fields and self.env.context.get('res_model'):
-            res['res_model_id'] = self.env['ir.model']._get(self.env.context.get('res_model')).id
+        if not fields or 'res_model_id' in fields and res.get('res_model'):
+            res['res_model_id'] = self.env['ir.model']._get(res['res_model']).id
         return res
 
     @api.model
     def _default_activity_type_id(self):
-
         ActivityType = self.env["mail.activity.type"]
         activity_type_todo = self.env.ref('mail.mail_activity_data_todo', raise_if_not_found=False)
         current_model_id = self.default_get(['res_model_id', 'res_model'])['res_model_id']
@@ -510,16 +509,14 @@ class MailActivity(models.Model):
         for activity in self:
             # extract value to generate next activities
             if activity.force_next:
-                Activity = self.env['mail.activity'].with_context(activity_previous_deadline=activity.date_deadline, res_model=self.res_model)  # context key is required in the onchange to set deadline
-                vals = Activity.default_get(Activity.fields_get())
+                Activity = self.env['mail.activity'].with_context(activity_previous_deadline=activity.date_deadline)  # context key is required in the onchange to set deadline
 
-                vals.update({
+                vals = {
                     'previous_activity_type_id': activity.activity_type_id.id,
                     'res_id': activity.res_id,
                     'res_model': activity.res_model,
                     'res_model_id': self.env['ir.model']._get(activity.res_model).id,
-                })
-
+                }
 
                 virtual_activity = Activity.new(vals)
                 virtual_activity._onchange_previous_activity_type_id()

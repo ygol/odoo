@@ -187,6 +187,10 @@ function factory(dependencies) {
                 method: 'action_feedback_schedule_next',
                 args: [[this.id]],
                 kwargs: { feedback },
+                context: {
+                    default_res_id: this.chatter.threadId,
+                    default_res_model: this.chatter.threadModel,
+                },
             }));
             const chatter = this.chatter;
             if (chatter) {
