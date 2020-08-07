@@ -122,10 +122,9 @@ class MrpUnbuild(models.Model):
             self.bom_id = self.env['mrp.bom']._bom_find(product=self.product_id, company_id=self.company_id.id)
             self.product_uom_id = self.product_id.uom_id.id
 
-    @api.constrains('product_qty')
-    def _check_qty(self):
-        if self.product_qty <= 0:
-            raise ValueError(_('Unbuild Order product quantity has to be strictly positive.'))
+    _sql_constraints = [
+        ('mrp_unbuild_qty', 'CHECK(product_qty > 0)', 'Unbuild Order product quantity has to be strictly positive.'),
+    ]
 
     @api.model
     def create(self, vals):

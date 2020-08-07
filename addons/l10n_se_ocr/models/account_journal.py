@@ -11,7 +11,6 @@ class AccountJournal(models.Model):
     invoice_reference_model = fields.Selection(selection_add=[('se_ocr2', 'Sweden OCR Level 1 & 2'), ('se_ocr3', 'Sweden OCR Level 3'), ('se_ocr4', 'Sweden OCR Level 4')], ondelete={'se_ocr2': 'set default', 'se_ocr3': 'set default', 'se_ocr4': 'set default'})
     l10n_se_invoice_ocr_length = fields.Integer(string='OCR Number Length', help="Total length of OCR Reference Number including checksum.", default=6)
 
-    @api.constrains('l10n_se_invoice_ocr_length')
-    def _check_l10n_se_invoice_ocr_length(self):
-        if self.l10n_se_invoice_ocr_length < 6:
-            return ValidationError(_('OCR Reference Number length need to be greater than 5. Please correct settings under invoice journal settings.'))
+    _sql_constraints = [
+        ('l10n_se_invoice_ocr_ref_size', 'CHECK(l10n_se_invoice_ocr_length > 5)', 'OCR Reference Number length needs to be greater than 5. Please correct settings under invoice journal settings.'),
+    ]

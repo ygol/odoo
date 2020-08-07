@@ -326,13 +326,24 @@ class PosConfig(models.Model):
 
     @api.constrains('rounding_method')
     def _check_rounding_method_strategy(self):
-        if self.cash_rounding and self.rounding_method.strategy != 'add_invoice_line':
-            raise ValidationError(_("Cash rounding strategy must be: 'Add a rounding line'"))
+        for config in self:
+            if config.cash_rounding and config.rounding_method.strategy != 'add_invoice_line':
+                selection_value = "Add a rounding line"
+                for key, val in self.env["account.cash.rounding"]._fields["stategy"]._description_selection(config.env):
+                    if key == "add_invoice_line":
+                        selection_value = val
+                        break
+                raise ValidationError(_(
+                    "The cash rounding strategy of the point of sale %(pos)s must be: '%(value)s'",
+                    pos=config.name,
+                    value=selection_value,
+                ))
 
     @api.constrains('company_id', 'journal_id')
     def _check_company_journal(self):
-        if self.journal_id and self.journal_id.company_id.id != self.company_id.id:
-            raise ValidationError(_("The sales journal and the point of sale must belong to the same company."))
+        for config in self:
+            if config.journal_id and config.journal_id.company_id.id != config.company_id.id:
+                raise ValidationError(_("The sales journal of the point of sale %s must belong to its company.", config.name))
 
     def _check_profit_loss_cash_journal(self):
         if self.cash_control and self.payment_method_ids:
@@ -342,13 +353,15 @@ class PosConfig(models.Model):
 
     @api.constrains('company_id', 'invoice_journal_id')
     def _check_company_invoice_journal(self):
-        if self.invoice_journal_id and self.invoice_journal_id.company_id.id != self.company_id.id:
-            raise ValidationError(_("The invoice journal and the point of sale must belong to the same company."))
+        for config in self:
+            if config.invoice_journal_id and config.invoice_journal_id.company_id.id != config.company_id.id:
+                raise ValidationError(_("The invoice journal of the point of sale %s must belong to the same company.", config.name))
 
     @api.constrains('company_id', 'payment_method_ids')
     def _check_company_payment(self):
-        if self.env['pos.payment.method'].search_count([('id', 'in', self.payment_method_ids.ids), ('company_id', '!=', self.company_id.id)]):
-            raise ValidationError(_("The method payments and the point of sale must belong to the same company."))
+        for config in self:
+            if any(pm.company_id != config.company_id for pm in config.payment_method_ids):
+                raise ValidationError(_("The payment methods of the point of sale %s must belong to its company.", config.name))
 
     @api.constrains('pricelist_id', 'use_pricelist', 'available_pricelist_ids', 'journal_id', 'invoice_journal_id', 'payment_method_ids')
     def _check_currencies(self):
@@ -384,8 +397,9 @@ class PosConfig(models.Model):
 
     @api.constrains('company_id', 'available_pricelist_ids')
     def _check_companies(self):
-        if any(self.available_pricelist_ids.mapped(lambda pl: pl.company_id.id not in (False, self.company_id.id))):
-            raise ValidationError(_("The selected pricelists must belong to no company or the company of the point of sale."))
+        for config in self:
+            if any(pricelist.company_id.id not in [False, config.company_id.id] for pricelist in config.available_pricelist_ids):
+                raise ValidationError(_("The selected pricelists must belong to no company or the company of the point of sale."))
 
     @api.onchange('iface_tipproduct')
     def _onchange_tipproduct(self):
