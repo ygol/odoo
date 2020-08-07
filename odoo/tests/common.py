@@ -1616,7 +1616,7 @@ class Form(object):
         else:
             self._init_from_defaults(self._model)
 
-    def _o2m_set_edition_view(self, descr, node, level):
+    def _set_x2m_subviews(self, descr, node, level):
         default_view = next(
             (m for m in node.get('mode', 'tree').split(',') if m != 'form'),
             'tree'
@@ -1684,8 +1684,8 @@ class Form(object):
             # NOTE: selection breaks because of m2o widget=selection
             if f.get('widget') in ['many2many']:
                 descr['type'] = f.get('widget')
-            if level and descr['type'] == 'one2many':
-                self._o2m_set_edition_view(descr, f, level)
+            if level and descr['type'] in ('one2many', 'many2many'):
+                self._set_x2m_subviews(descr, f, level)
 
         fvg['onchange'] = model._onchange_spec(fvg)
 

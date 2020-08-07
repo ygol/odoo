@@ -44,6 +44,7 @@
                     <group>
                         <field name="value"/>
                         <field name="v"/>
+                        <field name="x"/>
                     </group>
                     <group>
                         <field name="subs"/>

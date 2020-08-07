@@ -534,6 +534,10 @@ class TestO2M(TransactionCase):
             a | b | c
         )
 
+        with Form(r, view='test_testing_utilities.o2m_widget_m2m') as f:
+            f.x = 5
+        self.assertEqual(sum(r.mapped('subs.value')), 15)
+
     def test_o2m_onchange_change_saved(self):
         """ If an onchange updates o2m values (in existing sub-records of an
         existing record), those updated values should be saved, both if the

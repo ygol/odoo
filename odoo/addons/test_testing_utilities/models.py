@@ -141,10 +141,15 @@ class O2MChange(models.Model):
     value = fields.Integer(default=1)
     v = fields.Integer()
     subs = fields.One2many('test_testing_utilities.sub', 'parent_id')
+    x = fields.Integer()
 
     @api.onchange('value', 'subs')
     def _onchange_values(self):
         self.v = self.value + sum(s.value for s in self.subs)
+    @api.onchange('x')
+    def _onchange_x(self):
+        for s in self.subs:
+            s.value = self.x
 
 class O2MSub(models.Model):
     _name = 'test_testing_utilities.sub'
