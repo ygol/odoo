@@ -16,7 +16,6 @@
             <field name="res_model">project.task</field>
             <field name="default" eval="False"/>
             <field name="hidden" eval="True"/>
-            <field name="description">Task Created</field>
         </record>
         <record id="mt_task_blocked" model="mail.message.subtype">
             <field name="name">Task Blocked</field>
