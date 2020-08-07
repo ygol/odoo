@@ -449,16 +449,15 @@ class EventEvent(models.Model):
                 ]
             event.event_ticket_ids = command
 
+    _sql_constraints = [
+        ("event_event_period", "CHECK(date_begin <= date_end)", "The closing date cannot be earlier than the beginning date."),
+    ]
+
     @api.constrains('seats_max', 'seats_available', 'seats_limited')
     def _check_seats_limit(self):
+        # VFE TODO specify as SQL constraint when pre-computed fields are supported.
         if any(event.seats_limited and event.seats_max and event.seats_available < 0 for event in self):
             raise ValidationError(_('No more available seats.'))
-
-    @api.constrains('date_begin', 'date_end')
-    def _check_closing_date(self):
-        for event in self:
-            if event.date_end < event.date_begin:
-                raise ValidationError(_('The closing date cannot be earlier than the beginning date.'))
 
     @api.depends('name', 'date_begin', 'date_end')
     def name_get(self):

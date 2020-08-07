@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from psycopg2 import IntegrityError
 import time
 
+from odoo.tools import mute_logger
 from odoo.tests.common import TransactionCase
 
 
@@ -20,12 +22,14 @@ class TestHrAttendance(TransactionCase):
 
     def test_attendance_in_before_out(self):
         # Make sure check_out is before check_in
-        with self.assertRaises(Exception):
-            self.my_attend = self.attendance.create({
-                'employee_id': self.test_employee.id,
-                'check_in': time.strftime('%Y-%m-10 12:00'),
-                'check_out': time.strftime('%Y-%m-10 11:00'),
-            })
+        with mute_logger('odoo.sql_db'):
+            with self.assertRaises(IntegrityError):
+                with self.cr.savepoint():
+                    self.attendance.create({
+                        'employee_id': self.test_employee.id,
+                        'check_in': time.strftime('%Y-%m-10 12:00'),
+                        'check_out': time.strftime('%Y-%m-10 11:00'),
+                    })
 
     def test_attendance_no_check_out(self):
         # Make sure no second attandance without check_out can be created

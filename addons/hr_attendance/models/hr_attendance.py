@@ -45,13 +45,9 @@ class HrAttendance(models.Model):
             else:
                 attendance.worked_hours = False
 
-    @api.constrains('check_in', 'check_out')
-    def _check_validity_check_in_check_out(self):
-        """ verifies if check_in is earlier than check_out. """
-        for attendance in self:
-            if attendance.check_in and attendance.check_out:
-                if attendance.check_out < attendance.check_in:
-                    raise exceptions.ValidationError(_('"Check Out" time cannot be earlier than "Check In" time.'))
+    _sql_constraints = [
+        ("hr_attendance_period", "CHECK(check_out IS NULL OR check_in <= check_out)", '"Check Out" time cannot be earlier than "Check In" time.'),
+    ]
 
     @api.constrains('check_in', 'check_out', 'employee_id')
     def _check_validity(self):

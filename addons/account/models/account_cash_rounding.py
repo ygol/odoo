@@ -28,11 +28,9 @@ class AccountCashRounding(models.Model):
         default='HALF-UP', help='The tie-breaking rule used for float rounding operations')
     company_id = fields.Many2one('res.company', related='profit_account_id.company_id')
 
-    @api.constrains('rounding')
-    def validate_rounding(self):
-        for record in self:
-            if record.rounding < 0:
-                raise ValidationError(_("Please set a positive rounding value."))
+    _sql_constraints = [
+        ('account_cash_rounding_positive', 'CHECK(rounding > 0)', 'The rounding value must be positive.'),
+    ]
 
     def round(self, amount):
         """Compute the rounding on the amount passed as parameter.

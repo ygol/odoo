@@ -835,10 +835,11 @@ class ResourceCalendarLeaves(models.Model):
     time_type = fields.Selection([('leave', 'Time Off'), ('other', 'Other')], default='leave',
                                  help="Whether this should be computed as a time off or as work time (eg: formation)")
 
-    @api.constrains('date_from', 'date_to')
-    def check_dates(self):
-        if self.filtered(lambda leave: leave.date_from > leave.date_to):
-            raise ValidationError(_('The start date of the time off must be earlier end date.'))
+    # VFE FIXME do we want to support leaves of duration 0 ?
+    # if not, tests have to be updated.
+    _sql_constraints = [
+        ('resource_cl_leave_dates', 'CHECK(date_from <= date_to)', 'The start date of the time off must be earlier than its end date.'),
+    ]
 
     @api.onchange('resource_id')
     def onchange_resource(self):

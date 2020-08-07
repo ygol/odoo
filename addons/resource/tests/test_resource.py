@@ -3,9 +3,11 @@
 
 from datetime import date, datetime
 from pytz import timezone, utc
+from psycopg2 import IntegrityError
 
 from odoo import fields
 from odoo.exceptions import ValidationError
+from odoo.tools import mute_logger
 from odoo.addons.resource.models.resource import Intervals
 from odoo.addons.resource.tests.common import TestResourceCommon
 from odoo.tests.common import TransactionCase
@@ -98,23 +100,27 @@ class TestErrors(TestResourceCommon):
 
     def test_create_negative_leave(self):
         # from > to
-        with self.assertRaises(ValidationError):
-            self.env['resource.calendar.leaves'].create({
-                'name': 'error cannot return in the past',
-                'resource_id': False,
-                'calendar_id': self.calendar_jean.id,
-                'date_from': datetime_str(2018, 4, 3, 20, 0, 0, tzinfo=self.jean.tz),
-                'date_to': datetime_str(2018, 4, 3, 0, 0, 0, tzinfo=self.jean.tz),
-            })
+        with mute_logger('odoo.sql_db'):
+            with self.assertRaises(IntegrityError):
+                with self.cr.savepoint():
+                    self.env['resource.calendar.leaves'].create({
+                        'name': 'error cannot return in the past',
+                        'resource_id': False,
+                        'calendar_id': self.calendar_jean.id,
+                        'date_from': datetime_str(2018, 4, 3, 20, 0, 0, tzinfo=self.jean.tz),
+                        'date_to': datetime_str(2018, 4, 3, 0, 0, 0, tzinfo=self.jean.tz),
+                    })
 
-        with self.assertRaises(ValidationError):
-            self.env['resource.calendar.leaves'].create({
-                'name': 'error caused by timezones',
-                'resource_id': False,
-                'calendar_id': self.calendar_jean.id,
-                'date_from': datetime_str(2018, 4, 3, 10, 0, 0, tzinfo='UTC'),
-                'date_to': datetime_str(2018, 4, 3, 12, 0, 0, tzinfo='Etc/GMT-6')
-            })
+        with mute_logger('odoo.sql_db'):
+            with self.assertRaises(IntegrityError):
+                with self.cr.savepoint():
+                    self.env['resource.calendar.leaves'].create({
+                        'name': 'error caused by timezones',
+                        'resource_id': False,
+                        'calendar_id': self.calendar_jean.id,
+                        'date_from': datetime_str(2018, 4, 3, 10, 0, 0, tzinfo='UTC'),
+                        'date_to': datetime_str(2018, 4, 3, 12, 0, 0, tzinfo='Etc/GMT-6')
+                    })
 
 
 class TestCalendar(TestResourceCommon):
