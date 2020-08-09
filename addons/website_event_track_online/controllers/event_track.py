@@ -231,12 +231,17 @@ class EventTrackOnlineController(WebsiteEventTrackController):
 
         return result
 
-    @http.route('/event/manifest.webmanifest', type='http', auth='public', methods=['GET'], website=True, sitemap=False)
+    @http.route('/event/pwa.json', type='http', auth='public', methods=['GET'], website=True, sitemap=False)
     def webmanifest(self):
         """ Returns a WebManifest describing the metadata associated with a web application.
         Using this metadata, user agents can provide developers with means to create user 
         experiences that are more comparable to that of a native application.
         """
+        print("""
+        ###################################################################################################
+        ########################################### WEBMANIFEST ###########################################
+        ###################################################################################################
+        """)
         company = request.env.company
         website = request.website
         manifest = {
@@ -257,7 +262,7 @@ class EventTrackOnlineController(WebsiteEventTrackController):
         } for size in icon_sizes]
         body = json.dumps(manifest, default=ustr)
         response = request.make_response(body, [
-            ('Content-Type', 'application/manifest+json'),
+            ('Content-Type', 'application/json'),
         ])
         return response
 
