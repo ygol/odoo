@@ -45,7 +45,9 @@ import dateutil.relativedelta
 import psycopg2, psycopg2.extensions
 from lxml import etree
 from lxml.builder import E
+from psycopg2 import sql
 from psycopg2.extensions import AsIs
+from psycopg2.extras import execute_values
 
 import odoo
 from . import SUPERUSER_ID
@@ -228,6 +230,7 @@ VALID_AGGREGATE_FUNCTIONS = {
     'bool_and', 'bool_or', 'max', 'min', 'avg', 'sum',
 }
 
+DEFAULT = AsIs('default')
 
 class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
     """Base class for Odoo models.
@@ -3838,47 +3841,59 @@ Fields:
     def _create(self, data_list):
         """ Create records from the stored field values in ``data_list``. """
         assert data_list
-        cr = self.env.cr
-        quote = '"{}"'.format
-
         # insert rows
-        ids = []                        # ids of created records
         other_fields = set()            # non-column fields
         translated_fields = set()       # translated fields
 
-        # column names, formats and values (for common fields)
-        columns0 = [('id', "nextval(%s)", self._sequence)]
-        if self._log_access:
-            columns0.append(('create_uid', "%s", self._uid))
-            columns0.append(('create_date', "%s", AsIs("(now() at time zone 'UTC')")))
-            columns0.append(('write_uid', "%s", self._uid))
-            columns0.append(('write_date', "%s", AsIs("(now() at time zone 'UTC')")))
+        fields = []
 
+        formats = {'id': 'nextval(%s)'}
+        converters = {'id': lambda v, *_: v}
+        autos = {'id': self._sequence}
+        if self._log_access:
+            access_columns = ['create_uid', 'create_date', 'write_uid', 'write_date']
+            formats.update(dict.fromkeys(access_columns, '%s'))
+            converters.update(dict.fromkeys(access_columns, lambda v, *_: v))
+            autos.update(
+                create_uid=self._uid, create_date=AsIs("(now() at time zone 'UTC')"),
+                write_uid=self._uid, write_date=AsIs("(now() at time zone 'UTC')"),
+            )
+
+        known_columns = set()
         for data in data_list:
-            # determine column values
             stored = data['stored']
-            columns = [column for column in columns0 if column[0] not in stored]
-            for name, val in sorted(stored.items()):
+            for name in stored:
                 field = self._fields[name]
                 assert field.store
+                if name in known_columns:
+                    continue
 
+                known_columns.add(name)
                 if field.column_type:
-                    col_val = field.convert_to_column(val, self, stored)
-                    columns.append((name, field.column_format, col_val))
+                    formats[name] = field.column_format
+                    converters[name] = field.convert_to_column
+                    fields.append(field)
                     if field.translate is True:
                         translated_fields.add(field)
                 else:
                     other_fields.add(field)
 
-            # insert a row with the given columns
-            query = "INSERT INTO {} ({}) VALUES ({}) RETURNING id".format(
-                quote(self._table),
-                ", ".join(quote(name) for name, fmt, val in columns),
-                ", ".join(fmt for name, fmt, val in columns),
-            )
-            params = [val for name, fmt, val in columns]
-            cr.execute(query, params)
-            ids.append(cr.fetchone()[0])
+        values = [
+            [
+                conv(rec[n], self, data['stored']) if n in rec else DEFAULT
+                for n, conv in converters.items()
+            ]
+            for data in data_list
+            for rec in [{**autos, **data['stored']}]
+        ]
+
+        query = sql.SQL("INSERT INTO {} ({}) VALUES %s RETURNING id").format(
+            sql.Identifier(self._table),
+            sql.SQL(',').join(map(sql.Identifier, formats))
+        )
+        # NOTE: requires psycopg2 2.8, 2.7 can't retrieve results
+        r = execute_values(self.env.cr._obj, query, values, template=f"({','.join(formats.values())})", fetch=True)
+        ids = [id_ for [id_] in r]
 
         # put the new records in cache, and update inverse fields, for many2one
         #
