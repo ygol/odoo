@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-<record id="tvac_00" model="account.tax.template">
+    <record id="tvac_00" model="account.tax.template">
         <field name="chart_template_id" ref="ro_chart_template"/>
         <field name="sequence">4</field>
         <field name="description">TVA colectat 0% Bunuri</field>
