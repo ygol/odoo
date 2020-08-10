@@ -45,6 +45,7 @@
                             <label for="name" class="oe_edit_only" string="Lead" attrs="{'invisible': [('type', '=', 'opportunity')]}"/>
                             <label for="name" class="oe_edit_only" attrs="{'invisible': [('type', '=', 'lead')]}"/>
                             <h1><field name="name" placeholder="e.g. Product Pricing"/></h1>
+                            <field name="is_automated_probability"/>
                             <h2 class="o_row row no-gutters d-flex align-items-end">
                                 <div class="col" attrs="{'invisible': [('type', '=', 'lead')]}">
                                     <label for="planned_revenue" class="oe_edit_only" />
