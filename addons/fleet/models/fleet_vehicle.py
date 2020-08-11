@@ -202,12 +202,10 @@ class FleetVehicle(models.Model):
     def create(self, vals_list):
         vehicles = super(FleetVehicle, self).create(vals_list)
         state_waiting_list = self.env.ref('fleet.fleet_vehicle_state_waiting_list', raise_if_not_found=False)
-        for vehicle in vehicles:
-            if vehicle.driver_id:
-                vehicle.create_driver_history(vehicle.driver_id.id)
-            if vehicle.future_driver_id:
-                if not state_waiting_list or vehicle.state_id != state_waiting_list:
-                    vehicle.future_driver_id.sudo().write({'plan_to_change_car': True})
+        vehicles.create_driver_history()
+        vehicles.filtered(
+            lambda v: v.future_driver_id and(not state_waiting_list or v.state_id != state_waiting_list)
+        ).sudo().write({'plan_to_change_car': True})
         return vehicles
 
     def write(self, vals):
@@ -234,13 +232,14 @@ class FleetVehicle(models.Model):
             ('date_end', '=', False)
         ]).write({'date_end': fields.Date.today()})
 
-    def create_driver_history(self, driver_id):
-        for vehicle in self:
-            self.env['fleet.vehicle.assignation.log'].create({
-                'vehicle_id': vehicle.id,
-                'driver_id': driver_id,
-                'date_start': fields.Date.today(),
-            })
+    def create_driver_history(self, driver_id=None):
+        today = fields.Date.today()
+        log_vals = [{
+            'vehicle_id': vehicle.id,
+            'driver_id': driver_id or vehicle.driver_id.id,
+            'date_start': today,
+        } for vehicle in self if driver_id or vehicle.driver_id]
+        self.env['fleet.vehicle.assignation.log'].create(log_vals)
 
     def action_accept_driver_change(self):
         self._close_driver_history()
