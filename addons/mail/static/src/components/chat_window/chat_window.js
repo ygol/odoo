@@ -118,7 +118,7 @@ class ChatWindow extends Component {
         if (this.chatWindow.isFolded) {
             return;
         }
-        if (!this.chatWindow.thread) {
+        if (!this.chatWindow.threadViewer) {
             this._inputRef.comp.focus();
         } else {
             this._threadRef.comp.focus();
@@ -244,7 +244,7 @@ class ChatWindow extends Component {
             this.chatWindow.unfold();
             this.chatWindow.focus();
         } else {
-            if (this.chatWindow.thread) {
+            if (this.chatWindow.threadViewer) {
                 this._saveThreadScrollTop();
             }
             this.chatWindow.fold();
@@ -332,7 +332,7 @@ class ChatWindow extends Component {
      * @private
      */
     async _onWillHideHomeMenu() {
-        if (!this.chatWindow.thread) {
+        if (!this.chatWindow.threadViewer) {
             return;
         }
         if (!this.chatWindow.isFolded) {
@@ -349,7 +349,7 @@ class ChatWindow extends Component {
      * @private
      */
     async _onWillShowHomeMenu() {
-        if (!this.chatWindow.thread) {
+        if (!this.chatWindow.threadViewer) {
             return;
         }
         if (!this.chatWindow.isFolded) {

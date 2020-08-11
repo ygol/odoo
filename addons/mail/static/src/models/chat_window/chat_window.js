@@ -106,7 +106,9 @@ function factory(dependencies) {
         unfold() {
             if (this.thread) {
                 this.thread.update({ pendingFoldState: 'open' });
-                this.threadViewer.addComponentHint('chat-window-unfolded');
+                if (this.threadViewer) {
+                    this.threadViewer.addComponentHint('chat-window-unfolded');
+                }
             } else {
                 this.update({ _isFolded: false });
             }
@@ -168,6 +170,31 @@ function factory(dependencies) {
                 return this.thread.displayName;
             }
             return this.env._t("New message");
+        }
+
+        /**
+         * @private
+         * @returns {boolean}
+         */
+        _computeIsVisible() {
+            return this.manager.allOrderedVisible.includes(this);
+        }
+
+        /**
+         * @private
+         * @returns{mail.thread_viewer|undefined}
+         */
+        _computeThreadViewer() {
+            if (this.thread && this.isVisible) {
+                if (!this.threadViewer) {
+                    return [['create', {
+                        thread: [['link', this.thread]]
+                    }]];
+                }
+            } else if (this.threadViewer) {
+                return [['unlink', this.threadViewer]];
+            }
+            return [];
         }
 
         /**
@@ -316,6 +343,16 @@ function factory(dependencies) {
             ],
             default: false,
         }),
+        /**
+         * Determine whether the chat window is visible or not.
+         */
+        isVisible: attr({
+            compute: '_computeIsVisible',
+            dependencies: [
+                'managerAllOrderedVisible',
+            ],
+            default: false,
+        }),
         manager: many2one('mail.chat_window_manager', {
             inverse: 'chatWindows',
         }),
@@ -332,9 +369,10 @@ function factory(dependencies) {
                 'threadDisplayName',
             ],
         }),
-        thread: many2one('mail.thread', {
-            related: 'threadViewer.thread',
-        }),
+        /**
+         * Link to the thread displayed in the chat window.
+         */
+        thread: many2one('mail.thread'),
         threadDisplayName: attr({
             related: 'thread.displayName',
         }),
@@ -342,7 +380,14 @@ function factory(dependencies) {
             related: 'thread.foldState',
         }),
         threadViewer: one2one('mail.thread_viewer', {
+            compute: '_computeThreadViewer',
+            dependencies: [
+                'isVisible',
+                'thread',
+                'threadViewer',
+            ],
             inverse: 'chatWindow',
+            isCausal: true,
         }),
         /**
          * This field handle the "order" (index) of the visible chatWindow inside the UI.

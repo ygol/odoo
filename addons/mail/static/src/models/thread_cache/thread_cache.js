@@ -2,7 +2,7 @@ odoo.define('mail/static/src/models/thread_cache/thread_cache.js', function (req
 'use strict';
 
 const { registerNewModel } = require('mail/static/src/model/model_core.js');
-const { attr, many2many, many2one } = require('mail/static/src/model/model_field.js');
+const { attr, many2many, many2one, one2many } = require('mail/static/src/model/model_field.js');
 
 const MESSAGE_FETCH_LIMIT = 30;
 
@@ -207,6 +207,21 @@ function factory(dependencies) {
 
         /**
          * @private
+         * @returns {boolean}
+         */
+        _computeShouldLoadMessages() {
+            if (!this.thread || this.thread.viewers.length === 0) {
+                return false;
+            }
+            if (this.isLoaded || this.isLoading) {
+                return false;
+            }
+            this.loadMessages();
+            return true;
+        }
+
+        /**
+         * @private
          * @returns {mail.message[]}
          */
         _computeUncheckedMessages() {
@@ -387,6 +402,19 @@ function factory(dependencies) {
             compute: '_computeOrderedMessages',
             dependencies: ['messages'],
         }),
+        /**
+         * Determine whether the thread cache should load messages.
+         * This is not a "real" field, its compute function is used to trigger
+         * the messages load at the right time.
+         */
+        shouldLoadMessages: attr({
+            compute: '_computeShouldLoadMessages',
+            dependencies: [
+                'threadViewers',
+                'isLoaded',
+                'isLoading',
+            ],
+        }),
         stringifiedDomain: attr({
             default: '[]',
         }),
@@ -395,6 +423,12 @@ function factory(dependencies) {
         }),
         threadMessages: many2many('mail.message', {
             related: 'thread.messages',
+        }),
+        /**
+         * Thread viewers used to view this thread cache.
+         */
+        threadViewers: one2many('mail.thread_viewer', {
+            related: 'thread.viewers',
         }),
         uncheckedMessages: many2many('mail.message', {
             compute: '_computeUncheckedMessages',

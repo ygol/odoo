@@ -143,10 +143,43 @@ function factory(dependencies) {
         /**
          * @private
          */
+        _onThreadChange() {
+            if (this.thread) {
+                this._stopLoading();
+            }
+        }
+
+        /**
+         * @private
+         */
+        _onThreadCacheChange() {
+            if (this.threadCache) {
+                this._stopLoading();
+                this.addComponentHint('change-of-thread-cache');
+            }
+        }
+
+        /**
+         * @private
+         * @returns {boolean}
+         */
+        _onThreadCacheIsLoading() {
+            if (
+                this.thread && this.threadCache && this.threadCache.isLoading &&
+                !this.isShowingLoading && !this._isPreparingLoading
+            ) {
+                this._prepareLoading();
+            }
+            return false;
+        }
+
+        /**
+         * @private
+         */
         _prepareLoading() {
             this._isPreparingLoading = true;
             this._loaderTimeout = setTimeout(() => {
-                this.isShowingLoading = true;
+                this.update({isShowingLoading: true});
                 this._isPreparingLoading = false;
             }, 400);
         }
@@ -157,43 +190,9 @@ function factory(dependencies) {
         _stopLoading() {
             clearTimeout(this._loaderTimeout);
             this._loaderTimeout = null;
-            this.isShowingLoading = false;
+            this.update({isShowingLoading: false});
             this._isPreparingLoading = false;
         }
-
-        /**
-         * @override
-         */
-        _updateAfter(previous) {
-            if (this.thread && this.thread !== previous.thread) {
-                this._stopLoading();
-                if (!this.threadCache.isLoaded && !this.threadCache.isLoading) {
-                    this.threadCache.loadMessages();
-                }
-            }
-            if (this.threadCache !== previous.threadCache) {
-                this._stopLoading();
-                this.addComponentHint('change-of-thread-cache');
-            }
-
-            if (
-                this.thread && this.threadCache && this.threadCache.isLoading &&
-                !this.isShowingLoading && !this._isPreparingLoading
-            ) {
-                this._prepareLoading();
-            }
-        }
-
-        /**
-         * @override
-         */
-        _updateBefore() {
-            return {
-                thread: this.thread,
-                threadCache: this.threadCache,
-            };
-        }
-
     }
 
     ThreadViewer.fields = {
@@ -230,6 +229,10 @@ function factory(dependencies) {
         hasComposerFocus: attr({
             related: 'composer.hasFocus',
         }),
+        /**
+         * Determine if thread viewer is showing loading.
+         */
+        isShowingLoading: attr(),
         lastMessage: many2one('mail.message', {
             related: 'thread.lastMessage',
         }),
@@ -240,6 +243,26 @@ function factory(dependencies) {
         lastVisibleMessage: many2one('mail.message'),
         messages: many2many('mail.message', {
             related: 'threadCache.messages',
+        }),
+        onThreadChange: attr({
+            compute: '_onThreadChange',
+            dependencies: [
+                'thread',
+            ]
+        }),
+        onThreadCacheChange: attr({
+            compute: '_onThreadCacheChange',
+            dependencies: [
+                'threadCache',
+            ]
+        }),
+        onThreadCacheIsLoading: attr({
+            compute: '_onThreadCacheIsLoading',
+            dependencies: [
+                'thread',
+                'threadCache',
+                'threadCacheIsLoading',
+            ],
         }),
         stringifiedDomain: attr({
             default: '[]',
@@ -254,6 +277,12 @@ function factory(dependencies) {
                 'thread',
                 'threadCaches',
             ],
+        }),
+        /**
+         * Determine if thread cache is loading.
+         */
+        threadCacheIsLoading: attr({
+            related: 'threadCache.isLoading',
         }),
         threadCacheInitialScrollPosition: attr({
             compute: '_computeThreadCacheInitialScrollPosition',
