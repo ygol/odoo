@@ -301,7 +301,6 @@ class ResPartnerBank(models.Model):
                    partner.city and \
                    partner.country_id.code and \
                    (partner.street or partner.street2)
-
         return _partner_fields_set(self.partner_id) and \
                _partner_fields_set(debtor_partner) and \
                (reference_to_check == '' or not self._is_qr_iban() or self._is_qr_reference(reference_to_check))

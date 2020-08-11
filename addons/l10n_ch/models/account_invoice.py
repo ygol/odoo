@@ -74,7 +74,7 @@ class AccountMove(models.Model):
         """
         for record in self:
             has_qriban = record.invoice_partner_bank_id._is_qr_iban()
-            isr_subscription = record.invoice_partner_bank_id.l10n_ch_postal
+            isr_subscription = record.invoice_partner_bank_id.l10n_ch_postal.replace("-", "")  # In case the user put the -
             if (has_qriban or isr_subscription) and record.name:
                 invoice_issuer_ref = (isr_subscription or '').ljust(l10n_ch_ISR_NUMBER_ISSUER_LENGTH, '0')
                 invoice_ref = re.sub('[^\d]', '', record.name)
