@@ -5,7 +5,6 @@ import logging
 import threading
 from datetime import date, datetime, timedelta
 from psycopg2 import sql
-import pdb
 
 from odoo import api, fields, models, tools, SUPERUSER_ID
 from odoo.osv import expression
@@ -587,12 +586,9 @@ class Lead(models.Model):
         lead_probabilities = self.sudo()._pls_get_naive_bayes_probabilities()
         for lead in self:
             lead_proba = lead_probabilities.get(lead.id, 0)
-            # proba_vals = {'automated_probability': lead_proba}
-            # pdb.set_trace()
-            # if lead.is_automated_probability:
-            proba_vals = {'automated_probability': lead_proba,
-                'probability': lead_proba if lead.stage_id.is_won else 0,
-                }
+            proba_vals = {'automated_probability': lead_proba}
+            if tools.float_compare(lead.probability, lead.automated_probability, 2) == 0:
+                proba_vals = {'probability': lead_proba}
             super(Lead, lead).write(proba_vals)
         return
 
