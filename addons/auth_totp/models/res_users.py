@@ -18,9 +18,8 @@ from odoo.exceptions import AccessDenied, UserError
 class Users(models.Model):
     _inherit = 'res.users'
 
-    totp_secret = fields.Char(copy=False)
-    totp_last_valid = fields.Integer(default=0)
-    totp_enabled = fields.Boolean(string="TOTP enabled", compute='_compute_totp_enabled', store=True)
+    totp_secret = fields.Char(copy=False, groups=".") # no access
+    totp_enabled = fields.Boolean(string="TOTP enabled", compute='_compute_totp_enabled')
 
     def __init__(self, pool, cr):
         init_res = super().__init__(pool, cr)
@@ -48,24 +47,19 @@ class Users(models.Model):
     def _totp_check(self, code):
         sudo = self.sudo()
         key = base64.b32decode(sudo.totp_secret.upper())
-        match = TOTP(key).match(code, previous=sudo.totp_last_valid)
+        match = TOTP(key).match(code)
         if match is None:
             raise AccessDenied()
-
-        sudo.totp_last_valid = match
 
     def _totp_try_setting(self, secret, code):
         if self.totp_enabled or self != self.env.user:
             return False
 
-        match = TOTP(base64.b32decode(secret.upper())).match(code, previous=0)
+        match = TOTP(base64.b32decode(secret.upper())).match(code)
         if match is None:
             return False
 
-        self.sudo().write({
-            'totp_secret': secret,
-            'totp_last_valid': match,
-        })
+        self.sudo().totp_secret = secret
         return True
 
     @check_identity
@@ -84,10 +78,10 @@ class Users(models.Model):
         if self.totp_enabled:
             raise UserError(_("Two-factor authentication already enabled"))
 
-        secret_size = hashlib.new(ALGORITHM).digest_size
+        secret_bytes_count = TOTP_SECRET_SIZE // 8
         w = self.env['auth_totp.wizard'].create({
             'user_id': self.id,
-            'secret': base64.b32encode(os.urandom(secret_size)).decode(),
+            'secret': base64.b32encode(os.urandom(secret_bytes_count)).decode(),
         })
         return {
             'type': 'ir.actions.act_window',
@@ -99,7 +93,6 @@ class Users(models.Model):
 
 class TOTPWizard(models.TransientModel):
     _name = 'auth_totp.wizard'
-    _description = "wizard used to set the totp token on a user's account"
 
     user_id = fields.Many2one('res.users', required=True, readonly=True)
     secret = fields.Char(required=True, readonly=True)
@@ -139,9 +132,13 @@ class TOTPWizard(models.TransientModel):
         except ValueError:
             raise UserError(_("The verification code should only contain numbers"))
         if self.user_id._totp_try_setting(self.secret, c):
-            self.secret = False
+            self.secret = '' # empty it, because why keep it until GC?
             return {'type': 'ir.actions.act_window_close'}
         raise UserError(_('Verification failed, please double-check the six-digit code.'))
+
+# 160 bits, as recommended by HOTP RFC 4226, section 4, R6.
+# Google Auth uses 80 bits by default but supports 160.
+TOTP_SECRET_SIZE=160
 
 # The algorithm (and key URI format) allows customising these parameters but
 # google authenticator doesn't support it
@@ -154,13 +151,14 @@ class TOTP:
     def __init__(self, key):
         self._key = key
 
-    def match(self, code, *, previous, t=None, window=TIMESTEP):
+    def match(self, code, previous=0, t=None, window=TIMESTEP):
         """
         :param code: authenticator code to check against this key
         :param int previous: counter value returned by a previously successful
                              match, windows older than that counter will not
                              be attempted (avoids replay attacks / shoulder
-                             surfing), pass in `0` for a first attempt
+                             surfing), leave default `0` for a first attempt or
+                             no previous check
         :param int t: current timestamp (seconds)
         :param int window: fuzz window to account for slow fingers, network
                            latency, desynchronised clocks, ..., every code
