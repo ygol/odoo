@@ -88,9 +88,6 @@
                                     <hr class="mt-1 mb-0"/>
                                     <div t-field="user_id.partner_id" t-options='{"widget": "contact", "fields": ["email", "phone", "address", "name"]}'/>
                                 </div>
-                                <div class="o_my_archives" t-if="archive_groups">
-                                    <t t-call="portal.portal_archive_groups"/>
-                                </div>
                             </div>
                         </div>
                     </t>
@@ -299,24 +296,6 @@
                 <span t-esc="sales_user.city"/>
             </div>
         </div>
-    </template>
-
-    <template id="portal_archive_groups" name="Portal Archive Groups">
-        <h3 class="o_page_header">Archives</h3>
-        <ul class="nav nav-pills flex-column">
-            <t t-foreach="archive_groups" t-as="group">
-                <t t-if="group['date_begin'] == date">
-                    <li class="nav-item">
-                        <a t-att-href="default_url" class="nav-link active" t-ignore="True"><t t-esc="group['name']"/><span class="float-right badge badge-pill" t-esc="group['item_count']"/></a>
-                    </li>
-                </t>
-                <t t-if="group['date_begin'] != date">
-                    <li class="nav-item">
-                        <a t-ignore="True" t-attf-href="#{default_url}?date_begin=#{group['date_begin']}&amp;date_end=#{group['date_end']}" class="nav-link"><t t-esc="group['name']"/><span class="float-right badge badge-pill" t-esc="group['item_count']"/></a>
-                    </li>
-                </t>
-            </t>
-        </ul>
     </template>
 
     <template id="portal_my_details">

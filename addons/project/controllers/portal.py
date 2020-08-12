@@ -45,10 +45,9 @@ class CustomerPortal(CustomerPortal):
             sortby = 'date'
         order = searchbar_sortings[sortby]['order']
 
-        # archive groups - Default Group By 'create_date'
-        archive_groups = self._get_archive_groups('project.project', domain) if values.get('my_details') else []
         if date_begin and date_end:
             domain += [('create_date', '>', date_begin), ('create_date', '<=', date_end)]
+
         # projects count
         project_count = Project.search_count(domain)
         # pager
@@ -69,7 +68,6 @@ class CustomerPortal(CustomerPortal):
             'date_end': date_end,
             'projects': projects,
             'page_name': 'project',
-            'archive_groups': archive_groups,
             'default_url': '/my/projects',
             'pager': pager,
             'searchbar_sortings': searchbar_sortings,
@@ -157,8 +155,6 @@ class CustomerPortal(CustomerPortal):
         if not groupby:
             groupby = 'project'
 
-        # archive groups - Default Group By 'create_date'
-        archive_groups = self._get_archive_groups('project.task', domain) if values.get('my_details') else []
         if date_begin and date_end:
             domain += [('create_date', '>', date_begin), ('create_date', '<=', date_end)]
 
@@ -208,7 +204,6 @@ class CustomerPortal(CustomerPortal):
             'date_end': date_end,
             'grouped_tasks': grouped_tasks,
             'page_name': 'task',
-            'archive_groups': archive_groups,
             'default_url': '/my/tasks',
             'pager': pager,
             'searchbar_sortings': searchbar_sortings,

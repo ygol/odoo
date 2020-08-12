@@ -59,10 +59,9 @@ class WebsiteAccount(CustomerPortal):
             sortby = 'date'
         order = searchbar_sortings[sortby]['order']
 
-        # archive groups - Default Group By 'create_date'
-        archive_groups = self._get_archive_groups('crm.lead', domain) if values.get('my_details') else []
         if date_begin and date_end:
             domain += [('create_date', '>', date_begin), ('create_date', '<=', date_end)]
+
         # pager
         lead_count = CrmLead.search_count(domain)
         pager = request.website.pager(
@@ -79,7 +78,6 @@ class WebsiteAccount(CustomerPortal):
             'date': date_begin,
             'leads': leads,
             'page_name': 'lead',
-            'archive_groups': archive_groups,
             'default_url': '/my/leads',
             'pager': pager,
             'searchbar_sortings': searchbar_sortings,
@@ -125,8 +123,6 @@ class WebsiteAccount(CustomerPortal):
         if filterby == 'lost':
             CrmLead = CrmLead.with_context(active_test=False)
 
-        # archive groups - Default Group By 'create_date'
-        archive_groups = self._get_archive_groups('crm.lead', domain) if values.get('my_details') else []
         if date_begin and date_end:
             domain += [('create_date', '>', date_begin), ('create_date', '<=', date_end)]
         # pager
@@ -138,14 +134,13 @@ class WebsiteAccount(CustomerPortal):
             page=page,
             step=self._items_per_page
         )
-        # content according to pager and archive selected
+        # content according to pager
         opportunities = CrmLead.search(domain, order=order, limit=self._items_per_page, offset=pager['offset'])
 
         values.update({
             'date': date_begin,
             'opportunities': opportunities,
             'page_name': 'opportunity',
-            'archive_groups': archive_groups,
             'default_url': '/my/opportunities',
             'pager': pager,
             'searchbar_sortings': searchbar_sortings,

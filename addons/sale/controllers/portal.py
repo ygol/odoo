@@ -60,7 +60,6 @@ class CustomerPortal(CustomerPortal):
             sortby = 'date'
         sort_order = searchbar_sortings[sortby]['order']
 
-        archive_groups = self._get_archive_groups('sale.order', domain) if values.get('my_details') else []
         if date_begin and date_end:
             domain += [('create_date', '>', date_begin), ('create_date', '<=', date_end)]
 
@@ -83,7 +82,6 @@ class CustomerPortal(CustomerPortal):
             'quotations': quotations.sudo(),
             'page_name': 'quote',
             'pager': pager,
-            'archive_groups': archive_groups,
             'default_url': '/my/quotes',
             'searchbar_sortings': searchbar_sortings,
             'sortby': sortby,
@@ -111,7 +109,6 @@ class CustomerPortal(CustomerPortal):
             sortby = 'date'
         sort_order = searchbar_sortings[sortby]['order']
 
-        archive_groups = self._get_archive_groups('sale.order', domain) if values.get('my_details') else []
         if date_begin and date_end:
             domain += [('create_date', '>', date_begin), ('create_date', '<=', date_end)]
 
@@ -125,7 +122,7 @@ class CustomerPortal(CustomerPortal):
             page=page,
             step=self._items_per_page
         )
-        # content according to pager and archive selected
+        # content according to pager
         orders = SaleOrder.search(domain, order=sort_order, limit=self._items_per_page, offset=pager['offset'])
         request.session['my_orders_history'] = orders.ids[:100]
 
@@ -134,7 +131,6 @@ class CustomerPortal(CustomerPortal):
             'orders': orders.sudo(),
             'page_name': 'order',
             'pager': pager,
-            'archive_groups': archive_groups,
             'default_url': '/my/orders',
             'searchbar_sortings': searchbar_sortings,
             'sortby': sortby,
