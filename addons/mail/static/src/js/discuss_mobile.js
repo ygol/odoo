@@ -34,9 +34,18 @@ Discuss.include({
      * @override
      */
     start: function () {
+        var self = this;
         this._$mainContent = this.$('.o_mail_discuss_content');
         return this._super.apply(this, arguments)
-            .then(this._updateControlPanel.bind(this));
+            .then(this._updateControlPanel.bind(this))
+            .then(function () {
+                // load on background the data linked to the thread type
+                if (self._thread._type === 'mailbox') {
+                    self._updateMailboxThread('mailbox_inbox');
+                } else {
+                    self._updateContent(self._thread._type);
+                }
+            });
     },
     /**
      * @override
@@ -228,6 +237,15 @@ Discuss.include({
             self.$('.o_mail_mobile_tab[data-type=' + type + ']').addClass('active');
         });
     },
+    /**
+     * Update the mailbox for the given thread id type
+     * @param type
+     * @private
+     */
+    _updateMailboxThread: function (type) {
+        this._setThread(type);
+        this._updateContent(this._thread.getID());
+    },
 
     //--------------------------------------------------------------------------
     // Handlers
@@ -248,8 +266,7 @@ Discuss.include({
      */
     _onMobileInboxButtonClicked: function (ev) {
         var mailboxID = $(ev.currentTarget).data('type');
-        this._setThread(mailboxID);
-        this._updateContent(this._thread.getID());
+        this._updateMailboxThread(mailboxID);
     },
     /**
      * Switches to another tab.
@@ -259,11 +276,11 @@ Discuss.include({
      */
     _onMobileTabClicked: function (ev) {
         var type = $(ev.currentTarget).data('type');
-        if (type === 'mailbox') {
-            var inbox = this.call('mail_service', 'getMailbox', 'inbox');
-            this._setThread(inbox);
+        if (type === 'mailbox_inbox') {
+            this._updateMailboxThread(type);
+        } else {
+            this._updateContent(type);
         }
-        this._updateContent(type);
     },
     /**
      * Opens a thread in a chat window (full screen in mobile).
