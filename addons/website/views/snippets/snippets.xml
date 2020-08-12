@@ -579,6 +579,10 @@
                        data-name="header_centered_logo_opt"
                        data-customize-website-views="website.template_header_centered_logo"
                        data-customize-website-variable="'centered_logo'"/>
+            <we-button string="Magazine"
+                       data-name="header_magazine_opt"
+                       data-customize-website-views="website.template_header_magazine"
+                       data-customize-website-variable="'magazine'"/>
         </we-select>
 
         <!-- Header Default Template - Options -->
