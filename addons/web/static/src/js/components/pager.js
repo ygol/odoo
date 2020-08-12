@@ -42,15 +42,8 @@ odoo.define('web.Pager', function (require) {
             useAutofocus();
         }
 
-        async willUpdateProps(nextProps) {
-            this.state.editing = false;
-            if (
-                this.props.currentMinimum !== nextProps.currentMinimum ||
-                this.props.limit !== nextProps.limit ||
-                this.props.size !== nextProps.size
-            ) {
-                this.state.disabled = false;
-            }
+        async willUpdateProps() {
+            this.state.disabled = false;
         }
 
         //---------------------------------------------------------------------
@@ -142,7 +135,8 @@ odoo.define('web.Pager', function (require) {
 
         /**
          * @private
-         * @param {Object} payload
+         * @param {number} currentMinimum
+         * @param {number} limit
          */
         _updateAndDisable(currentMinimum, limit) {
             if (
@@ -150,8 +144,9 @@ odoo.define('web.Pager', function (require) {
                 limit !== this.props.limit
             ) {
                 this.state.disabled = true;
-                this.trigger('pager-changed', { currentMinimum, limit });
             }
+            this.state.editing = false;
+            this.trigger('pager-changed', { currentMinimum, limit });
         }
 
         //---------------------------------------------------------------------
