@@ -15,6 +15,7 @@ class TestEventNotifications(SavepointCase):
             'name': "Doom's day",
             'start': datetime(2019, 10, 25, 8, 0),
             'stop': datetime(2019, 10, 27, 18, 0),
+            'partner_ids': [],
         }).with_context(mail_notrack=True)
         cls.user = new_test_user(cls.env, 'xav', email='em@il.com', notification_type='inbox')
         cls.partner = cls.user.partner_id
@@ -41,6 +42,7 @@ class TestEventNotifications(SavepointCase):
             'name': "Doom's day",
             'start': datetime(2019, 10, 25, 8, 0),
             'stop': datetime(2019, 10, 27, 18, 0),
+            'partner_ids': [],
         })
         events = self.event | event
         events.partner_ids = self.partner

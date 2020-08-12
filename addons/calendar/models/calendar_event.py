@@ -699,8 +699,8 @@ class Meeting(models.Model):
                                 activity_vals['user_id'] = user_id
                             values['activity_ids'] = [(0, 0, activity_vals)]
 
-        vals_list = [
-            dict(vals, attendee_ids=self._attendees_values(vals['partner_ids'])) if 'partner_ids' in vals else vals
+        vals_list = [ # Add the actual user as a participant if we don't receive any at the creation (can happen when quickcreating an event)
+            dict(vals, attendee_ids=self._attendees_values(vals.get('partner_ids', [[4, self.env.user.partner_id.id]])))
             for vals in vals_list
         ]
         recurrence_fields = self._get_recurrent_fields()
