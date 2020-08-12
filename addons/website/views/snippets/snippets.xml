@@ -575,6 +575,10 @@
                        data-name="header_boxed_opt"
                        data-customize-website-views="website.template_header_boxed"
                        data-customize-website-variable="'boxed'"/>
+            <we-button string="Centered Logo"
+                       data-name="header_centered_logo_opt"
+                       data-customize-website-views="website.template_header_centered_logo"
+                       data-customize-website-variable="'centered_logo'"/>
         </we-select>
 
         <!-- Header Default Template - Options -->
