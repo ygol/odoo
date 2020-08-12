@@ -24,7 +24,6 @@ odoo.define('calendar.CalendarController', function (require) {
                 }).open();
             });
         },
-
         // TODO factorize duplicated code
         /**
          * @override
