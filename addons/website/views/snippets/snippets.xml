@@ -571,6 +571,10 @@
                        data-name="header_minimalist_opt"
                        data-customize-website-views="website.template_header_minimalist"
                        data-customize-website-variable="'minimalist'"/>
+            <we-button string="Boxed"
+                       data-name="header_boxed_opt"
+                       data-customize-website-views="website.template_header_boxed"
+                       data-customize-website-variable="'boxed'"/>
         </we-select>
 
         <!-- Header Default Template - Options -->
