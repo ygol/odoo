@@ -36,27 +36,33 @@
         </record>
 
         <record id="identity_check_wizard" model="ir.ui.view">
-            <field name="name">Identity Check Wizard</field>
             <field name="model">res.users.identitycheck</field>
             <field name="arch" type="xml">
-                <form string="Check Identity">
+                <form>
                     <sheet>
-                        <p>
-                            You are trying to perform an action which impacts
-                            the security of your or an other account. For
-                            security reasons, we need to re-validate your
-                            identity.
-                        </p>
-                        <p>
-                            Confirm your password to enter the enhanced security
-                            mode, it will remain active for a few minutes.
-                        </p>
-                        <field name="password" password="True" required="True"/>
+                        <div class="row container">
+                            <div class="col-8 offset-2">
+                              <div class="card bg-dark my-b mx-5">
+                                <div class="card-header">
+                                    <span class="fa fa-bell mx-2" t-translation="off">&amp;nbsp;</span>
+                                    <span class="text-uppercase">Security Control</span>
+                                </div>
+                                <div class="card-body">
+                                  <a href="/web/reset_password/" class="float-right">Forgot password?</a>
+                                  <h4 class="card-title">Please confirm your password to continue</h4>
+                                  <p class="card-text">
+                                    This is necessary for sensitive changes. You won't be asked again for a bit.
+                                  </p>
+                                  <div>
+                                    <label for="password"/><field class="col-4" name="password" autocomplete="current-password" password="True"/>
+                                  </div>
+                                  <button string="Confirm Password" type="object" name="run_check" class="btn btn-primary mt-3"/>
+                                </div>
+                              </div>
+                            </div>
+                        </div>
+                        <footer><!-- no buttons --></footer>
                     </sheet>
-                    <footer>
-                        <button string="Confirm Password" type="object" name="run_check" class="btn btn-primary"/>
-                        <button string="Cancel" special="cancel" class="btn btn-secondary"/>
-                    </footer>
                 </form>
             </field>
         </record>

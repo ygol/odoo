@@ -1467,7 +1467,7 @@ the account.
 """
 
     request = fields.Char(readonly=True, groups='.')
-    password = fields.Char()
+    password = fields.Char(required=True)
 
     def run_check(self):
         if not request:
