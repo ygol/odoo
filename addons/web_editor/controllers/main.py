@@ -4,10 +4,12 @@ import io
 import logging
 import re
 import time
+import requests
+import json
 import werkzeug.wrappers
 from PIL import Image, ImageFont, ImageDraw
 from lxml import etree
-from base64 import b64decode
+from base64 import b64decode, b64encode
 
 from odoo.http import request
 from odoo import http, tools, _
@@ -15,7 +17,7 @@ from odoo.exceptions import UserError
 from odoo.modules.module import get_resource_path
 
 logger = logging.getLogger(__name__)
-
+DEFAULT_LIBRARY_ENDPOINT = 'https://media-api.odoo.com'
 
 class Web_Editor(http.Controller):
     #------------------------------------------------------
@@ -545,3 +547,43 @@ class Web_Editor(http.Controller):
             ('Content-type', 'image/svg+xml'),
             ('Cache-control', 'max-age=%s' % http.STATIC_CACHE_LONG),
         ])
+
+    @http.route(['/web_editor/media_library_url'], type='json', auth="user", website=True)
+    def media_library_url(self):
+        dbuuid = request.env['ir.config_parameter'].sudo().get_param('database.uuid')
+        endpoint = request.env['ir.config_parameter'].sudo().get_param('web_editor.media_library_endpoint', DEFAULT_LIBRARY_ENDPOINT)
+        return '%s?dbuuid=%s' % (endpoint, dbuuid)
+
+    @http.route('/web_editor/save_media', type='json', auth='user', methods=['POST'])
+    def save_media(self, media=[]):
+        """
+        Saves images from the media library as new attachments, making them
+        dynamic SVGs if needed.
+            media = [
+                {
+                    'media_url': 'https://...',
+                    'query': 'space separated search terms',
+                    'is_dynamic_svg': True/False,
+                }, ...
+            ]
+        """
+        attachments = []
+
+        for medium in media:
+            url = medium['media_url']
+            req = requests.get(url)
+            name = '_'.join([medium['query'], url.split('/')[-1]])
+            attachment = request.env['ir.attachment'].create({
+                'name': name,
+                'mimetype': req.headers['content-type'],
+                'datas': b64encode(req.content),
+                'public': True,
+                'res_model': 'ir.ui.view',
+                'res_id': 0,
+            })
+            if medium['is_dynamic_svg']:
+                # prefixing the name with id to ensure uniqueness of the url
+                attachment['url'] = '/web_editor/shape/external_shapes/%s_%s' % (attachment.id, name)
+            attachments.append(attachment._get_media_info())
+
+        return attachments

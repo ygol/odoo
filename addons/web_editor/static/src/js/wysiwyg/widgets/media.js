@@ -10,6 +10,7 @@ var utils = require('web.utils');
 var Widget = require('web.Widget');
 var session = require('web.session');
 const {removeOnImageChangeAttrs} = require('web_editor.image_processing');
+const {getCSSVariableValue} = require('web_editor.utils');
 
 var QWeb = core.qweb;
 var _t = core._t;
@@ -106,6 +107,7 @@ var SearchableMediaWidget = MediaWidget.extend({
      * @private
      */
     _onSearchInput: function (ev) {
+        this.attachments = [];
         this.search($(ev.currentTarget).val() || '').then(() => this._renderThumbnails());
         this.hasSearched = true;
     },
@@ -128,6 +130,7 @@ var FileWidget = SearchableMediaWidget.extend({
 
     IMAGE_MIMETYPES: ['image/gif', 'image/jpe', 'image/jpeg', 'image/jpg', 'image/gif', 'image/png', 'image/svg+xml'],
     NUMBER_OF_ATTACHMENTS_TO_DISPLAY: 30,
+    MAX_DB_ATTACHMENTS: 5,
 
     /**
      * @constructor
@@ -144,6 +147,8 @@ var FileWidget = SearchableMediaWidget.extend({
 
         this.attachments = [];
         this.selectedAttachments = [];
+        this.libraryMedia = [];
+        this.selectedMedia = new Set();
 
         this._onUploadURLButtonClick = dom.makeAsyncHandler(this._onUploadURLButtonClick);
     },
@@ -203,10 +208,9 @@ var FileWidget = SearchableMediaWidget.extend({
     /**
      * @override
      */
-    search: function (needle) {
-        this.attachments = [];
+    search: function (needle, number = this.NUMBER_OF_ATTACHMENTS_TO_DISPLAY) {
         this.needle = needle;
-        return this.fetchAttachments(this.NUMBER_OF_ATTACHMENTS_TO_DISPLAY, 0);
+        return this.fetchAttachments(number, 0);
     },
     /**
      * @param {Number} number - the number of attachments to fetch
@@ -230,6 +234,12 @@ var FileWidget = SearchableMediaWidget.extend({
             this.attachments = this.attachments.slice();
             Array.prototype.splice.apply(this.attachments, [offset, attachments.length].concat(attachments));
         });
+    },
+    /**
+     * Computes whether there is content to display in the template.
+     */
+    noContent() {
+        return !this.attachments.length;
     },
 
     //--------------------------------------------------------------------------
@@ -367,11 +377,31 @@ var FileWidget = SearchableMediaWidget.extend({
      * @returns {Promise}
      */
     _save: async function () {
+        // Create all media-library attachments.
+        const mediaAttachments = await this._rpc({
+            route: '/web_editor/save_media',
+            params: {
+                media: [...this.selectedMedia].map(media => ({
+                    media_url: media.media_url,
+                    query: media.query || '',
+                    is_dynamic_svg: !!media.isDynamicSVG,
+                })),
+            },
+        });
+        const selected = this.selectedAttachments.concat(mediaAttachments).map(attachment => {
+            // Color-customize dynamic SVGs with the primary theme color
+            if (attachment.image_src.startsWith('/web_editor/shape/')) {
+                const colorCustomizedURL = new URL(attachment.image_src, window.location.origin);
+                colorCustomizedURL.searchParams.set('c1', getCSSVariableValue('o-color-1'));
+                attachment.image_src = colorCustomizedURL.pathname + colorCustomizedURL.search;
+            }
+            return attachment;
+        });
         if (this.options.multiImages) {
-            return this.selectedAttachments;
+            return selected;
         }
 
-        var img = this.selectedAttachments[0];
+        let img = selected[0];
         if (!img || !img.id) {
             return this.media;
         }
@@ -388,6 +418,7 @@ var FileWidget = SearchableMediaWidget.extend({
 
         if (img.image_src) {
             var src = img.image_src;
+
             if (!img.public && img.access_token) {
                 src += _.str.sprintf('?access_token=%s', img.access_token);
             }
@@ -435,22 +466,45 @@ var FileWidget = SearchableMediaWidget.extend({
      *  and to close the media dialog
      * @private
      */
-    _selectAttachement: function (attachment, save) {
+    _selectAttachement: function (attachment, save, {type = 'attachment'} = {}) {
         if (this.options.multiImages) {
-            // if the clicked attachment is already selected then unselect it
-            // unless it was a save request (then keep the current selection)
-            var index = this.selectedAttachments.indexOf(attachment);
-            if (index !== -1) {
-                if (!save) {
-                    this.selectedAttachments.splice(index, 1);
+            switch (type) {
+                case 'attachment': {
+                    // if the clicked attachment is already selected then unselect it
+                    // unless it was a save request (then keep the current selection)
+                    const index = this.selectedAttachments.indexOf(attachment);
+                    if (index !== -1) {
+                        if (!save) {
+                            this.selectedAttachments.splice(index, 1);
+                        }
+                    } else {
+                        // if the clicked attachment is not selected, add it to selected
+                        this.selectedAttachments.push(attachment);
+                    }
+                    break;
                 }
-            } else {
-                // if the clicked attachment is not selected, add it to selected
-                this.selectedAttachments.push(attachment);
+                case 'media': {
+                    if (this.selectedMedia.has(attachment) && !save) {
+                        this.selectedMedia.delete(attachment);
+                    } else {
+                        attachment.query = this.needle;
+                        this.selectedMedia.add(attachment);
+                    }
+                }
             }
         } else {
             // select the clicked attachment
-            this.selectedAttachments = [attachment];
+            switch (type) {
+                case 'attachment':
+                    this.selectedAttachments = [attachment];
+                    this.selectedMedia.clear();
+                    break;
+                case 'media':
+                    attachment.query = this.needle;
+                    this.selectedMedia = new Set([attachment]);
+                    this.selectedAttachments = [];
+                    break;
+            }
         }
         this._highlightSelected();
         if (save) {
@@ -481,9 +535,15 @@ var FileWidget = SearchableMediaWidget.extend({
      * @private
      */
     _onAttachmentClick: function (ev) {
-        var $attachment = $(ev.currentTarget);
-        var attachment = _.find(this.attachments, {id: $attachment.data('id')});
-        this._selectAttachement(attachment, !this.options.multiImages);
+        const attachment = ev.currentTarget;
+        const {id: attachmentID, mediaId} = attachment.dataset;
+        if (attachmentID) {
+            const attachment = this.attachments.find(attachment => attachment.id === parseInt(attachmentID));
+            this._selectAttachement(attachment, !this.options.multiImages);
+        } else if (mediaId) {
+            const media = this.libraryMedia.find(media => media.id === parseInt(mediaId));
+            this._selectAttachement(media, !this.options.multiImages, {type: 'media'});
+        }
     },
     /**
      * Handles change of the file input: create attachments with the new files
@@ -639,6 +699,7 @@ var FileWidget = SearchableMediaWidget.extend({
      * @override
      */
     _onSearchInput: function () {
+        this.attachments = [];
         this.numberOfAttachmentsToDisplay = this.NUMBER_OF_ATTACHMENTS_TO_DISPLAY;
         this._super.apply(this, arguments);
     },
@@ -652,6 +713,7 @@ var ImageWidget = FileWidget.extend({
     existingAttachmentsTemplate: 'wysiwyg.widgets.image.existing.attachments',
     events: Object.assign({}, FileWidget.prototype.events, {
         'change input.o_we_show_optimized': '_onShowOptimizedChange',
+        'change .o_we_search_select': '_onSearchSelect',
     }),
     MIN_ROW_HEIGHT: 128,
 
@@ -659,6 +721,7 @@ var ImageWidget = FileWidget.extend({
      * @constructor
      */
     init: function (parent, media, options) {
+        this.searchService = 'all';
         options = _.extend({
             accept: 'image/*',
             mimetypeDomain: [['mimetype', 'in', this.IMAGE_MIMETYPES]],
@@ -671,7 +734,9 @@ var ImageWidget = FileWidget.extend({
      * @override
      */
     start: async function () {
-        await this._super(...arguments);
+        const _super = this._super.bind(this);
+        this.mediaLibraryEndpoint = await this._rpc({route: '/web_editor/media_library_url'});
+        await _super(...arguments);
         this.el.addEventListener('load', this._onAttachmentImageLoad, true);
     },
     /**
@@ -680,6 +745,60 @@ var ImageWidget = FileWidget.extend({
     destroy: function () {
         this.el.removeEventListener('load', this._onAttachmentImageLoad, true);
         return this._super(...arguments);
+    },
+    /**
+     * @override
+     */
+    search: function (needle) {
+        if (needle) {
+            return this._super(needle, this.MAX_DB_ATTACHMENTS);
+        }
+        return this._super(...arguments);
+    },
+    /**
+     * @override
+     */
+    async fetchAttachments(number, offset) {
+        if (this.needle && this.searchService !== 'database') {
+            number = this.MAX_DB_ATTACHMENTS;
+            offset = 0;
+        }
+        const result = await this._super(number, offset);
+        // Color-substitution for dynamic SVG attachment
+        const primaryColor = getCSSVariableValue('o-color-1');
+        this.attachments.forEach(attachment => {
+            if (attachment.image_src.startsWith('/')) {
+                const newURL = new URL(attachment.image_src, window.location.origin);
+                // Set the main color of dynamic SVGs to o-color-1
+                if (attachment.image_src.startsWith('/web_editor/shape/')) {
+                    newURL.searchParams.set('c1', primaryColor);
+                }
+                newURL.searchParams.set('height', 256);
+                attachment.image_src = newURL.pathname + newURL.search;
+            }
+        });
+        const searchURL = new URL(this.mediaLibraryEndpoint);
+        searchURL.pathname = '/1/image/search';
+        searchURL.searchParams.set('query', this.needle);
+        searchURL.searchParams.set('offset', this.libraryMedia.length);
+        if (this.needle) {
+            try {
+                const response = await (await fetch(searchURL.href)).json();
+                const newMedia = response.media;
+                this.nbMediaResults = response.results;
+                this.libraryMedia.push(...newMedia);
+            } catch (e) {
+                // Either API endpoint doesn't exist or is misconfigured.
+                console.error(`Couldn't reach API endpoint.`);
+            }
+        }
+        return result;
+    },
+    /**
+     * @override
+     */
+    noContent() {
+        return this._super(...arguments) && !this.libraryMedia.length;
     },
 
     //--------------------------------------------------------------------------
@@ -708,7 +827,7 @@ var ImageWidget = FileWidget.extend({
         this.$('.o_existing_attachment_cell').addClass('d-none');
         // Replace images that had been previously loaded if any to prevent scroll resetting to top
         alreadyLoaded.each((index, el) => {
-            const toReplace = this.$(`.o_existing_attachment_cell[data-id="${el.dataset.id}"]`);
+            const toReplace = this.$(`.o_existing_attachment_cell[data-id="${el.dataset.id}"], .o_existing_attachment_cell[data-media-id="${el.dataset.mediaId}"]`);
             if (toReplace.length) {
                 toReplace.replaceWith(el);
             }
@@ -720,13 +839,23 @@ var ImageWidget = FileWidget.extend({
             flexGrow: placeholderWidth,
             flexBasis: placeholderWidth,
         });
+        if (this.needle && ['media', 'all'].includes(this.searchService)) {
+            const noMoreImgToLoad = this.libraryMedia.length === this.nbMediaResults;
+            const noLoadMoreButton = noMoreImgToLoad && this.libraryMedia.length <= 15;
+            this.$('.o_load_done_msg').toggleClass('d-none', noLoadMoreButton || !noMoreImgToLoad);
+            this.$('.o_load_more').toggleClass('d-none', noMoreImgToLoad);
+        }
     },
     /**
      * @override
      */
     _renderExisting: function (attachments) {
+        if (this.needle && this.searchService !== 'database') {
+            attachments = attachments.slice(0, this.MAX_DB_ATTACHMENTS);
+        }
         return QWeb.render(this.existingAttachmentsTemplate, {
             attachments: attachments,
+            libraryMedia: this.libraryMedia,
             widget: this,
         });
     },
@@ -738,6 +867,16 @@ var ImageWidget = FileWidget.extend({
     _toggleOptimized: function (value) {
         this.$('.o_we_attachment_optimized').each((i, cell) => cell.style.setProperty('display', value ? null : 'none', 'important'));
     },
+    /**
+     * @override
+     */
+    _highlightSelected: function () {
+        this._super(...arguments);
+        this.selectedMedia.forEach(media => {
+            this.$(`.o_existing_attachment_cell[data-media-id=${media.id}]`)
+                .addClass("o_we_attachment_selected");
+        });
+    },
 
     //--------------------------------------------------------------------------
     // Handlers
@@ -746,11 +885,35 @@ var ImageWidget = FileWidget.extend({
     /**
      * @override
      */
-    _onAttachmentImageLoad: function (ev) {
+    _onAttachmentImageLoad: async function (ev) {
         const img = ev.target;
         const cell = img.closest('.o_existing_attachment_cell');
         if (!cell) {
             return;
+        }
+        if (cell.dataset.mediaId && !img.src.startsWith('blob')) {
+            const mediaUrl = img.src;
+            try {
+                const response = await fetch(mediaUrl);
+                if (response.headers.get('content-type') === 'image/svg+xml') {
+                    const svg = await response.text();
+                    if (/#3AADAA/gi.test(svg)) {
+                        const fileName = mediaUrl.split('/').pop();
+                        const file = new File([svg.replace(/#3AADAA/gi, getCSSVariableValue('o-color-1'))], fileName, {
+                            type: "image/svg+xml",
+                        });
+                        img.src = URL.createObjectURL(file);
+                        const media = this.libraryMedia.find(media => media.id === parseInt(cell.dataset.mediaId));
+                        if (media) {
+                            media.isDynamicSVG = true;
+                        }
+                        // We changed the src: wait for the next load event to do the styling
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.error('CORS is misconfigured on the API server');
+            }
         }
         const aspectRatio = img.naturalWidth / img.naturalHeight;
         const width = aspectRatio * this.MIN_ROW_HEIGHT;
@@ -765,6 +928,21 @@ var ImageWidget = FileWidget.extend({
      */
     _onShowOptimizedChange: function (ev) {
         this._toggleOptimized(ev.target.checked);
+    },
+    /**
+     * @override
+     */
+    _onSearchSelect: function (ev) {
+        const {value} = ev.target;
+        this.searchService = value;
+        this.$('.o_we_search').trigger('input');
+    },
+    /**
+     * @private
+     */
+    _onSearchInput: function (ev) {
+        this.libraryMedia = [];
+        this._super(...arguments);
     },
 });
 
