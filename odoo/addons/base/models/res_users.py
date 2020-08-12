@@ -1460,18 +1460,17 @@ class CheckIdentity(models.TransientModel):
     _name = 'res.users.identitycheck'
     _description = """ Wizard used to re-check the user's credentials (password)
 
-Might be useful before the more security-sensitive operations, users might be
-leaving their computer unlocked & unattended. Re-checking credentials mitigates
-some of the risk of a third party using such an unattended device to manipulate
-the account.
-"""
+    Might be useful before the more security-sensitive operations, users might be
+    leaving their computer unlocked & unattended. Re-checking credentials mitigates
+    some of the risk of a third party using such an unattended device to manipulate
+    the account.
+    """
 
-    request = fields.Char(readonly=True, groups='.')
+    request = fields.Char(readonly=True, groups='.') # no access
     password = fields.Char(required=True)
 
     def run_check(self):
-        if not request:
-            raise UserError(_("This method can only be accessed over HTTP"))
+        assert request, "This method can only be accessed over HTTP"
         self.create_uid._check_credentials(self.password, {'interactive': True})
         self.password = False
 

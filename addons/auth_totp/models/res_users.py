@@ -54,7 +54,7 @@ class Users(models.Model):
 
         sudo.totp_last_valid = match
 
-    def totp_try_setting(self, secret, code):
+    def _totp_try_setting(self, secret, code):
         if self.totp_enabled or self != self.env.user:
             return False
 
@@ -70,7 +70,7 @@ class Users(models.Model):
 
     @check_identity
     def totp_disable(self):
-        if not (self == self.env.user or self.env.user._is_admin()):
+        if not (self == self.env.user or self.env.user._is_admin() or self.env.su):
             return False
 
         self.sudo().write({'totp_secret': False})
@@ -79,10 +79,10 @@ class Users(models.Model):
     @check_identity
     def totp_enable_wizard(self):
         if self.env.user != self:
-            raise UserError(_("TOTP can only be enabled for oneself"))
+            raise UserError(_("Two-factor authentication can only be enabled for yourself"))
 
         if self.totp_enabled:
-            return False
+            raise UserError(_("Two-factor authentication already enabled"))
 
         secret_size = hashlib.new(ALGORITHM).digest_size
         w = self.env['auth_totp.wizard'].create({
@@ -102,13 +102,13 @@ class TOTPWizard(models.TransientModel):
     _description = "wizard used to set the totp token on a user's account"
 
     user_id = fields.Many2one('res.users', required=True, readonly=True)
-    secret = fields.Char(required=True, readonly=True) # why not create secret right here?
+    secret = fields.Char(required=True, readonly=True)
     url = fields.Char(store=True, readonly=True, compute='_compute_qrcode')
     qrcode = fields.Binary(
         attachment=False, store=True, readonly=True,
         compute='_compute_qrcode',
     )
-    code = fields.Char(string="Verification Code", size=6)
+    code = fields.Char(string="Verification Code", placeholder="123456", size=6)
 
     @api.depends('user_id.login', 'user_id.company_id.display_name', 'secret')
     def _compute_qrcode(self):
@@ -138,9 +138,10 @@ class TOTPWizard(models.TransientModel):
             c = int(self.code)
         except ValueError:
             raise UserError(_("The verification code should only contain numbers"))
-        if self.user_id.totp_try_setting(self.secret, c):
+        if self.user_id._totp_try_setting(self.secret, c):
+            self.secret = False
             return {'type': 'ir.actions.act_window_close'}
-        raise UserError(_('Verification failed, the code was probably incorrect.'))
+        raise UserError(_('Verification failed, please double-check the six-digit code.'))
 
 # The algorithm (and key URI format) allows customising these parameters but
 # google authenticator doesn't support it
@@ -169,7 +170,7 @@ class TOTP:
         if t is None:
             t = time.time()
 
-        low = max(int((t - window) / TIMESTEP), previous+1)
+        low = max(int((t - window) / TIMESTEP), previous + 1)
         high = int((t + window) / TIMESTEP) + 1
 
         return next((

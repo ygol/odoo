@@ -22,7 +22,7 @@ class Home(odoo.addons.web.controllers.main.Home):
                 with user._assert_can_auth():
                     user._totp_check(int(kwargs['totp_token']))
             except AccessDenied:
-                error = _("Authentication code failed.")
+                error = _("Verification failed, please double-check the six-digit code")
             except ValueError:
                 error = _("Invalid authentication code format.")
             else:
