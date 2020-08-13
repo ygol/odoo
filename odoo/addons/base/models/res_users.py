@@ -1458,17 +1458,18 @@ class UsersView(models.Model):
         return res
 
 class CheckIdentity(models.TransientModel):
-    _name = 'res.users.identitycheck'
-    _description = """ Wizard used to re-check the user's credentials (password)
+    """ Wizard used to re-check the user's credentials (password)
 
     Might be useful before the more security-sensitive operations, users might be
     leaving their computer unlocked & unattended. Re-checking credentials mitigates
     some of the risk of a third party using such an unattended device to manipulate
     the account.
     """
+    _name = 'res.users.identitycheck'
+    _description = "Password Check Wizard"
 
     request = fields.Char(readonly=True, groups='.') # no access
-    password = fields.Char(required=True)
+    password = fields.Char()
 
     def run_check(self):
         assert request, "This method can only be accessed over HTTP"
