@@ -80,19 +80,25 @@
         <field name="model">res.users</field>
         <field name="inherit_id" ref="base.view_users_form_simple_modif"/>
         <field name="arch" type="xml">
-            <xpath expr="//button[@name='preference_change_password']" position="after">
-                <field name="totp_enabled" invisible="1"/>
-                <button name="totp_enable_wizard" type="object"
-                        string="Enable secure login"
-                        class="btn btn-warning"
-                        attrs="{'invisible': [('totp_enabled', '!=', False)]}"
-                />
-                <button name="totp_disable" type="object"
-                        string="Disable secure login"
-                        class="btn btn-link"
-                        attrs="{'invisible': [('totp_enabled', '=', False)]}"
-                />
-            </xpath>
+            <button name="preference_change_password" position="after">
+                    <field name="totp_enabled" invisible="1"/>
+                    <group attrs="{'invisible': [('totp_enabled', '!=', False)]}">
+                        <div>
+                            <i class="fa fa-warning text-danger" t-translation="off">&amp;nbsp;</i>
+                            Two-factor authentication not enabled
+                            <button name="totp_enable_wizard" type="object" string="🔒 Enable two-factor authentication"
+                                    class="btn btn-dark mx-3"/>
+                        </div>
+                    </group>
+                    <group attrs="{'invisible': [('totp_enabled', '=', False)]}">
+                        <div>
+                            <i class="fa fa-check-circle text-success" t-translation="off">&amp;nbsp;</i>
+                                Two-factor authentication enabled
+                            <button name="totp_disable" type="object" string="(🔓 Disable two-factor authentication)"
+                                    class="btn btn-link text-muted"/>
+                        </div>
+                    </group>
+            </button>
         </field>
     </record>
 </odoo>

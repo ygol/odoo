@@ -38,7 +38,7 @@ tour.register('totportal_tour_setup', {
     }
 }, {
     content: "Check that the button has changed",
-    trigger: 'button:contains(Disable secure login)',
+    trigger: 'button:contains(Disable two-factor authentication)',
     run: () => {}
 }]);
 
@@ -95,7 +95,7 @@ tour.register('totportal_login_enabled', {
     trigger: "button:contains(Confirm Password)",
 }, {
     content: "Check that the button has changed",
-    trigger: 'button:contains(Enable secure login)',
+    trigger: 'button:contains(Enable two-factor authentication)',
     run: () => {}
 }]);
 

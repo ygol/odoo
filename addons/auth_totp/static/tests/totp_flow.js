@@ -54,7 +54,7 @@ tour.register('totp_tour_setup', {
     run: 'click',
 }, {
     content: "Check that the button has changed",
-    trigger: 'button:contains(Disable secure login)',
+    trigger: 'button:contains(Disable two-factor authentication)',
     run: () => {}
 }]);
 
@@ -127,7 +127,7 @@ tour.register('totp_login_enabled', {
     run: 'click',
 }, {
     content: "Check that the button has changed",
-    trigger: 'button:contains(Enable secure login)',
+    trigger: 'button:contains(Enable two-factor authentication)',
     run: () => {}
 }]);
 

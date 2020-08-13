@@ -26,11 +26,11 @@
                 <h4>Two-factor authentication</h4>
                 <button t-if="not user_id.totp_enabled" type="button"
                         class="btn btn-warning" id="auth_totp_portal_enable">
-                    Enable secure login
+                    Enable two-factor authentication
                 </button>
                 <button t-if="user_id.totp_enabled" type="button"
                         class="btn btn-link" id="auth_totp_portal_disable">
-                    Disable secure login
+                    Disable two-factor authentication
                 </button>
             </section>
         </xpath>
