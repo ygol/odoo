@@ -124,6 +124,7 @@ def check_identity(fn, self):
         'type': 'ir.actions.act_window',
         'res_model': 'res.users.identitycheck',
         'res_id': w.id,
+        'name': _("Security Control"),
         'target': 'new',
         'views': [(False, 'form')],
     }

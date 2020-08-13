@@ -96,12 +96,14 @@ class Users(models.Model):
             'type': 'ir.actions.act_window',
             'target': 'new',
             'res_model': 'auth_totp.wizard',
+            'name': _("Enable Two-Factor Authentication"),
             'res_id': w.id,
             'views': [(False, 'form')],
         }
 
 class TOTPWizard(models.TransientModel):
     _name = 'auth_totp.wizard'
+    _description = "Two-Factor Setup Wizard"
 
     user_id = fields.Many2one('res.users', required=True, readonly=True)
     secret = fields.Char(required=True, readonly=True)
@@ -143,7 +145,7 @@ class TOTPWizard(models.TransientModel):
         if self.user_id._totp_try_setting(self.secret, c):
             self.secret = '' # empty it, because why keep it until GC?
             return {'type': 'ir.actions.act_window_close'}
-        raise UserError(_('Verification failed, please double-check the six-digit code.'))
+        raise UserError(_('Verification failed, please double-check the six-digit code'))
 
 # 160 bits, as recommended by HOTP RFC 4226, section 4, R6.
 # Google Auth uses 80 bits by default but supports 160.
