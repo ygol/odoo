@@ -3,6 +3,7 @@ import base64
 import hashlib
 import hmac
 import io
+import logging
 import os
 import struct
 import time
@@ -14,6 +15,7 @@ from odoo import _, api, fields, models
 from odoo.addons.base.models.res_users import check_identity
 from odoo.exceptions import AccessDenied, UserError
 
+_logger = logging.getLogger(__name__)
 
 class Users(models.Model):
     _inherit = 'res.users'
@@ -49,25 +51,32 @@ class Users(models.Model):
         key = base64.b32decode(sudo.totp_secret.upper())
         match = TOTP(key).match(code)
         if match is None:
+            _logger.info("TFA check: FAIL for '%s' (#%s)", self.login, self.id)
             raise AccessDenied()
+        _logger.info("TFA check: SUCCESS for '%s' (#%s)", self.login, self.id)
 
     def _totp_try_setting(self, secret, code):
         if self.totp_enabled or self != self.env.user:
+            _logger.info("TFA enable: REJECT for '%s' (#%s)", self.login, self.id)
             return False
 
         match = TOTP(base64.b32decode(secret.upper())).match(code)
         if match is None:
+            _logger.info("TFA enable: REJECT CODE for '%s' (#%s)", self.login, self.id)
             return False
 
         self.sudo().totp_secret = secret
+        _logger.info("TFA enable: SUCCESS for '%s' (#%s)", self.login, self.id)
         return True
 
     @check_identity
     def totp_disable(self):
         if not (self == self.env.user or self.env.user._is_admin() or self.env.su):
+            _logger.info("TFA disable: REJECT for '%s' (#%s) by uid #%s", self.login, self.id, self.env.user.id)
             return False
 
         self.sudo().write({'totp_secret': False})
+        _logger.info("TFA disable: SUCCESS for '%s' (#%s) by uid #%s", self.login, self.id, self.env.user.id)
         return {'type': 'ir.actions.act_window_close'}
 
     @check_identity
