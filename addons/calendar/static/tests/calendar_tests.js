@@ -55,7 +55,7 @@ QUnit.module('calendar', {
                         "the event id should be passed as argument");
                     return Promise.resolve([
                         [1, "Jesus", "accepted", 0],
-                        [2, "Mahomet", "needsAction", 0],
+                        [2, "Mahomet", "tentative", 0],
                     ]);
                 }
                 return this._super.apply(this, arguments);
@@ -71,7 +71,7 @@ QUnit.module('calendar', {
             "Jesus should attend the meeting");
         assert.strictEqual(form.$('.o_field_widget[name="partner_ids"] .badge[data-id="2"]').text().trim(), "Mahomet",
             "the tag should be correctly named");
-        assert.hasClass(form.$('.o_field_widget[name="partner_ids"] .badge[data-id="2"] .o_calendar_invitation'),'needsAction',
+        assert.hasClass(form.$('.o_field_widget[name="partner_ids"] .badge[data-id="2"] .o_calendar_invitation'), 'tentative',
             "Mohamet should still confirm his attendance to the meeting");
         assert.hasClass(form.$('.o_field_many2manytags'), 'avatar',
             "should have avatar class");
