@@ -256,8 +256,6 @@ class AccountChartTemplate(models.Model):
             'default_cash_difference_expense_account_id': acc_template_ref.get(self.default_cash_difference_expense_account_id.id, False),
             'account_journal_suspense_account_id': acc_template_ref.get(self.account_journal_suspense_account_id.id),
             'account_cash_basis_base_account_id': acc_template_ref.get(self.property_cash_basis_base_account_id.id),
-            'income_currency_exchange_account_id': acc_template_ref.get(self.income_currency_exchange_account_id.id),
-            'expense_currency_exchange_account_id': acc_template_ref.get(self.expense_currency_exchange_account_id.id),
         })
 
         if not company.account_journal_suspense_account_id:
@@ -270,6 +268,27 @@ class AccountChartTemplate(models.Model):
         if acc_template_ref.get(default_pos_receivable):
             company.write({
                 'account_default_pos_receivable_account_id': acc_template_ref[default_pos_receivable]
+            })
+
+        # Set the exchange accounts
+        income_currency_exchange_account = self.income_currency_exchange_account_id.id
+        parent = self.parent_id
+        while not income_currency_exchange_account and parent:
+            income_currency_exchange_account = parent.income_currency_exchange_account_id.id
+            parent = parent.parent_id
+        if acc_template_ref.get(income_currency_exchange_account):
+            company.write({
+                'income_currency_exchange_account_id': acc_template_ref.get(income_currency_exchange_account)
+            })
+
+        expense_currency_exchange_account = self.expense_currency_exchange_account_id.id
+        parent = self.parent_id
+        while not expense_currency_exchange_account and parent:
+            expense_currency_exchange_account = parent.expense_currency_exchange_account_id.id
+            parent = parent.parent_id
+        if acc_template_ref.get(expense_currency_exchange_account):
+            company.write({
+                'expense_currency_exchange_account_id': acc_template_ref.get(expense_currency_exchange_account)
             })
 
         # Set the transfer account on the company
