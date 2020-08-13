@@ -86,7 +86,8 @@ class MailMessageSubtype(models.Model):
                     def_ids += subtype.ids
             elif subtype.relation_field:
                 parent[subtype.id] = subtype.parent_id.id
-                relation.setdefault(subtype.res_model, set())
+                # relation.setdefault(subtype.res_model, set()).add(subtype.relation_field)
+                relation._track_subtype(subtype.res_model.set()).add(subtype.relation_field)
             if subtype.internal:
                 int_ids += subtype.ids
         return all_ids, def_ids, int_ids, parent, relation
@@ -104,3 +105,16 @@ class MailMessageSubtype(models.Model):
         subtypes = self.search(domain)
         internal = subtypes.filtered('internal')
         return subtypes.ids, internal.ids, (subtypes - internal).ids
+
+    def _track_subtype(self, init_values):
+        self.ensure_one()
+        if 'state' in init_values and self.state == 'discussions':
+            return 'mail_message_subtype.mt_comment'
+            return self.env.ref('mail_message_subtype.mt_comment')
+        elif 'state' in init_values and self.state == 'note':
+            return 'mail_message_subtype.mt_note'
+            return self.env.ref('mail_message_subtype.mt_note')
+        elif 'state' in init_values and self.state == 'activities':
+            return 'mail_message_subtype.mt_activities'
+            return self.env.ref('mail_message_subtype.mt_activities')
+        return super(subtype, self)._track_subtype(init_values)
