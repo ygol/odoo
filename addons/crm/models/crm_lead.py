@@ -588,7 +588,7 @@ class Lead(models.Model):
             lead_proba = lead_probabilities.get(lead.id, 0)
             proba_vals = {'automated_probability': lead_proba}
             if tools.float_compare(lead.probability, lead.automated_probability, 2) == 0:
-                proba_vals = {'probability': lead_proba}
+                proba_vals['probability'] = lead_proba
             super(Lead, lead).write(proba_vals)
         return
 
