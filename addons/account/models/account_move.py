@@ -2,7 +2,7 @@
 
 from odoo import api, fields, models, _
 from odoo.exceptions import RedirectWarning, UserError, ValidationError, AccessError
-from odoo.tools import float_is_zero, float_compare, date_utils, email_split, email_escape_char, email_re
+from odoo.tools import float_is_zero, float_compare, date_utils, email_split, create_unique_index, email_re
 from odoo.tools.misc import formatLang, format_date, get_lang
 
 from datetime import date, timedelta
@@ -287,6 +287,18 @@ class AccountMove(models.Model):
     secure_sequence_number = fields.Integer(string="Inalteralbility No Gap Sequence #", readonly=True, copy=False)
     inalterable_hash = fields.Char(string="Inalterability Hash", readonly=True, copy=False)
     string_to_hash = fields.Char(compute='_compute_string_to_hash', readonly=True)
+
+    _sql_constraints = [
+        # Partial constraint, complemented by unique index (see below). Still
+        # useful to keep because it provides a proper error message when a
+        # violation occurs, as it shares the same prefix as the unique index.
+        ('unique_name', 'unique (id)', 'Posted Journal Entries\' numbers must be unique by journal.'),
+    ]
+
+    def init(self):
+        self.env.cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('account_move_unique_name_index',))
+        if not self.env.cr.fetchone():
+            self.env.cr.execute("CREATE UNIQUE INDEX account_move_unique_name_index ON account_move (name, journal_id) WHERE name != '/';")
 
     @api.model
     def _field_will_change(self, record, vals, field_name):
@@ -1473,30 +1485,6 @@ class AccountMove(models.Model):
     def _validate_move_modification(self):
         if 'posted' in self.mapped('line_ids.payment_id.state'):
             raise ValidationError(_("You cannot modify a journal entry linked to a posted payment."))
-
-    @api.constrains('name', 'journal_id', 'state')
-    def _check_unique_sequence_number(self):
-        moves = self.filtered(lambda move: move.state == 'posted')
-        if not moves:
-            return
-
-        self.flush()
-
-        # /!\ Computed stored fields are not yet inside the database.
-        self._cr.execute('''
-            SELECT move2.id, move2.name
-            FROM account_move move
-            INNER JOIN account_move move2 ON
-                move2.name = move.name
-                AND move2.journal_id = move.journal_id
-                AND move2.move_type = move.move_type
-                AND move2.id != move.id
-            WHERE move.id IN %s AND move2.state = 'posted'
-        ''', [tuple(moves.ids)])
-        res = self._cr.fetchall()
-        if res:
-            raise ValidationError(_('Posted journal entry must have an unique sequence number per company.\n'
-                                    'Problematic numbers: %s\n') % ', '.join(r[1] for r in res))
 
     @api.constrains('ref', 'move_type', 'partner_id', 'journal_id', 'invoice_date')
     def _check_duplicate_supplier_reference(self):

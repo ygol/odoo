@@ -4,12 +4,12 @@ from odoo.tests import tagged, new_test_user
 from odoo.tests.common import Form
 from odoo import fields, api, SUPERUSER_ID
 from odoo.sql_db import db_connect
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import UserError
 
 from dateutil.relativedelta import relativedelta
 from functools import reduce
 import json
-from psycopg2.errors import SerializationFailure
+import psycopg2
 
 
 @tagged('post_install', '-at_install')
@@ -491,10 +491,6 @@ class TestAccountMove(AccountTestInvoicingCommon):
         self.assertEqual(copies[4].name, 'XMISC/2019/00003')
         self.assertEqual(copies[5].name, 'XMISC/2019/00004')
 
-        # Can't have twice the same name
-        with self.assertRaises(ValidationError):
-            copies[0].name = 'XMISC/2019/00001'
-
         # Lets remove the order by date
         copies[0].name = 'XMISC/2019/10001'
         copies[1].name = 'XMISC/2019/10002'
@@ -534,10 +530,12 @@ class TestAccountMove(AccountTestInvoicingCommon):
     def test_sequence_concurency(self):
         with db_connect(self.env.registry.db_name).cursor() as cr0,\
                 db_connect(self.env.registry.db_name).cursor() as cr1,\
-                db_connect(self.env.registry.db_name).cursor() as cr2:
+                db_connect(self.env.registry.db_name).cursor() as cr2,\
+                db_connect(self.env.registry.db_name).cursor() as cr3:
             env0 = api.Environment(cr0, SUPERUSER_ID, {})
             env1 = api.Environment(cr1, SUPERUSER_ID, {})
             env2 = api.Environment(cr2, SUPERUSER_ID, {})
+            env3 = api.Environment(cr3, SUPERUSER_ID, {})
 
             journal = env0['account.journal'].create({
                 'name': 'concurency_test',
@@ -566,12 +564,22 @@ class TestAccountMove(AccountTestInvoicingCommon):
             move.post()
             env1.cr.commit()
 
+            # Check that no concurrency is possible
             move = env2['account.move'].browse(move_ids[2].id)
-            with self.assertRaises(SerializationFailure):
+            with self.assertRaises(psycopg2.OperationalError):
                 env2.cr._default_log_exceptions = False
                 move.post()
                 env2.cr._default_log_exceptions = True
             env2.cr.rollback()
+
+            # Check that no duplicate numbers are possible
+            move = env3['account.move'].browse(move_ids[2].id)
+            with self.assertRaises(psycopg2.IntegrityError):
+                env3.cr._default_log_exceptions = False
+                move.name = 'CT/2020/08/0001'
+                move.flush()
+                env3.cr._default_log_exceptions = True
+            env3.cr.rollback()
 
             self.assertEqual(move_ids.mapped('name'), ['CT/2020/08/0001', 'CT/2020/08/0002', '/'])
             move_ids.button_draft()
