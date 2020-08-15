@@ -44,12 +44,13 @@
 
     <template id="language_selector" name="Language Selector">
         <t t-set="active_lang" t-value="list(filter(lambda lg : lg[0] == lang, languages))[0]"/>
-        <div class="js_language_selector dropup" t-if="(len(languages) &gt; 1)">
-            <button class="btn btn-sm btn-outline-secondary border-0 dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+        <div class="js_language_selector dropdown nav-item" t-if="(len(languages) &gt; 1)">
+            <a href="#" class="dropdown-toggle nav-link" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                <i t-if="icon" class="fa fa-1x fa-fw fa-globe"/>
                 <span t-if="not no_text"
                         class="align-middle"
                         t-esc="active_lang[2].split('/').pop()"/>
-            </button>
+            </a>
             <div class="dropdown-menu" role="menu">
                 <t t-foreach="languages" t-as="lg">
                     <a t-att-href="url_for(request.httprequest.path + '?' + keep_query(), lang_code=lg[0])"

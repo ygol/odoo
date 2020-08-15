@@ -1686,12 +1686,12 @@
 </template>
 
 <template id="language_selector_add_language">
+    <div class="dropdown-divider"/>
     <a t-attf-class="o_add_language d-none #{dropdown and 'd-sm-block dropdown-item' or 'd-sm-inline-block list-inline-item'}"
        groups="website.group_website_publisher"
        t-attf-href="/web#action=base.action_view_base_language_install&amp;website_id=#{website.id if website else ''}&amp;url_return=#{url_return}">
         <t t-set="url_return" t-value="quote_plus(url_for('', '[lang]') + '?' + keep_query())"/>
-        <i class="fa fa-plus-circle"/>
-        Add a language...
+        <i class="fa fa-fw fa-1x fa-plus"/> Add a language
     </a>
 </template>
 
@@ -1709,7 +1709,7 @@
     </xpath>
 
     <!-- Add the 'flags' possibility -->
-    <xpath expr="//button[hasclass('dropdown-toggle')]/span" position="before">
+    <xpath expr="//a[hasclass('dropdown-toggle')]/span" position="before">
         <t t-if="flags" t-call="website.lang_flag">
             <t t-set="lang_code" t-value="active_lang[0]"/>
         </t>
