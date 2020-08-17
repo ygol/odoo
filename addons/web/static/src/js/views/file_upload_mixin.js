@@ -161,7 +161,7 @@ const ProgressBarMixin = {
             xhr.upload.addEventListener("progress", ev => {
                 this._updateFileUploadProgress(fileUploadId, ev);
             });
-            const progressPromise = this._onBeforeUpload();
+            const progressPromise = this._onBeforeUpload({ files });
             xhr.onload = async () => {
                 await progressPromise;
                 resolve();
