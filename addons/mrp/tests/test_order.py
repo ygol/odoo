@@ -1168,17 +1168,17 @@ class TestMrpOrder(TestMrpCommon):
 
         # produce product
         mo_form = Form(mo)
-        mo_form.qty_producing = 1/12.0
         mo_form.lot_producing_id = final_product_lot
+        mo_form.qty_producing = 1/12.0
         mo = mo_form.save()
 
         move_line_raw = mo.move_raw_ids.mapped('move_line_ids').filtered(lambda m: m.qty_done)
-        self.assertEqual(move_line_raw.qty_done, 1)
+        self.assertEqual(move_line_raw.qty_done, 0.96)
         self.assertEqual(move_line_raw.product_uom_id, unit, 'Should be 1 unit since the tracking is serial.')
 
         mo._post_inventory()
         move_line_finished = mo.move_finished_ids.mapped('move_line_ids').filtered(lambda m: m.qty_done)
-        self.assertEqual(move_line_finished.qty_done, 1)
+        self.assertEqual(move_line_finished.qty_done, 0.96)
         self.assertEqual(move_line_finished.product_uom_id, unit, 'Should be 1 unit since the tracking is serial.')
 
     def test_product_type_service_1(self):
