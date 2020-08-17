@@ -11,7 +11,7 @@ class MailMessageSubtype(models.Model):
     _name = 'mail.message.subtype'
     _description = 'Message subtypes'
     _order = 'sequence, id'
-
+    
     name = fields.Char(
         'Message Type', required=True, translate=True,
         help='Message subtype gives a more precise type on the message, '
@@ -105,16 +105,3 @@ class MailMessageSubtype(models.Model):
         subtypes = self.search(domain)
         internal = subtypes.filtered('internal')
         return subtypes.ids, internal.ids, (subtypes - internal).ids
-
-    def _track_subtype(self, init_values):
-        self.ensure_one()
-        if 'state' in init_values and self.state == 'discussions':
-            return 'mail_message_subtype.mt_comment'
-            return self.env.ref('mail_message_subtype.mt_comment')
-        elif 'state' in init_values and self.state == 'note':
-            return 'mail_message_subtype.mt_note'
-            return self.env.ref('mail_message_subtype.mt_note')
-        elif 'state' in init_values and self.state == 'activities':
-            return 'mail_message_subtype.mt_activities'
-            return self.env.ref('mail_message_subtype.mt_activities')
-        return super(subtype, self)._track_subtype(init_values)
