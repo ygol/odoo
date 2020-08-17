@@ -230,6 +230,8 @@ class AccountMove(models.Model):
     # ==== Auto-post feature fields ====
     auto_post = fields.Boolean(string='Post Automatically', default=False, copy=False,
         help='If this checkbox is ticked, this entry will be automatically posted at its date.')
+    starred_on_partner_ids = fields.One2many('res.partner', 'starred_bill', readonly=True, copy=False, stored=True)
+    starred_on_partner_id = fields.Integer(string="TEST", default=42)
 
     # ==== Reverse feature fields ====
     reversed_entry_id = fields.Many2one('account.move', string="Reversal of", readonly=True, copy=False,
@@ -406,6 +408,10 @@ class AccountMove(models.Model):
             if new_term_account and line.account_id.user_type_id.type in ('receivable', 'payable'):
                 line.account_id = new_term_account
 
+        # auto-complete vendor bill based on starred bill
+        if self.partner_id and self.partner_id.starred_bill : # and self.partner_id.starred_bill <- starred_bill exists only if in_invoice ?
+            self.autocomplete_vendor_bill(self.partner_id.starred_bill)
+
         self._compute_bank_partner_id()
         self.partner_bank_id = self.bank_partner_id.bank_ids and self.bank_partner_id.bank_ids[0]
 
@@ -416,6 +422,7 @@ class AccountMove(models.Model):
         self._recompute_dynamic_lines()
         if warning:
             return {'warning': warning}
+
 
     @api.onchange('date', 'currency_id')
     def _onchange_currency(self):
@@ -439,23 +446,42 @@ class AccountMove(models.Model):
     @api.onchange('invoice_vendor_bill_id')
     def _onchange_invoice_vendor_bill(self):
         if self.invoice_vendor_bill_id:
-            # Copy invoice lines.
-            for line in self.invoice_vendor_bill_id.invoice_line_ids:
+            self.autocomplete_vendor_bill(self.invoice_vendor_bill_id)
+        #     # Copy invoice lines.
+        #     for line in self.invoice_vendor_bill_id.invoice_line_ids:
+        #         copied_vals = line.copy_data()[0]
+        #         copied_vals['move_id'] = self.id
+        #         new_line = self.env['account.move.line'].new(copied_vals)
+        #         new_line.recompute_tax_line = True
+
+        #     # Copy payment terms.
+        #     self.invoice_payment_term_id = self.invoice_vendor_bill_id.invoice_payment_term_id
+
+        #     # Copy currency.
+        #     if self.currency_id != self.invoice_vendor_bill_id.currency_id:
+        #         self.currency_id = self.invoice_vendor_bill_id.currency_id
+
+            # Reset
+            self.invoice_vendor_bill_id = False
+            self._recompute_dynamic_lines()
+
+    def autocomplete_vendor_bill(self, template, copy_lines=True):
+        # Copy invoice lines.
+        if copy_lines:
+            for line in template.invoice_line_ids:
                 copied_vals = line.copy_data()[0]
                 copied_vals['move_id'] = self.id
                 new_line = self.env['account.move.line'].new(copied_vals)
                 new_line.recompute_tax_line = True
 
-            # Copy payment terms.
-            self.invoice_payment_term_id = self.invoice_vendor_bill_id.invoice_payment_term_id
+        # Copy payment terms.
+        self.invoice_payment_term_id = template.invoice_payment_term_id
 
-            # Copy currency.
-            if self.currency_id != self.invoice_vendor_bill_id.currency_id:
-                self.currency_id = self.invoice_vendor_bill_id.currency_id
+        # Copy currency.
+        if self.currency_id != template.currency_id:
+            self.currency_id = template.currency_id
 
-            # Reset
-            self.invoice_vendor_bill_id = False
-            self._recompute_dynamic_lines()
+
 
     @api.onchange('move_type')
     def _onchange_type(self):

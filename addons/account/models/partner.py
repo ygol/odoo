@@ -444,6 +444,9 @@ class ResPartner(models.Model):
     supplier_rank = fields.Integer(default=0)
     customer_rank = fields.Integer(default=0)
 
+    starred_bill = fields.Many2one('account.move', string='Starred Bill', help='Bill used as template for autocomplete',
+        domain=[('move_type', '=', 'in_invoice')], ondelete='set null', company_dependent=True)
+
     def _get_name_search_order_by_fields(self):
         res = super()._get_name_search_order_by_fields()
         partner_search_mode = self.env.context.get('res_partner_search_mode')
