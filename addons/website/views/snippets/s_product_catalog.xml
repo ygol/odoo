@@ -2,8 +2,8 @@
 <odoo>
 
 <template id="s_product_catalog" name="Pricelist">
-    <section class="s_product_catalog oe_img_bg oe_custom_bg pt48 pb32"
-             style="background-image: url('/web/image/website.s_product_catalog_default_image');"
+    <section class="s_product_catalog oe_img_bg o_bg_img_opt_center oe_custom_bg pt48 pb32"
+             style="background-image: url('/web/image/website.s_product_catalog_default_image'); background-position: 50% 0%;"
              data-vcss="001">
         <div class="container">
             <h2>Menu</h2>

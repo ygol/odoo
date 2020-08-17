@@ -238,6 +238,10 @@ font[class*='bg-'] {
         background-repeat: repeat;
     }
 
+    &.o_bg_img_opt_center {
+        background-position: 50% 50%;
+    }
+
     // Compatibility <= 13.0, TODO remove?
     // -----------------------------------
     &.o_bg_img_opt_contain {

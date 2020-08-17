@@ -3506,10 +3506,10 @@ registry.BackgroundImage = SnippetOptionWidget.extend({
     _setBackground(backgroundURL) {
         if (backgroundURL) {
             this.$target.css('background-image', `url('${backgroundURL}')`);
-            this.$target.addClass('oe_img_bg');
+            this.$target.addClass('oe_img_bg o_bg_img_opt_center');
         } else {
             this.$target.css('background-image', '');
-            this.$target.removeClass('oe_img_bg');
+            this.$target.removeClass('oe_img_bg o_bg_img_opt_center');
         }
     },
 });
