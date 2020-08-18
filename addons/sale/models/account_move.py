@@ -103,6 +103,7 @@ class AccountMoveLine(models.Model):
                 raise UserError(messages[sale_order.state] % (sale_order.name, sale_order.analytic_account_id.name))
 
             price = move_line._sale_get_invoice_price(sale_order)
+            quantity = move_line.quantity
 
             # find the existing sale.line or keep its creation values to process this in batch
             sale_line = None
@@ -123,14 +124,14 @@ class AccountMoveLine(models.Model):
                         map_move_sale_line[move_line.id] = existing_sale_line_cache[map_entry_key] = sale_line
                     else:  # should be create, so use the index of creation values instead of browse record
                         # save value to create it
-                        sale_line_values_to_create.append(move_line._sale_prepare_sale_line_values(sale_order, price))
+                        sale_line_values_to_create.append(move_line._sale_prepare_sale_line_values(sale_order, price, quantity))
                         # store it in the cache of existing ones
                         existing_sale_line_cache[map_entry_key] = len(sale_line_values_to_create) - 1  # save the index of the value to create sale line
                         # store it in the map_move_sale_line map
                         map_move_sale_line[move_line.id] = len(sale_line_values_to_create) - 1  # save the index of the value to create sale line
 
             else:  # save its value to create it anyway
-                sale_line_values_to_create.append(move_line._sale_prepare_sale_line_values(sale_order, price))
+                sale_line_values_to_create.append(move_line._sale_prepare_sale_line_values(sale_order, price, quantity))
                 map_move_sale_line[move_line.id] = len(sale_line_values_to_create) - 1  # save the index of the value to create sale line
 
         # create the sale lines in batch
@@ -167,7 +168,7 @@ class AccountMoveLine(models.Model):
         # map of AAL index with the SO on which it needs to be reinvoiced. Maybe be None if no SO found
         return {move_line.id: mapping.get(move_line.analytic_account_id.id) for move_line in self}
 
-    def _sale_prepare_sale_line_values(self, order, price):
+    def _sale_prepare_sale_line_values(self, order, price, quantity):
         """ Generate the sale.line creation value from the current move line """
         self.ensure_one()
         last_so_line = self.env['sale.order.line'].search([('order_id', '=', order.id)], order='sequence desc', limit=1)
@@ -185,7 +186,7 @@ class AccountMoveLine(models.Model):
             'discount': 0.0,
             'product_id': self.product_id.id,
             'product_uom': self.product_uom_id.id,
-            'product_uom_qty': 0.0,
+            'product_uom_qty': quantity,
             'is_expense': True,
         }
 
