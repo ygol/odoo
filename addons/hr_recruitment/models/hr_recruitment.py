@@ -207,7 +207,8 @@ class Applicant(models.Model):
     def _compute_company(self):
         for applicant in self:
             company_id = False
-            if applicant.department_id:
+            department_id = False
+            if department_id and applicant.department_id:
                 company_id = applicant.department_id.company_id.id
             if not company_id and applicant.job_id:
                 company_id = applicant.job_id.company_id.id
