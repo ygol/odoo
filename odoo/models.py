@@ -5881,7 +5881,7 @@ Fields:
         else:
             names = []
 
-        if not all(name in self._fields for name in names):
+        if any(name not in self._fields for name in names):
             return {}
 
         def PrefixTree(model, dotnames):
