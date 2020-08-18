@@ -2167,6 +2167,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
+<<<<<<< HEAD
     QUnit.test('groupby node with a button', async function (assert) {
         assert.expect(14);
 
@@ -2420,12 +2421,40 @@ QUnit.module('Views', {
 
         await testUtils.dom.click(list.$('.o_data_row:first .o_data_cell:first'));
         await testUtils.fields.editInput(list.$('.o_field_widget[name=foo]'), "new value");
+=======
+    QUnit.test('Do not display nocontent when it is an empty html tag', function (assert) {
+        assert.expect(2);
+
+        this.data.foo.records = [];
+
+        var list = createView({
+            View: ListView,
+            model: 'foo',
+            data: this.data,
+            arch: '<tree><field name="foo"/></tree>',
+            viewOptions: {
+                action: {
+                    help: '<p class="hello"></p>'
+                }
+            },
+        });
+
+        assert.strictEqual(list.$('.oe_view_nocontent').length, 0,
+            "should not display the no content helper");
+
+        assert.strictEqual(list.$('table').length, 1, "should have a table in the dom");
+>>>>>>> 862b440f782... temp
 
         list.destroy();
     });
 
+<<<<<<< HEAD
     QUnit.test('list view, editable, without data', async function (assert) {
         assert.expect(12);
+=======
+    QUnit.test('list view, editable, without data', function (assert) {
+        assert.expect(13);
+>>>>>>> 862b440f782... temp
 
         this.data.foo.records = [];
 
