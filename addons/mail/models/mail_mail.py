@@ -71,7 +71,7 @@ class MailMail(models.Model):
 
     @api.multi
     def read(self, fields=None, load='_classic_read'):
-        if self.user_has_groups('base.group_system') and self.sudo().filtered(lambda m: not (m.res_id and m.model)):
+        if self.sudo().filtered(lambda m: not (m.res_id and m.model)) and self.env.user.has_group('base.group_system'):
             self = self.sudo()
         return super(MailMail, self).read(fields=fields, load=load)
 
