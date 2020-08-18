@@ -187,26 +187,26 @@ function factory(dependencies) {
                 method: 'action_feedback_schedule_next',
                 args: [[this.id]],
                 kwargs: { feedback },
-                context: {
-                    default_res_id: this.chatter.threadId,
-                    default_res_model: this.chatter.threadModel,
-                },
             }));
             const chatter = this.chatter;
             if (chatter) {
                 this.chatter.refresh();
             }
             this.delete();
-            this.env.bus.trigger('do-action', {
-                action,
-                options: {
-                    on_close: () => {
-                        if (chatter) {
-                            chatter.refreshActivities();
-                        }
+            if (action) {
+                this.env.bus.trigger('do-action', {
+                    action,
+                    options: {
+                        on_close: () => {
+                            if (chatter) {
+                                chatter.refreshActivities();
+                            }
+                        },
                     },
-                },
-            });
+                });
+            } else {
+                chatter.refreshActivities();
+            }
         }
 
         //----------------------------------------------------------------------

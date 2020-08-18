@@ -510,14 +510,14 @@ class MailActivity(models.Model):
             # extract value to generate next activities
             if activity.force_next:
                 Activity = self.env['mail.activity'].with_context(activity_previous_deadline=activity.date_deadline)  # context key is required in the onchange to set deadline
+                vals = Activity.default_get(Activity.fields_get())
 
-                vals = {
+                vals.update({
                     'previous_activity_type_id': activity.activity_type_id.id,
                     'res_id': activity.res_id,
                     'res_model': activity.res_model,
                     'res_model_id': self.env['ir.model']._get(activity.res_model).id,
-                }
-
+                })
                 virtual_activity = Activity.new(vals)
                 virtual_activity._onchange_previous_activity_type_id()
                 virtual_activity._onchange_activity_type_id()
