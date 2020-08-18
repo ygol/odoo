@@ -36,7 +36,7 @@ odoo.define('web.DropdownMenuItem', function (require) {
             this.fallbackFocusRef = useRef('fallback-focus');
             this.state = useState({ open: false });
 
-            useExternalListener(window, 'mousedown', this._onWindowClick);
+            useExternalListener(window, 'click', this._onWindowClick);
             useListener('keydown', this._onKeydown);
         }
 
@@ -86,6 +86,9 @@ odoo.define('web.DropdownMenuItem', function (require) {
          * @param {MouseEvent} ev
          */
         _onWindowClick(ev) {
+            if (document.activeElement.className == 'o_input' && !this.el.contains(ev.target)) {
+                return;
+            }
             if (this.state.open && !this.el.contains(ev.target)) {
                 this.state.open = false;
             }
