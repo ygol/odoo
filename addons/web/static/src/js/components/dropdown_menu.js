@@ -34,9 +34,22 @@ odoo.define('web.DropdownMenu', function (require) {
 
             this.dropdownMenu = useRef('dropdown');
             this.state = useState({ open: false });
+            this._onClickGlobal = this._onWindowClick.bind(this);
 
             useExternalListener(window, 'click', this._onWindowClick);
             useExternalListener(window, 'keydown', this._onWindowKeydown);
+        }
+
+        mounted() {
+            document.addEventListener('click', this._onClickGlobal, true);
+            document.addEventListener('touchstart', this._onClickGlobal, true);
+            super.mounted(...arguments);
+        }
+
+        willUnmount() {
+            document.removeEventListener('click', this._onClickGlobal, true);
+            document.removeEventListener('touchstart', this._onClickGlobal, true);
+            super.willUnmount(...arguments);
         }
 
         //---------------------------------------------------------------------

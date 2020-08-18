@@ -283,13 +283,14 @@ odoo.define('web.favorite_menu_tests', function (require) {
             assert.deepEqual(cpHelpers.getFacetTexts(controlPanel), ["My favorite"]);
             assert.hasClass(controlPanel.el.querySelector('.o_favorite_menu .o_menu_item > a'), 'selected');
 
+            const itemEls = controlPanel.el.querySelectorAll('.o_favorite_menu .o_menu_item.o_add_favorite');
+            assert.deepEqual([...itemEls].map(e => e.innerText.trim()), ["Save Current Search"]);
+
             await cpHelpers.deleteFavorite(controlPanel, 0);
 
             // confirm deletion
             await testUtils.dom.click(document.querySelector('div.o_dialog footer button'));
             assert.deepEqual(cpHelpers.getFacetTexts(controlPanel), []);
-            const itemEls = controlPanel.el.querySelectorAll('.o_favorite_menu .o_menu_item');
-            assert.deepEqual([...itemEls].map(e => e.innerText.trim()), ["Save Current Search"]);
 
             controlPanel.destroy();
         });
