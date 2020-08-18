@@ -64,7 +64,7 @@ var buyCertificationSteps = [{
     run: 'text 999'
 }, {
     content: 'eCommerce: pay',
-    trigger: '#o_payment_form_pay'
+    trigger: 'button[name="o_payment_submit_button"]'
 }, {
     content: 'eCommerce: check that the payment is successful',
     trigger: '.oe_website_sale_tx_status:contains("Your payment has been successfully processed")',

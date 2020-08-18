@@ -7,9 +7,8 @@ odoo.define('payment.checkout_form', require => {
 
     publicWidget.registry.PaymentCheckoutForm = publicWidget.Widget.extend(paymentFormMixin, {
         selector: 'form[name="o_payment_checkout"]',
-        events: _.extend({}, publicWidget.Widget.prototype.events, {
+        events: Object.assign({}, publicWidget.Widget.prototype.events, {
                 'click div[name="o_payment_option_card"]': '_onClickPaymentOption',
-                'click input[name="o_payment_radio"]': '_onClickPaymentOptionRadio',
                 'click a[name="o_payment_icon_more"]': '_onClickMorePaymentIcons',
                 'click a[name="o_payment_icon_less"]': '_onClickLessPaymentIcons',
                 'click button[name="o_payment_submit_button"]': '_onClickPay',
@@ -19,7 +18,7 @@ odoo.define('payment.checkout_form', require => {
         /**
          * @constructor
          */
-        init: function (_parent, _value, _unit) {
+        init: function () {
             const preventDoubleClick = handlerMethod => {
                 return _.debounce(handlerMethod, 500, true);
             };
@@ -29,7 +28,6 @@ odoo.define('payment.checkout_form', require => {
             this._onClickMorePaymentIcons = preventDoubleClick(this._onClickMorePaymentIcons);
             this._onClickPay = preventDoubleClick(this._onClickPay);
             this._onClickPaymentOption = preventDoubleClick(this._onClickPaymentOption);
-            this._onClickPaymentOptionRadio = preventDoubleClick(this._onClickPaymentOptionRadio);
             this._onSubmit = preventDoubleClick(this._onSubmit);
         },
 

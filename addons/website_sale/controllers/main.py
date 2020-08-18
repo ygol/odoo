@@ -880,13 +880,13 @@ class WebsiteSale(http.Controller):
         """ Json method that creates a payment.transaction, used to create a
         transaction when the user clicks on 'pay now' button. After having
         created the transaction, the event continues and the user is redirected
-        to the acquirer website.
+        to the acquirer website. TODO ANV
 
         :param int acquirer_id: id of a payment.acquirer record. If not set the
                                 user is redirected to the checkout page
         """
         # Ensure a payment acquirer is selected
-        if not acquirer_id:
+        if not acquirer_id:  # TODO ANV payment_option_id
             return False
 
         acquirer_sudo = request.env['payment.acquirer'].browse(acquirer_id).sudo()

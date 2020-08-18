@@ -110,7 +110,7 @@ odoo.define('payment_adyen.payment_form', require => {
         /**
          * Prepare the inline form of Adyen for direct payment.
          *
-         * @override method from payment.checkout_form
+         * @override method from payment.payment_form_mixin
          * @private
          * @param {number} paymentOptionId - The id of the selected payment option
          * @param {string} provider - The provider of the selected payment option's acquirer
@@ -184,7 +184,7 @@ odoo.define('payment_adyen.payment_form', require => {
         /**
          * Submit the drop-in.
          *
-         * @override method from payment.checkout_form
+         * @override method from payment.payment_form_mixin
          * @private
          * @param {number} paymentOptionId - The id of the payment option handling the transaction
          * @param {string} provider - The provider of the payment option's acquirer

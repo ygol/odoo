@@ -20,10 +20,7 @@ odoo.define('payment.payment_form_mixin', require => {
             if ($checkedRadios.length === 1) {
                 const checkedRadio = $checkedRadios[0];
                 this._displayInlineForm(checkedRadio);
-                const flow = this._getPaymentFlowFromRadio(checkedRadio);
-                if (flow !== 'token' || this.txContext.allowTokenSelection) {
-                    this._enableButton();
-                }
+                this._enableButton();
             } else {
                 this._setPaymentFlow(); // Initialize the payment flow to let acquirers overwrite it
             }
@@ -34,7 +31,10 @@ odoo.define('payment.payment_form_mixin', require => {
         //--------------------------------------------------------------------------
 
         /**
-         * Disable the submit button and update the icons to show that an action is processing.
+         * Disable the submit button.
+         *
+         * The icons are updated to either show that an action is processing or that the button is
+         * not ready, depending on the value of `showLoadingAnimation`.
          *
          * @private
          * @param {boolean} showLoadingAnimation - Whether a spinning loader should be shown
@@ -128,17 +128,23 @@ odoo.define('payment.payment_form_mixin', require => {
         },
 
         /**
-         * Enable the submit button and update the icons to show that it is ready.
+         * Check if the submit button can be enabled and do it if so.
+         *
+         * The icons are updated to show that the button is ready.
          *
          * @private
-         * @return {undefined}
+         * @return {boolean} Whether the button was enabled.
          */
-        _enableButton: () => {
-            const $submitButton = this.$('button[name="o_payment_submit_button"]');
-            const iconClass = $submitButton.data('icon-class');
-            $submitButton.attr('disabled', false);
-            $submitButton.find('i').addClass(iconClass);
-            $submitButton.find('span.o_loader').remove();
+        _enableButton: function () {
+            if (this._isButtonReady()) {
+                const $submitButton = this.$('button[name="o_payment_submit_button"]');
+                const iconClass = $submitButton.data('icon-class');
+                $submitButton.attr('disabled', false);
+                $submitButton.find('i').addClass(iconClass);
+                $submitButton.find('span.o_loader').remove();
+                return true;
+            }
+            return false;
         },
 
         /**
@@ -149,7 +155,7 @@ odoo.define('payment.payment_form_mixin', require => {
          *
          * @return {boolean} Whether exactly one radio button among the provided radios is checked
          */
-        _ensureRadioIsChecked: ($checkedRadios) => {
+        _ensureRadioIsChecked: function ($checkedRadios) {
             if ($checkedRadios.length === 0) {
                 this._displayError(
                     _t("No payment option selected"),
@@ -214,6 +220,28 @@ odoo.define('payment.payment_form_mixin', require => {
          * @return {jQuery} The removed error
          */
         _hideError: () => this.$('div[name="o_payment_error"]').remove(),
+
+        /**
+         * Verify that the submit is ready to be enabled.
+         *
+         * For a module to support a custom behavior for the submit button, it must override this
+         * method and only return true if the result of this method is true and if nothing prevents
+         * enabling the submit button for that custom behavior.
+         *
+         * @private
+         *
+         * @return {boolean} Whether the submit button can be enabled
+         */
+        _isButtonReady: function () {
+            const $checkedRadios = this.$('input[type="radio"]:checked');
+            if ($checkedRadios.length === 1) {
+                const checkedRadio = $checkedRadios[0];
+                const flow = this._getPaymentFlowFromRadio(checkedRadio);
+                return flow !== 'token' || this.txContext.allowTokenSelection;
+            } else {
+                return false;
+            }
+        },
 
         /**
          * Prepare the acquirer-specific inline form of the selected payment option.
@@ -367,10 +395,10 @@ odoo.define('payment.payment_form_mixin', require => {
          */
         _onClickPaymentOption: function (ev) {
             // Uncheck all radio buttons
-            this.$('input[type="radio"]').prop("checked", false);
+            this.$('input[type="radio"]').prop('checked', false);
             // Check radio button linked to selected payment option
             const checkedRadio = $(ev.currentTarget).find('input[type="radio"]')[0];
-            $(checkedRadio).prop("checked", true);
+            $(checkedRadio).prop('checked', true);
 
             // Disable the submit button while building the content
             this._disableButton(false);
@@ -379,26 +407,7 @@ odoo.define('payment.payment_form_mixin', require => {
             this._displayInlineForm(checkedRadio);
 
             // Re-enable the submit button
-            const flow = this._getPaymentFlowFromRadio(checkedRadio);
-            if (flow !== 'token' || this.txContext.allowTokenSelection) {
-                this._enableButton();
-            }
-        },
-
-        /**
-         * Let `_onClickPaymentOption` select the radio button and display the inline form.
-         *
-         * Called when clicking on a the radio button of the card of a payment option.
-         *
-         * @private
-         * @param {Event} ev
-         * @return {undefined}
-         */
-        _onClickPaymentOptionRadio: ev => {
-            // The default behavior of radio buttons can sometimes cause a race condition with the
-            // management of radio buttons by _onClickPaymentOption. Prevent the default behavior to
-            // make sure to always display exactly 0 or 1 checked radio.
-            ev.preventDefault();
+            this._enableButton();
         },
 
     };
