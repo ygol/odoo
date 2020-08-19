@@ -45,12 +45,13 @@ class Discuss extends Component {
         });
         this._updateLocalStoreProps();
         /**
-         * Reference of the thread. Useful to update scroll position correctly
-         * on patch. AKU TODO: this made sense when composer was outside of
-         * thread, but this may no longer be necessary??
+         * Reference of the composer. Useful to focus it.
          */
-        this._threadRef = useRef('thread');
-
+        this._composerRef = useRef('composer');
+        /**
+         * Reference of the thread viewer. Useful to focus it.
+         */
+        this._threadViewerRef = useRef('threadViewer');
         // bind since passed as props
         this._onMobileAddItemHeaderInputSelect = this._onMobileAddItemHeaderInputSelect.bind(this);
         this._onMobileAddItemHeaderInputSource = this._onMobileAddItemHeaderInputSource.bind(this);
@@ -64,6 +65,7 @@ class Discuss extends Component {
             this.discuss.openInitThread();
         }
         this._updateLocalStoreProps();
+        this._update();
     }
 
     patched() {
@@ -81,6 +83,7 @@ class Discuss extends Component {
         }
         this._activeThreadCache = this.discuss.threadViewer.threadCache;
         this._updateLocalStoreProps();
+        this._update();
     }
 
     willUnmount() {
@@ -136,6 +139,24 @@ class Discuss extends Component {
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     */
+    _update() {
+        if (this.discuss.isDoFocus) {
+            this.discuss.update({ isDoFocus: false });
+            const composer = this._composerRef.comp;
+            if (composer) {
+                composer.focus();
+            } else {
+                const threadViewer = this._threadViewerRef.comp;
+                if (threadViewer) {
+                    threadViewer.focus();
+                }
+            }
+        }
+    }
 
     /**
      * @private
@@ -244,16 +265,6 @@ class Discuss extends Component {
         }
         this.discuss.clearReplyingToMessage();
         this.discuss.update({ activeMobileNavbarTabId: ev.detail.tabId });
-    }
-
-    /**
-     * @private
-     * @param {CustomEvent} ev
-     * @param {Object} ev.detail
-     * @param {mail.thread} ev.detail.thread
-     */
-    _onSelectThread(ev) {
-        this.discuss.threadViewer.update({ thread: [['link', ev.detail.thread]] });
     }
 
     /**

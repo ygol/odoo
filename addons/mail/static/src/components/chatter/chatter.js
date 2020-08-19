@@ -37,19 +37,18 @@ class Chatter extends Component {
                 attachments: 1,
             },
         });
-        this._threadRef = useRef('thread');
+        /**
+         * Reference of the composer. Useful to focus it.
+         */
+        this._composerRef = useRef('composer');
     }
 
     mounted() {
-        if (this.chatter.thread) {
-            this._notifyRendered();
-        }
+        this._update();
     }
 
     patched() {
-        if (this.chatter.thread) {
-            this._notifyRendered();
-        }
+        this._update();
     }
 
     //--------------------------------------------------------------------------
@@ -77,6 +76,21 @@ class Chatter extends Component {
         });
     }
 
+    /**
+     * @private
+     */
+    _update() {
+        if (this.chatter.thread) {
+            this._notifyRendered();
+        }
+        if (this.chatter.isDoFocus) {
+            this.chatter.update({ isDoFocus: false });
+            const composer = this._composerRef.comp;
+            if (composer) {
+                composer.focus();
+            }
+        }
+    }
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------

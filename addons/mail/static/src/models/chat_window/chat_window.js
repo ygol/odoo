@@ -14,7 +14,7 @@ function factory(dependencies) {
         static create(data) {
             const chatWindow = super.create(data);
             chatWindow._onShowHomeMenu.bind(chatWindow);
-            chatWindow._onHideHomeMenu.bind(chatWindow)
+            chatWindow._onHideHomeMenu.bind(chatWindow);
 
             chatWindow.env.messagingBus.on(
                 'hide_home_menu',
@@ -55,7 +55,7 @@ function factory(dependencies) {
 
         expand() {
             if (this.thread) {
-                this.thread.openExpanded();
+                this.thread.open({ expanded: true });
             }
         }
 
@@ -90,9 +90,23 @@ function factory(dependencies) {
         }
 
         /**
-         * Assume that this chat window was hidden before-hand.
+         * Makes this chat window active, which consists of making it visible,
+         * unfolding it, and focusing it.
+         */
+        makeActive() {
+            this.makeVisible();
+            this.unfold();
+            this.focus();
+        }
+
+        /**
+         * Makes this chat window visible by swapping it with the last visible
+         * chat window, or do nothing if it is already visible.
          */
         makeVisible() {
+            if (this.isVisible) {
+                return;
+            }
             const lastVisible = this.manager.lastVisible;
             this.manager.swap(this, lastVisible);
         }
@@ -165,6 +179,17 @@ function factory(dependencies) {
                 return thread.foldState === 'folded';
             }
             return this._isFolded;
+        }
+
+        /**
+         * @private
+         * @returns {boolean}
+         */
+        _computeIsVisible() {
+            if (!this.manager) {
+                return false;
+            }
+            return this.manager.allOrderedVisible.includes(this);
         }
 
         /**
@@ -323,6 +348,17 @@ function factory(dependencies) {
                 '_isFolded',
             ],
             default: false,
+        }),
+        /**
+         * Whether this chat window is visible or not. Should be considered
+         * read-only. Setting this value manually will not make it visible.
+         * @see `makeVisible`
+         */
+        isVisible: attr({
+            compute: '_computeIsVisible',
+            dependencies: [
+                'managerAllOrderedVisible',
+            ],
         }),
         manager: many2one('mail.chat_window_manager', {
             inverse: 'chatWindows',

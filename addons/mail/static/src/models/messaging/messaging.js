@@ -16,18 +16,69 @@ function factory(dependencies) {
             super.delete();
         }
 
+        /**
+         * Starts messaging and related records.
+         */
+        async start() {
+            this._handleGlobalWindowFocus = this._handleGlobalWindowFocus.bind(this);
+            this.env.services['bus_service'].on('window_focus', null, this._handleGlobalWindowFocus);
+            await this.async(() => this.initializer.start());
+            this.notificationHandler.start();
+            this.update({ isInitialized: true });
+        }
+
         //----------------------------------------------------------------------
         // Public
         //----------------------------------------------------------------------
 
         /**
-         * Open the form view of the record with provided id and model.
+         * Gets the canonical chat with the provided person and returns it.
+         *
+         * If a chat is not appropriate a notification is displayed instead.
+         *
+         * @param {Object} param0
+         * @param {integer} [param0.partnerId]
+         * @param {integer} [param0.userId]
+         * @param {Object} [options]
+         * @returns {mail.thread|undefined}
+         */
+        async getCanonicalChat({ partnerId, userId }) {
+            if (userId) {
+                const user = this.env.models['mail.user'].insert({ id: userId });
+                return user.getCanonicalChat();
+            }
+            if (partnerId) {
+                const partner = this.env.models['mail.partner'].insert({ id: partnerId });
+                return partner.getCanonicalChat();
+            }
+        }
+
+        /**
+         * Opens a chat with the provided person and returns it.
+         *
+         * If a chat is not appropriate a notification is displayed instead.
+         *
+         * @param {Object} person forwarded to @see `getCanonicalChat()`
+         * @param {Object} [options] forwarded to @see `mail.thread:open()`
+         * @returns {mail.thread|undefined}
+         */
+        async openChat(person, options) {
+            const chat = await this.async(() => this.getCanonicalChat(person));
+            if (!chat) {
+                return;
+            }
+            await this.async(() => chat.open(options));
+            return chat;
+        }
+
+        /**
+         * Opens the form view of the record with provided id and model.
          *
          * @param {Object} param0
          * @param {integer} param0.id
          * @param {string} param0.model
          */
-        openDocument({ id, model }) {
+        async openDocument({ id, model }) {
             this.env.bus.trigger('do-action', {
                 action: {
                     type: 'ir.actions.act_window',
@@ -36,79 +87,40 @@ function factory(dependencies) {
                     res_id: id,
                 },
             });
-            this.messagingMenu.close();
-        }
-
-        /**
-         * Handles redirection to a model and id. Try to handle it in the context
-         * of messaging (e.g. open chat if this is a user), otherwise fallback to
-         * opening form view of record.
-         *
-         * @param {Object} param0
-         * @param {integer} param0.id
-         * @param {string} param0.model
-         * FIXME needs to be tested and maybe refactored (see task-2244279)
-         */
-        async redirect({ id, model }) {
-            if (model === 'mail.channel') {
-                const channel = this.env.models['mail.thread'].find(thread =>
-                    thread.id === id &&
-                    thread.model === 'mail.channel'
-                );
-                if (!channel || !channel.isPinned) {
-                    this.env.models['mail.thread'].joinChannel(id, { autoselect: true });
-                    return;
-                }
-                channel.open();
-            } else if (model === 'res.partner') {
-                if (id === this.currentPartner.id) {
-                    this.openDocument({
-                        model: 'res.partner',
-                        id,
-                    });
-                    return;
-                }
-                const partner = this.env.models['mail.partner'].insert({ id });
-                if (!partner.user) {
-                    await this.async(() => partner.checkIsUser());
-                }
-                if (!partner.user) {
-                    // partner is not a user, open document instead
-                    this.openDocument({
-                        model: 'res.partner',
-                        id: partner.id,
-                    });
-                    return;
-                }
-                const chat = partner.correspondentThreads.find(thread =>
-                    thread.channel_type === 'chat'
-                );
-                if (!chat) {
-                    this.env.models['mail.thread'].createChannel({
-                        autoselect: true,
-                        partnerId: id,
-                        type: 'chat',
-                    });
-                    return;
-                }
-                chat.open();
-            } else {
-                this.openDocument({
-                    model,
-                    id,
-                });
+            if (this.env.messaging.device.isMobile) {
+                // messaging menu has a higher z-index than views so it must
+                // be closed to ensure the visibility of the view
+                this.env.messaging.messagingMenu.close();
             }
         }
 
         /**
-         * Start messaging and related records.
+         * Opens the most appropriate view that is a profile for provided id and
+         * model.
+         *
+         * @param {Object} param0
+         * @param {integer} param0.id
+         * @param {string} param0.model
          */
-        async start() {
-            this._handleGlobalWindowFocus = this._handleGlobalWindowFocus.bind(this);
-            this.env.services['bus_service'].on('window_focus', null, this._handleGlobalWindowFocus);
-            await this.async(() => this.initializer.start());
-            this.notificationHandler.start();
-            this.update({ isInitialized: true });
+        async openProfile({ id, model }) {
+            if (model === 'res.partner') {
+                const partner = this.env.models['mail.partner'].insert({ id });
+                return partner.openProfile();
+            }
+            if (model === 'res.users') {
+                const user = this.env.models['mail.user'].insert({ id });
+                return user.openProfile();
+            }
+            if (model === 'mail.channel') {
+                let channel = this.env.models['mail.thread'].findFromIdentifyingData({ id, model: 'mail.channel' });
+                if (!channel) {
+                    channel = (await this.async(() =>
+                        this.env.models['mail.thread'].performRpcChannelInfo({ ids: [id] })
+                    ))[0];
+                }
+                return channel.openProfile();
+            }
+            return this.env.messaging.openDocument({ id, model });
         }
 
         //----------------------------------------------------------------------

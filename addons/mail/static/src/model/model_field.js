@@ -400,10 +400,20 @@ class ModelField {
             const otherField = OtherModel.fields[relatedFieldName];
             const newVal = otherField.get(otherRecord);
             if (this.fieldType === 'relation') {
-                if (newVal) {
-                    return [['replace', newVal]];
+                if (['one2many', 'many2many'].includes(this.relationType)) {
+                    if (newVal) {
+                        return [['replace', newVal]];
+                    } else {
+                        return [['unlink-all']];
+                    }
                 } else {
-                    return [['unlink-all']];
+                    // avoid doing unnecessary replace for x2o, for performance
+                    // and to allow cyclic related fields
+                    if (newVal) {
+                        return [['link', newVal]];
+                    } else {
+                        return [['unlink']];
+                    }
                 }
             }
             return newVal;

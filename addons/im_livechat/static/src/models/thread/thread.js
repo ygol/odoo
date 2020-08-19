@@ -21,6 +21,7 @@ registerClassPatchModel('mail.thread', 'im_livechat/static/src/models/thread/thr
             if (!data2.members) {
                 data2.members = [];
             }
+            data2.members.push(['unlink', this.env.messaging.publicPartner]);
             if (!data.livechat_visitor.id) {
                 // Create partner derived from public partner.
                 const partner = this.env.models['mail.partner'].create(

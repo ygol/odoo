@@ -121,7 +121,7 @@ class Composer extends Component {
         if (this.env.messaging.device.isMobile) {
             this.el.scrollIntoView();
         }
-        this.composer.focus();
+        this._textInputRef.comp.focus();
     }
 
     /**
@@ -279,7 +279,7 @@ class Composer extends Component {
         ev.stopPropagation();
         this._textInputRef.comp.saveStateInStore();
         this.composer.insertIntoTextInput(ev.detail.unicode);
-        this.composer.focus();
+        this.focus();
     }
 
     /**
@@ -314,7 +314,7 @@ class Composer extends Component {
         if (ev.key === 'Escape') {
             if (this._emojisPopoverRef.comp) {
                 this._emojisPopoverRef.comp.close();
-                this.composer.focus();
+                this.focus();
                 markEventHandled(ev, 'Composer.closeEmojisPopover');
             }
         }

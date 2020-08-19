@@ -629,7 +629,8 @@ class Channel(models.Model):
             :rtype : dict
         """
         if partners_to:
-            partners_to.append(self.env.user.partner_id.id)
+            if self.env.user.partner_id.id not in partners_to:
+                partners_to.append(self.env.user.partner_id.id)
             # determine type according to the number of partner in the channel
             self.env.cr.execute("""
                 SELECT P.channel_id
@@ -638,9 +639,16 @@ class Channel(models.Model):
                     AND C.public LIKE 'private'
                     AND P.partner_id IN %s
                     AND C.channel_type LIKE 'chat'
+                    AND NOT EXISTS (
+                        SELECT *
+                        FROM mail_channel_partner P2
+                        WHERE P2.channel_id = C.id
+                            AND P2.partner_id NOT IN %s
+                    )
                 GROUP BY P.channel_id
                 HAVING ARRAY_AGG(DISTINCT P.partner_id ORDER BY P.partner_id) = %s
-            """, (tuple(partners_to), sorted(list(partners_to)),))
+                LIMIT 1
+            """, (tuple(partners_to), tuple(partners_to), sorted(list(partners_to)),))
             result = self.env.cr.dictfetchall()
             if result:
                 # get the existing channel between the given partners

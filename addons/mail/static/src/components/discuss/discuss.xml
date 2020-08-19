@@ -59,7 +59,6 @@
                 hasComposerThreadTyping="true"
                 hasMessageCheckbox="true"
                 hasSquashCloseMessages="discuss.thread.model !== 'mail.box'"
-                haveMessagesAuthorRedirect="discuss.thread.channel_type !== 'chat'"
                 haveMessagesMarkAsReadIcon="discuss.thread === env.messaging.inbox"
                 haveMessagesReplyIcon="discuss.thread === env.messaging.inbox"
                 selectedMessageLocalId="
@@ -67,6 +66,7 @@
                     discuss.replyingToMessage.localId"
                 threadViewerLocalId="discuss.threadViewer.localId"
                 t-on-o-rendered="_onThreadRendered"
+                t-ref="threadViewer"
             />
         </t>
         <t t-if="!discuss.thread and (!env.messaging.device.isMobile or discuss.activeMobileNavbarTabId === 'mailbox')">
@@ -78,7 +78,6 @@
             <NotificationList
                 class="o_Discuss_notificationList"
                 filter="discuss.activeMobileNavbarTabId"
-                t-on-o-select-thread="_onSelectThread"
             />
         </t>
         <t t-if="env.messaging.device.isMobile and !discuss.isReplyingToMessage">
@@ -97,6 +96,7 @@
                 hasDiscardButton="true"
                 hasThreadName="true"
                 t-on-o-message-posted="_onReplyingToMessageMessagePosted"
+                t-ref="composer"
             />
         </t>
     </t>

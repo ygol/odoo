@@ -431,7 +431,7 @@ QUnit.test('channel preview: basic rendering', async function (assert) {
         model: 'mail.channel', // necessary to link message to channel
         res_id: 20, // id of related channel
     });
-    await this.start({ debug: 1 });
+    await this.start();
 
     await afterNextRender(() => document.querySelector(`.o_MessagingMenu_toggler`).click());
     assert.strictEqual(
