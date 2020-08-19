@@ -222,7 +222,7 @@ odoo.define('payment.payment_form_mixin', require => {
         _hideError: () => this.$('div[name="o_payment_error"]').remove(),
 
         /**
-         * Verify that the submit is ready to be enabled.
+         * Verify that the submit button is ready to be enabled.
          *
          * For a module to support a custom behavior for the submit button, it must override this
          * method and only return true if the result of this method is true and if nothing prevents
