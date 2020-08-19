@@ -63,7 +63,7 @@
                             </div>
                             <div class="mt-2">
                                 <label for="code">Verification Code</label>
-                                <field required="True" name="code"/>
+                                <field required="True" name="code" placeholder="123 456"/>
                             </div>
                             <button type="object" name="enable" class="btn btn-primary"
                                     string="Enable two-factor authentication"/>

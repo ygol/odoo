@@ -5,6 +5,7 @@ import hmac
 import io
 import logging
 import os
+import re
 import struct
 import time
 
@@ -127,7 +128,7 @@ class TOTPWizard(models.TransientModel):
         attachment=False, store=True, readonly=True,
         compute='_compute_qrcode',
     )
-    code = fields.Char(string="Verification Code", placeholder="6-digit code", size=6)
+    code = fields.Char(string="Verification Code", size=7)
 
     @api.depends('user_id.login', 'user_id.company_id.display_name', 'secret')
     def _compute_qrcode(self):
@@ -154,7 +155,7 @@ class TOTPWizard(models.TransientModel):
     @check_identity
     def enable(self):
         try:
-            c = int(self.code)
+            c = int(re.sub(r'\s', '', self.code))
         except ValueError:
             raise UserError(_("The verification code should only contain numbers"))
         if self.user_id._totp_try_setting(self.secret, c):
