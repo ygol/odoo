@@ -216,6 +216,7 @@ class FleetVehicle(models.Model):
 
     def write(self, vals):
         if 'driver_id' in vals and vals['driver_id']:
+            print("************ Driver ID:-", driver_id)
             driver_id = vals['driver_id']
             self.filtered(lambda v: v.driver_id.id != driver_id).create_driver_history(driver_id)
 
