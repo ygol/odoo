@@ -1,6 +1,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 import logging
+import re
 
 import requests
 
@@ -52,25 +53,25 @@ class PaymentAcquirer(models.Model):
     _inherit = 'payment.acquirer'
 
     provider = fields.Selection(
-        selection_add=[('adyen', 'Adyen')], ondelete={'adyen': 'set default'}
+        selection_add=[('adyen', "Adyen")], ondelete={'adyen': 'set default'}
     )
-    # TODO add long help texts asking to go to Adyen portal or link to doc page (-> that would
-    #  require adapting the tests for doc links to handle non-settings views)
     # TODO check if we can remove the public read access on payment.acquirer
     #  and then groups='base.group_user' -> yes, change access for public in access for accounting+website group
     adyen_merchant_account = fields.Char(
-        string='Merchant Account', required_if_provider='adyen', groups='base.group_system'  # TODO group system partout
-    )
+        string="Merchant Account",
+        help="The code of the merchant account to use with this acquirer",
+        required_if_provider='adyen', groups='base.group_system')
     adyen_api_key = fields.Char(
-        string='API Key', required_if_provider='adyen', groups='base.group_user'
-    )
-    # TODO exclude version and endpoint from urls in create() and write()
+        string="API Key", help="The API key of the user account", required_if_provider='adyen',
+        groups='base.group_system')
     adyen_checkout_api_url = fields.Char(
-        string='Checkout API URL', required_if_provider='adyen', groups='base.group_user'
-    )
+        string="Checkout API URL", help="The base URL for the Checkout API endpoints",
+        required_if_provider='adyen', groups='base.group_system')
     adyen_recurring_api_url = fields.Char(
-        string='Recurring API URL', required_if_provider='adyen', groups='base.group_user'
-    )
+        string="Recurring API URL", help="The base URL for the Recurring API endpoints",
+        required_if_provider='adyen', groups='base.group_system')
+
+    #=== COMPUTE METHODS ===#
 
     @api.model
     def _get_supported_features(self, provider):
@@ -84,6 +85,32 @@ class PaymentAcquirer(models.Model):
             return super()._get_supported_features(provider)
 
         return {'tokenization': True}
+
+    #=== CRUD METHODS ===#
+
+    @api.model_create_multi
+    def create(self, values_list):
+        for values in values_list:
+            self._adyen_trim_api_urls(values)
+        return super().create(values_list)
+
+    def write(self, values):
+        self._adyen_trim_api_urls(values)
+        return super().write(values)
+
+    @api.model
+    def _adyen_trim_api_urls(self, values):
+        """ Remove the version and the endpoint from the url of Adyen API fields.
+
+        :param dict values: The create or write values
+        :return: None
+        """
+        for field_name in ('adyen_checkout_api_url', 'adyen_recurring_api_url'):
+            if field_name in values:
+                field_value = values[field_name]
+                values[field_name] = re.sub(r'[vV]\d+(/.*)?', '', field_value)
+
+    #=== BUSINESS METHODS ===#
     
     @api.model
     # TODO make generic

@@ -359,7 +359,7 @@ class PaymentTransaction(models.Model):
         For an acquirer to support tokenization, it must override this method and request a money
         transfer to its provider, then call this method to log the sent message.
 
-        :param dict _kwargs: Optional data. This parameter is not used here
+        :param dict _kwargs: Optional data. This parameter is not used here  # TODO DBO is this from old stuff for subs' 3d secure ?
         :return: None
         """
         self._log_sent_message()

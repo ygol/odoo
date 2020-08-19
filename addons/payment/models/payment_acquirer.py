@@ -33,7 +33,7 @@ class PaymentAcquirer(models.Model):
         string="State", help="""In test mode, a fake payment is processed through a test
                                 payment interface. This mode is advised when setting up the
                                 acquirer. Watch out, test and production modes require
-                                different credentials.""",  # TODO DBO force \n or not ?
+                                different credentials.""",
         selection=[('disabled', "Disabled"), ('enabled', "Enabled"), ('test', "Test Mode")],
         default='disabled', required=True, copy=False)
     company_id = fields.Many2one(
@@ -68,7 +68,7 @@ class PaymentAcquirer(models.Model):
         string="Inline Form Template", comodel_name='ir.ui.view',
         help="The template rendered inside the acquirer form when making a direct payment",
         domain=[('type', '=', 'qweb')])
-    qr_code = fields.Boolean(
+    qr_code = fields.Boolean(  # TODO ANV is this used in generic ?
         string="Enable QR Codes",
         help="Enable the use of QR-codes for payments made on this acquirer")
     country_ids = fields.Many2many(
@@ -84,11 +84,11 @@ class PaymentAcquirer(models.Model):
         related='journal_id.inbound_payment_method_ids', readonly=False)
 
     # Fees fields
-    fees_active = fields.Boolean(string="Add Extra Fees")  # TODO add help # TODO DBO are those generic ?
-    fees_dom_fixed = fields.Float(string="Fixed domestic fees")  # TODO add help
-    fees_dom_var = fields.Float(string="Variable domestic fees (in percents)")  # TODO add help
-    fees_int_fixed = fields.Float(string="Fixed international fees")  # TODO add help
-    fees_int_var = fields.Float(string="Variable international fees (in percents)")  # TODO add help
+    fees_active = fields.Boolean(string="Add Extra Fees")
+    fees_dom_fixed = fields.Float(string="Fixed domestic fees")
+    fees_dom_var = fields.Float(string="Variable domestic fees (in percents)")
+    fees_int_fixed = fields.Float(string="Fixed international fees")
+    fees_int_var = fields.Float(string="Variable international fees (in percents)")
 
     # Message fields
     display_as = fields.Char(

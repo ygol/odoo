@@ -24,6 +24,8 @@ class PaymentTransaction(models.Model):
         string="Saved Payment Data",
         help="Data that must be passed back to Adyen when returning from redirect", readonly=True)
 
+    #=== BUSINESS METHODS ===#
+
     def _get_specific_processing_values(self, processing_values):
         """ Return a dict of acquirer-specific values used to process the transaction.
 
@@ -50,14 +52,14 @@ class PaymentTransaction(models.Model):
             )
         }
 
-    def _send_payment_request(self, **kwargs):
+    def _send_payment_request(self, **_kwargs):
         """ Request Adyen to execute the payment.
 
-        :param dict kwargs: TODO
+        :param dict _kwargs: Optional data. This parameter is not used here
         :return: None
         """
         if self.acquirer_id.provider != 'adyen':
-            return super()._send_payment_request(**kwargs)
+            return super()._send_payment_request(**_kwargs)
 
         # Make the payment requests to Adyen
         for tx in self:
@@ -95,10 +97,10 @@ class PaymentTransaction(models.Model):
             )
 
             # Handle the payment request response
-            _logger.info(f"payment request response:\n{pprint.pformat(response_content)}")  # TODO ANV log all this pavé -> yup
+            _logger.info(f"payment request response:\n{pprint.pformat(response_content)}")
             tx._handle_feedback_data(response_content, 'adyen')
 
-        return super()._send_payment_request(**kwargs)
+        return super()._send_payment_request(**_kwargs)
 
     @api.model
     def _get_tx_from_data(self, data, provider):

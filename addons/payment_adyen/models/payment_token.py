@@ -12,6 +12,8 @@ class PaymentToken(models.Model):
         string="Shopper Reference", help="The unique reference of the partner owning this token",
         readonly=True)
 
+    #=== BUSINESS METHODS ===#
+
     def _handle_deactivation_request(self):
         """ Request Adyen to remove stored payment details of this token.
 
