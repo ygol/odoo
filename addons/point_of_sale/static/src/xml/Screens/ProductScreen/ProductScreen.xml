@@ -27,7 +27,7 @@
                     </t>
                 </div>
                 <div class="rightpane" t-if="!env.isMobile || mobile_pane === 'right'">
-                    <ProductsWidget t-if="!state.cashControl"/>
+                    <ProductsWidget/>
                     <t t-if="env.isMobile">
                         <MobileOrderWidget pane="mobile_pane" t-on-switchpane="switchPane"/>
                     </t>
