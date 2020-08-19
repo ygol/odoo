@@ -63,7 +63,9 @@ odoo.define('website_blog.editor', function (require) {
 
 require('web.dom_ready');
 const {qweb, _t} = require('web.core');
+const {ComponentWrapper, WidgetAdapterMixin} = require('web.OwlCompatibility');
 const options = require('web_editor.snippets.options');
+const UserValue = require('website.component.UserValue');
 var WysiwygMultizone = require('web_editor.wysiwyg.multizone');
 
 if (!$('.website_blog').length) {
@@ -194,9 +196,12 @@ options.registry.CoverProperties.include({
     },
 });
 
-options.registry.BlogPostTagSelection = options.Class.extend({
+options.registry.BlogPostTagSelection = options.Class.extend(WidgetAdapterMixin, {
     xmlDependencies: (options.Class.prototype.xmlDependencies || [])
         .concat(['/website_blog/static/src/xml/website_blog_tag.xml']),
+    custom_events: _.extend({}, options.Class.prototype.custom_events, {
+        save_user_value: '_onSaveUserValue',
+    }),
 
     /**
      * @override
@@ -348,6 +353,9 @@ options.registry.BlogPostTagSelection = options.Class.extend({
      * @override
      */
     async _renderCustomXML(uiFragment) {
+
+        // old TODO: remove once owl comp is ready
+        /*
         const $tagList = $(uiFragment.querySelector('.o_wblog_tag_list'));
         for (const tagID of this.tagIDs) {
             const tag = this.allTagsByID[tagID];
@@ -364,6 +372,53 @@ options.registry.BlogPostTagSelection = options.Class.extend({
                 tag: tag,
             }));
         }
+        */
+        // props selected, unselected
+        // triggers selected, unselected, new
+        setTimeout(async () => {
+            const selectedTags = [];
+            const unselectedTags = [];
+            for (const [key, tag] of Object.entries(this.allTagsByID)) {
+                if (this.tagIDs.includes(parseInt(key))) {
+                    selectedTags.push(tag.name);
+                } else {
+                    unselectedTags.push(tag.name);
+                }
+            }
+            this._userValue = new ComponentWrapper(this, UserValue, {
+                selectedRecords: selectedTags,
+                unselectedRecords: unselectedTags,
+                recordName: 'Tag',
+            });
+            await this._userValue.mount($('.o_wblog_tag_container').get(1));
+        });
+
     },
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     * @param {OdooEvent} ev
+     * @param {Object} [ev.data]
+     * @param {String[]} [ev.data.selectedRecords]
+     * @param {String[]} [ev.data.newRecords]
+     */
+    _onSaveUserValue(ev) {
+        for (tag of ev.data.newRecords) {
+            const newTagID = _.uniqueId(NEW_TAG_PREFIX);
+            this.allTagsByID[newTagID] = {
+                'id': newTagID,
+                'name': tag,
+            };
+        }
+        const tags = Object.values(this.allTagsByID).filter(tag => ev.data.selectedRecords.includes(tag.name));
+        this.trigger_up('set_blog_post_updated_tags', {
+            blogPostID: this.blogPostID,
+            tags,
+        });
+    }
 });
 });
