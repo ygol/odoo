@@ -9,8 +9,8 @@
         background-color: theme-color('success');
     }
 
-    &.needsAction {
-        background-color: $o-brand-secondary;
+    &.tentative {
+        background-color: grey;
     }
 
     &.declined {
