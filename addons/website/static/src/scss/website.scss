@@ -1007,6 +1007,60 @@ header {
     }
 }
 
+@if o-website-value('header-template') == 'hamburger-full' {
+
+    // $o-navbar-height
+    // var(--o-we-toolbar-height)
+    // $navbar-padding-y
+    @include media-breakpoint-up(md) {
+
+        #wrapwrap {
+
+            > header {
+                .navbar-collapse .container {
+                    height: calc(100vh - #{$o-navbar-height} - var(--o-we-toolbar-height));
+                    transition: height .3s ease;
+                    .dropdown-menu {
+                        position: absolute;
+                    }
+                }
+                &:not(.o_header_affixed) {
+                    position: fixed;
+                    top: 0;
+                    right: 0;
+                    bottom: auto;
+                    left: 0;
+                    z-index: 1000;
+                }
+                &.o_header_affixed {
+                    transform: none !important;
+                }
+            }
+
+            > main {
+                > :first-child:not(#wrap):before {
+                    content: "";
+                    display: block;
+                    width: 100%;
+                    margin-top: $o-navbar-height;
+                }
+                #wrap {
+                    > :first-child:before {
+                        content: "";
+                        display: block;
+                        width: 100%;
+                        margin-top: $o-navbar-height;
+                    }
+                }
+            }
+        }
+        #oe_main_menu_navbar ~ #wrapwrap > header {
+            top: $o-navbar-height;
+        }
+    }
+}
+
+
 // Mega menu
 .o_mega_menu {
     width: 100%;

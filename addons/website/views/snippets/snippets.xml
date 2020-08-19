@@ -514,6 +514,11 @@
                        data-customize-website-views="website.template_header_magazine"
                        data-customize-website-variable="'magazine'"
                        data-img="/website/static/src/img/snippets_options/header_template_magazine.svg"/>
+            <we-button title="Hamburger Full"
+                       data-name="header_hamburger_full_opt"
+                       data-customize-website-views="website.template_header_hamburger_full"
+                       data-customize-website-variable="'hamburger-full'"
+                       data-img="/website/static/src/img/snippets_options/header_template_hamburger_full.svg"/>
         </we-select>
 
         <!-- Header Default Template - Options -->
