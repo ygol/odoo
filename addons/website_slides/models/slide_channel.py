@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+import json
 import uuid
 from collections import defaultdict
 
@@ -748,3 +749,41 @@ class Channel(models.Model):
 
     def get_backend_menu_id(self):
         return self.env.ref('website_slides.website_slides_menu_root').id
+
+    def _search_slide_review_values(self):
+        self.ensure_one()
+
+        last_message = self.env['mail.message'].search([
+            ('model', '=', self._name),
+            ('res_id', '=', self.id),
+            ('author_id', '=', self.env.user.partner_id.id),
+            ('message_type', '=', 'comment'),
+            ('is_internal', '=', False)
+        ], order='write_date DESC', limit=1)
+        if last_message:
+            last_message_values = last_message.read(['body', 'rating_value', 'attachment_ids'])[0]
+            last_message_attachment_ids = last_message_values.pop('attachment_ids', [])
+            if last_message_attachment_ids:
+                # use sudo as portal user cannot read access_token, necessary for updating attachments
+                # through frontend chatter -> access is already granted and limited to current user message
+                last_message_attachment_ids = json.dumps(
+                    self.env['ir.attachment'].sudo().browse(last_message_attachment_ids).read(
+                        ['id', 'name', 'mimetype', 'file_size', 'access_token']
+                    )
+                )
+        else:
+            last_message_values = {}
+            last_message_attachment_ids = []
+        values = {
+            'last_message_id': last_message_values.get('id'),
+            'last_message': tools.html2plaintext(last_message_values.get('body', '')),
+            'last_rating_value': last_message_values.get('rating_value'),
+            'last_message_attachment_ids': last_message_attachment_ids,
+        }
+        if self.can_review:
+            values.update({
+                'message_post_hash': self._sign_token(self.env.user.partner_id.id),
+                'message_post_pid': self.env.user.partner_id.id,
+            })
+        return values
+

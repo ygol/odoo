@@ -339,7 +339,12 @@ $o-wslides-fs-side-width: 300px;
     @include o-wslides-header-bar();
 }
 
+.o_review_pencil {
+        display : none;
+    }
+
 .o_wslides_course_main {
+
     .o_wslides_nav_tabs {
         @include media-breakpoint-up(md)  {
             @include o-wslides-tabs();
@@ -490,6 +495,21 @@ $o-wslides-fs-side-width: 300px;
                 }
             }
         }
+    }
+}
+
+/* Extra Small Devices, Phones */
+@media only screen and (min-width : 480px) {
+    .border-nav-xs {
+        border: 1px solid $border-color;
+    }
+}
+
+/* Small Devices, Tablets */
+@media only screen and (min-width : 768px) {
+    .border-nav-sm {
+        border: 1px solid $border-color;
+        border-top: 0;
     }
 }
 

@@ -80,7 +80,9 @@ class WebsiteSlides(WebsiteProfile):
 
             most_viewed_slides = request.env['slide.slide'].search(base_domain, limit=self._slides_per_aside, order='total_views desc')
             related_slides = request.env['slide.slide'].search(related_domain, limit=self._slides_per_aside)
-            category_data = []
+            category_data = slide.channel_id._get_categorized_slides(
+                base_domain, order=request.env['slide.slide']._order_by_strategy['sequence'],
+                force_void=True)
             uncategorized_slides = request.env['slide.slide']
         else:
             most_viewed_slides, related_slides = request.env['slide.slide'], request.env['slide.slide']
@@ -452,38 +454,8 @@ class WebsiteSlides(WebsiteProfile):
             'enable_slide_upload': 'enable_slide_upload' in kw,
         }
         if not request.env.user._is_public():
-            last_message = request.env['mail.message'].search([
-                ('model', '=', channel._name),
-                ('res_id', '=', channel.id),
-                ('author_id', '=', request.env.user.partner_id.id),
-                ('message_type', '=', 'comment'),
-                ('is_internal', '=', False)
-            ], order='write_date DESC', limit=1)
-            if last_message:
-                last_message_values = last_message.read(['body', 'rating_value', 'attachment_ids'])[0]
-                last_message_attachment_ids = last_message_values.pop('attachment_ids', [])
-                if last_message_attachment_ids:
-                    # use sudo as portal user cannot read access_token, necessary for updating attachments
-                    # through frontend chatter -> access is already granted and limited to current user message
-                    last_message_attachment_ids = json.dumps(
-                        request.env['ir.attachment'].sudo().browse(last_message_attachment_ids).read(
-                            ['id', 'name', 'mimetype', 'file_size', 'access_token']
-                        )
-                    )
-            else:
-                last_message_values = {}
-                last_message_attachment_ids = []
-            values.update({
-                'last_message_id': last_message_values.get('id'),
-                'last_message': tools.html2plaintext(last_message_values.get('body', '')),
-                'last_rating_value': last_message_values.get('rating_value'),
-                'last_message_attachment_ids': last_message_attachment_ids,
-            })
-            if channel.can_review:
-                values.update({
-                    'message_post_hash': channel._sign_token(request.env.user.partner_id.id),
-                    'message_post_pid': request.env.user.partner_id.id,
-                })
+            review_values = channel._search_slide_review_values()
+            values.update(review_values)
 
         # fetch slides and handle uncategorized slides; done as sudo because we want to display all
         # of them but unreachable ones won't be clickable (+ slide controller will crash anyway)
@@ -658,6 +630,7 @@ class WebsiteSlides(WebsiteProfile):
         self._set_viewed_slide(slide)
 
         values = self._get_slide_detail(slide)
+
         # quiz-specific: update with karma and quiz information
         if slide.question_ids:
             values.update(self._get_slide_quiz_data(slide))
@@ -680,6 +653,9 @@ class WebsiteSlides(WebsiteProfile):
         values['signup_allowed'] = request.env['res.users'].sudo()._get_signup_invitation_scope() == 'b2c'
 
         if kwargs.get('fullscreen') == '1':
+            review_values = slide.channel_id._search_slide_review_values()
+            values.update(review_values)
+            print(values.keys())
             return request.render("website_slides.slide_fullscreen", values)
         return request.render("website_slides.slide_main", values)
 

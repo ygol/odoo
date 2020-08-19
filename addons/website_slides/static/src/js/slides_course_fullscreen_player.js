@@ -532,6 +532,7 @@ odoo.define('website_slides.fullscreen', function (require) {
          */
         _pushUrlState: function (){
             var urlParts = window.location.pathname.split('/');
+
             urlParts[urlParts.length-1] = this.get('slide').slug;
             var url =  urlParts.join('/');
             this.$('.o_wslides_fs_exit_fullscreen').attr('href', url);
@@ -607,7 +608,7 @@ odoo.define('website_slides.fullscreen', function (require) {
          * When the current slide is changed, widget will be automatically updated
          * and allowed to: fetch the content if needed, render it, update the url,
          * and set slide as "completed" according to its type requirements. In
-         * mobile case (i.e. limited screensize), sidebar will be toggled since 
+         * mobile case (i.e. limited screensize), sidebar will be toggled since
          * sidebar will block most or all of new slide visibility.
          *
          * @private
@@ -641,6 +642,7 @@ odoo.define('website_slides.fullscreen', function (require) {
                 id: slideData.id,
                 isQuiz: slideData.isQuiz || false,
             });
+
             this.set('slide', newSlide);
             this.shareButton._onChangeSlide(newSlide);
         },

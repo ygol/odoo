@@ -44,7 +44,7 @@
                             <a class="h5 d-block mb-1" t-attf-href="/slides/#{slug(slide.channel_id)}">
                                 <span t-field="slide.channel_id.name"/>
                             </a>
-                            <div t-if="not is_public_user" class="d-flex align-items-center">
+                            <div t-if="not is_public_user and is_training_channel" class="d-flex align-items-center">
                                 <t t-if="slide.channel_id.completed">
                                     <span class="badge badge-pill badge-success py-1 px-2" style="font-size: 1em"><i class="fa fa-check"/> Completed</span>
                                 </t>
@@ -83,7 +83,7 @@
         <a t-if="category" class="text-uppercase text-500 py-1 small d-block" t-attf-id="category-collapse-#{category.id if category else 0}" data-toggle="collapse" role="button" aria-expanded="true" t-att-href="('#collapse-%s') % (category.id if category else 0)" t-attf-aria-controls="collapse-#{category.id if category else 0}">
             <b t-field="category.name"/>
         </a>
-        <ul class="o_wslides_fs_sidebar_section_slides collapse show position-relative px-0 pb-1 my-0 mx-n3" t-att-id="('collapse-%s') % (category.id if category else 0)">
+        <ul class="o_wslides_fs_sidebar_section_slides collapse show position-relative px-0 pb-1 my-0 mx-n3" t-att-id="('colo_wslides_fs_playerlapse-%s') % (category.id if category else 0)">
             <t t-foreach="slides" t-as="slide">
                 <t t-set="slide_completed" t-value="channel_progress[slide.id].get('completed')"/>
                 <t t-set="is_member" t-value="current_slide.channel_id.is_member"/>

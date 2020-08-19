@@ -42,7 +42,7 @@
             <div class="container o_wslides_lesson_main">
                 <div class="row">
                     <div t-attf-class="o_wslides_lesson_aside col-lg-3 #{'order-2' if slide.channel_id.channel_type == 'documentation' else ''}">
-                        <t t-if="slide.channel_id.channel_type == 'training'" t-call="website_slides.slide_aside_training"/>
+                        <t t-if="slide.channel_id.channel_type != 'documentation'" t-call="website_slides.slide_aside_training"/>
                         <t t-if="slide.channel_id.channel_type == 'documentation'" t-call="website_slides.slide_aside_documentation"/>
                     </div>
                     <div t-attf-class="o_wslides_lesson_content col-lg-9 #{'order-1' if slide.channel_id.channel_type == 'documentation' else ''}">
@@ -115,7 +115,7 @@
         </div>
         <ul id="collapse_slide_aside" class="list-unstyled my-0 pb-3 collapse d-lg-block">
             <t t-set="i" t-value="0"/>
-            <t t-if="category.get('slides')" t-foreach="category_data" t-as="category">
+            <t t-foreach="category_data" t-as="category">
                 <t t-call="website_slides.slide_aside_training_category">
                     <t t-set="category_slide_ids" t-value="category['slides']"/>
                 </t>
@@ -244,7 +244,7 @@
                     <span class="d-none d-sm-inline-block">Next</span> <i class="fa fa-chevron-right ml-2"></i>
                 </a>
             </div>
-            <a t-if="is_training_channel" class="btn btn-light border ml-2" role="button" t-att-href="'/slides/slide/%s?fullscreen=1' % (slug(slide))">
+            <a class="btn btn-light border ml-2" role="button" t-att-href="'/slides/slide/%s?fullscreen=1' % (slug(slide))">
                 <i class="fa fa-desktop mr-2"/>
                 <span class="d-none d-sm-inline-block">Fullscreen</span>
             </a>
