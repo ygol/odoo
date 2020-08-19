@@ -605,11 +605,11 @@
             <field name="res_model">mail.compose.message</field>
             <field name="view_mode">form</field>
             <field name="target">new</field>
-            <field name="context">{
+            <field name="context" eval="{
                 'default_composition_mode': 'comment',
                 'default_use_template': True,
                 'default_template_id': ref('crm.email_template_opportunity_mail'),
-                }</field>
+            }"/>
             <field name="binding_model_id" ref="model_crm_lead"/>
             <field name="binding_view_types">list</field>
         </record>
@@ -622,12 +622,12 @@
             <field name="res_model">mail.compose.message</field>
             <field name="view_mode">form</field>
             <field name="target">new</field>
-            <field name="context">{
-                            'default_composition_mode': 'mass_mail',
-                            'default_email_to':'{($object.email or \'\')|safe}',
-                            'default_use_template': True,
-                            'default_template_id': ref('crm.email_template_opportunity_mail'),
-                        }</field>
+            <field name="context" eval="{
+                'default_composition_mode': 'mass_mail',
+                'default_email_to':'{($object.email or \'\')|safe}',
+                'default_use_template': True,
+                'default_template_id': ref('crm.email_template_opportunity_mail'),
+            }"/>
             <field name="binding_model_id" ref="model_crm_lead"/>
             <field name="binding_view_types">list</field>
         </record>
