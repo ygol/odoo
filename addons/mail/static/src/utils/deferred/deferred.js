@@ -11,8 +11,8 @@ function makeDeferred() {
         resolve = res.bind(this);
         reject = rej.bind(this);
     });
-    prom.resolve = (...args) => resolve(...args);
-    prom.reject = (...args) => reject(...args);
+    prom.resolve = (...args) => { resolve(...args); return prom; };
+    prom.reject = (...args) => { reject(...args); return prom; };
     return prom;
 }
 
