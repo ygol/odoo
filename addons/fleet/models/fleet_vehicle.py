@@ -119,6 +119,7 @@ class FleetVehicle(models.Model):
             record.contract_count = LogContract.search_count([('vehicle_id', '=', record.id), ('state', '!=', 'closed')])
             record.cost_count = Cost.search_count([('vehicle_id', '=', record.id), ('parent_id', '=', False)])
             record.history_count = self.env['fleet.vehicle.assignation.log'].search_count([('vehicle_id', '=', record.id)])
+            import pdb; pdb.set_trace()
 
     @api.depends('log_contracts')
     def _compute_contract_reminder(self):
@@ -216,7 +217,6 @@ class FleetVehicle(models.Model):
 
     def write(self, vals):
         if 'driver_id' in vals and vals['driver_id']:
-            print("************ Driver ID:-", driver_id)
             driver_id = vals['driver_id']
             self.filtered(lambda v: v.driver_id.id != driver_id).create_driver_history(driver_id)
 
@@ -246,6 +246,7 @@ class FleetVehicle(models.Model):
                 'driver_id': driver_id,
                 'date_start': fields.Date.today(),
             })
+        import pdb; pdb.set_trace()
 
     def action_accept_driver_change(self):
         # Find all the vehicles for which the driver is the future_driver_id
