@@ -1060,16 +1060,9 @@ body.editor_enable.editor_has_snippets {
         }
 
         .o_we_image_weight {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            margin: $o-we-sidebar-content-field-spacing *.25 $o-we-item-border-width $o-we-sidebar-content-field-spacing*2;
-
-            b {
-                margin-left: $o-we-sidebar-content-field-label-spacing;
-                font: 1em/1 bold $o-we-sidebar-content-field-input-font-family;
-                color: $o-we-color-success;
-            }
+            font: 1em/1 bold $o-we-sidebar-content-field-input-font-family;
+            color: $o-we-color-success;
+            margin-right: auto;
         }
 
         .o_we_tag {

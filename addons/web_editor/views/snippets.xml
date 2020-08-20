@@ -115,8 +115,9 @@
 
     <t t-set="quality_label">Quality</t>
     <we-range t-att-string="indent and (' ⌙ %s' % quality_label) or quality_label" data-set-quality=""/>
-
-    <div class="o_we_image_weight d-none"><small/><b/></div>
+    <we-row string="Size" class="o_we_full_row">
+        <b class="o_we_image_weight d-none o_we_user_value_widget"/><small>Initial: <b class="o_we_initial_weight"/></small>
+    </we-row>
 </template>
 
 <template id="snippet_options_background_color_widget">
