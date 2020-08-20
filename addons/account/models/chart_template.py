@@ -253,45 +253,46 @@ class AccountChartTemplate(models.Model):
 
         # Install all the templates objects and generate the real objects
         acc_template_ref, taxes_ref = self._install_template(company, code_digits=self.code_digits, limited_install=limited_install)
-        if not limited_install:
+        if limited_install:
+            return {}
 
-            # Set default cash difference account on company
+        # Set default cash difference account on company
+        company.write({
+            'default_cash_difference_income_account_id': acc_template_ref.get(self.default_cash_difference_income_account_id.id, False),
+            'default_cash_difference_expense_account_id': acc_template_ref.get(self.default_cash_difference_expense_account_id.id, False),
+            'account_journal_suspense_account_id': acc_template_ref.get(self.account_journal_suspense_account_id.id),
+            'account_cash_basis_base_account_id': acc_template_ref.get(self.property_cash_basis_base_account_id.id),
+            'income_currency_exchange_account_id': acc_template_ref.get(self.income_currency_exchange_account_id.id),
+            'expense_currency_exchange_account_id': acc_template_ref.get(self.expense_currency_exchange_account_id.id),
+        })
+
+        if not company.account_journal_suspense_account_id:
+            company.account_journal_suspense_account_id = self._create_liquidity_journal_suspense_account(company, self.code_digits)
+
+        # Set default PoS receivable account in company
+        default_pos_receivable = self.default_pos_receivable_account_id.id
+        if not default_pos_receivable and self.parent_id:
+            default_pos_receivable = self.parent_id.default_pos_receivable_account_id.id
+        if acc_template_ref.get(default_pos_receivable):
             company.write({
-                'default_cash_difference_income_account_id': acc_template_ref.get(self.default_cash_difference_income_account_id.id, False),
-                'default_cash_difference_expense_account_id': acc_template_ref.get(self.default_cash_difference_expense_account_id.id, False),
-                'account_journal_suspense_account_id': acc_template_ref.get(self.account_journal_suspense_account_id.id),
-                'account_cash_basis_base_account_id': acc_template_ref.get(self.property_cash_basis_base_account_id.id),
-                'income_currency_exchange_account_id': acc_template_ref.get(self.income_currency_exchange_account_id.id),
-                'expense_currency_exchange_account_id': acc_template_ref.get(self.expense_currency_exchange_account_id.id),
+                'account_default_pos_receivable_account_id': acc_template_ref[default_pos_receivable]
             })
 
-            if not company.account_journal_suspense_account_id:
-                company.account_journal_suspense_account_id = self._create_liquidity_journal_suspense_account(company, self.code_digits)
+        # Set the transfer account on the company
+        company.transfer_account_id = self.env['account.account'].search([
+            ('code', '=like', self.transfer_account_code_prefix + '%'), ('company_id', '=', company.id)], limit=1)
 
-            # Set default PoS receivable account in company
-            default_pos_receivable = self.default_pos_receivable_account_id.id
-            if not default_pos_receivable and self.parent_id:
-                default_pos_receivable = self.parent_id.default_pos_receivable_account_id.id
-            if acc_template_ref.get(default_pos_receivable):
-                company.write({
-                    'account_default_pos_receivable_account_id': acc_template_ref[default_pos_receivable]
-                })
+        # Create Bank journals
+        self._create_bank_journals(company, acc_template_ref)
 
-            # Set the transfer account on the company
-            company.transfer_account_id = self.env['account.account'].search([
-                ('code', '=like', self.transfer_account_code_prefix + '%'), ('company_id', '=', company.id)], limit=1)
+        # Create the current year earning account if it wasn't present in the CoA
+        company.get_unaffected_earnings_account()
 
-            # Create Bank journals
-            self._create_bank_journals(company, acc_template_ref)
+        # set the default taxes on the company
+        company.account_sale_tax_id = self.env['account.tax'].search([('type_tax_use', 'in', ('sale', 'all')), ('company_id', '=', company.id)], limit=1).id
+        company.account_purchase_tax_id = self.env['account.tax'].search([('type_tax_use', 'in', ('purchase', 'all')), ('company_id', '=', company.id)], limit=1).id
 
-            # Create the current year earning account if it wasn't present in the CoA
-            company.get_unaffected_earnings_account()
-
-            # set the default taxes on the company
-            company.account_sale_tax_id = self.env['account.tax'].search([('type_tax_use', 'in', ('sale', 'all')), ('company_id', '=', company.id)], limit=1).id
-            company.account_purchase_tax_id = self.env['account.tax'].search([('type_tax_use', 'in', ('purchase', 'all')), ('company_id', '=', company.id)], limit=1).id
-
-        return {}
+    return {}
 
     @api.model
     def existing_accounting(self, company_id):
