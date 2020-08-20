@@ -13,6 +13,7 @@ from dateutil import relativedelta
 
 from odoo import SUPERUSER_ID, _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.osv import expression
 from odoo.tools.float_utils import float_compare, float_is_zero, float_repr, float_round
 from odoo.tools.misc import format_date
 
@@ -1730,3 +1731,32 @@ class StockMove(models.Model):
     def _show_details_in_draft(self):
         self.ensure_one()
         return self.state != 'draft' or (self.picking_id.immediate_transfer and self.state == 'draft')
+
+    @api.model
+    def _trigger_scheduler(self, moves):
+        """ Check for and run scheduler for moves.
+
+        @param moves: The moves that should have their automatic reordering rules triggered """
+        orderpoints_by_company = defaultdict(lambda: self.env['stock.warehouse.orderpoint'])
+        for move in moves:
+            orderpoint = self.env['stock.warehouse.orderpoint'].search([
+                ('product_id', '=', move.product_id.id),
+                ('trigger', '=', 'auto'),
+                ('location_id', 'parent_of', move.location_id.id),
+            ], limit=1)
+            if orderpoint:
+                orderpoints_by_company[move.company_id] |= orderpoint
+        for company, orderpoints in orderpoints_by_company.items():
+            orderpoints._procure_orderpoint_confirm(company_id=company, raise_user_error=False)
+
+    @api.model
+    def _trigger_assign(self, moves):
+        """ Check for and trigger action_assign for confirmed/partially_available moves related to done moves.
+
+        @param moves: Done moves to check for corresponding confirmed/partially_available moves """
+        domains = []
+        for move in moves:
+            domains.append([('product_id', '=', move.product_id.id), ('location_id', '=', move.location_dest_id.id)])
+        static_domain = [('state', 'in', ['confirmed', 'partially_available']), ('procure_method', '=', 'make_to_stock')]
+        moves_to_reserve = self.env['stock.move'].search(expression.AND([static_domain, expression.OR(domains)]))
+        moves_to_reserve._action_assign()

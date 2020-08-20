@@ -713,18 +713,8 @@ class Picking(models.Model):
         moves._action_assign()
         package_level_done.write({'is_done': True})
 
-        # run scheduler for moves are not fully reserved
-        orderpoints_by_company = defaultdict(lambda: self.env['stock.warehouse.orderpoint'])
-        for move in moves:
-            orderpoint = self.env['stock.warehouse.orderpoint'].search([
-                ('product_id', '=', move.product_id.id),
-                ('trigger', '=', 'auto'),
-                ('location_id', 'parent_of', move.location_id.id),
-            ], limit=1)
-            if orderpoint:
-                orderpoints_by_company[move.company_id] |= orderpoint
-        for company, orderpoints in orderpoints_by_company.items():
-            orderpoints._procure_orderpoint_confirm(company_id=company, raise_user_error=False)
+        # run scheduler for not fully reserved moves
+        moves[0]._trigger_scheduler(moves)
 
         return True
 
@@ -777,12 +767,8 @@ class Picking(models.Model):
 
         # if incoming moves make other confirmed/partially_available moves available, assign them
         done_incoming_moves = self.filtered(lambda p: p.picking_type_id.code == 'incoming').move_lines.filtered(lambda m: m.state == 'done')
-        domains = []
-        for move in done_incoming_moves:
-            domains.append([('product_id', '=', move.product_id.id), ('location_id', '=', move.location_dest_id.id)])
-        static_domain = [('state', 'in', ['confirmed', 'partially_available']), ('procure_method', '=', 'make_to_stock')]
-        moves_to_reserve = self.env['stock.move'].search(expression.AND([static_domain, expression.OR(domains)]))
-        moves_to_reserve._action_assign()
+        if done_incoming_moves:
+            done_incoming_moves[0]._trigger_assign(done_incoming_moves)
 
         self._send_confirmation_email()
         return True

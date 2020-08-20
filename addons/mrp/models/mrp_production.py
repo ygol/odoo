@@ -1064,6 +1064,9 @@ class MrpProduction(models.Model):
     def action_assign(self):
         for production in self:
             production.move_raw_ids._action_assign()
+
+            # run scheduler for moves not fully reserved
+            production.move_raw_ids[0]._trigger_scheduler(production.move_raw_ids)
         return True
 
     def button_plan(self):
@@ -1424,6 +1427,11 @@ class MrpProduction(models.Model):
         productions_not_to_backorder._post_inventory(cancel_backorder=True)
         productions_to_backorder._post_inventory(cancel_backorder=False)
         backorders = productions_to_backorder._generate_backorder_productions()
+
+        # if completed products make other confirmed/partially_available moves available, assign them
+        done_move_finished_ids = (productions_to_backorder.move_finished_ids | productions_not_to_backorder.move_finished_ids).filtered(lambda m: m.state == 'done')
+        if done_move_finished_ids:
+            done_move_finished_ids[0]._trigger_assign(done_move_finished_ids)
 
         # Moves without quantity done are not posted => set them as done instead of canceling. In
         # case the user edits the MO later on and sets some consumed quantity on those, we do not
