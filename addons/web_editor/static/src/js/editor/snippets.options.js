@@ -241,6 +241,14 @@ const UserValueWidget = Widget.extend({
             this.$el.on('mouseenter.img_animate', 'img', buildImgExtensionSwitcher('png', 'gif'));
             this.$el.on('mouseleave.img_animate', 'img', buildImgExtensionSwitcher('gif', 'png'));
         }
+        this.$el.tooltip({
+            selector: 'we-title',
+            placement: 'bottom',
+            title: function () {
+                const el = this;
+                return (el.scrollWidth > el.offsetWidth) ? el.innerHTML: '';
+            },
+        });
     },
     /**
      * @override
