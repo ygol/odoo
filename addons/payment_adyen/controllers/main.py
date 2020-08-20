@@ -6,7 +6,7 @@ import pprint
 import werkzeug
 from werkzeug import urls
 
-from odoo import http
+from odoo import _, http
 from odoo.exceptions import ValidationError
 from odoo.http import request
 

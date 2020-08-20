@@ -15,8 +15,7 @@
             - 'tokens' - The payment tokens of the current partner and payment acquirers
             - 'default_token_id' - The id of the token that should be pre-selected. Optional
             - 'fees_by_acquirer' - The dict of transaction fees for each acquirer. Optional
-            - 'partner_is_known' - Whether the partner is known and thus if saving the payment
-                                   method as a token is allowed
+            - 'show_tokenize_input' - Whether saving the payment method as a token is allowed
             - 'reference' - The custom prefix to compute the full transaction reference
             - 'amount' - The amount to pay
             - 'currency' - The currency of the transaction, as a `res.currency` record
@@ -31,10 +30,10 @@
               class="o_payment_form mt-3 clearfix"
               t-att-data-reference="reference"
               t-att-data-amount="amount"
-              t-att-data-currency-id="currency.id"
+              t-att-data-currency-id="currency and currency.id"
               t-att-data-partner-id="partner_id"
-              t-att-data-order-id="order_id or ''"
-              t-att-data-access-token="access_token or ''"
+              t-att-data-order-id="order_id"
+              t-att-data-access-token="access_token"
               t-att-data-init-tx-route="init_tx_route"
               t-att-data-landing-route="landing_route"
               t-att-data-allow-token-selection="True">
@@ -102,7 +101,7 @@
                         </div>
                         <!-- === "Save my payment details" checkbox === -->
                         <!-- Only shown if partner is known and if the choice is given -->
-                        <label t-att-class="'' if partner_is_known and acquirer.allow_tokenization else 'd-none'">
+                        <label t-att-class="'' if show_tokenize_input and acquirer.allow_tokenization else 'd-none'">
                             <input name="o_payment_save_as_token" type="checkbox"/>
                             Save my payment details
                         </label>

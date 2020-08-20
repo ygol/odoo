@@ -1,12 +1,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 import logging
-import datetime
-import json
 import pprint
-
-from dateutil import relativedelta
-from werkzeug import urls
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
@@ -52,20 +47,17 @@ class PaymentTransaction(models.Model):
             )
         }
 
-    def _send_payment_request(self, **_kwargs):
+    def _send_payment_request(self, _operation='online'):
         """ Request Adyen to execute the payment.
 
-        :param dict _kwargs: Optional data. This parameter is not used here
+        :param str _operation: The operation of the payment: 'online', 'offline' or 'validation'.
         :return: None
         """
         if self.acquirer_id.provider != 'adyen':
-            return super()._send_payment_request(**_kwargs)
+            return super()._send_payment_request(_operation)
 
         # Make the payment requests to Adyen
         for tx in self:
-            pass
-            # TODO AND signature here too ? how ? -> wut ?
-
             if not tx.token_id:
                 _logger.warning(
                     f"attempted to send a payment request for transaction with id {tx.id} which "
@@ -100,7 +92,7 @@ class PaymentTransaction(models.Model):
             _logger.info(f"payment request response:\n{pprint.pformat(response_content)}")
             tx._handle_feedback_data(response_content, 'adyen')
 
-        return super()._send_payment_request(**_kwargs)
+        return super()._send_payment_request(_operation)
 
     @api.model
     def _get_tx_from_data(self, data, provider):
@@ -191,9 +183,8 @@ class PaymentTransaction(models.Model):
             self._set_canceled()
         else:  # error
             _logger.info(f"received data with invalid transaction status: {tx_status}")
-            self.state_message = "Adyen: " + _(
-                f"received data with invalid transaction status: %(tx_status)s", tx_status
-            )
-            self._set_error()
+            self._set_error("Adyen: " + _(
+                "received data with invalid transaction status: %(tx_status)s", tx_status=tx_status
+            ))
             return False
         return True

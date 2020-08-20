@@ -63,16 +63,18 @@ odoo.define('payment_adyen.payment_form', require => {
                     'reference': this.txContext.reference,
                     'amount': this.txContext.amount !== undefined
                         ? parseFloat(this.txContext.amount) : null,
-                    'currency_id': this.txContext.currencyId !== undefined
+                    'currency_id': this.txContext.currencyId
                         ? parseInt(this.txContext.currencyId) : null,
-                    'partner_id': parseInt(this.txContext.partnerId),
-                    'order_id': this.txContext.orderId !== ''
+                    'partner_id': this.txContext.partnerId
+                        ? parseInt(this.txContext.partnerId) : undefined,
+                    'order_id': this.txContext.orderId
                         ? parseInt(this.txContext.orderId) : undefined,
                     'flow': 'direct',
                     'tokenization_requested': this.txContext.tokenizationRequested,
-                    'is_validation': this.txContext.isValidation,
+                    'is_validation': this.txContext.isValidation !== undefined
+                        ? this.txContext.isValidation : false,
                     'landing_route': this.txContext.landingRoute,
-                    'access_token': this.txContext.accessToken !== ''
+                    'access_token': this.txContext.accessToken
                         ? this.txContext.accessToken : undefined,
                     'csrf_token': core.csrf_token,
                 },

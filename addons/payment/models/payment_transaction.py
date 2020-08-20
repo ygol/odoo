@@ -273,7 +273,7 @@ class PaymentTransaction(models.Model):
         """
         if callback_model_id and callback_res_id and callback_method:
             secret = self.env['ir.config_parameter'].sudo().get_param('database.secret')
-            model_name = self.env['id.model'].sudo().browse(callback_model_id).model
+            model_name = self.env['ir.model'].sudo().browse(callback_model_id).model
             token = f'{model_name}{callback_res_id}{callback_method}'
             callback_hash = hmac.new(
                 secret.encode('utf-8'), token.encode('utf-8'), hashlib.sha256
@@ -353,13 +353,13 @@ class PaymentTransaction(models.Model):
         """
         return dict()
 
-    def _send_payment_request(self, **_kwargs):
+    def _send_payment_request(self, _operation='online'):
         """ Request the provider of the acquirer handling the transactions to execute the payment.
 
         For an acquirer to support tokenization, it must override this method and request a money
         transfer to its provider, then call this method to log the sent message.
 
-        :param dict _kwargs: Optional data. This parameter is not used here  # TODO DBO is this from old stuff for subs' 3d secure ?
+        :param str _operation: The operation of the payment: 'online', 'offline' or 'validation'.
         :return: None
         """
         self._log_sent_message()
@@ -387,6 +387,7 @@ class PaymentTransaction(models.Model):
                 feedback_result = False
             else:
                 feedback_result = tx._process_feedback_data(data)
+                tx._execute_callback()
         else:
             pass  # The transaction might not be recorded in Odoo in some acquirer-specific flows
         return tx, feedback_result
@@ -447,7 +448,7 @@ class PaymentTransaction(models.Model):
         tx_to_process._log_received_message()
 
     def _set_authorized(self):
-        """ Update the transactions' state to 'authorized' and execute pending callbacks.
+        """ Update the transactions' state to 'authorized'.
 
         :return: None
         """
@@ -455,10 +456,9 @@ class PaymentTransaction(models.Model):
         target_state = 'authorized'
         tx_to_process = self._update_state(allowed_states, target_state)
         tx_to_process._log_received_message()
-        self._execute_callback()
 
     def _set_done(self):
-        """ Update the transactions' state to 'done' and execute pending callbacks.
+        """ Update the transactions' state to 'done'.
 
         :return: None
         """
@@ -466,7 +466,6 @@ class PaymentTransaction(models.Model):
         target_state = 'done'
         tx_to_process = self._update_state(allowed_states, target_state)
         # tx_to_process._log_received_message() # FIXME ANV
-        self._execute_callback()
 
     def _set_canceled(self):
         """ Update the transactions' state to 'cancel'.

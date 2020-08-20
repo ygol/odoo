@@ -199,7 +199,7 @@ class WebsitePayment(http.Controller):
             'acquirers': acquirers,
             'tokens': _select_payment_tokens(acquirers, partner_id),
             'fees_by_acquirer': fees_by_acquirer,
-            'partner_is_known': not user_sudo._is_public(),
+            'show_tokenize_input': not user_sudo._is_public(),  # Only save your own payment methods
             'reference': reference or 'tx',  # Use 'tx' to always have a ref if it was not provided
             'amount': amount,
             'currency': currency,
@@ -261,7 +261,7 @@ class WebsitePayment(http.Controller):
             'amount': amount,
             'currency_id': currency_id,
             'partner_id': partner_id,
-            'operation': f'online_{flow}',
+            'operation': f'online_{flow}' if not is_validation else 'validation',
         }
 
         processing_values = {}  # The generic and acquirer-specific values to process the tx

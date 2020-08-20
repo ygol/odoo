@@ -30,10 +30,10 @@ class PaymentAcquirer(models.Model):
         string="Provider", help="The Payment Service Provider to use with this acquirer",
         selection=[('manual', "Custom Payment Form")], default='manual', required=True)  # TODO ANV readonly if created
     state = fields.Selection(
-        string="State", help="""In test mode, a fake payment is processed through a test
-                                payment interface. This mode is advised when setting up the
-                                acquirer. Watch out, test and production modes require
-                                different credentials.""",
+        string="State",
+        help="In test mode, a fake payment is processed through a test payment interface.\n"
+             "This mode is advised when setting up the acquirer.\n"
+             "Note: test and production modes require different credentials.",
         selection=[('disabled', "Disabled"), ('enabled', "Enabled"), ('test', "Test Mode")],
         default='disabled', required=True, copy=False)
     company_id = fields.Many2one(
@@ -49,14 +49,14 @@ class PaymentAcquirer(models.Model):
         ], default='redirect', required=True)
     allow_tokenization = fields.Boolean(
         string="Allow Saving Payment Methods",
-        help="""This controls whether customers can save their payment methods as payment tokens.
-                A payment token is an anonymous link to the payment method details saved in the
-                acquirer's database, allowing the customer to reuse it for a later purchase.""")
+        help="This controls whether customers can save their payment methods as payment tokens.\n"
+             "A payment token is an anonymous link to the payment method details saved in the\n"
+             "acquirer's database, allowing the customer to reuse it for a next purchase.")
     check_validity = fields.Boolean(
         string="Verify Token Validity",
-        help="""Whether a transaction of 1 currency unit should be triggered and immediately
-                refunded to check the validity of newly created payment tokens. Without this check,
-                the validity will only be verified at the very first transaction.""")
+        help="Whether a validation transaction should be triggered and immediately refunded\n"
+             "to check the validity of newly created payment tokens. Without this check,\n"
+             "the validity will only be verified at the very first transaction.")
     capture_manually = fields.Boolean(
         string="Capture Amount Manually",
         help="Capture the amount from Odoo, when the delivery is completed.")
@@ -74,8 +74,8 @@ class PaymentAcquirer(models.Model):
     country_ids = fields.Many2many(
         string="Countries", comodel_name='res.country', relation='payment_country_rel',
         column1='payment_id', column2='country_id',
-        help="""The countries for which this payment gateway is available.
-                If none is selected, it is available for all countries.""")
+        help="The countries for which this payment acquirer is available.\n"
+             "If none is selected, it is available for all countries.")
     journal_id = fields.Many2one(
         string="Payment Journal", comodel_name='account.journal',
         help="The journal in which the successful transactions are posted",

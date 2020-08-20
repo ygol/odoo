@@ -56,7 +56,7 @@ odoo.define('payment.manage_form', require => {
                     'token_id': tokenId,
                     'csrf_token': core.csrf_token,
                 }
-            }).then(_result => {
+            }).then(() => {
                 window.location = this.txContext.landingRoute;
             }).guardedCatch(error => {
                 error.event.preventDefault();
