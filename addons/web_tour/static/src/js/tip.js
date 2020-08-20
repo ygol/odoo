@@ -340,7 +340,14 @@ var Tip = Widget.extend({
         this.$anchor.on('mouseleave.anchor', () => this._to_bubble_mode());
 
         this.$scrolableElement = this.$ideal_location.is('html,body') ? $(window) : this.$ideal_location;
-        this.$scrolableElement.on('scroll.Tip', () => this._onAncestorScroll());
+        this.$scrolableElement.on('scroll.Tip', _.debounce(() => {
+            this._onAncestorScroll();
+            if (this.tip_opened) {
+                this._to_bubble_mode(true);
+            } else {
+                this._reposition();
+            }
+        }, 0.1));
     },
     _unbind_anchor_events: function () {
         this.$anchor.off(".anchor");
