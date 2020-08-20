@@ -375,6 +375,14 @@ Object.assign(Composer, {
             optional: true,
         },
         hasSendButton: Boolean,
+        /**
+         * Determine if composer posts message when enter is pressed.
+         *
+         * If true, pressing enter posts the message (if can post), holding shift key while pressing
+         * enter inserts a newline instead of posting message.
+         * If false, pressing enter inserts a newline, holding ctrl key or meta key while pressing
+         * enter posts the message (if can post).
+         */
         hasTextInputSendOnEnterEnabled: Boolean,
         hasThreadName: Boolean,
         hasThreadTyping: Boolean,

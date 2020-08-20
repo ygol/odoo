@@ -589,6 +589,108 @@ QUnit.test('composer: paste attachments', async function (assert) {
     );
 });
 
+QUnit.test('send message when enter is pressed while holding ctrl key', async function (assert) {
+    assert.expect(5);
+
+    this.data['mail.channel'].records.push({ id: 20 });
+    await this.start({
+        async mockRPC(route, args) {
+            if (args.method === 'message_post') {
+                assert.step('message_post');
+            }
+            return this._super(...arguments);
+        },
+    });
+    const thread = this.env.models['mail.thread'].find(thread =>
+        thread.id === 20 &&
+        thread.model === 'mail.channel'
+    );
+    await this.createComposerComponent(thread.composer, { hasTextInputSendOnEnterEnabled: false });
+    // Type message
+    document.querySelector(`.o_ComposerTextInput_textarea`).focus();
+    document.execCommand('insertText', false, "test message");
+    assert.strictEqual(
+        document.querySelector(`.o_ComposerTextInput_textarea`).value,
+        "test message",
+        "should have inserted text content in editable"
+    );
+
+    // Try to send message with enter
+    await afterNextRender(() => {
+        const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter' });
+        document.querySelector(`.o_ComposerTextInput_textarea`)
+            .dispatchEvent(enterEvent);
+    });
+    assert.strictEqual(
+        document.querySelector(`.o_ComposerTextInput_textarea`).value,
+        "test message",
+        "should have inserted text content in editable as message has not been posted"
+    );
+
+    // Send message with meta+enter
+    await afterNextRender(() =>
+        document.querySelector(`.o_ComposerTextInput_textarea`)
+            .dispatchEvent(new window.KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' }))
+    );
+    assert.verifySteps(['message_post']);
+    assert.strictEqual(
+        document.querySelector(`.o_ComposerTextInput_textarea`).value,
+        "",
+        "should have no content in composer input as message has been posted"
+    );
+});
+
+QUnit.test('send message when enter is pressed while holding meta key', async function (assert) {
+    assert.expect(5);
+
+    this.data['mail.channel'].records.push({ id: 20 });
+    await this.start({
+        async mockRPC(route, args) {
+            if (args.method === 'message_post') {
+                assert.step('message_post');
+            }
+            return this._super(...arguments);
+        },
+    });
+    const thread = this.env.models['mail.thread'].find(thread =>
+        thread.id === 20 &&
+        thread.model === 'mail.channel'
+    );
+    await this.createComposerComponent(thread.composer, { hasTextInputSendOnEnterEnabled: false });
+    // Type message
+    document.querySelector(`.o_ComposerTextInput_textarea`).focus();
+    document.execCommand('insertText', false, "test message");
+    assert.strictEqual(
+        document.querySelector(`.o_ComposerTextInput_textarea`).value,
+        "test message",
+        "should have inserted text content in editable"
+    );
+
+    // Try to send message with enter
+    await afterNextRender(() => {
+        const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter' });
+        document.querySelector(`.o_ComposerTextInput_textarea`)
+            .dispatchEvent(enterEvent);
+    });
+    assert.strictEqual(
+        document.querySelector(`.o_ComposerTextInput_textarea`).value,
+        "test message",
+        "should have inserted text content in editable as message has not been posted"
+    );
+
+    // Send message with meta+enter
+    await afterNextRender(() =>
+        document.querySelector(`.o_ComposerTextInput_textarea`)
+            .dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', metaKey: true }))
+    );
+    assert.verifySteps(['message_post']);
+    assert.strictEqual(
+        document.querySelector(`.o_ComposerTextInput_textarea`).value,
+        "",
+        "should have no content in composer input as message has been posted"
+    );
+});
+
 QUnit.test('composer text input cleared on message post', async function (assert) {
     assert.expect(4);
 

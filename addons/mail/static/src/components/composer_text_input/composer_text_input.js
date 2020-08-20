@@ -242,7 +242,7 @@ class ComposerTextInput extends Component {
         if (this.composer.hasSuggestedPartners) {
             ev.preventDefault();
         } else {
-            if (!this.props.hasSendOnEnterEnabled) {
+            if (!this.props.hasSendOnEnterEnabled && !ev.ctrlKey && !ev.metaKey) {
                 return;
             }
             if (ev.shiftKey) {
