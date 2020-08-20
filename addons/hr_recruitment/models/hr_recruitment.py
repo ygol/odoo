@@ -206,13 +206,16 @@ class Applicant(models.Model):
     @api.depends('job_id', 'department_id')
     def _compute_company(self):
         for applicant in self:
-            company_id = False
-            department_id = False
-            if department_id and applicant.department_id:
+            print(applicant)
+            print(applicant.department_id)
+            if applicant.department_id:
                 company_id = applicant.department_id.company_id.id
+                print(company_id)
             if not company_id and applicant.job_id:
                 company_id = applicant.job_id.company_id.id
+                print(company_id)
             applicant.company_id = company_id or self.env.company.id
+            print(applicant.company_id)
 
     @api.depends('job_id')
     def _compute_department(self):
