@@ -4,11 +4,12 @@
 import json
 
 from odoo import http, tests
+from odoo.addons.account.tests.common import AccountHttpCommon
 from odoo.tools import mute_logger
 
 
 @tests.tagged('post_install', '-at_install')
-class TestUi(tests.HttpCase):
+class TestUi(AccountHttpCommon):
 
     @mute_logger('odoo.addons.http_routing.models.ir_http', 'odoo.http')
     def test_01_portal_attachment(self):
@@ -19,12 +20,13 @@ class TestUi(tests.HttpCase):
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         # For this test we need a parent document with an access_token field
         # (in this case from portal.mixin) and also inheriting mail.thread.
+
         invoice = self.env['account.move'].with_context(tracking_disable=True).create({
             'move_type': 'out_invoice',
             'date': '2017-01-01',
             'invoice_date': '2017-01-01',
             'partner_id': partner.id,
-            'invoice_line_ids': [(0, 0, {'name': 'aaaa', 'price_unit': 100.0})],
+            'invoice_line_ids': [(0, 0, {'name': 'aaaa', 'price_unit': 100.0, 'account_id': self.account_receivable.id})],
         })
 
         # Test public user can't create attachment without token of document

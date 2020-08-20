@@ -1264,3 +1264,57 @@ class TestAccountReconciliationCommon(AccountTestCommon):
         bank_stmt = self.make_payment(invoice_record, bank_journal, amount=-amount, amount_currency=-amount_currency, currency_id=transaction_currency_id, reconcile_param=[{'id': line.id}])
         supplier_move_lines = bank_stmt.line_ids.line_ids
         return customer_move_lines, supplier_move_lines
+
+@tagged('post_install', '-at_install')
+class AccountHttpCommon(HttpCase):
+
+    def setUp(self):
+        super().setUp()
+        env = self.env(user=self.env.ref('base.user_admin'))
+
+        main_company = env.ref('base.main_company')
+
+        self.account_receivable = env['account.account'].create({
+            'code': 'X1012',
+            'name': 'Account Receivable Test',
+            'user_type_id': env.ref('account.data_account_type_receivable').id,
+            'reconcile': True,
+            'company_id': main_company.id
+        })
+        self.account_payable = env['account.account'].create({
+            'code': 'X1111',
+            'name': 'Creditors - (test)',
+            'user_type_id': env.ref('account.data_account_type_payable').id,
+            'reconcile': True,
+            'company_id': main_company.id
+        })
+
+        self.env['ir.property']._set_default('property_account_receivable_id', 'res.partner', self.account_receivable, main_company)
+        self.env['ir.property']._set_default('property_account_payable_id', 'res.partner', self.account_payable, main_company)
+
+        env['account.journal'].create([{
+            'name': 'Sales Test',
+            'type': 'sale',
+            'code': 'TSJ',
+            'company_id': main_company.id
+        }, {
+            'name': 'Purchase Test',
+            'code': 'TEXJ',
+            'type': 'purchase',
+            'company_id': main_company.id,
+        }, {
+            'name': 'Cash Test',
+            'type': 'cash',
+            'code': 'TCSH',
+            'company_id': main_company.id,
+        }, {
+            'name': 'Bank Test',
+            'code': 'TBNK',
+            'type': 'bank',
+            'company_id': main_company.id,
+        }, {
+            'name': 'Miscellaneous Test',
+            'code': 'TMIS',
+            'type': 'general',
+            'company_id': main_company.id,
+        }])
