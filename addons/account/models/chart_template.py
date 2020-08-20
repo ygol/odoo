@@ -248,44 +248,48 @@ class AccountChartTemplate(models.Model):
         # If the floats for sale/purchase rates have been filled, create templates from them
         self._create_tax_templates_from_rates(company.id, sale_tax_rate, purchase_tax_rate)
 
+        # In case of account_data_import, we just want to create taxes and install templates without generating acccounts
+        limited_install = self.env["ir.config_parameter"].get_param("account_data_import_company_%d" % company.id)
+
         # Install all the templates objects and generate the real objects
-        acc_template_ref, taxes_ref = self._install_template(company, code_digits=self.code_digits)
+        acc_template_ref, taxes_ref = self._install_template(company, code_digits=self.code_digits, limited_install=limited_install)
+        if not limited_install:
 
-        # Set default cash difference account on company
-        company.write({
-            'default_cash_difference_income_account_id': acc_template_ref.get(self.default_cash_difference_income_account_id.id, False),
-            'default_cash_difference_expense_account_id': acc_template_ref.get(self.default_cash_difference_expense_account_id.id, False),
-            'account_journal_suspense_account_id': acc_template_ref.get(self.account_journal_suspense_account_id.id),
-            'account_cash_basis_base_account_id': acc_template_ref.get(self.property_cash_basis_base_account_id.id),
-            'income_currency_exchange_account_id': acc_template_ref.get(self.income_currency_exchange_account_id.id),
-            'expense_currency_exchange_account_id': acc_template_ref.get(self.expense_currency_exchange_account_id.id),
-        })
-
-        if not company.account_journal_suspense_account_id:
-            company.account_journal_suspense_account_id = self._create_liquidity_journal_suspense_account(company, self.code_digits)
-
-        # Set default PoS receivable account in company
-        default_pos_receivable = self.default_pos_receivable_account_id.id
-        if not default_pos_receivable and self.parent_id:
-            default_pos_receivable = self.parent_id.default_pos_receivable_account_id.id
-        if acc_template_ref.get(default_pos_receivable):
+            # Set default cash difference account on company
             company.write({
-                'account_default_pos_receivable_account_id': acc_template_ref[default_pos_receivable]
+                'default_cash_difference_income_account_id': acc_template_ref.get(self.default_cash_difference_income_account_id.id, False),
+                'default_cash_difference_expense_account_id': acc_template_ref.get(self.default_cash_difference_expense_account_id.id, False),
+                'account_journal_suspense_account_id': acc_template_ref.get(self.account_journal_suspense_account_id.id),
+                'account_cash_basis_base_account_id': acc_template_ref.get(self.property_cash_basis_base_account_id.id),
+                'income_currency_exchange_account_id': acc_template_ref.get(self.income_currency_exchange_account_id.id),
+                'expense_currency_exchange_account_id': acc_template_ref.get(self.expense_currency_exchange_account_id.id),
             })
 
-        # Set the transfer account on the company
-        company.transfer_account_id = self.env['account.account'].search([
-            ('code', '=like', self.transfer_account_code_prefix + '%'), ('company_id', '=', company.id)], limit=1)
+            if not company.account_journal_suspense_account_id:
+                company.account_journal_suspense_account_id = self._create_liquidity_journal_suspense_account(company, self.code_digits)
 
-        # Create Bank journals
-        self._create_bank_journals(company, acc_template_ref)
+            # Set default PoS receivable account in company
+            default_pos_receivable = self.default_pos_receivable_account_id.id
+            if not default_pos_receivable and self.parent_id:
+                default_pos_receivable = self.parent_id.default_pos_receivable_account_id.id
+            if acc_template_ref.get(default_pos_receivable):
+                company.write({
+                    'account_default_pos_receivable_account_id': acc_template_ref[default_pos_receivable]
+                })
 
-        # Create the current year earning account if it wasn't present in the CoA
-        company.get_unaffected_earnings_account()
+            # Set the transfer account on the company
+            company.transfer_account_id = self.env['account.account'].search([
+                ('code', '=like', self.transfer_account_code_prefix + '%'), ('company_id', '=', company.id)], limit=1)
 
-        # set the default taxes on the company
-        company.account_sale_tax_id = self.env['account.tax'].search([('type_tax_use', 'in', ('sale', 'all')), ('company_id', '=', company.id)], limit=1).id
-        company.account_purchase_tax_id = self.env['account.tax'].search([('type_tax_use', 'in', ('purchase', 'all')), ('company_id', '=', company.id)], limit=1).id
+            # Create Bank journals
+            self._create_bank_journals(company, acc_template_ref)
+
+            # Create the current year earning account if it wasn't present in the CoA
+            company.get_unaffected_earnings_account()
+
+            # set the default taxes on the company
+            company.account_sale_tax_id = self.env['account.tax'].search([('type_tax_use', 'in', ('sale', 'all')), ('company_id', '=', company.id)], limit=1).id
+            company.account_purchase_tax_id = self.env['account.tax'].search([('type_tax_use', 'in', ('purchase', 'all')), ('company_id', '=', company.id)], limit=1).id
 
         return {}
 
@@ -496,7 +500,7 @@ class AccountChartTemplate(models.Model):
                 company.write({stock_property: value})
         return True
 
-    def _install_template(self, company, code_digits=None, obj_wizard=None, acc_ref=None, taxes_ref=None):
+    def _install_template(self, company, code_digits=None, obj_wizard=None, acc_ref=None, taxes_ref=None, limited_install=False):
         """ Recursively load the template objects and create the real objects from them.
 
             :param company: company the wizard is running for
@@ -516,16 +520,16 @@ class AccountChartTemplate(models.Model):
         if taxes_ref is None:
             taxes_ref = {}
         if self.parent_id:
-            tmp1, tmp2 = self.parent_id._install_template(company, code_digits=code_digits, acc_ref=acc_ref, taxes_ref=taxes_ref)
+            tmp1, tmp2 = self.parent_id._install_template(company, code_digits=code_digits, acc_ref=acc_ref, taxes_ref=taxes_ref, limited_install=limited_install)
             acc_ref.update(tmp1)
             taxes_ref.update(tmp2)
         # Ensure, even if individually, that everything is translated according to the company's language.
-        tmp1, tmp2 = self.with_context(lang=company.partner_id.lang)._load_template(company, code_digits=code_digits, account_ref=acc_ref, taxes_ref=taxes_ref)
+        tmp1, tmp2 = self.with_context(lang=company.partner_id.lang)._load_template(company, code_digits=code_digits, account_ref=acc_ref, taxes_ref=taxes_ref, limited_install=limited_install)
         acc_ref.update(tmp1)
         taxes_ref.update(tmp2)
         return acc_ref, taxes_ref
 
-    def _load_template(self, company, code_digits=None, account_ref=None, taxes_ref=None):
+    def _load_template(self, company, code_digits=None, account_ref=None, taxes_ref=None, limited_install=False):
         """ Generate all the objects from the templates
 
             :param company: company the wizard is running for
@@ -551,39 +555,41 @@ class AccountChartTemplate(models.Model):
         generated_tax_res = self.with_context(active_test=False).tax_template_ids._generate_tax(company)
         taxes_ref.update(generated_tax_res['tax_template_to_tax'])
 
-        # Generating Accounts from templates.
-        account_template_ref = self.generate_account(taxes_ref, account_ref, code_digits, company)
-        account_ref.update(account_template_ref)
+        if not limited_install:
 
-        # Generate account groups, from template
-        self.generate_account_groups(company)
+            # Generating Accounts from templates.
+            account_template_ref = self.generate_account(taxes_ref, account_ref, code_digits, company)
+            account_ref.update(account_template_ref)
 
-        # writing account values after creation of accounts
-        for key, value in generated_tax_res['account_dict']['account.tax'].items():
-            if value['cash_basis_transition_account_id']:
-                AccountTaxObj.browse(key).write({
-                    'cash_basis_transition_account_id': account_ref.get(value['cash_basis_transition_account_id'], False),
-                })
+            # Generate account groups, from template
+            self.generate_account_groups(company)
 
-        AccountTaxRepartitionLineObj = self.env['account.tax.repartition.line']
-        for key, value in generated_tax_res['account_dict']['account.tax.repartition.line'].items():
-            if value['account_id']:
-                AccountTaxRepartitionLineObj.browse(key).write({
-                    'account_id': account_ref.get(value['account_id']),
-                })
+            # writing account values after creation of accounts
+            for key, value in generated_tax_res['account_dict']['account.tax'].items():
+                if value['cash_basis_transition_account_id']:
+                    AccountTaxObj.browse(key).write({
+                        'cash_basis_transition_account_id': account_ref.get(value['cash_basis_transition_account_id'], False),
+                    })
 
-        # Create Journals - Only done for root chart template
-        if not self.parent_id:
-            self.generate_journals(account_ref, company)
+            AccountTaxRepartitionLineObj = self.env['account.tax.repartition.line']
+            for key, value in generated_tax_res['account_dict']['account.tax.repartition.line'].items():
+                if value['account_id']:
+                    AccountTaxRepartitionLineObj.browse(key).write({
+                        'account_id': account_ref.get(value['account_id']),
+                    })
 
-        # generate properties function
-        self.generate_properties(account_ref, company)
+            # Create Journals - Only done for root chart template
+            if not self.parent_id:
+                self.generate_journals(account_ref, company)
 
-        # Generate Fiscal Position , Fiscal Position Accounts and Fiscal Position Taxes from templates
-        self.generate_fiscal_position(taxes_ref, account_ref, company)
+            # generate properties function
+            self.generate_properties(account_ref, company)
 
-        # Generate account operation template templates
-        self.generate_account_reconcile_model(taxes_ref, account_ref, company)
+            # Generate Fiscal Position , Fiscal Position Accounts and Fiscal Position Taxes from templates
+            self.generate_fiscal_position(taxes_ref, account_ref, company)
+
+            # Generate account operation template templates
+            self.generate_account_reconcile_model(taxes_ref, account_ref, company)
 
         return account_ref, taxes_ref
 
