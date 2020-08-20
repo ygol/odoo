@@ -942,7 +942,9 @@ var FormRenderer = BasicRenderer.extend({
                 },
             });
         });
-        this._activateFirstVisibleTab(renderedTabs);
+        if (!this._chatterContainerComponent || this.el.querySelectorAll('.nav-link')[0].className.includes('active')) {
+            this._activateFirstVisibleTab(renderedTabs);
+        }
         var $notebookHeaders = $('<div class="o_notebook_headers">').append($headers);
         var $notebook = $('<div class="o_notebook">').append($notebookHeaders, $pages);
         $notebook[0].dataset.name = node.attrs.name || '_default_';

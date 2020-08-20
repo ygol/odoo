@@ -8,6 +8,7 @@ const {
     start,
 } = require('mail/static/src/utils/test_utils.js');
 
+const concurrency = require('web.concurrency');
 const config = require('web.config');
 const FormView = require('web.FormView');
 const {
@@ -624,6 +625,67 @@ QUnit.test('Form view not scrolled when switching record', async function (asser
     assert.strictEqual(controllerContentEl.scrollTop, 0,
         "Form view's scroll position should have been reset when switching back to first record"
     );
+});
+
+QUnit.test('only activate one page on edit', async function (assert) {
+    assert.expect(2);
+
+    this.data['res.partner'].records.push(
+        {
+            id: 11,
+            display_name: "Partner 1",
+            description: [...Array(10).keys()].join('\n'),
+        }
+    );
+
+    await this.createView({
+        data: this.data,
+        hasView: true,
+        View: FormView,
+        model: 'res.partner',
+        arch: `
+            <form string="Partners">
+                <sheet>
+                    <notebook>
+                        <page string="page1">
+                            <field name="name"/>
+                            <field name="description"/>
+                        </page>
+                        <page string="page2">
+                            <field name="name"/>
+                            <field name="description"/>
+                        </page>
+                        <page string="page3"/>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_ids"/>
+                </div>
+            </form>
+            `,
+        viewOptions: {
+            currentId: 11,
+            ids: [11],
+        },
+    });
+
+    await afterNextRender(async() => {
+        // click on third page tab
+        document.querySelectorAll('.nav-link')[2].click();
+
+        // click on Edit button
+        document.querySelector('.o_form_button_edit').click();
+
+        return concurrency.delay(10).then(async () => {
+            assert.strictEqual(document.querySelector('.nav-link').className.includes('active'), false,
+                "should not have activated page1");
+
+            return concurrency.delay(500);
+        }).then(() => {
+            assert.strictEqual(document.querySelector('.nav-link.active').text, "page3",
+                "should have activated page3");
+        });
+    });
 });
 
 });
