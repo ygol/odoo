@@ -292,7 +292,7 @@ class AccountChartTemplate(models.Model):
         company.account_sale_tax_id = self.env['account.tax'].search([('type_tax_use', 'in', ('sale', 'all')), ('company_id', '=', company.id)], limit=1).id
         company.account_purchase_tax_id = self.env['account.tax'].search([('type_tax_use', 'in', ('purchase', 'all')), ('company_id', '=', company.id)], limit=1).id
 
-    return {}
+        return {}
 
     @api.model
     def existing_accounting(self, company_id):
@@ -556,41 +556,42 @@ class AccountChartTemplate(models.Model):
         generated_tax_res = self.with_context(active_test=False).tax_template_ids._generate_tax(company)
         taxes_ref.update(generated_tax_res['tax_template_to_tax'])
 
-        if not limited_install:
+        if limited_install:
+            return account_ref, taxes_ref
 
-            # Generating Accounts from templates.
-            account_template_ref = self.generate_account(taxes_ref, account_ref, code_digits, company)
-            account_ref.update(account_template_ref)
+        # Generating Accounts from templates.
+        account_template_ref = self.generate_account(taxes_ref, account_ref, code_digits, company)
+        account_ref.update(account_template_ref)
 
-            # Generate account groups, from template
-            self.generate_account_groups(company)
+        # Generate account groups, from template
+        self.generate_account_groups(company)
 
-            # writing account values after creation of accounts
-            for key, value in generated_tax_res['account_dict']['account.tax'].items():
-                if value['cash_basis_transition_account_id']:
-                    AccountTaxObj.browse(key).write({
-                        'cash_basis_transition_account_id': account_ref.get(value['cash_basis_transition_account_id'], False),
-                    })
+        # writing account values after creation of accounts
+        for key, value in generated_tax_res['account_dict']['account.tax'].items():
+            if value['cash_basis_transition_account_id']:
+                AccountTaxObj.browse(key).write({
+                    'cash_basis_transition_account_id': account_ref.get(value['cash_basis_transition_account_id'], False),
+                })
 
-            AccountTaxRepartitionLineObj = self.env['account.tax.repartition.line']
-            for key, value in generated_tax_res['account_dict']['account.tax.repartition.line'].items():
-                if value['account_id']:
-                    AccountTaxRepartitionLineObj.browse(key).write({
-                        'account_id': account_ref.get(value['account_id']),
-                    })
+        AccountTaxRepartitionLineObj = self.env['account.tax.repartition.line']
+        for key, value in generated_tax_res['account_dict']['account.tax.repartition.line'].items():
+            if value['account_id']:
+                AccountTaxRepartitionLineObj.browse(key).write({
+                    'account_id': account_ref.get(value['account_id']),
+                })
 
-            # Create Journals - Only done for root chart template
-            if not self.parent_id:
-                self.generate_journals(account_ref, company)
+        # Create Journals - Only done for root chart template
+        if not self.parent_id:
+            self.generate_journals(account_ref, company)
 
-            # generate properties function
-            self.generate_properties(account_ref, company)
+        # generate properties function
+        self.generate_properties(account_ref, company)
 
-            # Generate Fiscal Position , Fiscal Position Accounts and Fiscal Position Taxes from templates
-            self.generate_fiscal_position(taxes_ref, account_ref, company)
+        # Generate Fiscal Position , Fiscal Position Accounts and Fiscal Position Taxes from templates
+        self.generate_fiscal_position(taxes_ref, account_ref, company)
 
-            # Generate account operation template templates
-            self.generate_account_reconcile_model(taxes_ref, account_ref, company)
+        # Generate account operation template templates
+        self.generate_account_reconcile_model(taxes_ref, account_ref, company)
 
         return account_ref, taxes_ref
 
