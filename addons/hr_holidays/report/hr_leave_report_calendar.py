@@ -28,6 +28,8 @@ class LeaveReportCalendar(models.Model):
         ('validate', 'Approved')
     ], readonly=True)
 
+    is_hatched = fields.Boolean('Hatched', compute='_compute_is_hatched', readonly=True)
+
     def init(self):
         tools.drop_view_if_exists(self._cr, 'hr_leave_report_calendar')
         self._cr.execute("""CREATE OR REPLACE VIEW hr_leave_report_calendar AS
@@ -54,6 +56,11 @@ class LeaveReportCalendar(models.Model):
             for record in self.with_user(SUPERUSER_ID):
                 self.env.cache.set(record, name_field, record.name.split(':')[-1].strip())
         return res
+
+    @api.depends('state')
+    def _compute_is_hatched(self):
+        for holiday in self:
+            holiday.is_hatched = holiday.state not in ['refuse', 'validate']
 
     @api.model
     def get_unusual_days(self, date_from, date_to=None):

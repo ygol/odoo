@@ -256,6 +256,8 @@ class HolidaysRequest(models.Model):
     request_unit_half = fields.Boolean('Half Day', compute='_compute_request_unit_half', store=True, readonly=False)
     request_unit_hours = fields.Boolean('Custom Hours', compute='_compute_request_unit_hours', store=True, readonly=False)
     request_unit_custom = fields.Boolean('Days-long custom hours', compute='_compute_request_unit_custom', store=True, readonly=False)
+    # view
+    is_hatched = fields.Boolean('Hatched', compute='_compute_is_hatched', readonly=True)
 
     _sql_constraints = [
         ('type_value',
@@ -547,6 +549,11 @@ class HolidaysRequest(models.Model):
                 holiday.can_approve = False
             else:
                 holiday.can_approve = True
+
+    @api.depends('state')
+    def _compute_is_hatched(self):
+        for holiday in self:
+            holiday.is_hatched = holiday.state not in ['refuse', 'validate']
 
     @api.constrains('date_from', 'date_to', 'state', 'employee_id')
     def _check_date(self):
