@@ -22,6 +22,7 @@ class AttachmentBox extends Component {
         this.isDropZoneVisible = useDragVisibleDropZone();
         useStore(props => {
             const thread = this.env.models['mail.thread'].get(props.threadLocalId);
+            this.isDisableAttachment = thread ? thread.isDisableAttachment : false;
             return {
                 attachments: thread
                     ? thread.allAttachments.map(attachment => attachment.__state)

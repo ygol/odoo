@@ -7,6 +7,8 @@ const components = {
 
 const FormRenderer = require('web.FormRenderer');
 const { ComponentWrapper } = require('web.OwlCompatibility');
+const { toBoolElse } = require("web.utils");
+const pyUtils = require('web.py_utils');
 
 class ChatterContainerWrapperComponent extends ComponentWrapper {}
 
@@ -104,6 +106,7 @@ FormRenderer.include({
             hasFollowers: this.chatterFields.hasMessageFollowerIds,
             hasThread: this.chatterFields.hasMessageIds,
             isAttachmentBoxVisible: this.chatterFields.isAttachmentBoxVisible,
+            isDisableAttachment: this.chatterFields.isDisableAttachment,
             messageIds,
             threadAttachmentCount,
             threadId: this.state.res_id,
@@ -148,6 +151,10 @@ FormRenderer.include({
         if (node.tag === 'div' && node.attrs.class === 'oe_chatter') {
             if (this._isFromFormViewDialog) {
                 return $('<div/>');
+            }
+            if (node.attrs.disable_upload) {
+                const optionValue = pyUtils.py_eval(node.attrs.disable_upload);
+                this.chatterFields.isDisableAttachment = _.isBoolean(optionValue) ? optionValue : this.state.evalModifiers(optionValue).invisible;
             }
             return this._makeChatterContainerTarget();
         }

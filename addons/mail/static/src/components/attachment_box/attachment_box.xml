@@ -29,10 +29,12 @@
                         t-on-o-attachment-removed="_onAttachmentRemoved"
                     />
                 </t>
-                <button class="o_AttachmentBox_buttonAdd btn btn-link" type="button" t-on-click="_onClickAdd">
-                    <i class="fa fa-plus-square"/>
-                    Add attachments
-                </button>
+                <t t-if="!isDisableAttachment">
+                    <button class="o_AttachmentBox_buttonAdd btn btn-link" type="button" t-on-click="_onClickAdd">
+                        <i class="fa fa-plus-square"/>
+                        Add attachments
+                    </button>
+                </t>
             </div>
             <t t-if="thread">
                 <FileUploader

@@ -241,6 +241,7 @@ function factory(dependencies) {
                 const thread = this.env.models['mail.thread'].insert({
                     id: this.threadId,
                     model: this.threadModel,
+                    isDisableAttachment: this.isDisableAttachment,
                 });
                 this.threadViewer.update({ thread: [['link', thread]] });
             }
@@ -300,6 +301,9 @@ function factory(dependencies) {
             default: true,
         }),
         isAttachmentBoxVisible: attr({
+            default: false,
+        }),
+        isDisableAttachment: attr({
             default: false,
         }),
         isComposerVisible: attr({

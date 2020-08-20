@@ -626,6 +626,36 @@ QUnit.test('Form view not scrolled when switching record', async function (asser
     );
 });
 
+
+QUnit.test('From view chatter cannot be uploaded document with option disable_upload True', async function (assert) {
+    assert.expect(1);
+
+    this.data['res.partner'].records.push({ display_name: "second partner", id: 5, });
+    const form = await this.createView({
+        data: this.data,
+        hasView: true,
+        View: FormView,
+        model: 'res.partner',
+        arch: `
+            <form string="Partners">
+                <sheet>
+                    <field name="name"/>
+                </sheet>
+                <div class="oe_chatter" disable_upload="true"></div>
+            </form>
+        `,
+        res_id: 5,
+    });
+    await afterNextRender(() =>
+        document.querySelector('.o_ChatterTopbar_buttonAttachments').click()
+    );
+    assert.strictEqual(
+        document.querySelectorAll(`.o_AttachmentBox_buttonAdd`).length,
+        0,
+        "there should be no Attachment button"
+    );
+});
+
 });
 });
 });

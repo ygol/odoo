@@ -1191,6 +1191,9 @@ function factory(dependencies) {
         areAttachmentsLoaded: attr({
             default: false,
         }),
+        isDisableAttachment: attr({
+            default: false,
+        }),
         attachments: many2many('mail.attachment', {
             inverse: 'threads',
         }),
