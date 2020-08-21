@@ -428,6 +428,7 @@ class StockMove(models.Model):
                     outgoing_unreserved_moves_per_warehouse[picking_type.warehouse_id] |= move
                 else:
                     reserved_availability = float_repr(move.reserved_availability, precision)
+                    # TODO if reserved_availability
                     move.json_forecast = json.dumps({'reservedAvailability': reserved_availability})
         if not outgoing_unreserved_moves_per_warehouse:
             return
