@@ -79,6 +79,7 @@ return core.Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
             url: options.url,
             rainbowMan: options.rainbowMan === undefined ? true : !!options.rainbowMan,
             rainbowManMessage: options.rainbowManMessage,
+            fadeout: options.fadeout,
             sequence: options.sequence || 1000,
             test: options.test,
             wait_for: options.wait_for || Promise.resolve(),
@@ -393,7 +394,8 @@ return core.Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
             this.tours[tour_name].current_step === this.tours[tour_name].steps.length) {
             const message = this.tours[tour_name].rainbowManMessage ||
                 _t('<strong><b>Good job!</b> You went through all steps of this tour.</strong>');
-            new RainbowMan({message}).appendTo(this.$body);
+            const fadeout = this.tours[tour_name].fadeout || 'medium';
+            new RainbowMan({message, fadeout}).appendTo(this.$body);
         }
         this.tours[tour_name].current_step = 0;
         local_storage.removeItem(get_step_key(tour_name));
