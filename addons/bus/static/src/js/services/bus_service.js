@@ -62,7 +62,7 @@ var BusService =  CrossTab.extend(ServicesMixin, {
      * @param {string} content
      * @param {function} [callback] if given callback will be called when user clicks on notification
      */
-    sendNotification: function (title, content, callback) {
+    sendNotification: function (title, content, className, type, callback) {
         if (window.Notification && Notification.permission === "granted") {
             if (this.isMasterTab()) {
                 try {
@@ -80,7 +80,7 @@ var BusService =  CrossTab.extend(ServicesMixin, {
                 }
             }
         } else {
-            this.do_notify(title, content);
+            this.do_notify(title, content, false, className, type);
             if (this.isMasterTab()) {
                 this._beep();
             }

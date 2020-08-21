@@ -252,9 +252,9 @@ var ServicesMixin = {
      * @deprecated will be removed as soon as the notification system is reviewed
      * @see displayNotification
      */
-    do_notify: function (title = false, message, sticky, className) {
+    do_notify: function (title = false, message, sticky, className, type = 'warning') {
         return this.displayNotification({
-            type: 'warning',
+            type: type,
             title: title,
             message: message,
             sticky: sticky,
