@@ -545,9 +545,12 @@ class PaymentTransaction(models.Model):
     def _execute_callback(self):
         """ Execute the callbacks defined on the transactions.
 
-        Callbacks that have already been executed are silently ignored. This case can happen if a
-        transaction was first authorized before being confirmed, in which case both status update
-        try to execute the callback.
+        Only successful callbacks are marked as done. This allows callbacks to reschedule themselves
+        should the conditions not be met in this call, but eventually in a second one.
+
+        Callbacks that have already been executed are silently ignored. This case can happen when
+        a transaction first authorized before being confirmed, for instance. In this which case,
+        both status updates try to execute the callback.
 
         :return: None
         """
@@ -571,8 +574,8 @@ class PaymentTransaction(models.Model):
                 )
                 continue  # Ignore invalidated callbacks
 
-            getattr(record, method)(tx)  # Execute the callback
-            tx.callback_is_done = True
+            success = getattr(record, method)(tx)  # Execute the callback
+            tx.callback_is_done = success or success is None  # Missing returns are successful
 
     def _finalize_post_processing(self):
         """ Trigger the final post-processing tasks and mark the transactions as post-processed.
