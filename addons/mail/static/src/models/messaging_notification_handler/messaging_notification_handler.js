@@ -3,8 +3,7 @@ odoo.define('mail/static/src/models/messaging_notification_handler/messaging_not
 
 const { registerNewModel } = require('mail/static/src/model/model_core.js');
 const { one2one } = require('mail/static/src/model/model_field.js');
-
-const PREVIEW_MSG_MAX_SIZE = 350; // optimal for native English speakers
+const mailUtils = require('mail.utils');
 
 function factory(dependencies) {
 
@@ -471,12 +470,13 @@ function factory(dependencies) {
                 !wasCurrentPartnerMember
             ) {
                 this.env.services['notification'].notify({
+                    className: 'o_Notification_Discuss',
                     message: _.str.sprintf(
                         this.env._t("You have been invited to: %s"),
                         owl.utils.escape(channel.name)
                     ),
                     title: this.env._t("Invitation"),
-                    type: 'warning',
+                    type: 'info',
                 });
             }
             // a new thread with unread messages could have been added
@@ -673,9 +673,10 @@ function factory(dependencies) {
             // unpinned the channel
             channel.update({ isServerPinned: false });
             this.env.services['notification'].notify({
+                className: 'o_Notification_Discuss',
                 message,
                 title: this.env._t("Unsubscribed"),
-                type: 'warning',
+                type: 'info',
             });
         }
 
@@ -707,7 +708,7 @@ function factory(dependencies) {
             if (!author) {
                 notificationTitle = this.env._t("New message");
             } else {
-                const authorName = author.nameOrDisplayName;
+                const escapedAuthorName = owl.utils.escape(author.nameOrDisplayName);
                 if (channel.channel_type === 'channel') {
                     // hack: notification template does not support OWL components,
                     // so we simply use their template to make HTML as if it comes
@@ -720,15 +721,15 @@ function factory(dependencies) {
                     const channelNameWithIcon = channelIcon + channelName;
                     notificationTitle = _.str.sprintf(
                         this.env._t("%s from %s"),
-                        owl.utils.escape(authorName),
+                        escapedAuthorName,
                         channelNameWithIcon
                     );
                 } else {
-                    notificationTitle = owl.utils.escape(authorName);
+                    notificationTitle = escapedAuthorName;
                 }
             }
-            const notificationContent = message.prettyBody.substr(0, PREVIEW_MSG_MAX_SIZE);
-            this.env.services['bus_service'].sendNotification(notificationTitle, notificationContent);
+            const notificationContent = mailUtils.htmlToTextContentInline(message.prettyBody);
+            this.env.services['bus_service'].sendNotification(notificationTitle, notificationContent, 'o_Notification_Discuss', 'info');
             messaging.update({ outOfFocusUnreadMessageCounter: messaging.outOfFocusUnreadMessageCounter + 1 });
             const titlePattern = messaging.outOfFocusUnreadMessageCounter === 1
                 ? this.env._t("%d Message")

@@ -189,3 +189,19 @@
         }
     }
 }
+
+// ------------------------------------------------------------------
+// Discuss Notification
+// ------------------------------------------------------------------
+
+.o_Notification_Discuss {
+
+    .toast-header {
+        padding: 8px 10px;
+        color: #212529;
+
+        .o_notification_icon {
+            display: none;
+        }
+    }
+}
