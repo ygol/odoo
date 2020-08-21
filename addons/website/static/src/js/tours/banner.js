@@ -7,8 +7,7 @@ var tour = require("web_tour.tour");
 var _t = core._t;
 
 tour.register("banner", {
-    url: "/web",
-    sequence: 7,
+    url: "/",
 }, [{
     trigger: "a[data-action=edit]",
     content: _t("<b>Click Edit</b> to start designing your homepage."),
