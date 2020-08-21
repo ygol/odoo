@@ -28,7 +28,7 @@ class PaymentAcquirer(models.Model):
     name = fields.Char(string="Name", required=True, translate=True)
     provider = fields.Selection(
         string="Provider", help="The Payment Service Provider to use with this acquirer",
-        selection=[('manual', "Custom Payment Form")], default='manual', required=True)  # TODO ANV readonly if created
+        selection=[('manual', "Custom Payment Form")], default='manual', required=True)
     state = fields.Selection(
         string="State",
         help="In test mode, a fake payment is processed through a test payment interface.\n"
@@ -60,15 +60,15 @@ class PaymentAcquirer(models.Model):
     capture_manually = fields.Boolean(
         string="Capture Amount Manually",
         help="Capture the amount from Odoo, when the delivery is completed.")
-    redirect_template_view_id = fields.Many2one(  # TODO remove from view
+    redirect_template_view_id = fields.Many2one(
         name="Redirect Form Template", comodel_name='ir.ui.view',
         help="The template rendered in the form when submitting a payment by redirect",
         domain=[('type', '=', 'qweb')])
-    inline_template_view_id = fields.Many2one(  # TODO remove from view
+    inline_template_view_id = fields.Many2one(
         string="Inline Form Template", comodel_name='ir.ui.view',
         help="The template rendered inside the acquirer form when making a direct payment",
         domain=[('type', '=', 'qweb')])
-    qr_code = fields.Boolean(  # TODO ANV is this used in generic ?
+    qr_code = fields.Boolean(  # TODO ANV is this used in generic ? -> nope, wire transfer only
         string="Enable QR Codes",
         help="Enable the use of QR-codes for payments made on this acquirer")
     country_ids = fields.Many2many(
