@@ -35,23 +35,6 @@
         </field>
     </record>
 
-    <record model="ir.actions.act_window" id="action_mrp_workorder_production_specific">
-        <field name="name">Work Orders</field>
-        <field name="type">ir.actions.act_window</field>
-        <field name="res_model">mrp.workorder</field>
-        <field name="view_mode">tree,form,gantt,calendar,pivot,graph</field>
-        <field name="domain">[('production_id', '=', active_id)]</field>
-        <field name="help" type="html">
-          <p class="o_view_nocontent_smiling_face">
-            Start a new work order
-          </p><p>
-            Work Orders are operations to be processed at a Work Center to realize a
-            Manufacturing Order. Work Orders are trigerred by Manufacturing Orders,
-            they are based on the Routing defined on these ones
-            </p>
-        </field>
-    </record>
-
     <record model="ir.ui.view" id="mrp_production_workorder_tree_editable_view">
         <field name="name">mrp.production.work.order.tree.editable</field>
         <field name="model">mrp.workorder</field>
@@ -400,47 +383,6 @@
                     </t>
                 </templates>
             </kanban>
-        </field>
-    </record>
-
-    <record model="ir.actions.act_window" id="action_mrp_workorder_workcenter">
-        <field name="name">Work Orders Planning</field>
-        <field name="type">ir.actions.act_window</field>
-        <field name="res_model">mrp.workorder</field>
-        <field name="view_mode">gantt,tree,form,calendar,pivot,graph</field>
-        <field name="search_view_id" ref="view_mrp_production_workorder_form_view_filter"/>
-        <field name="view_id" ref="mrp_workorder_view_gantt"/>
-        <field name="context">{'search_default_work_center': True, 'search_default_ready': True, 'search_default_progress': True, 'search_default_pending': True}</field>
-        <field name="help" type="html">
-          <p class="o_view_nocontent_smiling_face">
-            Start a new work order
-          </p><p>
-            Work Orders are operations to be processed at a Work Center to realize a
-            Manufacturing Order. Work Orders are trigerred by Manufacturing Orders,
-            they are based on the Routing defined on these ones
-            </p>
-        </field>
-    </record>
-
-    <record model="ir.actions.act_window" id="action_mrp_workorder_production">
-        <field name="name">Work Orders Planning</field>
-        <field name="type">ir.actions.act_window</field>
-        <field name="res_model">mrp.workorder</field>
-        <field name="domain">[('production_state','not in',('done','cancel'))]</field>
-        <field name="view_mode">gantt,tree,form,calendar,pivot,graph</field>
-        <field name="search_view_id" ref="view_mrp_production_workorder_form_view_filter"/>
-        <field name="view_id" ref="workcenter_line_gantt_production"/>
-        <field name="context">{'search_default_production': True, 'search_default_ready': True, 'search_default_progress': True, 'search_default_pending': True}</field>
-        <field name="help" type="html">
-          <p class="o_view_nocontent_smiling_face">
-            Start a new work order
-          </p><p>
-            To manufacture or assemble products, and use components and
-            finished products you must also handle manufacturing operations.
-            Manufacturing operations are often called Work Orders. The various
-            operations will have different impacts on the costs of
-            manufacturing and planning depending on the available workload.
-          </p>
         </field>
     </record>
 
