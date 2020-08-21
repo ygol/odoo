@@ -918,7 +918,7 @@ Reason(s) of this behavior could be:
 
         return groups
 
-    def _create_payment_transaction(self, vals):
+    def _create_payment_transaction(self, vals):  # TODO ANV rename to order._get_vals_...
         '''Similar to self.env['payment.transaction'].create(vals) but the values are filled with the
         current sales orders fields (e.g. the partner or the currency).
         :param vals: The values to create a new payment.transaction.
@@ -936,36 +936,23 @@ Reason(s) of this behavior could be:
 
         # Try to retrieve the acquirer. However, fallback to the token's acquirer.
         acquirer_id = vals.get('acquirer_id')
-        acquirer = False
         payment_token_id = vals.get('token_id')
 
         if payment_token_id:
             payment_token = self.env['payment.token'].sudo().browse(payment_token_id)
-
-            # Check payment_token/acquirer matching or take the acquirer from token
-            if acquirer_id:
-                acquirer = self.env['payment.acquirer'].browse(acquirer_id)
-                if payment_token and payment_token.acquirer_id != acquirer:
-                    raise ValidationError(_('Invalid token found! Token acquirer %s != %s') % (
-                    payment_token.acquirer_id.name, acquirer.name))
-                if payment_token and payment_token.partner_id != partner:
-                    raise ValidationError(_('Invalid token found! Token partner %s != %s') % (
-                    payment_token.partner.name, partner.name))
-            else:
-                acquirer = payment_token.acquirer_id
+            acquirer = payment_token.acquirer_id
+        else:
+            acquirer = self.env['payment.acquirer'].browse(acquirer_id)
 
         # Check an acquirer is there.
-        if not acquirer_id and not acquirer:
-            raise ValidationError(_('A payment acquirer is required to create a transaction.'))
-
         if not acquirer:
-            acquirer = self.env['payment.acquirer'].browse(acquirer_id)
+            raise ValidationError(_('A payment acquirer is required to create a transaction.'))
 
         # Check a journal is set on acquirer.
         if not acquirer.journal_id:
             raise ValidationError(_('A journal must be specified for the acquirer %s.', acquirer.name))
 
-        if not acquirer_id and acquirer:
+        if not acquirer_id:
             vals['acquirer_id'] = acquirer.id
 
         vals.update({
@@ -973,7 +960,7 @@ Reason(s) of this behavior could be:
             'currency_id': currency.id,
             'partner_id': partner.id,
             'sale_order_ids': [(6, 0, self.ids)],
-            'type': self[0]._get_payment_type(),
+            'operation': f'online_{flow}',
         })
 
         transaction = self.env['payment.transaction'].create(vals)

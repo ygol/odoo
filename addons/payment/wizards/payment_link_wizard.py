@@ -6,7 +6,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools import float_compare
 
-from odoo.addons.payment.controllers.portal import WebsitePayment
+from odoo.addons.payment.utils import toolbox as payment_toolbox
 
 
 class PaymentLinkWizard(models.TransientModel):
@@ -52,9 +52,11 @@ class PaymentLinkWizard(models.TransientModel):
 
     @api.depends('amount', 'description', 'partner_id', 'currency_id')
     def _compute_values(self):
+        db_secret = self.env['ir.config_parameter'].sudo().get_param('database.secret')
         for payment_link in self:
-            payment_link.access_token = WebsitePayment.generate_access_token(
-                payment_link.partner_id.id, payment_link.amount, payment_link.currency_id.id
+            payment_link.access_token = payment_toolbox.generate_access_token(
+                db_secret, payment_link.partner_id.id, payment_link.amount,
+                payment_link.currency_id.id
             )
         # must be called after token generation, obvsly - the link needs an up-to-date token
         self._generate_link()

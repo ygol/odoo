@@ -47,7 +47,7 @@ class AccountPayment(models.Model):
             ('acquirer_id.journal_id', '=', self.journal_id.id),
          ], limit=1)
 
-    def _prepare_payment_transaction_vals(self):
+    def _prepare_payment_transaction_vals(self):  # TODO ANV double check values
         self.ensure_one()
         return {
             'amount': self.amount,
@@ -58,7 +58,7 @@ class AccountPayment(models.Model):
             'token_id': self.payment_token_id.id,
             'acquirer_id': self.payment_token_id.acquirer_id.id,
             'payment_id': self.id,
-            'type': 'offline',
+            'operation': 'offline',
         }
 
     def _create_payment_transaction(self, vals=None):

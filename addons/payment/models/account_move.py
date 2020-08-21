@@ -21,7 +21,7 @@ class AccountMove(models.Model):
         self.ensure_one()
         return self.transaction_ids.get_last_transaction()
 
-    def _create_payment_transaction(self, vals):
+    def _create_payment_transaction(self, vals):  # TODO ANV rename to invoice._get_vals...
         '''Similar to self.env['payment.transaction'].create(vals) but the values are filled with the
         current invoices fields (e.g. the partner or the currency).
         :param vals: The values to create a new payment.transaction.

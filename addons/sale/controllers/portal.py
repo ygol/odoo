@@ -299,7 +299,7 @@ class CustomerPortal(CustomerPortal):
             'landing_route': order.get_portal_url(),
         }
 
-        transaction = order._create_payment_transaction(vals)
+        transaction = order._create_payment_transaction(vals)  # TODO ANV use order._get_vals_...
         PaymentPostProcessing.monitor_transactions(transaction)
         return transaction.render_sale_button(order)
 
@@ -325,6 +325,6 @@ class CustomerPortal(CustomerPortal):
             'landing_route': order.get_portal_url(),
         }
 
-        tx = order._create_payment_transaction(vals)
+        tx = order._create_payment_transaction(vals)  # TODO ANV use order._get_vals_... bis
         PaymentPostProcessing.monitor_transactions(tx)
         return request.redirect('/payment/status')

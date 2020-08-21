@@ -137,14 +137,14 @@ class WebsitePayment(http.Controller):
 
         # If a sale order is provided, its currency and amount overwrite any value set before. For
         # reconciliation, we need both these values to match exactly that of the sale order.
-        order = None
+        order_sudo = None
         if order_id:
-            order = request.env['sale.order'].browse(order_id)
-            currency_id = order.currency_id.id
-            amount = order.amount_total
+            order_sudo = request.env['sale.order'].sudo().browse(order_id)
+            currency_id = order_sudo.currency_id.id
+            amount = order_sudo.amount_total
 
         # Pick the company that is the most relevant given the tx context to filter the acquirers
-        company_id = _pick_company(company_id, order, user_sudo)
+        company_id = _pick_company(company_id, order_sudo, user_sudo)
 
         # Select all acquirers that match the constraints
         acquirers_sudo = request.env['payment.acquirer'].sudo()._get_compatible_acquirers(

@@ -875,7 +875,7 @@ class WebsiteSale(http.Controller):
     @http.route(['/shop/payment/transaction/',
         '/shop/payment/transaction/<int:so_id>',
         '/shop/payment/transaction/<int:so_id>/<string:access_token>'], type='json', auth="public", website=True)
-    def payment_transaction(self, acquirer_id, tokenization_requested=False, so_id=None, access_token=None, token=None, **kwargs):
+    def payment_transaction(self, payment_option_id, tokenization_requested=False, so_id=None, access_token=None, token=None, **kwargs):
         """ Json method that creates a payment.transaction, used to create a
         transaction when the user clicks on 'pay now' button. After having
         created the transaction, the event continues and the user is redirected
@@ -884,11 +884,7 @@ class WebsiteSale(http.Controller):
         :param int acquirer_id: id of a payment.acquirer record. If not set the
                                 user is redirected to the checkout page
         """
-        # Ensure a payment acquirer is selected
-        if not acquirer_id:  # TODO ANV payment_option_id
-            return False
-
-        acquirer_sudo = request.env['payment.acquirer'].browse(acquirer_id).sudo()
+        acquirer_sudo = request.env['payment.acquirer'].browse(payment_option_id).sudo()
         tokenize = bool(
             # Public users are not allowed to save tokens as their partner is unknown
             not request.env.user.sudo()._is_public()
@@ -915,7 +911,7 @@ class WebsiteSale(http.Controller):
 
         # Create transaction
         vals = {
-            'acquirer_id': acquirer_id,
+            'acquirer_id': payment_option_id,
             'landing_route': '/shop/payment/validate',
             'operation': f'online_{kwargs.get("flow", "redirect")}',
             'tokenize': tokenize,
@@ -924,7 +920,7 @@ class WebsiteSale(http.Controller):
         if token:
             vals['token_id'] = int(token)
 
-        transaction = order._create_payment_transaction(vals)
+        transaction = order._create_payment_transaction(vals)  # TODO ANV use order._get_vals_...
 
         # store the new transaction into the transaction list and if there's an old one, we remove it
         # until the day the ecommerce supports multiple orders at the same time
@@ -961,7 +957,7 @@ class WebsiteSale(http.Controller):
         # Create transaction
         vals = {'operation': 'online_token', 'token_id': pm_id, 'landing_route': '/shop/payment/validate'}
 
-        tx = order._create_payment_transaction(vals)
+        tx = order._create_payment_transaction(vals)  # TODO ANV use order._get_vals_... bis
         PaymentPostProcessing.monitor_transactions(tx)
         return request.redirect('/payment/status')
 
