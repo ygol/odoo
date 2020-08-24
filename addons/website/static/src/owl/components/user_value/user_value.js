@@ -25,34 +25,37 @@ class UserValue extends owl.Component {
             </div>
             <t t-if="state.isEditing">
                 <!-- UNSELECTED RECORDS -->
-                <we-select>
-                    <we-title>"Existing"</we-title>
-                    <t t-foreach="state.unselectedRecords" t-as="record" t-key="record">
-                        <we-button t-on-click="_onSelectRecord(record)">
-                            <t t-raw="record"/>
-                        </we-button>
-                    </t>
-                </we-select>
+                <we-row>
+                    <we-title>Existing</we-title>
+                    <select t-on-click="_onSelectRecord()" t-ref="selectInput">
+                        <option hidden="true" disabled="true" selected="true" value="">Select a tag</option>
+                        <t t-foreach="state.unselectedRecords" t-as="record" t-key="record">
+                            <option t-att-value="record">
+                                <t t-raw="record"/>
+                            </option>
+                        </t>
+                    </select>
+                </we-row>
                 <we-row t-attf-string="New {{props.recordName}}">
                     <input t-ref="newRecordInput" placeholder="Name"/>
                     <we-button title="Confirm" t-on-click="_onAddNewRecord" class="fa fa-plus ml-1"/>
                 </we-row>
             </t>
-        </div>
-    `;
+        </div>`;
     /**
      * @override
      */
     constructor() {
         super(...arguments);
         this.state = useState({
-            isEditing: true,
+            isEditing: false,
             selectedRecords: this.props.selectedRecords,
             unselectedRecords: this.props.unselectedRecords,
             newRecords: [],
         });
-        this.newRecordInput = useRef("newRecordInput");
         this.editButton = useRef("editButton");
+        this.newRecordInput = useRef("newRecordInput");
+        this.selectInput = useRef("selectInput");
     }
 
     willUnmount() {
@@ -121,10 +124,14 @@ class UserValue extends owl.Component {
      * @param {String} record
      * @param {MouseEvent} ev
      */
-    _onSelectRecord(record, ev) {
+    _onSelectRecord(ev) {
         ev.stopPropagation();
-        this.state.unselectedRecords = this.state.unselectedRecords.filter(item => item !== record);
-        this.state.selectedRecords.push(record);
+        const record = this.selectInput.el.value;
+        if (record) {
+            this.state.unselectedRecords = this.state.unselectedRecords.filter(item => item !== record);
+            this.state.selectedRecords.push(record);
+        }
+        this.selectInput.el.value = '';
     }
 }
 
