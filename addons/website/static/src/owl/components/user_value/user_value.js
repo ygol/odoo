@@ -85,12 +85,16 @@ class UserValue extends owl.Component {
     _onAddNewRecord(ev) {
         ev.stopPropagation();
         const newRecord = this.newRecordInput.el.value;
+        if (!newRecord) {
+            return;
+        }
         const allRecords = this.state.selectedRecords.concat(this.state.unselectedRecords).map(record => record.toLowerCase());
         if (allRecords.includes(newRecord.toLowerCase())) {
             return;
         }
         this.state.selectedRecords.push(newRecord)
         this.state.newRecords.push(newRecord)
+        this.newRecordInput.el.value = '';
     }
     /**
      * @private
