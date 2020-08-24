@@ -49,10 +49,10 @@ tour.register('crm_tour', {
     position: "bottom",
     run: "drag_and_drop .o_opportunity_kanban .o_kanban_group:eq(2) ",
 }, {
-    trigger: ".o_kanban_record:not(.o_updating) .o_activity_color_default",
-    extra_trigger: ".o_opportunity_kanban",
-    content: _t("Looks like nothing is planned. :(<br><br><i>Tip : Schedule activities to keep track of everything you have to do!</i>"),
-    position: "bottom",
+    trigger: '.o_kanban_record:not(.o_updating) .o_activity_color_default',
+    extra_trigger: '.o_opportunity_kanban',
+    content: _t('Looks like nothing is planned. :(<br><br><i>Tip : Schedule activities to keep track of everything you have to do!</i>'),
+    position: 'bottom',
 }, {
     trigger: ".o_schedule_activity",
     extra_trigger: ".o_opportunity_kanban",
