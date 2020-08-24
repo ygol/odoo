@@ -13,7 +13,7 @@ function factory(dependencies) {
          * @override
          */
         _willDelete() {
-            this._stopLoading();
+            clearTimeout(this._loaderTimeout);
             return super._willDelete(...arguments);
         }
 
@@ -38,17 +38,6 @@ function factory(dependencies) {
             this.update({
                 componentHintList: this.componentHintList.concat([hint]),
             });
-        }
-
-        /**
-         * @param {mail.thread_cache} threadCache
-         */
-        handleThreadCacheLoaded(threadCache) {
-            // TODO compute based on thread cache value
-            if (threadCache !== this.threadCache) {
-                return;
-            }
-            this._stopLoading();
         }
 
         /**
@@ -98,6 +87,34 @@ function factory(dependencies) {
 
         /**
          * @private
+         * @returns {string}
+         */
+        _computeStringifiedDomain() {
+            if (this.discuss) {
+                return this.discuss.stringifiedDomain;
+            }
+            return '[]';
+        }
+
+        /**
+         * @private
+         * @returns {mail.thread|undefined}
+         */
+         _computeThread() {
+            if (this.chatter) {
+                return [['link', this.chatter.thread]];
+            }
+            if (this.chatWindow) {
+                return [['link', this.chatWindow.thread]];
+            }
+            if (this.discuss) {
+                return [['link', this.discuss.thread]];
+            }
+            return [['unlink']];
+        }
+
+        /**
+         * @private
          * @returns {mail.thread_cache}
          */
         _computeThreadCache() {
@@ -142,50 +159,40 @@ function factory(dependencies) {
         /**
          * @private
          */
-        _onThreadChange() {
-            // TODO should become dependency on thread cache + thread cache loading
-            this._stopLoading();
-        }
-
-        /**
-         * @private
-         * @returns {boolean}
-         */
-        _onThreadCacheIsLoading() {
-            if (
-                this.thread && this.threadCache && this.threadCache.isLoading &&
-                !this.isLoading && !this._isPreparingLoading
-            ) {
-                this._prepareLoading();
+        _onThreadCacheIsLoadingChanged() {
+            if (this.threadCache && this.threadCache.isLoading) {
+                if (!this.isLoading && !this.isPreparingLoading) {
+                    this.update({ isPreparingLoading: true });
+                    this.async(() =>
+                        new Promise(resolve => {
+                            this._loaderTimeout = setTimeout(resolve, 400);
+                        }
+                    )).then(() => {
+                        const isLoading = this.threadCache
+                            ? this.threadCache.isLoading
+                            : false;
+                        this.update({ isLoading, isPreparingLoading: false });
+                    });
+                }
+                return;
             }
-            return false;
-        }
-
-        /**
-         * @private
-         */
-        _prepareLoading() {
-            this._isPreparingLoading = true;
-            this._loaderTimeout = setTimeout(() => {
-                this.update({ isLoading: true });
-                this._isPreparingLoading = false;
-            }, 400);
-        }
-
-        /**
-         * @private
-         */
-        _stopLoading() {
             clearTimeout(this._loaderTimeout);
-            this._loaderTimeout = null;
-            this.update({ isLoading: false });
-            this._isPreparingLoading = false;
+            this.update({ isLoading: false, isPreparingLoading: false });
         }
     }
 
     ThreadViewer.fields = {
+        chatter: one2one('mail.chatter', {
+            inverse: 'threadViewer',
+        }),
+        chatterThread: many2one('mail.thread', {
+            related: 'chatter.thread',
+        }),
         chatWindow: one2one('mail.chat_window', {
             inverse: 'threadViewer',
+        }),
+        chatWindowThread: many2one('mail.thread', {
+            related: 'chatWindow.thread',
         }),
         checkedMessages: many2many('mail.message', {
             related: 'threadCache.checkedMessages',
@@ -214,13 +221,44 @@ function factory(dependencies) {
         composer: many2one('mail.composer', {
             related: 'thread.composer',
         }),
+        discuss: one2one('mail.discuss', {
+            inverse: 'threadViewer',
+        }),
+        discussThread: many2one('mail.thread', {
+            related: 'discuss.thread',
+        }),
+        discussStringifiedDomain: attr({
+            related: 'discuss.stringifiedDomain',
+        }),
         hasComposerFocus: attr({
             related: 'composer.hasFocus',
         }),
         /**
-         * Determine if thread viewer is showing loading.
+         * States whether the thread cache displayed by this thread viewer is
+         * currently loading messages.
+         *
+         * This field is related to `threadCache.isLoading` but with a delay on
+         * its update to avoid flickering on the UI.
+         *
+         * It is computed through `_onThreadCacheIsLoadingChanged` and it should
+         * otherwise be considered read-only.
          */
-        isLoading: attr(),
+        isLoading: attr({
+            default: false,
+        }),
+        /**
+         * States whether this thread viewer is aware of its thread cache
+         * currently loading messages, but this thread viewer is not yet ready
+         * to reflect this state on the UI.
+         *
+         * It is computed through `_onThreadCacheIsLoadingChanged` and it should
+         * otherwise be considered read-only.
+         *
+         * @see `isLoading` field
+         */
+        isPreparingLoading: attr({
+            default: false,
+        }),
         lastMessage: many2one('mail.message', {
             related: 'thread.lastMessage',
         }),
@@ -232,35 +270,35 @@ function factory(dependencies) {
         messages: many2many('mail.message', {
             related: 'threadCache.messages',
         }),
-        onThreadChange: attr({
-            compute: '_onThreadChange',
+        /**
+         * @see `isLoading` field
+         */
+        onThreadCacheIsLoadingChanged: attr({
+            compute: '_onThreadCacheIsLoadingChanged',
             dependencies: [
-                'thread',
-            ],
-        }),
-        onThreadCacheIsLoading: attr({
-            compute: '_onThreadCacheIsLoading',
-            dependencies: [
-                'thread',
                 'threadCache',
                 'threadCacheIsLoading',
             ],
         }),
         /**
-         * Determine the domain to apply when fetching messages for the current
-         * thread.
-         * This field is supposed to be controlled by the creator of this thread
-         * viewer and should not be updated directly from this thread viewer.
+         * Domain to apply when fetching messages for the current thread.
          */
         stringifiedDomain: attr({
-            default: '[]',
+            compute: '_computeStringifiedDomain',
+            dependencies: [
+                'discussStringifiedDomain',
+            ],
         }),
         /**
-         * Determine the thread currently displayed by this thread viewer.
-         * This field is supposed to be controlled by the creator of this thread
-         * viewer and should not be updated directly from this thread viewer.
+         * Thread currently displayed by this thread viewer.
          */
         thread: many2one('mail.thread', {
+            compute: '_computeThread',
+            dependencies: [
+                'chatterThread',
+                'chatWindowThread',
+                'discussThread',
+            ],
             inverse: 'viewers',
         }),
         /**
@@ -286,12 +324,6 @@ function factory(dependencies) {
          */
         threadCacheIsLoading: attr({
             related: 'threadCache.isLoading',
-        }),
-        /**
-         * Whether the current thread cache is loaded.
-         */
-        threadCacheIsLoaded: attr({
-            related: 'threadCache.isLoaded',
         }),
         /**
          * List of saved initial scroll positions of thread caches.

@@ -188,13 +188,10 @@ function factory(dependencies) {
             if (!this.thread || !this.isVisible) {
                 return [['unlink']];
             }
-            const threadViewerData = { thread: [['link', this.thread]] };
-            if (!this.threadViewer) {
-                return [['create', threadViewerData]];
+            if (this.threadViewer) {
+                return [];
             }
-            // side effect of compute
-            this.threadViewer.update(threadViewerData);
-            return [];
+            return [['create']];
         }
 
         /**
@@ -328,7 +325,7 @@ function factory(dependencies) {
             default: false,
         }),
         /**
-         * Determine whether the chat window is focused or not. Useful for
+         * States whether this chat window is focused or not. Useful for
          * visual clue.
          */
         isFocused: attr({
@@ -344,7 +341,7 @@ function factory(dependencies) {
             default: false,
         }),
         /**
-         * Determine whether the chat window is visible or not.
+         * States whether this chat window is visible or not.
          */
         isVisible: attr({
             compute: '_computeIsVisible',
@@ -370,7 +367,7 @@ function factory(dependencies) {
             ],
         }),
         /**
-         * Determine the thread that is currently displayed in this chat window.
+         * Determine the thread that is currently displayed by this chat window.
          * If no thread is linked, this chat window is considered "new message".
          */
         thread: many2one('mail.thread'),

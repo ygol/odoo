@@ -121,6 +121,9 @@ class MessageList extends Component {
      * fixed height, which is the case for the moment.
      */
     async adjustFromComponentHints() {
+        if (!this.threadViewer) {
+            return;
+        }
         for (const hint of this.threadViewer.componentHintList) {
             switch (hint.type) {
                 case 'change-of-thread-cache':
@@ -430,6 +433,9 @@ class MessageList extends Component {
      * @private
      */
     _checkMostRecentMessageIsVisible() {
+        if (!this.threadViewer) {
+            return;
+        }
         const thread = this.threadViewer.thread;
         const threadCache = this.threadViewer.threadCache;
         const lastMessageIsVisible =

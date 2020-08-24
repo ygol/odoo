@@ -314,19 +314,22 @@ function factory(dependencies) {
          * @returns{mail.thread_viewer|undefined}
          */
         _computeThreadViewer() {
-            if (!this.thread) {
+            if (!this.thread || !this.isOpen) {
                 return [['unlink']];
             }
-            const threadViewerData = {
-                stringifiedDomain: this.stringifiedDomain,
-                thread: [['link', this.thread]],
-            };
-            if (!this.threadViewer) {
-                return [['create', threadViewerData]];
+            if (
+                this.env.messaging.device.isMobile &&
+                (
+                    this.activeMobileNavbarTabId !== 'mailbox' ||
+                    this.thread.model !== 'mail.box'
+                )
+            ) {
+                return [['unlink']];
             }
-            // side effect of compute
-            this.threadViewer.update(threadViewerData);
-            return [];
+            if (this.threadViewer) {
+                return [];
+            }
+            return [['create']];
         }
     }
 
@@ -490,15 +493,18 @@ function factory(dependencies) {
             related: 'thread.model',
         }),
         /**
-         * Viewer that displays the current thread of this discuss.
+         * Viewer that displays the current thread of this discuss. There might
+         * be no thread viewer depending on the state of this discuss.
          */
         threadViewer: one2one('mail.thread_viewer', {
             compute: '_computeThreadViewer',
             dependencies: [
+                'isOpen',
                 'stringifiedDomain',
                 'thread',
                 'threadViewer',
             ],
+            inverse: 'discuss',
             isCausal: true,
         }),
     };

@@ -306,9 +306,6 @@ function factory(dependencies) {
                 isLoading: false,
                 isLoadingMore: false,
             });
-            for (const viewer of this.thread.viewers) {
-                viewer.handleThreadCacheLoaded(this);
-            }
         }
 
     }

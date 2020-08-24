@@ -130,13 +130,10 @@ function factory(dependencies) {
             if (!this.thread || !this.hasThreadViewer) {
                 return [['unlink']];
             }
-            const threadViewerData = { thread: [['link', this.thread]] };
-            if (!this.threadViewer) {
-                return [['create', threadViewerData]];
+            if (this.threadViewer) {
+                return [];
             }
-            // side effect of compute
-            this.threadViewer.update(threadViewerData);
-            return [];
+            return [['create']];
         }
 
         /**
@@ -356,6 +353,7 @@ function factory(dependencies) {
                 'thread',
                 'threadViewer',
             ],
+            inverse: 'chatter',
             isCausal: true,
         }),
         todayActivities: one2many('mail.activity', {
