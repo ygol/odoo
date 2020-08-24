@@ -725,14 +725,18 @@ blockquote {
     }
 }
 %o-we-background-layer {
-    @include o-position-absolute(0, 0, 0, 0);
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
     display: block;
     overflow: hidden;
     background-repeat: no-repeat;
     pointer-events: none;
 }
 
-section {
+section, .oe_img_bg, [data-oe-shape-data], .o_background_video, .parallax {
     @extend %o-we-background-layer-parent;
 }
 .o_we_bg_filter {
