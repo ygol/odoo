@@ -112,7 +112,7 @@ function factory(dependencies) {
             );
             const chat = partner.correspondentThreads.find(thread => thread.channel_type === 'chat');
             if (chat) {
-                this.threadViewer.update({ thread: [['link', chat]] });
+                this.update({ thread: [['link', chat]] });
             } else {
                 this.env.models['mail.thread'].createChannel({
                     autoselect: true,
@@ -160,7 +160,7 @@ function factory(dependencies) {
             if (!thread) {
                 return;
             }
-            this.threadViewer.update({
+            this.update({
                 stringifiedDomain: '[]',
                 thread: [['link', thread]],
             });
@@ -291,21 +291,42 @@ function factory(dependencies) {
         }
 
         /**
+         * Only pinned threads are allowed in discuss. Fallback to Inbox in
+         * other cases.
+         *
          * @private
+         * @returns{mail.thread|undefined}
          */
-        _onChangeThreadIsPinned() {
+        _onChangeThread() {
             let thread = this.thread;
-            // No thread, or thread is being removed
-            // so we display discuss the messaging's Inbox.
-            if (
-                (!thread || !thread.isPinned) &&
-                this.messaging
-            ) {
-                thread = this.messaging.inbox;
+            if (!thread || !thread.isPinned) {
+                if (!this.messaging || !this.messaging.inbox) {
+                    // prevent crash at init or delete
+                    return [['unlink']];
+                }
+                return [['link', this.messaging.inbox]];
             }
-            if (thread && this.threadViewer && thread !== this.thread) {
-                this.threadViewer.update({ thread: [['link', thread]] });
+            return [];
+        }
+
+        /**
+         * @private
+         * @returns{mail.thread_viewer|undefined}
+         */
+        _computeThreadViewer() {
+            if (!this.thread) {
+                return [['unlink']];
             }
+            const threadViewerData = {
+                stringifiedDomain: this.stringifiedDomain,
+                thread: [['link', this.thread]],
+            };
+            if (!this.threadViewer) {
+                return [['create', threadViewerData]];
+            }
+            // side effect of compute
+            this.threadViewer.update(threadViewerData);
+            return [];
         }
     }
 
@@ -406,16 +427,8 @@ function factory(dependencies) {
         messaging: one2one('mail.messaging', {
             inverse: 'discuss',
         }),
-        /**
-         * When a thread changes, or some properties of it change
-         * Computes whether we should display it or change it
-         */
-        onChangeThreadIsPinned: attr({
-            compute: '_onChangeThreadIsPinned',
-            dependencies: [
-                'isThreadPinned',
-                'thread',
-            ],
+        messagingInbox: one2one('mail.thread', {
+            related: 'messaging.inbox',
         }),
         renamingThreads: one2many('mail.thread'),
         /**
@@ -452,8 +465,23 @@ function factory(dependencies) {
         sidebarQuickSearchValue: attr({
             default: "",
         }),
+        /**
+         * Determine the domain to apply when fetching messages for the current
+         * thread.
+         */
+        stringifiedDomain: attr({
+            default: '[]',
+        }),
+        /**
+         * Determine the thread that is currently displayed in this discuss.
+         */
         thread: many2one('mail.thread', {
-            related: 'threadViewer.thread',
+            compute: '_onChangeThread',
+            dependencies: [
+                'isThreadPinned',
+                'messagingInbox',
+                'thread',
+            ],
         }),
         threadId: attr({
             related: 'thread.id',
@@ -461,8 +489,16 @@ function factory(dependencies) {
         threadModel: attr({
             related: 'thread.model',
         }),
+        /**
+         * Viewer that displays the current thread of this discuss.
+         */
         threadViewer: one2one('mail.thread_viewer', {
-            default: [['create']],
+            compute: '_computeThreadViewer',
+            dependencies: [
+                'stringifiedDomain',
+                'thread',
+                'threadViewer',
+            ],
             isCausal: true,
         }),
     };

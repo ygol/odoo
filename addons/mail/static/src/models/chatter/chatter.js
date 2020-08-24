@@ -124,6 +124,23 @@ function factory(dependencies) {
 
         /**
          * @private
+         * @returns{mail.thread_viewer|undefined}
+         */
+        _computeThreadViewer() {
+            if (!this.thread || !this.hasThreadViewer) {
+                return [['unlink']];
+            }
+            const threadViewerData = { thread: [['link', this.thread]] };
+            if (!this.threadViewer) {
+                return [['create', threadViewerData]];
+            }
+            // side effect of compute
+            this.threadViewer.update(threadViewerData);
+            return [];
+        }
+
+        /**
+         * @private
          * @returns {mail.activity[]}
          */
         _computeTodayActivities() {
@@ -136,7 +153,7 @@ function factory(dependencies) {
         _prepareAttachmentsLoading() {
             this._isPreparingAttachmentsLoading = true;
             this._attachmentsLoaderTimeout = this.env.browser.setTimeout(() => {
-                this.update({isShowingAttachmentsLoading: true});
+                this.update({ isShowingAttachmentsLoading: true });
                 this._isPreparingAttachmentsLoading = false;
             }, this.env.loadingBaseDelayDuration);
         }
@@ -147,7 +164,7 @@ function factory(dependencies) {
         _stopAttachmentsLoading() {
             this.env.browser.clearTimeout(this._attachmentsLoaderTimeout);
             this._attachmentsLoaderTimeout = null;
-            this.update({isShowingAttachmentsLoading: false});
+            this.update({ isShowingAttachmentsLoading: false });
             this._isPreparingAttachmentsLoading = false;
         }
 
@@ -232,7 +249,7 @@ function factory(dependencies) {
                     id: getMessageNextTemporaryId(),
                     isTemporary: true,
                 });
-                this.threadViewer.update({ thread: [['link', thread]] });
+                this.update({ thread: [['link', thread]] });
                 for (const cache of thread.caches) {
                     cache.update({ messages: [['link', message]] });
                 }
@@ -242,7 +259,7 @@ function factory(dependencies) {
                     id: this.threadId,
                     model: this.threadModel,
                 });
-                this.threadViewer.update({ thread: [['link', thread]] });
+                this.update({ thread: [['link', thread]] });
             }
         }
 
@@ -290,7 +307,10 @@ function factory(dependencies) {
         hasMessageListScrollAdjust: attr({
             default: false,
         }),
-        hasThread: attr({
+        /**
+         * Determine whether to display a thread viewer for this chatter.
+         */
+        hasThreadViewer: attr({
             default: true,
         }),
         hasTopbarCloseButton: attr({
@@ -320,16 +340,23 @@ function factory(dependencies) {
             compute: '_computeOverdueActivities',
             dependencies: ['activitiesState'],
         }),
-        thread: many2one('mail.thread', {
-            related: 'threadViewer.thread',
-        }),
+        thread: many2one('mail.thread'),
         threadAttachmentCount: attr({
             default: 0,
         }),
         threadId: attr(),
         threadModel: attr(),
+        /**
+         * Viewer that displays the current thread of this chatter.
+         */
         threadViewer: one2one('mail.thread_viewer', {
-            default: [['create']],
+            compute: '_computeThreadViewer',
+            dependencies: [
+                'hasThreadViewer',
+                'thread',
+                'threadViewer',
+            ],
+            isCausal: true,
         }),
         todayActivities: one2many('mail.activity', {
             compute: '_computeTodayActivities',

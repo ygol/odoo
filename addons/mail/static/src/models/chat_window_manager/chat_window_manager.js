@@ -95,16 +95,13 @@ function factory(dependencies) {
             let chatWindow = this.env.models['mail.chat_window'].find(chatWindow =>
                 chatWindow.thread === thread
             );
-            let chatWindowHasJustBeenCreated = false;
             if (!chatWindow) {
                 chatWindow = this.env.models['mail.chat_window'].create({
                     manager: [['link', this]],
                     thread: [['link', thread]],
                 });
-                chatWindowHasJustBeenCreated = true;
             }
-
-            if (mode === 'last_visible' && (chatWindowHasJustBeenCreated || !chatWindow.isVisible)) {
+            if (mode === 'last_visible' && !chatWindow.isVisible) {
                 chatWindow.makeVisible();
                 chatWindow.unfold();
                 chatWindow.focus();

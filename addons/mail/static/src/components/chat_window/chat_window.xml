@@ -20,8 +20,8 @@
                     t-on-o-clicked="_onClickedHeader"
                     t-ref="header"
                 />
-                <t t-if="!chatWindow.isFolded">
-                    <t t-if="chatWindow.thread">
+                <t t-if="chatWindow.thread">
+                    <t t-if="chatWindow.threadViewer">
                         <ThreadViewer
                             class="o_ChatWindow_thread"
                             composerAttachmentsDetailsMode="'card'"
@@ -35,7 +35,9 @@
                             t-ref="thread"
                         />
                     </t>
-                    <t t-else="">
+                </t>
+                <t t-else="">
+                    <t t-if="!chatWindow.isFolded">
                         <div class="o_ChatWindow_newMessageForm">
                             <span class="o_ChatWindow_newMessageFormLabel">
                                 To:

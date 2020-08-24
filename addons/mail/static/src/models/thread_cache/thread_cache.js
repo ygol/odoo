@@ -211,13 +211,12 @@ function factory(dependencies) {
          */
         _computeShouldLoadMessages() {
             if (!this.thread || this.thread.viewers.length === 0) {
-                return false;
+                return;
             }
             if (this.isLoaded || this.isLoading) {
-                return false;
+                return;
             }
             this.loadMessages();
-            return true;
         }
 
         /**
@@ -410,9 +409,9 @@ function factory(dependencies) {
         shouldLoadMessages: attr({
             compute: '_computeShouldLoadMessages',
             dependencies: [
-                'threadViewers',
                 'isLoaded',
                 'isLoading',
+                'threadViewers',
             ],
         }),
         stringifiedDomain: attr({
@@ -425,10 +424,12 @@ function factory(dependencies) {
             related: 'thread.messages',
         }),
         /**
-         * Thread viewers used to view this thread cache.
+         * Thread viewers that are currently displaying this thread cache. This
+         * field is computed from the inverse relation and should be considered
+         * read-only.
          */
         threadViewers: one2many('mail.thread_viewer', {
-            related: 'thread.viewers',
+            inverse: 'threadCache',
         }),
         uncheckedMessages: many2many('mail.message', {
             compute: '_computeUncheckedMessages',

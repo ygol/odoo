@@ -26,16 +26,17 @@ class Discuss extends Component {
         super(...args);
         useStore(props => {
             const discuss = this.env.messaging.discuss;
+            const threadViewer = discuss.threadViewer;
             return {
-                checkedMessages: discuss.threadViewer.checkedMessages.map(message => message.__state),
+                checkedMessages: threadViewer ? threadViewer.checkedMessages.map(message => message.__state) : [],
                 discuss: discuss.__state,
                 isDeviceMobile: this.env.messaging.device.isMobile,
                 isMessagingInitialized: this.env.messaging.isInitialized,
                 thread: discuss.thread ? discuss.thread.__state : undefined,
-                threadCache: discuss.threadViewer.threadCache
+                threadCache: (threadViewer && threadViewer.threadCache)
                     ? discuss.threadViewer.threadCache.__state
                     : undefined,
-                uncheckedMessages: discuss.threadViewer.uncheckedMessages.map(message => message.__state),
+                uncheckedMessages: threadViewer ? threadViewer.uncheckedMessages.map(message => message.__state) : [],
             };
         }, {
             compareDepth: {
@@ -74,12 +75,13 @@ class Discuss extends Component {
         if (
             this.discuss.thread &&
             this.discuss.thread === this.env.messaging.inbox &&
+            this.discuss.threadViewer &&
             this._lastThreadCache === this.discuss.threadViewer.threadCache.localId &&
             this._lastThreadCounter > 0 && this.discuss.thread.counter === 0
         ) {
             this.trigger('o-show-rainbow-man');
         }
-        this._activeThreadCache = this.discuss.threadViewer.threadCache;
+        this._activeThreadCache = this.discuss.threadViewer && this.discuss.threadViewer.threadCache;
         this._updateLocalStoreProps();
     }
 
@@ -147,6 +149,7 @@ class Discuss extends Component {
          * rainbox man on inbox.
          */
         this._lastThreadCache = (
+            this.discuss.threadViewer &&
             this.discuss.threadViewer.threadCache &&
             this.discuss.threadViewer.threadCache.localId
         );
@@ -253,7 +256,7 @@ class Discuss extends Component {
      * @param {mail.thread} ev.detail.thread
      */
     _onSelectThread(ev) {
-        this.discuss.threadViewer.update({ thread: [['link', ev.detail.thread]] });
+        this.discuss.update({ thread: [['link', ev.detail.thread]] });
     }
 
     /**

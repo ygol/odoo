@@ -185,15 +185,15 @@ function factory(dependencies) {
          * @returns{mail.thread_viewer|undefined}
          */
         _computeThreadViewer() {
-            if (this.thread && this.isVisible) {
-                if (!this.threadViewer) {
-                    return [['create', {
-                        thread: [['link', this.thread]]
-                    }]];
-                }
-            } else if (this.threadViewer) {
-                return [['unlink', this.threadViewer]];
+            if (!this.thread || !this.isVisible) {
+                return [['unlink']];
             }
+            const threadViewerData = { thread: [['link', this.thread]] };
+            if (!this.threadViewer) {
+                return [['create', threadViewerData]];
+            }
+            // side effect of compute
+            this.threadViewer.update(threadViewerData);
             return [];
         }
 
@@ -370,7 +370,8 @@ function factory(dependencies) {
             ],
         }),
         /**
-         * Link to the thread displayed in the chat window.
+         * Determine the thread that is currently displayed in this chat window.
+         * If no thread is linked, this chat window is considered "new message".
          */
         thread: many2one('mail.thread'),
         threadDisplayName: attr({
@@ -379,6 +380,10 @@ function factory(dependencies) {
         threadFoldState: attr({
             related: 'thread.foldState',
         }),
+        /**
+         * Viewer that displays the current thread of this chat window. There
+         * might be no thread viewer depending on the state of this chat window.
+         */
         threadViewer: one2one('mail.thread_viewer', {
             compute: '_computeThreadViewer',
             dependencies: [

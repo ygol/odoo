@@ -115,14 +115,19 @@ class ChatWindow extends Component {
             isDoFocus: false,
             isFocused: true,
         });
-        if (this.chatWindow.isFolded) {
+        if (!this.chatWindow.thread) {
+            // "new message" chat window
+            if (!this._inputRef.comp) {
+                return;
+            }
+            this._inputRef.comp.focus();
             return;
         }
-        if (!this.chatWindow.threadViewer) {
-            this._inputRef.comp.focus();
-        } else {
-            this._threadRef.comp.focus();
+        // thread chat window
+        if (!this._threadRef.comp) {
+            return;
         }
+        this._threadRef.comp.focus();
     }
 
     /**
@@ -134,6 +139,9 @@ class ChatWindow extends Component {
      * @private
      */
     _saveThreadScrollTop() {
+        if (!this._threadRef.comp || !this.chatWindow.threadViewer) {
+            return;
+        }
         this.chatWindow.threadViewer.saveThreadCacheScrollPositionsAsInitial(
             this._threadRef.comp.getScrollTop()
         );
@@ -244,9 +252,7 @@ class ChatWindow extends Component {
             this.chatWindow.unfold();
             this.chatWindow.focus();
         } else {
-            if (this.chatWindow.threadViewer) {
-                this._saveThreadScrollTop();
-            }
+            this._saveThreadScrollTop();
             this.chatWindow.fold();
         }
     }
@@ -332,12 +338,7 @@ class ChatWindow extends Component {
      * @private
      */
     async _onWillHideHomeMenu() {
-        if (!this.chatWindow.threadViewer) {
-            return;
-        }
-        if (!this.chatWindow.isFolded) {
-            this._saveThreadScrollTop();
-        }
+        this._saveThreadScrollTop();
     }
 
     /**
@@ -349,12 +350,7 @@ class ChatWindow extends Component {
      * @private
      */
     async _onWillShowHomeMenu() {
-        if (!this.chatWindow.threadViewer) {
-            return;
-        }
-        if (!this.chatWindow.isFolded) {
-            this._saveThreadScrollTop();
-        }
+        this._saveThreadScrollTop();
     }
 
 }

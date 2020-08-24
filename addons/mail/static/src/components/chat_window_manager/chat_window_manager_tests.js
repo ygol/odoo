@@ -1612,7 +1612,7 @@ QUnit.test('chat window does not fetch messages if hidden', async function (asse
      *
      * Enough space for 2 visible chat windows, and one hidden chat window:
      * 3 visible chat windows:
-     *  10 + 325 + 5 + 325 + 5 + 325 + 10 = 1000 < 900
+     *  10 + 325 + 5 + 325 + 5 + 325 + 10 = 1000 > 900
      * 2 visible chat windows + hidden menu:
      *  10 + 325 + 5 + 325 + 10 + 200 + 5 = 875 < 900
      */
@@ -1624,33 +1624,33 @@ QUnit.test('chat window does not fetch messages if hidden', async function (asse
         {
             id: 10,
             is_minimized: true,
-            name: "Channel #1",
+            name: "Channel #10",
             state: 'open',
         },
         {
             id: 11,
             is_minimized: true,
-            name: "Channel #2",
+            name: "Channel #11",
             state: 'open',
         },
         {
             id: 12,
             is_minimized: true,
-            name: "Channel #3",
+            name: "Channel #12",
             state: 'open',
         },
     ];
     await this.start({
         env: {
             browser: {
-                innerWidth: 900, // enough to fit 2 chat windows but not 3
+                innerWidth: 900,
             },
         },
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 // args should be like {args: [[['channel_id', 'in', [X]]]]} with X the channel id
                 const channel_ids = args.args[0][0][2];
-                assert.strictEqual(channel_ids.length, 1, "messages should be fetch channel per channel");
+                assert.strictEqual(channel_ids.length, 1, "messages should be fetched channel per channel");
                 assert.step(`rpc:message_fetch:${channel_ids[0]}`);
             }
             return this._super(...arguments);
@@ -1661,7 +1661,7 @@ QUnit.test('chat window does not fetch messages if hidden', async function (asse
         document.body,
         '.o_ChatWindow',
         2,
-        "two chat windows should be visible"
+        "2 chat windows should be visible"
     );
     assert.containsNone(
         document.body,
@@ -1670,7 +1670,7 @@ QUnit.test('chat window does not fetch messages if hidden', async function (asse
                 t.model === 'mail.channel' && t.id === 12
             ).localId
         }"]`,
-        "chat window for channel #12 should be hidden"
+        "chat window for Channel #12 should be hidden"
     );
     assert.containsOnce(
         document.body,
@@ -1688,7 +1688,7 @@ QUnit.test('chat window does not fetch messages if hidden', async function (asse
     assert.containsOnce(
         document.body,
         '.o_ChatWindowHiddenMenu_chatWindowHeader',
-        "a hidden chat window should be listed in hidden menu"
+        "1 hidden chat window should be listed in hidden menu"
     );
 
     await afterNextRender(() =>
@@ -1698,9 +1698,8 @@ QUnit.test('chat window does not fetch messages if hidden', async function (asse
         document.body,
         '.o_ChatWindow',
         2,
-        "two chat windows should still be visible"
+        "2 chat windows should still be visible"
     );
-    window.env = this.env;
     assert.containsOnce(
         document.body,
         `.o_ChatWindow[data-thread-local-id="${
@@ -1708,11 +1707,11 @@ QUnit.test('chat window does not fetch messages if hidden', async function (asse
                 t.model === 'mail.channel' && t.id === 12
             ).localId
         }"]`,
-        "chat window for channel #12 should now be visible"
+        "chat window for Channel #12 should now be visible"
     );
     assert.verifySteps(
         ['rpc:message_fetch:12'],
-        "messages should be now be fetched for chat window for channel #12"
+        "messages should now be fetched for Channel #12"
     );
 });
 

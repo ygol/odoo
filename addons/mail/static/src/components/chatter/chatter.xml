@@ -8,7 +8,7 @@
                     class="o_Chatter_topbar"
                     chatterLocalId="chatter.localId"
                 />
-                <t t-if="chatter.hasThread and chatter.thread and chatter.isComposerVisible">
+                <t t-if="chatter.hasThreadViewer and chatter.thread and chatter.isComposerVisible">
                     <Composer
                         class="o_Chatter_composer"
                         t-att-class="{ 'o-bordered': chatter.hasExternalBorder }"
@@ -34,7 +34,7 @@
                             chatterLocalId="chatter.localId"
                         />
                     </t>
-                    <t t-if="chatter.hasThread">
+                    <t t-if="chatter.hasThreadViewer">
                         <ThreadViewer
                             class="o_Chatter_thread"
                             hasComposer="false"

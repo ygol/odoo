@@ -44,6 +44,7 @@ function factory(dependencies) {
          * @param {mail.thread_cache} threadCache
          */
         handleThreadCacheLoaded(threadCache) {
+            // TODO compute based on thread cache value
             if (threadCache !== this.threadCache) {
                 return;
             }
@@ -97,12 +98,10 @@ function factory(dependencies) {
 
         /**
          * @private
-         * @returns {mail.thread_cache|undefined}
+         * @returns {mail.thread_cache}
          */
         _computeThreadCache() {
-            if (!this.thread) {
-                return [];
-            }
+            this.addComponentHint('change-of-thread-cache');
             return [['link', this.thread.cache(this.stringifiedDomain)]];
         }
 
@@ -144,19 +143,8 @@ function factory(dependencies) {
          * @private
          */
         _onThreadChange() {
-            if (this.thread) {
-                this._stopLoading();
-            }
-        }
-
-        /**
-         * @private
-         */
-        _onThreadCacheChange() {
-            if (this.threadCache) {
-                this._stopLoading();
-                this.addComponentHint('change-of-thread-cache');
-            }
+            // TODO should become dependency on thread cache + thread cache loading
+            this._stopLoading();
         }
 
         /**
@@ -166,7 +154,7 @@ function factory(dependencies) {
         _onThreadCacheIsLoading() {
             if (
                 this.thread && this.threadCache && this.threadCache.isLoading &&
-                !this.isShowingLoading && !this._isPreparingLoading
+                !this.isLoading && !this._isPreparingLoading
             ) {
                 this._prepareLoading();
             }
@@ -179,7 +167,7 @@ function factory(dependencies) {
         _prepareLoading() {
             this._isPreparingLoading = true;
             this._loaderTimeout = setTimeout(() => {
-                this.update({isShowingLoading: true});
+                this.update({ isLoading: true });
                 this._isPreparingLoading = false;
             }, 400);
         }
@@ -190,7 +178,7 @@ function factory(dependencies) {
         _stopLoading() {
             clearTimeout(this._loaderTimeout);
             this._loaderTimeout = null;
-            this.update({isShowingLoading: false});
+            this.update({ isLoading: false });
             this._isPreparingLoading = false;
         }
     }
@@ -232,7 +220,7 @@ function factory(dependencies) {
         /**
          * Determine if thread viewer is showing loading.
          */
-        isShowingLoading: attr(),
+        isLoading: attr(),
         lastMessage: many2one('mail.message', {
             related: 'thread.lastMessage',
         }),
@@ -248,13 +236,7 @@ function factory(dependencies) {
             compute: '_onThreadChange',
             dependencies: [
                 'thread',
-            ]
-        }),
-        onThreadCacheChange: attr({
-            compute: '_onThreadCacheChange',
-            dependencies: [
-                'threadCache',
-            ]
+            ],
         }),
         onThreadCacheIsLoading: attr({
             compute: '_onThreadCacheIsLoading',
@@ -264,25 +246,33 @@ function factory(dependencies) {
                 'threadCacheIsLoading',
             ],
         }),
+        /**
+         * Determine the domain to apply when fetching messages for the current
+         * thread.
+         * This field is supposed to be controlled by the creator of this thread
+         * viewer and should not be updated directly from this thread viewer.
+         */
         stringifiedDomain: attr({
             default: '[]',
         }),
+        /**
+         * Determine the thread currently displayed by this thread viewer.
+         * This field is supposed to be controlled by the creator of this thread
+         * viewer and should not be updated directly from this thread viewer.
+         */
         thread: many2one('mail.thread', {
             inverse: 'viewers',
         }),
+        /**
+         * Thread cache currently displayed by this thread viewer.
+         */
         threadCache: many2one('mail.thread_cache', {
             compute: '_computeThreadCache',
             dependencies: [
                 'stringifiedDomain',
                 'thread',
-                'threadCaches',
             ],
-        }),
-        /**
-         * Determine if thread cache is loading.
-         */
-        threadCacheIsLoading: attr({
-            related: 'threadCache.isLoading',
+            inverse: 'threadViewers',
         }),
         threadCacheInitialScrollPosition: attr({
             compute: '_computeThreadCacheInitialScrollPosition',
@@ -290,6 +280,18 @@ function factory(dependencies) {
                 'threadCache',
                 'threadCacheInitialScrollPositions',
             ],
+        }),
+        /**
+         * Whether the current thread cache is loading.
+         */
+        threadCacheIsLoading: attr({
+            related: 'threadCache.isLoading',
+        }),
+        /**
+         * Whether the current thread cache is loaded.
+         */
+        threadCacheIsLoaded: attr({
+            related: 'threadCache.isLoaded',
         }),
         /**
          * List of saved initial scroll positions of thread caches.
@@ -300,9 +302,6 @@ function factory(dependencies) {
          */
         threadCacheInitialScrollPositions: attr({
             default: {},
-        }),
-        threadCaches: many2many('mail.thread_cache', {
-            related: 'thread.caches',
         }),
         /**
          * Not a real field, used to trigger `thread.markAsSeen` when one of

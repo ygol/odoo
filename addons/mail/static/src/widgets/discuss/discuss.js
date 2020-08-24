@@ -185,6 +185,7 @@ const DiscussWidget = AbstractAction.extend({
         }
         // Mark All Read
         if (
+            this.discuss.threadViewer &&
             this.discuss.thread &&
             this.discuss.thread === this.env.messaging.inbox
         ) {
@@ -199,6 +200,7 @@ const DiscussWidget = AbstractAction.extend({
         }
         // Unstar All
         if (
+            this.discuss.threadViewer &&
             this.discuss.thread &&
             this.discuss.thread === this.env.messaging.starred
         ) {
@@ -242,8 +244,11 @@ const DiscussWidget = AbstractAction.extend({
         const $unselectAll = this.$buttons.find('.o_widget_Discuss_controlPanelButtonUnselectAll');
 
         if (
-            this.discuss.threadViewer.checkedMessages.length > 0 ||
-            this.discuss.threadViewer.uncheckedMessages.length > 0
+            this.discuss.threadViewer &&
+            (
+                this.discuss.threadViewer.checkedMessages.length > 0 ||
+                this.discuss.threadViewer.uncheckedMessages.length > 0
+            )
         ) {
             $selectAll.removeClass('o_hidden');
             $selectAll.toggleClass('disabled', this.discuss.threadViewer.uncheckedMessages.length === 0);
@@ -259,6 +264,7 @@ const DiscussWidget = AbstractAction.extend({
         // Moderation Actions
         const $moderationButtons = this.$buttons.find('.o_widget_Discuss_controlPanelButtonModeration');
         if (
+            this.discuss.threadViewer &&
             this.discuss.threadViewer.checkedMessages.length > 0 &&
             this.discuss.threadViewer.checkedMessages.filter(
                 message => !message.isModeratedByCurrentPartner
@@ -370,7 +376,7 @@ const DiscussWidget = AbstractAction.extend({
      * @param {Object} searchQuery
      */
     _onSearch: function (searchQuery) {
-        this.discuss.threadViewer.update({
+        this.discuss.update({
             stringifiedDomain: JSON.stringify(searchQuery.domain),
         });
     },

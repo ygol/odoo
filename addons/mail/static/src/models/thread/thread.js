@@ -502,9 +502,9 @@ function factory(dependencies) {
                 (device.isMobile && this.model === 'mail.box')
             ) {
                 if (resetDiscussDomain) {
-                    discuss.threadViewer.update({ stringifiedDomain: '[]' });
+                    discuss.update({ stringifiedDomain: '[]' });
                 }
-                discuss.threadViewer.update({ thread: [['link', this]] });
+                discuss.update({ thread: [['link', this]] });
             } else {
                 this.env.messaging.chatWindowManager.openThread(this, { mode: chatWindowMode });
             }
@@ -519,7 +519,7 @@ function factory(dependencies) {
         openExpanded() {
             const discuss = this.env.messaging.discuss;
             if (['mail.channel', 'mail.box'].includes(this.model)) {
-                discuss.threadViewer.update({ thread: [['link', this]] });
+                discuss.update({ thread: [['link', this]] });
                 this.env.bus.trigger('do-action', {
                     action: 'mail.action_discuss',
                     options: {
