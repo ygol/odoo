@@ -15,7 +15,7 @@
             - 'tokens' - The payment tokens of the current partner and payment acquirers
             - 'default_token_id' - The id of the token that should be pre-selected. Optional
             - 'fees_by_acquirer' - The dict of transaction fees for each acquirer. Optional
-            - 'show_tokenize_input' - Whether saving the payment method as a token is allowed
+            - 'show_tokenize_input' - Whether the option to save the payment method is shown
             - 'reference' - The custom prefix to compute the full transaction reference
             - 'amount' - The amount to pay
             - 'currency' - The currency of the transaction, as a `res.currency` record

@@ -2,7 +2,7 @@
 
 import logging
 import urllib.parse
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import psycopg2
 import werkzeug
@@ -10,7 +10,6 @@ import werkzeug
 from odoo import _, fields, http
 from odoo.exceptions import UserError
 from odoo.http import request
-from odoo.osv import expression
 from odoo.tools.float_utils import float_repr
 
 from odoo.addons.payment.utils import toolbox as payment_toolbox
@@ -90,45 +89,8 @@ class WebsitePayment(http.Controller):
                 _company_id = _user_sudo.company_id.id
             return _company_id
 
-        def _select_acquirers(_acquirer_id, _company_id, _partner_id):
-            """ Select and return the acquirers matching the criteria for online payments.
-
-            The criteria are that acquirers must not be disabled, be in the same company as the one
-            that is provided, and support the country of the partner if it exists.
-
-            If the `_acquirer_id` param is populated, only the corresponding acquirer is returned.
-            If that acquirer does not exist or does not match the criteria, only the acquirers that
-            do match them are returned.
-
-            :param int|None _acquirer_id: The desired acquirer, as a `payment.acquirer` id
-            :param int _company_id: The relevant company, as a `res.company` id
-            :param int _partner_id: The partner making the payment, as a `res.partner` id
-            :return: The compatible acquirers
-            :rtype: recordset of `payment.acquirer`
-            """
-            _domain = ['&', ('state', 'in', ['enabled', 'test']), ('company_id', '=', _company_id)]
-            _partner_sudo = request.env['res.partner'].sudo().browse(_partner_id)
-            if _partner_sudo.country_id:  # If the partner has a country, check that it is supported
-                _domain = expression.AND([
-                    _domain,
-                    [
-                        '|', ('country_ids', '=', False),
-                        ('country_ids', 'in', [_partner_sudo.country_id.id])
-                    ]
-                ])
-            _acquirers = None
-            if _acquirer_id:  # If an acquirer is specified, check that it matches the criteria
-                _acquirers = request.env['payment.acquirer'].search(
-                    _domain + [('id', '=', _acquirer_id)]
-                )
-            if not _acquirers:  # If not found or incompatible, fallback on the compatible acquirers
-                _acquirers = request.env['payment.acquirer'].search(_domain)
-            return _acquirers
-
         def _select_payment_tokens(_acquirers, _partner_id):
             """ Select and return the payment tokens of the partner for the provided acquirers.
-
-            If no partner is provided, an empty list is returned.
 
             :param recordset _acquirers: The acquirers, as a `payment.acquirer` recordset
             :param int _partner_id: The partner making the payment, as a `res.partner` id
@@ -136,7 +98,7 @@ class WebsitePayment(http.Controller):
             :rtype: recordset of `payment.token`
             """
             payment_tokens = request.env['payment.token'].search(
-                [('acquirer_id', 'in', acquirers.ids), ('partner_id', '=', _partner_id)]
+                [('acquirer_id', 'in', _acquirers.ids), ('partner_id', '=', _partner_id)]
             )
             return payment_tokens
 
@@ -155,13 +117,15 @@ class WebsitePayment(http.Controller):
                 raise werkzeug.exceptions.NotFound  # Don't leak info about existence of an id
 
         user_sudo = request.env.user.sudo()
+        logged_in = not user_sudo._is_public()
         # If the user is logged in, overwrite the partner set in the params with that of the user.
-        # This is something that we want, since security rules are based on the partner.
-        # This should have no impact on the payment itself besides making reconciliation
-        # possibly more difficult (e.g. The payment and invoice partners are different).
-        if not user_sudo._is_public():  # The user is logged in
+        # This is something that we want, since security rules are based on the partner and created
+        # tokens should not be assigned to the public user. This should have no impact on the
+        # transaction itself besides making reconciliation possibly more difficult (e.g. The
+        # transaction and invoice partners are different).
+        if logged_in:
             partner_id = user_sudo.partner_id.id
-        elif not partner_id:  # The user is not logged in and no partner is provided
+        elif not partner_id:
             return request.redirect(
                 # Escape special characters to avoid loosing original params when redirected
                 f'/web/login?redirect={urllib.parse.quote(request.httprequest.full_path)}'
@@ -183,7 +147,9 @@ class WebsitePayment(http.Controller):
         company_id = _pick_company(company_id, order, user_sudo)
 
         # Select all acquirers that match the constraints
-        acquirers = _select_acquirers(acquirer_id, company_id, partner_id)
+        acquirers_sudo = request.env['payment.acquirer'].sudo()._get_compatible_acquirers(
+            company_id, partner_id, preferred_acquirer_id=acquirer_id
+        )  # In sudo mode to read on the partner fields if the user is not logged in
 
         # Make sure that the currency exists and is active
         currency = request.env['res.currency'].browse(currency_id).exists()
@@ -192,14 +158,14 @@ class WebsitePayment(http.Controller):
 
         # Compute the fees taken by acquirers supporting the feature
         country_id = user_sudo.partner_id.country_id.id
-        fees_by_acquirer = {acquirer: acquirer._compute_fees(amount, currency.id, country_id)
-                            for acquirer in acquirers.filtered('fees_active')}
+        fees_by_acquirer = {acq_sudo: acq_sudo._compute_fees(amount, currency.id, country_id)
+                            for acq_sudo in acquirers_sudo.filtered('fees_active')}
 
         tx_context = {
-            'acquirers': acquirers,
-            'tokens': _select_payment_tokens(acquirers, partner_id),
+            'acquirers': acquirers_sudo,
+            'tokens': _select_payment_tokens(acquirers_sudo, partner_id) if logged_in else [],
             'fees_by_acquirer': fees_by_acquirer,
-            'show_tokenize_input': not user_sudo._is_public(),  # Only save your own payment methods
+            'show_tokenize_input': logged_in,  # Prevent saving payment methods on different partner
             'reference': reference or 'tx',  # Use 'tx' to always have a ref if it was not provided
             'amount': amount,
             'currency': currency,
@@ -368,39 +334,10 @@ class WebsitePayment(http.Controller):
         :return: The rendered manage form
         :rtype: str
         """
-
-        def _select_acquirers(_company_id, _partner_id):
-            """ Select and return the acquirers matching the criteria for tokenization.
-
-            The criteria are that acquirers must not be disabled, be in the same company as the one
-            that is provided, support the country of the partner if it exists, and support
-            tokenization.
-
-            :param int _company_id: The relevant company, as a `res.company` id
-            :param int _partner_id: The partner making the payment, as a `res.partner` id
-            :return: The compatible acquirers
-            :rtype: recordset of `payment.acquirer`
-            """
-            _domain = [
-                ('state', 'in', ['enabled', 'test']),
-                ('company_id', '=', _company_id),
-                ('allow_tokenization', '=', True),
-                ('support_tokenization', '=', True),
-            ]
-            _partner = request.env['res.partner'].browse(_partner_id)
-            if _partner.country_id:  # If the partner has a country, check that it is supported
-                _domain = expression.AND([
-                    _domain,
-                    [
-                        '|', ('country_ids', '=', False),
-                        ('country_ids', 'in', [_partner.country_id.id])
-                    ]
-                ])
-            _acquirers = request.env['payment.acquirer'].search(_domain)
-            return _acquirers
-
         partner = request.env.user.partner_id
-        acquirers = _select_acquirers(request.env.user.company_id.id, partner.id)
+        acquirers = request.env['payment.acquirer']._get_compatible_acquirers(
+            request.env.user.company_id.id, partner.id, allow_tokenization=True
+        )
         tokens = set(partner.payment_token_ids).union(
             partner.commercial_partner_id.sudo().payment_token_ids
         )  # Show all partner's tokens, regardless of which acquirer is available

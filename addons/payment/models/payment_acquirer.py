@@ -5,6 +5,7 @@ import logging
 from odoo import _, api, fields, models, SUPERUSER_ID
 from odoo.exceptions import ValidationError
 from odoo.http import request
+from odoo.osv import expression
 
 _logger = logging.getLogger(__name__)
 
@@ -324,6 +325,54 @@ class PaymentAcquirer(models.Model):
 
     #=== BUSINESS METHODS ===#
 
+    @api.model
+    def _get_compatible_acquirers(
+        self, company_id, partner_id, allow_tokenization=False, preferred_acquirer_id=None,
+        **_kwargs
+    ):
+        """ Select and return the acquirers matching the criteria.
+
+        The base criteria are that acquirers must not be disabled, be in the company that is
+        provided, and support the country of the partner if it exists.
+
+        If a `preferred_acquirer_id` is specified, only the corresponding acquirer is returned.
+        If that acquirer does not exist or does not match the criteria, only the acquirers that
+        do match them are returned.
+
+        :param int company_id: The company to which acquirers must belong, as a `res.company` id
+        :param int partner_id: The partner making the payment, as a `res.partner` id
+        :param bool allow_tokenization: Whether matching acquirers must allow tokenization
+        :param int preferred_acquirer_id: The preferred acquirer, as a `payment.acquirer` id
+        :param dict _kwargs: Optional data. This parameter is not used here
+        :return: The compatible acquirers
+        :rtype: recordset of `payment.acquirer`
+        """
+        # Compute the base domain for compatible acquirers
+        domain = ['&', ('state', 'in', ['enabled', 'test']), ('company_id', '=', company_id)]
+        partner = self.env['res.partner'].browse(partner_id)
+
+        # Handle partner country
+        if partner.country_id:  # The partner country must either not be set or be supported
+            domain = expression.AND([
+                domain,
+                ['|', ('country_ids', '=', False), ('country_ids', 'in', [partner.country_id.id])]
+            ])
+
+        # Handle tokenization support
+        if allow_tokenization:
+            domain = expression.AND([domain, [('allow_tokenization', '=', True)]])
+
+        # Handle preferred acquirer
+        compatible_acquirers = None
+        if preferred_acquirer_id:  # If an acquirer is preferred, check that it matches the criteria
+            compatible_acquirers = request.env['payment.acquirer'].search(expression.AND([
+                domain, [('id', '=', preferred_acquirer_id)]
+            ]))
+        if not compatible_acquirers:  # If not found or incompatible, fallback on the others
+            compatible_acquirers = request.env['payment.acquirer'].search(domain)
+
+        return compatible_acquirers
+
     def _get_inline_template_view_xml_id(self):
         """ Get the xml id of the inline form template.
 
@@ -351,7 +400,7 @@ class PaymentAcquirer(models.Model):
         url = ''
         if request:  # Give priority to url_root to handle multi-website cases
             url = request.httprequest.url_root
-        if not url and 'website_id' in self and self.website_id:
+        if not url and 'website_id' in self and self.website_id:  # TODO ANV should be website_id agnostic since it's defined in website_payment
             url = self.website_id._get_http_domain()
         if not url:  # Fallback to web.base.url
             url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')

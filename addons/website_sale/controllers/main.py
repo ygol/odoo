@@ -825,30 +825,29 @@ class WebsiteSale(http.Controller):
             partner_id=order.partner_id.id,
             order=order,
             payment_action_id=request.env.ref('payment.action_payment_acquirer').id,
+            init_tx_route='/shop/payment/transaction/',
             landing_route='/shop/payment/validate',
         )
 
-        domain = expression.AND([
-            ['&', ('state', 'in', ['enabled', 'test']), ('company_id', '=', order.company_id.id)],
-            ['|', ('website_id', '=', False), ('website_id', '=', request.website.id)],
-            ['|', ('country_ids', '=', False), ('country_ids', 'in', [order.partner_id.country_id.id])]
-        ])
-        acquirers = request.env['payment.acquirer'].search(domain)
+        acquirers_sudo = request.env['payment.acquirer'].sudo()._get_compatible_acquirers(
+            order.company_id.id, order.partner_id.id, website_id=request.website.id, order=order
+        )  # In sudo mode to read on the partner and order fields if the user is not logged in
 
-        values['access_token'] = order.access_token
-        values['acquirers'] = [acq for acq in acquirers if (acq.payment_flow == 'form' and acq.redirect_template_view_id) or
-                                    (acq.payment_flow == 's2s' and acq.inline_template_view_id)]
+        values['acquirers'] = acquirers_sudo
         values['tokens'] = request.env['payment.token'].search(
-            [('acquirer_id', 'in', acquirers.ids)])
+            [('acquirer_id', 'in', acquirers_sudo.ids)]
+        ) if not request.env.user._is_public() else []
+        values['fees_by_acquirer'] = {acq_sudo: acq_sudo._compute_fees(
+            order.amount_total, order.currency_id, order.partner_id.country_id.id
+        ) for acq_sudo in acquirers_sudo.filtered('fees_active')}
         values['reference'] = ''
         values['amount'] = order.amount_total
         values['currency'] = order.currency_id
-        values['fees_by_acquirer'] = {acquirer: acquirer._compute_fees(
-            order.amount_total, order.currency_id, order.partner_id.country_id.id
-        ) for acquirer in acquirers.filtered('fees_active')}
+        values['access_token'] = order.access_token
         return values
 
     @http.route(['/shop/payment'], type='http', auth="public", website=True, sitemap=False)
+    # TODO ANV don't show tokenization option if Subs product in cart
     def payment(self, **post):
         """ Payment step. This page proposes several payment means based on available
         payment.acquirer. State at this point :
