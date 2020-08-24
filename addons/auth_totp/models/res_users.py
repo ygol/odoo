@@ -142,18 +142,7 @@ class TOTPWizard(models.TransientModel):
     @api.depends('user_id.login', 'user_id.company_id.display_name', 'secret')
     def _compute_qrcode(self):
         # TODO: make "issuer" configurable through config parameter?
-        global_issuer = None
-        base = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        if base:
-            base_url = werkzeug.urls.url_parse(base)
-            dbs = db_list(force=True)
-            # must use host (rather than netloc) because `:` between host and
-            # port is interpreted as separator between issuer and accountname
-            # even if escaped
-            global_issuer = base_url.host
-            if len(dbs) > 1:
-                global_issuer = f'{global_issuer}~{self.env.cr.dbname}'
-
+        global_issuer = request and request.httprequest.host.split(':', 1)[0]
         for w in self:
             issuer = global_issuer or w.user_id.company_id.display_name
             w.url = url = werkzeug.urls.url_unparse((
