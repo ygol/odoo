@@ -193,6 +193,8 @@ class account_payment(models.Model):
                 active_ids = self._context.get('active_ids')
                 invoices = self.env['account.move'].browse(active_ids)
                 self.amount = abs(self._compute_payment_amount(invoices, self.currency_id, self.journal_id, self.payment_date))
+            if self.payment_type == 'inbound':
+                domain['partner_bank_account_id'] = [('partner_id', '=', self.company_id.partner_id.id)]
 
             return {'domain': domain}
         return {}
@@ -212,7 +214,11 @@ class account_payment(models.Model):
                 self.partner_bank_account_id = self.partner_id.commercial_partner_id.bank_ids[0]
             else:
                 self.partner_bank_account_id = False
-        return {'domain': {'partner_bank_account_id': [('partner_id', 'in', [self.partner_id.id, self.partner_id.commercial_partner_id.id])]}}
+        if self.payment_type == 'inbound' and self.company_id:
+            domain = {'partner_bank_account_id': [('partner_id', '=', self.company_id.partner_id.id)]}
+        else:
+            domain = {'partner_bank_account_id': [('partner_id', 'in', [self.partner_id.id, self.partner_id.commercial_partner_id.id])]}
+        return {'domain': domain}
 
     @api.onchange('payment_type')
     def _onchange_payment_type(self):
