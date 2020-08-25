@@ -170,7 +170,6 @@ QUnit.module('widgets', {
             },
             mockRPC: function (route) {
                 if (route.startsWith('/web/async_export')) {
-                    assert.step(route);
                     return Promise.resolve({
                         'asyncJobId': false
                     });
@@ -218,6 +217,12 @@ QUnit.module('widgets', {
                     }
                     return this._super(...arguments);
                 },
+            },
+            services: {
+                'async_job': AsyncJobService,
+                'bus_service': BusService,
+                'crash_manager': CrashManager,
+                'local_storage': LocalStorageService,
             },
         });
 
@@ -306,7 +311,6 @@ QUnit.module('widgets', {
             },
             services: {
                 'async_job': AsyncJobService,
-                'async_job': AsyncJobService,
                 'bus_service': BusService,
                 'crash_manager': CrashManager,
                 'local_storage': LocalStorageService,
@@ -382,6 +386,12 @@ QUnit.module('widgets', {
                     ]);
                 }
                 return this._super.apply(this, arguments);
+            },
+            services: {
+                'async_job': AsyncJobService,
+                'bus_service': BusService,
+                'crash_manager': CrashManager,
+                'local_storage': LocalStorageService,
             },
         });
 

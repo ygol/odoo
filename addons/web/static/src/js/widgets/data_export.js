@@ -174,6 +174,9 @@ var DataExport = Dialog.extend({
                 }),
                 token: 'dummy-token',
             }
+        }).then((job) => {
+            this.do_action(job.payload.result);
+            this.call('async_job', 'complete', job.id);
         });
     },
     /**

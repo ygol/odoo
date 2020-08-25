@@ -15,6 +15,7 @@ const PROCESSING = 'processing';  // a worker begins to process the task
 const SUCCEEDED = 'succeeded';    // the task succeeded with a result the user must process
 const DONE = 'done';              // the task succeeded without result or the user processed it
 const FAILED = 'failed';          // the task failed with an error
+const STATE_ORDER = [CREATED, PROCESSING, SUCCEEDED, FAILED, DONE];
 
 
 const TASK_CREATED_TITLE = _lt("Background task created");
@@ -62,29 +63,37 @@ const AsyncJobService = AbstractService.extend({
     //--------------------------------------------------------------------------
 
     /**
-     * Call an asynchronous capable endpoint, waiting up to 5 seconds
-     * for the asynchronous task completes to automomatically execute
-     * its action (if any).
+     * Call an asynchronous capable endpoint, blocking the UI up to 5 seconds
+     * for the asynchronous task to completes. Resolves when the asynchronous
+     * background task completes.
      * 
      * @param {object} params ajax rpc params
      * @param {object} options ajac rpc options
-     * @return {promise} original rpc response
+     * @return {promise} resolved when the background task completes
      */
     asyncRpc(params, options) {
         options = options || {}
         options.shadow = true;
         blockUI();
-        return this._rpc(params).then(({asyncJobId}) => {
-            if (asyncJobId) {
-                this._fakeSyncRegister(asyncJobId, 5000);
-            } else {
-                if (asyncJobId === undefined) {
-                    console.warn("The called endpoint is not asynchronous or the asyncJobId key was not set.");
-                };
-                unblockUI();
-            }
-        }, () => {
-            unblockUI()
+        return new Promise((resolve, reject) => {
+            this._rpc(params, options).then(({asyncJobId}) => {
+                let blocked = true;
+                function _unblockUI() {
+                    if (blocked) {
+                        blocked = false;
+                        unblockUI();
+                    }
+                }
+                setTimeout(_unblockUI, 5000);
+                this._watchedJobs[asyncJobId] = {resolve, reject, _unblockUI};
+                if (asyncJobId in this._jobs) {
+                    // In case the HTTP response comes AFTER the job completed
+                    this._resumeWatchedJob(this._jobs[asyncJobId]);
+                }
+            }).catch(error => {
+                blockUI();
+                reject(error);
+            });
         });
     },
 
@@ -121,68 +130,31 @@ const AsyncJobService = AbstractService.extend({
     },
 
     /**
-     * Execute the action of a SUCCEEDED job or show the error of a FAILED one
-     * @param  {integer} jobId
+     * Mark a job as DONE
+     * @param  {int} jobId
      */
-    resume(jobId) {
+    complete(jobId) {
         const job = this._jobs[jobId];
-        if (job.state === SUCCEEDED
-            && (job.payload.result["type"] || "").startsWith("ir.action")) {
-            this.do_action(job.payload.result).then(() => {
-                // Quickly update this tab
-                job.state = DONE;
-                delete job.payload;
-                bus.trigger('async_job', job);
-
-                // Make the server send a message on the bus to notify
-                // the other tabs
-                this._rpc({
-                    model: 'ir.async',
-                    method: 'complete',
-                    args: [job.id],
-                });
-            });
-        } else if (job.state === FAILED) {
-            this.call('crash_manager', 'rpc_error', job.payload.error);
+        if (job.state !== SUCCEEDED) {
+            console.warn("Only SUCCEEDED jobs should be programmatically completed")
         }
+
+        job.state = DONE;
+        delete job.payload;
+        bus.trigger('async_job', job);
+
+        // Make the server send a message on the bus to notify
+        // the other tabs
+        this._rpc({
+            model: 'ir.async',
+            method: 'complete',
+            args: [job.id],
+        });
     },
 
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
-
-    /**
-     * Register a jobId returned by the HTTP response of an asynchronous
-     * capable endpoint to be automatically executed
-     * 
-     * @param {integer} jobId
-     * @param {integer} [unregisterDelai]
-     */
-    _fakeSyncRegister(jobId, unregisterDelai) {
-        this._watchedJobs[jobId] = true;
-        if (unregisterDelai) {
-            setTimeout(() => {this._fakeSyncResume(jobId)}, unregisterDelai)
-        }
-    },
-
-    /**
-     * Resume a job registered by _fakeSyncRegister
-     * 
-     * @param {integer} jobId
-     */
-    _fakeSyncResume(jobId) {
-        if (!(jobId in this._watchedJobs)) return;
-        delete this._watchedJobs[jobId];
-        const defaultJob = {state: CREATED, name: _t("Unknown")};
-        const job = this._jobs[jobId] || defaultJob;
-
-        unblockUI();
-        if (job.state === CREATED || job.state === PROCESSING) {
-            this.do_notify(TASK_CREATED_TITLE, _.str.sprintf(TASK_PROCESSING_CONTENT.toString(), job.name));
-        } else {
-            this.resume(job.id);
-        }
-    },
 
     /**
      * Shows a notification for newly created jobs and when jobs are done
@@ -210,6 +182,30 @@ const AsyncJobService = AbstractService.extend({
             case DONE:
                 this.do_notify(TASK_DONE_TITLE, _.str.sprintf(TASK_DONE_CONTENT.toString(), job.name));
                 break;
+        }
+    },
+
+    /**
+     * Resolve/reject the asyncRpc promise when 
+     *
+     * @private
+     * @param {Job} new job
+     * @param {jobState} oldState
+     */
+    _resumeWatchedJob(job) {
+        if (STATE_ORDER.indexOf(job.state) < STATE_ORDER.indexOf(SUCCEEDED)) {
+            return
+        }
+
+        const {resolve, reject, _unblockUI} = this._watchedJobs[job.id];
+        delete this._watchedJobs[job.id];
+        _unblockUI();
+
+        if (job.state === FAILED) {
+            this.call('crash_manager', 'rpc_error', job.payload.error);
+            reject({message: job.payload.error, event: $.Event()});
+        } else {
+            resolve(job);
         }
     },
 
@@ -249,20 +245,17 @@ const AsyncJobService = AbstractService.extend({
             }
 
             // Discard jobs that are in a previous stage
-            const order = [CREATED, PROCESSING, SUCCEEDED, FAILED, DONE];
             const oldJob = this._jobs[job.id] || {};
-            if (order.indexOf(job.state) < order.indexOf(oldJob.state))
+            if (STATE_ORDER.indexOf(job.state) < STATE_ORDER.indexOf(oldJob.state))
                 continue;
 
+            // Update internal jobs db and relay the event
             this._jobs[job.id] = job;
-
-            // Notify non watched jobs, auto execute terminated watched ones
-            if (!(job.id in this._watchedJobs)) {
-                this._notify(job, oldJob.state)
-            } else if (order.indexOf(job.state) > order.indexOf(PROCESSING)) {
-                this._fakeSyncResume(job.id);
+            if (job.id in this._watchedJobs) {
+                this._resumeWatchedJob(job);
+            } else {
+                this._notify(job, oldJob.state);
             }
-
             bus.trigger('async_job', job);
         }
     },
