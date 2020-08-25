@@ -78,6 +78,9 @@ function factory(dependencies) {
                     0
                 );
             }
+            if (this.messaging.isNotificationPermissionDefault()) {
+                counter += 1;
+            }
             return counter;
         }
 

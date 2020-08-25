@@ -3,6 +3,7 @@ odoo.define('mail/static/src/components/notification_list/notification_list.js',
 
 const components = {
     NotificationGroup: require('mail/static/src/components/notification_group/notification_group.js'),
+    NotificationRequest: require('mail/static/src/components/notification_request/notification_request.js'),
     ThreadNeedactionPreview: require('mail/static/src/components/thread_needaction_preview/thread_needaction_preview.js'),
     ThreadPreview: require('mail/static/src/components/thread_preview/thread_preview.js'),
 };
@@ -95,6 +96,7 @@ class NotificationList extends Component {
                     };
                 });
         }
+
         // thread notifications
         const threadNotifications = threads
             .sort((t1, t2) => {
@@ -135,10 +137,20 @@ class NotificationList extends Component {
                     };
                 }).concat(notifications);
         }
-        return {
+
+        const res = {
             isDeviceMobile: this.env.messaging.device.isMobile,
             notifications,
         };
+
+        if (props.filter === 'all' && this.env.messaging.isNotificationPermissionDefault()) {
+            res.notifications.unshift({
+                type: 'odoobotRequest',
+                uniqueId: `odoobotRequest`,
+            });
+        }
+
+        return res;
     }
 
     /**

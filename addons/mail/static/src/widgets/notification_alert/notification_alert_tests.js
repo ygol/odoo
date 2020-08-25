@@ -1,11 +1,11 @@
-odoo.define('mail_bot/static/src/widgets/notification_alert/notification_alert_tests.js', function (require) {
+odoo.define('mail/static/src/widgets/notification_alert/notification_alert_tests.js', function (require) {
 'use strict';
 
 const { afterEach, beforeEach, start } = require('mail/static/src/utils/test_utils.js');
 
 const FormView = require('web.FormView');
 
-QUnit.module('mail_bot', {}, function () {
+QUnit.module('mail', {}, function () {
 QUnit.module('widgets', {}, function () {
 QUnit.module('notification_alert_tests.js', {
     beforeEach() {

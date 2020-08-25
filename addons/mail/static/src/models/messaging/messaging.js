@@ -111,6 +111,16 @@ function factory(dependencies) {
             this.update({ isInitialized: true });
         }
 
+        /**
+         * @returns {boolean}
+         */
+        isNotificationPermissionDefault() {
+            const windowNotification = this.env.browser.Notification;
+            return windowNotification
+                ? windowNotification.permission === 'default'
+                : false;
+        }
+
         //----------------------------------------------------------------------
         // Private
         //----------------------------------------------------------------------

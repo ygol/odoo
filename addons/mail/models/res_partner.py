@@ -112,7 +112,13 @@ class Partner(models.Model):
         if len(users) < limit:
             partners = self.search_read(search_dom, fields, limit=limit)
             # Remove duplicates
-            partners = [p for p in partners if not len([u for u in users if u['id'] == p['id']])] 
+            partners = [p for p in partners if not len([u for u in users if u['id'] == p['id']])]
+
+        #add odoobot in mention suggestion when pinging in mail_thread
+        if len(partners) + len(users) < limit and "odoobot".startswith(search.lower()):
+            odoobot = self.env.ref("base.partner_root")
+            if not any(elem['id'] == odoobot.id for elem in partners):
+                partners.append({'id': odoobot.id, 'name': odoobot.name, 'email': odoobot.email})
 
         return [users, partners]
 
@@ -151,3 +157,9 @@ class Partner(models.Model):
         else:
             return {}
 
+    def _compute_im_status(self):
+        super()._compute_im_status()
+        odoobot_id = self.env['ir.model.data'].xmlid_to_res_id("base.partner_root")
+        odoobot = self.env['res.partner'].browse(odoobot_id)
+        if odoobot in self:
+            odoobot.im_status = 'bot'

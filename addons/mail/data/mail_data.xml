@@ -6,6 +6,12 @@
             <field name="notification_type">inbox</field>
         </record>
 
+        <record id="base.partner_root" model="res.partner">
+            <field name="name">OdooBot</field>
+            <field name="email">odoobot@example.com</field>
+            <field name="image_1920" type="base64" file="mail/static/src/img/odoobot.png"/>
+        </record>
+
         <!-- Catchall Email Alias -->
         <record id="icp_mail_catchall_alias" model="ir.config_parameter">
             <field name="key">mail.catchall.alias</field>
