@@ -336,7 +336,7 @@ class WebsitePayment(http.Controller):
         """
         partner = request.env.user.partner_id
         acquirers = request.env['payment.acquirer']._get_compatible_acquirers(
-            request.env.user.company_id.id, partner.id, allow_tokenization=True
+            request.env.company.id, partner.id, allow_tokenization=True
         )
         tokens = set(partner.payment_token_ids).union(
             partner.commercial_partner_id.sudo().payment_token_ids

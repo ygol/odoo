@@ -1030,10 +1030,6 @@ Reason(s) of this behavior could be:
             return self.get_portal_url(query_string='&%s' % auth_param)
         return super(SaleOrder, self)._get_share_url(redirect, signup_partner, pid)
 
-    def _get_payment_flow(self):
-        self.ensure_one()
-        return 'redirect'
-
     def _get_portal_return_action(self):
         """ Return the action used to display orders when returning from customer portal. """
         self.ensure_one()

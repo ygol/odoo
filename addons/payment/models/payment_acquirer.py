@@ -42,12 +42,6 @@ class PaymentAcquirer(models.Model):
         required=True)
     payment_icon_ids = fields.Many2many(
         string="Supported Payment Icons", comodel_name='payment.icon')
-    payment_flow = fields.Selection(
-        string="Payment Flow",
-        help="Note: Subscriptions does not take this field in account, it uses S2S by default.",
-        selection=[
-            ('redirect', "Redirection to the acquirer website"), ('s2s', "Payment from Odoo")
-        ], default='redirect', required=True)
     allow_tokenization = fields.Boolean(
         string="Allow Saving Payment Methods",
         help="This controls whether customers can save their payment methods as payment tokens.\n"
@@ -153,15 +147,15 @@ class PaymentAcquirer(models.Model):
         for acquirer in self:
             acquirer.journal_id.show_on_dashboard = acquirer.state == 'enabled'
 
-    @api.onchange('payment_flow')
-    def _onchange_payment_flow(self):  # TODO ANV drop  # TODO DBO what about electronic ?
-        """ Add (remove) the electronic payment method for acquirers (not) supporting tokenization.
+    @api.onchange('allow_tokenization')
+    def _onchange_allow_tokenization(self):
+        """ Add (remove) the electronic payment method for acquirers (not) allowing tokenization.
 
         :return: None
         """
         electronic = self.env.ref('payment.account_payment_method_electronic_in')
         for acquirer in self:
-            if acquirer.support_tokenization and acquirer.payment_flow == 's2s':
+            if acquirer.allow_tokenization:
                 if electronic not in acquirer.inbound_payment_method_ids:
                     acquirer.inbound_payment_method_ids = [(4, electronic.id)]
             elif electronic in acquirer.inbound_payment_method_ids:
@@ -305,7 +299,7 @@ class PaymentAcquirer(models.Model):
             _prepare_transfer_account_for_direct_creation(self.name, self.company_id)
         account = self.env['account.account'].create(account_vals)
         inbound_payment_method_ids = []
-        if self.support_tokenization and self.payment_flow == 's2s':  # TODO DBU wut ?
+        if self.allow_tokenization:
             inbound_payment_method_ids.append(
                 (4, self.env.ref('payment.account_payment_method_electronic_in').id)
             )
@@ -453,7 +447,7 @@ class PaymentAcquirer(models.Model):
 
     # --> CLEANED & SORTED |
 
-    def s2s_process(self, data):
+    def s2s_process(self, data):  # TODO DBO spec
         """ TODO. """
         cust_method_name = '%s_s2s_form_process' % (self.provider)
         if not self.s2s_validate(data):
@@ -467,7 +461,7 @@ class PaymentAcquirer(models.Model):
             return method(data)
         return True
 
-    def s2s_validate(self, data):
+    def s2s_validate(self, data):  # TODO DBO spec
         """ TODO. """
         cust_method_name = '%s_s2s_form_validate' % (self.provider)
         if hasattr(self, cust_method_name):

@@ -189,8 +189,7 @@ class CustomerPortal(CustomerPortal):
             ])
             acquirers = request.env['payment.acquirer'].sudo().search(domain)
 
-            values['acquirers'] = acquirers.filtered(lambda acq: (acq.payment_flow == 'redirect' and acq.redirect_template_view_id) or
-                                                     (acq.payment_flow == 's2s' and acq.inline_template_view_id))
+            values['acquirers'] = acquirers  # TODO ANV use _get_compatible_acquirers
             values['tokens'] = request.env['payment.token'].search([('partner_id', '=', order_sudo.partner_id.id)])
             values['fees_by_acquirer'] = {acquirer: acquirer._compute_fees(
                 order_sudo.amount_total, order_sudo.currency_id, order_sudo.partner_id.country_id.id
@@ -267,7 +266,7 @@ class CustomerPortal(CustomerPortal):
 
     # note dbo: website_sale code
     @http.route(['/my/orders/<int:order_id>/transaction/'], type='json', auth="public", website=True)
-    def payment_transaction_token(self, acquirer_id, order_id, tokenization_requested=False, access_token=None, **kwargs):
+    def payment_transaction_token(self, acquirer_id, order_id, flow, tokenization_requested=False, access_token=None, **kwargs):
         """ Json method that creates a payment.transaction, used to create a
         transaction when the user clicks on 'pay now' button. After having
         created the transaction, the event continues and the user is redirected
@@ -295,7 +294,7 @@ class CustomerPortal(CustomerPortal):
         # Create transaction
         vals = {
             'acquirer_id': acquirer_id,
-            'operation': f'online_{kwargs.get("flow") or order._get_payment_flow()}',
+            'operation': f'online_{flow}',
             'tokenize': tokenize,
             'landing_route': order.get_portal_url(),
         }

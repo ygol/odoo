@@ -51,7 +51,6 @@
                                         <field name="allow_tokenization" attrs="{'invisible': [('support_tokenization', '=', False)]}"/>
                                         <field name="check_validity" attrs="{'invisible': [('support_tokenization', '=', False)]}" groups="base.group_no_one"/>
                                         <field name="capture_manually" attrs="{'invisible': [('support_authorization', '=', False)]}"/>
-                                        <field name="payment_flow" widget="radio" attrs="{'invisible': [('support_tokenization', '=', False)]}"/>
                                         <field name="qr_code" attrs="{'invisible': [('provider', '!=', 'transfer')]}"/>
                                     </group>
                                     <group string="Availability" name="availability">
