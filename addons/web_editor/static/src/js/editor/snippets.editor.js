@@ -881,7 +881,7 @@ var SnippetsMenu = Widget.extend({
         this.snippetEditors = [];
         this._enabledEditorHierarchy = [];
 
-        this._mutex = new concurrency.Mutex();
+        this._mutex = this._mutexWithLoadingEffect(new concurrency.Mutex());
 
         this.setSelectorEditableArea(options.$el, options.selectorEditableArea);
 
@@ -897,6 +897,9 @@ var SnippetsMenu = Widget.extend({
             '.modal .close',
             '.o_we_crop_widget',
         ].join(', ');
+
+        this.currentLoader = undefined;
+        this.loadingTimer = undefined;
     },
     /**
      * @override
@@ -1302,7 +1305,7 @@ var SnippetsMenu = Widget.extend({
      * @returns {Promise}
      */
     _updateInvisibleDOM: function () {
-        return this._mutex.exec(() => {
+        return this._mutex.execWithLoadingEffect(() => {
             this.invisibleDOMMap = new Map();
             const $invisibleDOMPanelEl = $(this.invisibleDOMPanelEl);
             $invisibleDOMPanelEl.find('.o_we_invisible_entry').remove();
@@ -1988,7 +1991,78 @@ var SnippetsMenu = Widget.extend({
         this.$('.o_we_customize_snippet_btn').toggleClass('active', tab === this.tabs.OPTIONS)
                                              .prop('disabled', tab !== this.tabs.OPTIONS);
     },
-
+    /**
+     * @private
+     */
+    _setLoadingEffect: function () {
+        if (this.currentLoader === undefined) {
+            const loaderContainer = document.createElement('div');
+            const loader = document.createElement('i');
+            const loaderContainerClassList = [
+                'd-flex',
+                'h-100',
+                'w-100',
+                'bg-black-25',
+                'position-absolute',
+                'oe_option_tab_loader',
+            ];
+            const loaderClassList = [
+                'fa',
+                'fa-spinner',
+                'fa-pulse',
+                'fa-4x',
+                'w-100',
+                'text-white',
+                'text-center',
+                'position-absolute',
+                'align-self-center',
+            ];
+            loaderContainer.classList.add(...loaderContainerClassList);
+            loader.classList.add(...loaderClassList);
+            loaderContainer.appendChild(loader);
+            this.el.appendChild(loaderContainer);
+            this.currentLoader = loaderContainer;
+        }
+    },
+    /**
+     * @private
+     */
+    _removeLoadingEffect: function () {
+        if (this.currentLoader) {
+            this.el.removeChild(this.currentLoader);
+            this.currentLoader = undefined;
+        }
+    },
+    /**
+     * Mutex decorator : used to add loading effet while mutexualized operations are executed.
+     * The execWithLoadingEffect method adds the action to the mutex queue and
+     * sets a loading effect over the editor after 1s.
+     * As soon as the mutex is unlocked, the loading effect will be removed.
+     *
+     * Sometimes mutex computations can remove loader element from DOM (see _loadSnippetsTemplates)
+     * In this case, 'this.currentLoader' contains loader element but querySelector('.oe_option_tab_loader') will be null.
+     * So loading effect on editor level can't be used for those computations.
+     *
+     * @private
+     * @param {Mutex} mutex
+     */
+    _mutexWithLoadingEffect: function (mutex) {
+        mutex.execWithLoadingEffect = async action => {
+            mutex.exec(action);
+            // In case of an active loadingTimer, the action will only be added to mutex queue.
+            if (!this.loadingTimer) {
+                this.loadingTimer = setTimeout(() => {
+                    this._setLoadingEffect();
+                }, 1000);
+                await mutex.getUnlockedDef().then(() => {
+                    clearTimeout(this.loadingTimer);
+                    this.loadingTimer = undefined;
+                    this._removeLoadingEffect();
+                });
+            }
+        }
+        return mutex;
+    },
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
@@ -2290,7 +2364,7 @@ var SnippetsMenu = Widget.extend({
      * @param {function} ev.data.exec
      */
     _onSnippetEditionRequest: function (ev) {
-        this._mutex.exec(ev.data.exec);
+        this._mutex.execWithLoadingEffect(ev.data.exec);
     },
     /**
      * @private
