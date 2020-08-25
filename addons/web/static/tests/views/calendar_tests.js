@@ -2815,7 +2815,7 @@ QUnit.module('Views', {
         assert.strictEqual(calendar.$('.o_field_widget[name="start"]').text(), "12/16/2016 16:00:00");
 
         // Move event 6 as on first day of month view (27th november 2016)
-        await testUtils.dragAndDrop(
+        await testUtils.dom.dragAndDrop(
             calendar.$('.fc-event').eq(5),
             calendar.$('.fc-day-top').first()
         );
@@ -2866,8 +2866,8 @@ QUnit.module('Views', {
 
         // Create event (on 20 december)
         var $cell = calendar.$('.fc-day-grid .fc-row:eq(3) .fc-day:eq(2)');
-        await testUtils.triggerMouseEvent($cell, "mousedown");
-        await testUtils.triggerMouseEvent($cell, "mouseup");
+        await testUtils.dom.triggerMouseEvent($cell, "mousedown");
+        await testUtils.dom.triggerMouseEvent($cell, "mouseup");
         await testUtils.nextTick();
         var $input = $('.modal-body input:first');
         await testUtils.fields.editInput($input, "An event");
@@ -2879,7 +2879,7 @@ QUnit.module('Views', {
         assert.strictEqual(calendar.$('.o_cw_popover .o_cw_popover_fields_secondary .list-group-item:last .o_field_date').text(), '12/20/2016', "should have correct start date");
 
         // Move event to another day (on 27 november)
-        await testUtils.dragAndDrop(
+        await testUtils.dom.dragAndDrop(
             calendar.$('.fc-event').first(),
             calendar.$('.fc-day-top').first()
         );
@@ -2890,7 +2890,7 @@ QUnit.module('Views', {
         assert.strictEqual(calendar.$('.o_cw_popover .o_cw_popover_fields_secondary .list-group-item:last .o_field_date').text(), '11/27/2016', "should have correct start date");
 
         // Move event to last day (on 7 january)
-        await testUtils.dragAndDrop(
+        await testUtils.dom.dragAndDrop(
             calendar.$('.fc-event').first(),
             calendar.$('.fc-day-top').last()
         );
@@ -2920,8 +2920,8 @@ QUnit.module('Views', {
 
         // Create event (on 20 december)
         var $cell = calendar.$('.fc-day-grid .fc-row:eq(3) .fc-day:eq(2)');
-        testUtils.triggerMouseEvent($cell, "mousedown");
-        testUtils.triggerMouseEvent($cell, "mouseup");
+        testUtils.dom.triggerMouseEvent($cell, "mousedown");
+        testUtils.dom.triggerMouseEvent($cell, "mouseup");
         await testUtils.nextTick();
         var $input = $('.modal-body input:first');
         await testUtils.fields.editInput($input, "An event");
@@ -2929,7 +2929,7 @@ QUnit.module('Views', {
         await testUtils.nextTick();
 
         // Move event to another day (on 19 december)
-        await testUtils.dragAndDrop(
+        await testUtils.dom.dragAndDrop(
             calendar.$('.fc-event:contains("An event")'),
             calendar.$('.fc-day-grid .fc-row:eq(3) .fc-day-top:eq(1)')
         );
@@ -2964,8 +2964,8 @@ QUnit.module('Views', {
 
         // Create event (on 20 december)
         var $cell = calendar.$('.fc-day-grid .fc-row:eq(3) .fc-day:eq(2)');
-        testUtils.triggerMouseEvent($cell, "mousedown");
-        testUtils.triggerMouseEvent($cell, "mouseup");
+        testUtils.dom.triggerMouseEvent($cell, "mousedown");
+        testUtils.dom.triggerMouseEvent($cell, "mouseup");
         await testUtils.nextTick();
         var $input = $('.modal-body input:first');
         await testUtils.fields.editInput($input, "An event");
@@ -3033,8 +3033,8 @@ QUnit.module('Views', {
 
         // Create event (on 20 december)
         var $cell = calendar.$('.fc-day-grid .fc-row:eq(3) .fc-day:eq(2)');
-        await testUtils.triggerMouseEvent($cell, "mousedown");
-        await testUtils.triggerMouseEvent($cell, "mouseup");
+        await testUtils.dom.triggerMouseEvent($cell, "mousedown");
+        await testUtils.dom.triggerMouseEvent($cell, "mouseup");
         await testUtils.nextTick();
         var $input = $('.modal-body input:first');
         await testUtils.fields.editInput($input, "An event");
@@ -3042,7 +3042,7 @@ QUnit.module('Views', {
         await testUtils.nextTick();
 
         // Move event to another day (on 27 november)
-        await testUtils.dragAndDrop(
+        await testUtils.dom.dragAndDrop(
             calendar.$('.fc-event').first(),
             calendar.$('.fc-day-top').first()
         );

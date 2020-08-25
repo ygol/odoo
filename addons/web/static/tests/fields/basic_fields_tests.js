@@ -3413,7 +3413,7 @@ QUnit.module('basic_fields', {
         assert.strictEqual($('.bootstrap-datetimepicker-widget:visible').length, 0,
             "datepicker should be closed initially");
 
-        testUtils.openDatepicker(form.$('.o_datepicker'));
+        testUtils.dom.openDatepicker(form.$('.o_datepicker'));
 
         assert.strictEqual($('.bootstrap-datetimepicker-widget:visible').length, 1,
             "datepicker should be opened");
@@ -3875,7 +3875,7 @@ QUnit.module('basic_fields', {
 
         var dateViewForm = form.$('.o_field_date').text();
         await testUtils.dom.click(form.$buttons.find('.o_form_button_edit'));
-        await testUtils.openDatepicker(form.$('.o_datepicker'));
+        await testUtils.dom.openDatepicker(form.$('.o_datepicker'));
         assert.strictEqual(form.$('.o_datepicker_input').val(), dateViewForm,
             "input date field should be the same as it was in the view form");
 
@@ -6917,7 +6917,7 @@ QUnit.module('basic_fields', {
         var top = $progressBarEl.offset().top + 5;
         var left = $progressBarEl.offset().left + 5;
         try {
-            testUtils.triggerPositionalMouseEvent(left, top, "click");
+            testUtils.dom.triggerPositionalMouseEvent(left, top, "click");
         } catch (e) {
             form.destroy();
             $view.remove();
@@ -6964,7 +6964,7 @@ QUnit.module('basic_fields', {
         var top = $progressBarEl.offset().top + 5;
         var left = $progressBarEl.offset().left + 5;
         try {
-            testUtils.triggerPositionalMouseEvent(left, top, "click");
+            testUtils.dom.triggerPositionalMouseEvent(left, top, "click");
         } catch (e) {
             form.destroy();
             $view.remove();

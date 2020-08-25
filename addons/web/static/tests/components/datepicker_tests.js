@@ -105,7 +105,7 @@ odoo.define('web.datepicker_tests', function (require) {
         QUnit.test("Date format is correctly set", async function (assert) {
             assert.expect(2);
 
-            testUtils.patch(time, { getLangDateFormat: () => "YYYY/MM/DD" });
+            testUtils.mock.patch(time, { getLangDateFormat: () => "YYYY/MM/DD" });
             const picker = await createComponent(DatePicker, {
                 props: { date: moment('01/09/1997') },
             });
@@ -119,7 +119,7 @@ odoo.define('web.datepicker_tests', function (require) {
             assert.strictEqual(input.value, '1997/01/09');
 
             picker.destroy();
-            testUtils.unpatch(time);
+            testUtils.mock.unpatch(time);
         });
 
         QUnit.module('DateTimePicker');
@@ -236,7 +236,7 @@ odoo.define('web.datepicker_tests', function (require) {
         QUnit.test("Date time format is correctly set", async function (assert) {
             assert.expect(2);
 
-            testUtils.patch(time, { getLangDatetimeFormat: () => "hh:mm:ss YYYY/MM/DD" });
+            testUtils.mock.patch(time, { getLangDatetimeFormat: () => "hh:mm:ss YYYY/MM/DD" });
             const picker = await createComponent(DateTimePicker, {
                 props: { date: moment('01/09/1997 12:30:01') },
             });
@@ -250,7 +250,7 @@ odoo.define('web.datepicker_tests', function (require) {
             assert.strictEqual(input.value, '12:30:01 1997/01/09');
 
             picker.destroy();
-            testUtils.unpatch(time);
+            testUtils.mock.unpatch(time);
         });
     });
 });
