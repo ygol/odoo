@@ -197,8 +197,6 @@ options.registry.CoverProperties.include({
 });
 
 options.registry.BlogPostTagSelection = options.Class.extend(WidgetAdapterMixin, {
-    xmlDependencies: (options.Class.prototype.xmlDependencies || [])
-        .concat(['/website_blog/static/src/xml/website_blog_tag.xml']),
     custom_events: _.extend({}, options.Class.prototype.custom_events, {
         save_user_value: '_onSaveUserValue',
     }),
@@ -210,7 +208,6 @@ options.registry.BlogPostTagSelection = options.Class.extend(WidgetAdapterMixin,
         const _super = this._super.bind(this);
 
         this.blogPostID = parseInt(this.$target[0].dataset.blogId);
-        this.isEditingTags = false;
         const tags = await this._rpc({
             model: 'blog.tag',
             method: 'search_read',
@@ -245,6 +242,7 @@ options.registry.BlogPostTagSelection = options.Class.extend(WidgetAdapterMixin,
                 selectedRecords: selectedTags,
                 unselectedRecords: unselectedTags,
                 recordName: 'Tag',
+                create: true,
             });
             await this._userValue.mount($('.o_wblog_tag_container').get(1));
         });

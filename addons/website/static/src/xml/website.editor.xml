@@ -142,4 +142,36 @@
         <div class="mb-2" t-esc="contentText"/>
         <div class="o_ace_editor_container"/>
     </div>
+
+    <!-- record selection user value widget -->
+    <we-row t-name="website.recordSelectionMainButtons" string='List'>
+        <we-button class="o_edit_records fa fa-pencil" t-if="!isEditing" title="Edit"/>
+        <we-button class="o_save_records fa fa-save" t-if="isEditing" title="Save"/>
+    </we-row>
+
+    <div t-name="website.recordSelectionSelectedRecords">
+        <t t-foreach="selectedRecords" t-as="record">
+            <div class="o_we_record_wrapper">
+                <span t-raw="record" class="o_we_record"/>
+                <we-button class="fa fa-minus ml-1" t-if="isEditing" t-att-data="record"/>
+            </div>
+        </t>
+    </div>
+
+    <we-row t-name="website.recordSelectionUnselectedRecords" string='Existing'>
+        <we-title>Existing</we-title>
+        <select>
+            <option hidden="true" disabled="true" selected="true" value="">Select a <t t-esc="recordName"/></option>
+            <t t-foreach="unselectedRecords" t-as="record">
+                <option t-att-value="record">
+                    <t t-raw="record"/>
+                </option>
+            </t>
+        </select>
+    </we-row>
+
+    <we-row t-name="website.recordSelectionInput" t-attf-string="New {{recordName}}">
+        <input placeholder="Name"/>
+        <we-button title="Confirm" t-on-click="_onAddNewRecord" class="fa fa-plus ml-1"/>
+    </we-row>
 </templates>

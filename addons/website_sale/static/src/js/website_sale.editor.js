@@ -54,6 +54,9 @@ odoo.define('website_sale.editor', function (require) {
 
 var options = require('web_editor.snippets.options');
 var publicWidget = require('web.public.widget');
+const WysiwygMultizone = require('web_editor.wysiwyg.multizone');
+const {ComponentWrapper, WidgetAdapterMixin} = require('web.OwlCompatibility');
+const UserValue = require('website.component.UserValue');
 const {Class: EditorMenuBar} = require('web_editor.editor');
 const {qweb} = require('web.core');
 
@@ -343,7 +346,130 @@ options.registry.WebsiteSaleGridLayout = options.Class.extend({
         return this._super(...arguments);
     },
 });
+WysiwygMultizone.include({
+    custom_events: Object.assign({}, WysiwygMultizone.prototype.custom_events, {
+        'set_website_updated_fields': '_onSetWebsiteUpdatedFields',
+    }),
 
+    /**
+     * @override
+     */
+    init() {
+        this._super(...arguments);
+        this.fieldIds = {};
+    },
+
+    //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    /**
+     * @override
+     */
+    async save() {
+        const ret = await this._super(...arguments);
+        await this._saveFields(); // Note: important to be called after save otherwise cleanForSave is not called before
+        return ret;
+    },
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     */
+    async _saveFields() {
+        if (!this.fieldIds.length) {
+            return;
+        }
+        let websiteID;
+        this.trigger_up('context_get', {
+            callback: function (ctx) {
+                websiteID = ctx['website_id'];
+            },
+        });
+        await this._rpc({
+            model: 'website',
+            method: 'write',
+            args: [websiteID, {
+                'shop_extra_field_ids': [[6, 0, fieldIds]],
+            }],
+        });
+    },
+
+    //--------------------------------------------------------------------------
+    // Handlers
+    //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     * @param {OdooEvent} ev
+     */
+    _onSetWebsiteUpdatedFields: function (ev) {
+        this.fieldIds = ev.data.fieldIds;
+    },
+
+});
+options.registry.WebsiteSaleProductsFieldSelection = options.Class.extend({
+    custom_events: _.extend({}, options.Class.prototype.custom_events, {
+        save_user_value: '_onSaveUserValue',
+    }),
+    /**
+     * @override
+     */
+    async willStart() {
+        await this._super(...arguments);
+
+        let websiteID;
+        this.trigger_up('context_get', {
+            callback: function (ctx) {
+                websiteID = ctx['website_id'];
+            },
+        });
+        const fields = await this._rpc({
+            model: 'website.sale.extra.field',
+            method: 'search_read',
+            args: [[], ['id', 'name', 'website_id']],
+        });
+        this.allFieldsByID = {};
+        this.fieldIDs = [];
+        for (const field of fields) {
+            this.allFieldsByID[field.id] = field;
+            if (field['website_id'] === websiteID) {
+                this.fieldIDs.push(field.id);
+            }
+        }
+        this.unselectedFields = [];
+        this.selectedFields = [];
+        for (const [key, field] of Object.entries(this.allFieldsByID)) {
+            if (this.fieldIDs.includes(parseInt(key))) {
+                this.selectedFields.push(field.name);
+            } else {
+                this.unselectedFields.push(field.name);
+            }
+        }
+    },
+    /**
+     * @private
+     * @param {OdooEvent} ev
+     * @param {Object} [ev.data]
+     * @param {String[]} [ev.data.selectedRecords]
+     * @param {String[]} [ev.data.newRecords]
+     */
+    _onSaveUserValue(ev) {
+        const fieldIds = [];
+        for (const [key, field] of Object.entries(this.allFieldsByID)) {
+            if (ev.data.selectedRecords.includes(field.name)) {
+                fieldIds.push(key);
+            }
+        }
+        this.trigger_up('set_website_updated_fields', {
+            blogPostID: this.blogPostID,
+            fieldIds,
+        });
+    }
+});
 options.registry.WebsiteSaleProductsItem = options.Class.extend({
     xmlDependencies: (options.Class.prototype.xmlDependencies || []).concat(['/website_sale/static/src/xml/website_sale_utils.xml']),
     events: _.extend({}, options.Class.prototype.events || {}, {

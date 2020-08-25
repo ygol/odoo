@@ -3,6 +3,8 @@ odoo.define('website.editor.snippets.options', function (require) {
 
 const {ColorpickerWidget} = require('web.Colorpicker');
 const config = require('web.config');
+const {ComponentWrapper, WidgetAdapterMixin} = require('web.OwlCompatibility');
+const UserValue = require('website.component.UserValue');
 var core = require('web.core');
 var Dialog = require('web.Dialog');
 const weUtils = require('web_editor.utils');
@@ -61,6 +63,107 @@ const UrlPickerUserValueWidget = InputUserValueWidget.extend({
         if (this._value) {
             window.open(this._value, '_blank');
         }
+    },
+});
+
+const RecordSelection = options.UserValueWidget.extend({
+    tagName: 'we-record-selection',
+    events: _.extend({}, options.UserValueWidget.prototype.events || {}, {
+        'click .o_edit_records': '_onClickEdit',
+        'click .o_save_records': '_onClickSave',
+    }),
+
+    init() {
+        this._super(...arguments);
+        this.isEditing = true;
+        this.selectedRecords = [];
+        this.unselectedRecords = [];
+        this.newRecords = [];
+        this.create = true;
+        this.recordName = 'record';
+    },
+
+    async start() {
+        await this._super(...arguments);
+        await this._renderWidget();
+    },
+
+    async _renderWidget() {
+        setTimeout(async () => {
+            await this._renderMainButtons();
+            await this._renderSelectedRecords();
+            await this._renderUnselectedRecords();
+            await this._renderRecordInput();
+        }, 1000); // TODO find a way to properly construct the DOM
+    },
+
+    async _renderMainButtons() {
+        this.$mainButtons && this.$mainButtons.remove();
+        this.$mainButtons = $(qweb.render('website.recordSelectionMainButtons', {
+            isEditing: this.isEditing,
+        }));
+        await this.$mainButtons.appendTo(this.$el);
+    },
+
+    async _renderSelectedRecords() {
+        this.$selectedRecordsTemplate && this.$selectedRecordsTemplate.remove();
+        this.$selectedRecordsTemplate = $(qweb.render('website.recordSelectionSelectedRecords', {
+            isEditing: this.isEditing,
+            selectedRecords: this.selectedRecords,
+        }));
+        await this.$selectedRecordsTemplate.appendTo(this.$el);
+    },
+
+    async _renderUnselectedRecords() {
+        this.$unselectedRecordsTemplate && this.$unselectedRecordsTemplate.remove();
+        if (this.isEditing) {
+            this.$unselectedRecordsTemplate = $(qweb.render('website.recordSelectionUnselectedRecords',{
+                unselectedRecords: this.unselectedRecords,
+                recordName: this.recordName,
+            }));
+            await this.$unselectedRecordsTemplate.appendTo(this.$el);
+        }
+    },
+
+    async _renderRecordInput() {
+        this.$recordInput && this.$recordInput.remove();
+        if (this.create && this.isEditing) {
+            this.$recordInput = $(qweb.render('website.recordSelectionInput', {
+                recordName: this.recordName,
+            }));
+            await this.$recordInput.appendTo(this.$el);
+        }
+    },
+
+    _save() {
+        this.trigger('save-user-value', {
+            selectedRecords: this.selectedRecords,
+            newRecords: this.newRecords,
+        });
+    },
+
+    //--------------------------------------------------------------------------
+    // Handlers
+    //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onClickEdit(ev) {
+        ev.stopPropagation();
+        this.isEditing = true;
+        this._renderWidget();
+    },
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onClickSave(ev) {
+        ev.stopPropagation();
+        this.isEditing = false;
+        this._save();
+        this._renderWidget();
     },
 });
 
@@ -339,6 +442,7 @@ const GPSPicker = InputUserValueWidget.extend({
 options.userValueWidgetsRegistry['we-urlpicker'] = UrlPickerUserValueWidget;
 options.userValueWidgetsRegistry['we-fontfamilypicker'] = FontFamilyPickerUserValueWidget;
 options.userValueWidgetsRegistry['we-gpspicker'] = GPSPicker;
+options.userValueWidgetsRegistry['we-record-selection'] = RecordSelection;
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
