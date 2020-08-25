@@ -3260,6 +3260,9 @@ var FieldReference = FieldMany2One.extend({
      */
     start: function () {
         this.$('select').val(this.field.relation);
+        if (this.attrs.options['hide_model']){
+            this.$('select').hide() 
+        }
         return this._super.apply(this, arguments);
     },
 
@@ -3323,7 +3326,11 @@ var FieldReference = FieldMany2One.extend({
         this._super.apply(this, arguments);
         var value = this.$('select').val();
         this._setState();
-        this.$('select').val(this.value && this.value.model || value);
+        if (this.attrs.options['hide_model'] && !this.value){
+            this.$('select').val('');
+        }else{
+            this.$('select').val(this.value && this.value.model || value);
+        }
     },
     /**
      * Set `relation` key in field properties.
