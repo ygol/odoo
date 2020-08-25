@@ -182,7 +182,6 @@ class FleetVehicleLogContract(models.Model):
         res = super(FleetVehicleLogContract, self).write(vals)
         if vals.get('expiration_date') or vals.get('user_id'):
             self.activity_reschedule(['fleet.mail_act_fleet_contract_to_renew'], date_deadline=vals.get('expiration_date'), new_user_id=vals.get('user_id'))
-        import pdb; pdb.set_trace()
         return res
 
     def contract_close(self):
