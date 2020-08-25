@@ -13,6 +13,7 @@
                 <attribute name="js_class">hr_timesheet_config_form</attribute>
             </xpath>
             <xpath expr="//div[hasclass('settings')]" position="inside">
+                <!-- <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/> -->
                 <div class="app_settings_block" data-string="Timesheets" string="Timesheets" data-key="hr_timesheet" groups="hr_timesheet.group_timesheet_manager" id="timesheets">
                     <h2>Time Encoding</h2>
                     <div class="row mt16 o_settings_container" name="time_encoding_setting_container">
@@ -57,16 +58,20 @@
                                 </div>
                                 <div class="content-group">
                                     <div class="row mt16 oe_center">
-                                        <div class="col-lg-3 pr-0 o_chrome_store_link">
+                                        <div name="abc" class="col-lg-3 pr-0 o_chrome_store_link">
                                             <a href="http://www.odoo.com/page/timesheet?platform=chrome" class="align-middle" target="_blank">
                                                 <img alt="Google Chrome Store" class="img img-fluid align-middle mt-1" style="height: 85% !important;" src="project/static/src/img/chrome_store.png"/>
                                             </a>
                                         </div>
-                                        <div class="col-lg-3 pr-0">
-                                            <img alt="Apple App Store" class="img img-fluid o_config_app_store mt-1" style="height: 85% !important; cursor: pointer;" src="project/static/src/img/app_store.png"/>
+                                        <div class="col-lg-3 pr-0 o_config_app_store">
+                                            <a href="http://www.odoo.com/page/timesheet?platform=ios" target="_blank">
+                                                <img alt="Apple App Store" class="img img-fluid mt-1" style="height: 85% !important; cursor: pointer;" src="project/static/src/img/app_store.png"/>
+                                            </a>
                                         </div>
-                                        <div class="col-lg-3 pr-0">
-                                            <img alt="Google Play Store" class="img img-fluid o_config_play_store mt-1" style="height: 85% !important; cursor: pointer;" src="project/static/src/img/play_store.png"/>
+                                        <div class="col-lg-3 pr-0 o_config_play_store">
+                                            <a href="http://www.odoo.com/page/timesheet?platform=android" target="_blank">
+                                                <img alt="Google Play Store" class="img img-fluid mt-1" style="height: 85% !important; cursor: pointer;" src="project/static/src/img/play_store.png"/>
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
