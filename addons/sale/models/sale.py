@@ -1296,7 +1296,7 @@ class SaleOrderLine(models.Model):
     product_template_id = fields.Many2one(
         'product.template', string='Product Template',
         related="product_id.product_tmpl_id", domain=[('sale_ok', '=', True)])
-    product_updatable = fields.Boolean(compute='_compute_product_updatable', string='Can Edit Product', readonly=True, default=True)
+    product_updatable = fields.Boolean(compute='_compute_product_updatable', string='Can Edit Product') # VFE TODO verify behavior
     product_uom_qty = fields.Float(string='Quantity', digits='Product Unit of Measure', required=True, default=1.0)
     product_uom = fields.Many2one('uom.uom', string='Unit of Measure', domain="[('category_id', '=', product_uom_category_id)]")
     product_uom_category_id = fields.Many2one(related='product_id.uom_id.category_id', readonly=True)

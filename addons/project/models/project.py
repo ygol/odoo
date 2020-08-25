@@ -735,6 +735,8 @@ class Task(models.Model):
 
     @api.depends('recurring_task', 'repeat_unit')
     def _compute_repeat(self):
+        # VFE FIXME do not depend on default_get for a compute behavior...
+        # not stored computed fields should have no default...
         rec_fields = self._get_recurrence_fields()
         defaults = self.default_get(rec_fields)
         for task in self:

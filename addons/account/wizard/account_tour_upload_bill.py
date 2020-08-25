@@ -10,6 +10,8 @@ class AccountTourUploadBill(models.TransientModel):
     _description = 'Account tour upload bill'
     _inherits = {'mail.compose.message':'composer_id'}
 
+    # VFE FIXME missing field for _inherits log...
+
     selection = fields.Selection(
         selection=lambda self: self._selection_values(),
         default="sample"

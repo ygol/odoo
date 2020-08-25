@@ -112,13 +112,12 @@ class Task(models.Model):
     overtime = fields.Float(compute='_compute_progress_hours', store=True)
     subtask_effective_hours = fields.Float("Sub-tasks Hours Spent", compute='_compute_subtask_effective_hours', store=True, help="Time spent on the sub-tasks (and their own sub-tasks) of this task.")
     timesheet_ids = fields.One2many('account.analytic.line', 'task_id', 'Timesheets')
-    encode_uom_in_days = fields.Boolean(compute='_compute_encode_uom_in_days', default=lambda self: self._uom_in_days())
-
-    def _uom_in_days(self):
-        return self.env.company.timesheet_encode_uom_id == self.env.ref('uom.product_uom_day')
+    encode_uom_in_days = fields.Boolean(compute='_compute_encode_uom_in_days')
 
     def _compute_encode_uom_in_days(self):
-        self.encode_uom_in_days = self._uom_in_days()
+        day_uom = self.env.ref('uom.product_uom_day')
+        for task in self:
+            task.encode_uom_in_days = (task.company_id or self.env.company).timesheet_encode_uom_id = day_uom
 
     @api.depends('project_id.analytic_account_id.active')
     def _compute_analytic_account_active(self):

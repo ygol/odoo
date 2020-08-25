@@ -22,17 +22,13 @@ class ProductTemplate(models.Model):
     project_id = fields.Many2one(domain="[('allow_billable', '=', True), ('bill_type', '=', 'customer_task'), ('allow_timesheets', 'in', [service_policy == 'delivered_timesheet' or '', True])]")
     project_template_id = fields.Many2one(domain="[('allow_billable', '=', True), ('bill_type', '=', 'customer_project'), ('allow_timesheets', 'in', [service_policy == 'delivered_timesheet' or '', True])]")
 
-    def _default_visible_expense_policy(self):
-        visibility = self.user_has_groups('project.group_project_user')
-        return visibility or super(ProductTemplate, self)._default_visible_expense_policy()
-
     def _compute_visible_expense_policy(self):
         super(ProductTemplate, self)._compute_visible_expense_policy()
 
         visibility = self.user_has_groups('project.group_project_user')
-        for product_template in self:
-            if not product_template.visible_expense_policy:
-                product_template.visible_expense_policy = visibility
+        if visibility:
+            # If not, the value assigned by the super call is the correct one.
+            self.visible_expense_policy = True
 
     @api.depends('invoice_policy', 'service_type')
     def _compute_service_policy(self):
