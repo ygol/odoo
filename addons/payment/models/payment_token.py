@@ -27,7 +27,7 @@ class PaymentToken(models.Model):
         required=True)  # This is not the same thing as the acquirer reference of the transaction
     transaction_ids = fields.One2many(
         string="Payment Transactions", comodel_name='payment.transaction', inverse_name='token_id')
-    verified = fields.Boolean(string="Verified")  # TODO DBO is this standard ? i.e. sometimes False
+    verified = fields.Boolean(string="Verified")
     active = fields.Boolean(string="Active", default=True)
 
     #=== CRUD METHODS ===#
