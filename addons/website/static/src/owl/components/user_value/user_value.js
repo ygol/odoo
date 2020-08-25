@@ -28,7 +28,7 @@ class UserValue extends owl.Component {
                 <we-row>
                     <we-title>Existing</we-title>
                     <select t-on-click="_onSelectRecord()" t-ref="selectInput">
-                        <option hidden="true" disabled="true" selected="true" value="">Select a tag</option>
+                        <option hidden="true" disabled="true" selected="true" value="">Select a <t t-esc="props.recordName"/></option>
                         <t t-foreach="state.unselectedRecords" t-as="record" t-key="record">
                             <option t-att-value="record">
                                 <t t-raw="record"/>
@@ -36,7 +36,7 @@ class UserValue extends owl.Component {
                         </t>
                     </select>
                 </we-row>
-                <we-row t-attf-string="New {{props.recordName}}">
+                <we-row t-if="props.create" t-attf-string="New {{props.recordName}}">
                     <input t-ref="newRecordInput" placeholder="Name"/>
                     <we-button title="Confirm" t-on-click="_onAddNewRecord" class="fa fa-plus ml-1"/>
                 </we-row>
@@ -85,7 +85,7 @@ class UserValue extends owl.Component {
     _onAddNewRecord(ev) {
         ev.stopPropagation();
         const newRecord = this.newRecordInput.el.value;
-        if (!newRecord) {
+        if (!newRecord || !this.props.create) {
             return;
         }
         const allRecords = this.state.selectedRecords.concat(this.state.unselectedRecords).map(record => record.toLowerCase());
@@ -143,12 +143,14 @@ UserValue.defaultProps = {
     selectedRecords: [],
     unselectedRecords: [],
     recordName: 'record',
+    create: false,
 };
 
 UserValue.props = {
     selectedRecords: Array,
     unselectedRecords: Array,
     recordName: String,
+    create: { type: Boolean, optional: 1 },
 };
 
 return UserValue;
