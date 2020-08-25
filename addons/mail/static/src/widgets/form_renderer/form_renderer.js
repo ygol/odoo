@@ -98,7 +98,7 @@ FormRenderer.include({
             followerIds,
             hasActivities: this.chatterFields.hasActivityIds,
             hasFollowers: this.chatterFields.hasMessageFollowerIds,
-            hasThreadViewer: this.chatterFields.hasMessageIds,
+            hasMessageList: this.chatterFields.hasMessageIds,
             isAttachmentBoxVisible: this.chatterFields.isAttachmentBoxVisible,
             messageIds,
             threadAttachmentCount,

@@ -235,6 +235,26 @@ function factory(dependencies) {
 
         /**
          * @private
+         * @returns{boolean}
+         */
+        _computeHasThreadViewer() {
+            if (!this.thread || !this.isOpen) {
+                return false;
+            }
+            if (
+                this.env.messaging.device.isMobile &&
+                (
+                    this.activeMobileNavbarTabId !== 'mailbox' ||
+                    this.thread.model !== 'mail.box'
+                )
+            ) {
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * @private
          * @returns {string}
          */
         _computeInitActiveId() {
@@ -291,6 +311,19 @@ function factory(dependencies) {
         }
 
         /**
+         * @private
+         * @returns{mail.thread_viewer_container}
+         */
+        _computeThreadViewerContainer() {
+            this.threadViewerContainer.update({
+                hasThreadViewer: this.hasThreadViewer,
+                stringifiedDomain: this.stringifiedDomain,
+                thread: this.thread ? [['link', this.thread]] : [['unlink']],
+            });
+            return [];
+        }
+
+        /**
          * Only pinned threads are allowed in discuss. Fallback to Inbox in
          * other cases.
          *
@@ -309,28 +342,6 @@ function factory(dependencies) {
             return [];
         }
 
-        /**
-         * @private
-         * @returns{mail.thread_viewer|undefined}
-         */
-        _computeThreadViewer() {
-            if (!this.thread || !this.isOpen) {
-                return [['unlink']];
-            }
-            if (
-                this.env.messaging.device.isMobile &&
-                (
-                    this.activeMobileNavbarTabId !== 'mailbox' ||
-                    this.thread.model !== 'mail.box'
-                )
-            ) {
-                return [['unlink']];
-            }
-            if (this.threadViewer) {
-                return [];
-            }
-            return [['create']];
-        }
     }
 
     Discuss.fields = {
@@ -359,6 +370,12 @@ function factory(dependencies) {
         defaultInitActiveId: attr({
             default: 'mail.box_inbox',
         }),
+        device: one2one('mail.device', {
+            related: 'messaging.device',
+        }),
+        deviceIsMobile: attr({
+            related: 'device.isMobile',
+        }),
         /**
          * Determine if the moderation discard dialog is displayed.
          */
@@ -370,6 +387,19 @@ function factory(dependencies) {
          */
         hasModerationRejectDialog: attr({
             default: false,
+        }),
+        /**
+         * Determine if this discuss has a thread viewer.
+         */
+        hasThreadViewer: attr({
+            compute: '_computeHasThreadViewer',
+            dependencies: [
+                'activeMobileNavbarTabId',
+                'deviceIsMobile',
+                'isOpen',
+                'thread',
+                'threadModel',
+            ],
         }),
         /**
          * Formatted init thread on opening discuss for the first time,
@@ -497,14 +527,20 @@ function factory(dependencies) {
          * be no thread viewer depending on the state of this discuss.
          */
         threadViewer: one2one('mail.thread_viewer', {
-            compute: '_computeThreadViewer',
+            related: 'threadViewerContainer.threadViewer',
+        }),
+        /**
+         * Container for the thread viewer of this discuss. Useful to keep
+         * scroll positions saved even when the thread viewer is deleted.
+         */
+        threadViewerContainer: one2one('mail.thread_viewer_container', {
+            compute: '_computeThreadViewerContainer',
+            default: [['create']],
             dependencies: [
-                'isOpen',
+                'hasThreadViewer',
                 'stringifiedDomain',
                 'thread',
-                'threadViewer',
             ],
-            inverse: 'discuss',
             isCausal: true,
         }),
     };

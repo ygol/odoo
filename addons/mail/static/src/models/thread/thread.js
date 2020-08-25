@@ -760,15 +760,6 @@ function factory(dependencies) {
 
         /**
          * @private
-         * @returns {mail.chat_window[]}
-         */
-        _computeChatWindows() {
-            const chatWindowViewers = this.viewers.filter(viewer => !!viewer.chatWindow);
-            return [['replace', chatWindowViewers.map(viewer => viewer.chatWindow)]];
-        }
-
-        /**
-         * @private
          * @returns {mail.partner}
          */
         _computeCorrespondent() {
@@ -1189,8 +1180,7 @@ function factory(dependencies) {
         }),
         channel_type: attr(),
         chatWindows: one2many('mail.chat_window', {
-            compute: '_computeChatWindows',
-            dependencies: ['viewersChatWindow'],
+            inverse: 'thread',
         }),
         composer: one2one('mail.composer', {
             /**
@@ -1470,9 +1460,6 @@ function factory(dependencies) {
         uuid: attr(),
         viewers: one2many('mail.thread_viewer', {
             inverse: 'thread',
-        }),
-        viewersChatWindow: many2many('mail.chat_window', {
-            related: 'viewers.chatWindow',
         }),
     };
 

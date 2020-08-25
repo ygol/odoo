@@ -74,11 +74,7 @@ function factory(dependencies) {
             if (!this.threadCache) {
                 return;
             }
-            this.update({
-                threadCacheInitialScrollPositions: Object.assign({}, this.threadCacheInitialScrollPositions, {
-                    [this.threadCache.localId]: scrollTop,
-                }),
-            });
+            this.container.saveThreadCacheScrollPositionsAsInitial(this.threadCache, scrollTop);
         }
 
         //----------------------------------------------------------------------
@@ -87,39 +83,22 @@ function factory(dependencies) {
 
         /**
          * @private
-         * @returns {string}
-         */
-        _computeStringifiedDomain() {
-            if (this.discuss) {
-                return this.discuss.stringifiedDomain;
-            }
-            return '[]';
-        }
-
-        /**
-         * @private
-         * @returns {mail.thread|undefined}
-         */
-         _computeThread() {
-            if (this.chatter) {
-                return [['link', this.chatter.thread]];
-            }
-            if (this.chatWindow) {
-                return [['link', this.chatWindow.thread]];
-            }
-            if (this.discuss) {
-                return [['link', this.discuss.thread]];
-            }
-            return [['unlink']];
-        }
-
-        /**
-         * @private
          * @returns {mail.thread_cache}
          */
         _computeThreadCache() {
             this.addComponentHint('change-of-thread-cache');
             return [['link', this.thread.cache(this.stringifiedDomain)]];
+        }
+
+        /**
+         * @private
+         * @returns {integer|undefined}
+         */
+        _computeThreadCacheInitialScrollPosition() {
+            if (!this.threadCache) {
+                return undefined;
+            }
+            return this.threadCacheInitialScrollPositions[this.threadCache.localId];
         }
 
         /**
@@ -143,17 +122,6 @@ function factory(dependencies) {
                 });
             }
             return true;
-        }
-
-        /**
-         * @private
-         * @returns {integer|undefined}
-         */
-        _computeThreadCacheInitialScrollPosition() {
-            if (!this.threadCache) {
-                return undefined;
-            }
-            return this.threadCacheInitialScrollPositions[this.threadCache.localId];
         }
 
         /**
@@ -182,18 +150,6 @@ function factory(dependencies) {
     }
 
     ThreadViewer.fields = {
-        chatter: one2one('mail.chatter', {
-            inverse: 'threadViewer',
-        }),
-        chatterThread: many2one('mail.thread', {
-            related: 'chatter.thread',
-        }),
-        chatWindow: one2one('mail.chat_window', {
-            inverse: 'threadViewer',
-        }),
-        chatWindowThread: many2one('mail.thread', {
-            related: 'chatWindow.thread',
-        }),
         checkedMessages: many2many('mail.message', {
             related: 'threadCache.checkedMessages',
         }),
@@ -221,14 +177,11 @@ function factory(dependencies) {
         composer: many2one('mail.composer', {
             related: 'thread.composer',
         }),
-        discuss: one2one('mail.discuss', {
+        /**
+         * Record containing and controlling this thread viewer.
+         */
+        container: one2one('mail.thread_viewer_container', {
             inverse: 'threadViewer',
-        }),
-        discussThread: many2one('mail.thread', {
-            related: 'discuss.thread',
-        }),
-        discussStringifiedDomain: attr({
-            related: 'discuss.stringifiedDomain',
         }),
         hasComposerFocus: attr({
             related: 'composer.hasFocus',
@@ -284,22 +237,14 @@ function factory(dependencies) {
          * Domain to apply when fetching messages for the current thread.
          */
         stringifiedDomain: attr({
-            compute: '_computeStringifiedDomain',
-            dependencies: [
-                'discussStringifiedDomain',
-            ],
+            related: 'container.stringifiedDomain',
         }),
         /**
          * Thread currently displayed by this thread viewer.
          */
         thread: many2one('mail.thread', {
-            compute: '_computeThread',
-            dependencies: [
-                'chatterThread',
-                'chatWindowThread',
-                'discussThread',
-            ],
             inverse: 'viewers',
+            related: 'container.thread',
         }),
         /**
          * Thread cache currently displayed by this thread viewer.
@@ -327,13 +272,10 @@ function factory(dependencies) {
         }),
         /**
          * List of saved initial scroll positions of thread caches.
-         * Useful to restore scroll position on changing back to this
-         * thread cache. Note that this is only applied when opening
-         * the thread cache, because scroll position may change fast so
-         * save is already throttled
          */
         threadCacheInitialScrollPositions: attr({
             default: {},
+            related: 'container.threadCacheInitialScrollPositions',
         }),
         /**
          * Not a real field, used to trigger `thread.markAsSeen` when one of

@@ -85,6 +85,9 @@ function factory(dependencies) {
          * Assume that this chat window was hidden before-hand.
          */
         makeVisible() {
+            if (this.isVisible) {
+                return;
+            }
             const lastVisible = this.manager.lastVisible;
             this.manager.swap(this, lastVisible);
         }
@@ -151,6 +154,17 @@ function factory(dependencies) {
 
         /**
          * @private
+         * @returns{boolean}
+         */
+        _computeHasThreadViewer() {
+            if (!this.thread || !this.isVisible || this.isFolded) {
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * @private
          * @returns {boolean}
          */
         _computeIsFolded() {
@@ -159,6 +173,14 @@ function factory(dependencies) {
                 return thread.foldState === 'folded';
             }
             return this._isFolded;
+        }
+
+        /**
+         * @private
+         * @returns {boolean}
+         */
+        _computeIsVisible() {
+            return this.manager.allOrderedVisible.includes(this);
         }
 
         /**
@@ -174,24 +196,30 @@ function factory(dependencies) {
 
         /**
          * @private
-         * @returns {boolean}
+         * @returns{mail.thread_viewer_container}
          */
-        _computeIsVisible() {
-            return this.manager.allOrderedVisible.includes(this);
+        _computeThreadViewerContainer() {
+            this.threadViewerContainer.update({
+                hasThreadViewer: this.hasThreadViewer,
+                thread: this.thread ? [['link', this.thread]] : [['unlink']],
+            });
+            return [];
         }
 
         /**
          * @private
-         * @returns{mail.thread_viewer|undefined}
+         * @returns {integer|undefined}
          */
-        _computeThreadViewer() {
-            if (!this.thread || !this.isVisible) {
-                return [['unlink']];
+        _computeVisibleIndex() {
+            if (!this.manager) {
+                return undefined;
             }
-            if (this.threadViewer) {
-                return [];
+            const visible = this.manager.visual.visible;
+            const index = visible.findIndex(visible => visible.chatWindowLocalId === this.localId);
+            if (index === -1) {
+                return undefined;
             }
-            return [['create']];
+            return index;
         }
 
         /**
@@ -277,21 +305,6 @@ function factory(dependencies) {
             this.threadViewer.addComponentHint('home-menu-shown');
         }
 
-        /**
-         * @private
-         * @returns {integer|undefined}
-         */
-        _computeVisibleIndex() {
-            if (!this.manager) {
-                return undefined;
-            }
-            const visible = this.manager.visual.visible;
-            const index = visible.findIndex(visible => visible.chatWindowLocalId === this.localId);
-            if (index === -1) {
-                return undefined;
-            }
-            return index;
-        }
     }
 
     ChatWindow.fields = {
@@ -314,6 +327,17 @@ function factory(dependencies) {
             compute: '_computeHasShiftRight',
             dependencies: ['managerAllOrderedVisible'],
             default: false,
+        }),
+        /**
+         * Determine if this chat window has a thread viewer.
+         */
+        hasThreadViewer: attr({
+            compute: '_computeHasThreadViewer',
+            dependencies: [
+                'isFolded',
+                'isVisible',
+                'thread',
+            ],
         }),
         /**
          * Determine whether the chat window should be programmatically
@@ -370,7 +394,9 @@ function factory(dependencies) {
          * Determine the thread that is currently displayed by this chat window.
          * If no thread is linked, this chat window is considered "new message".
          */
-        thread: many2one('mail.thread'),
+        thread: many2one('mail.thread', {
+            inverse: 'chatWindows',
+        }),
         threadDisplayName: attr({
             related: 'thread.displayName',
         }),
@@ -382,13 +408,19 @@ function factory(dependencies) {
          * might be no thread viewer depending on the state of this chat window.
          */
         threadViewer: one2one('mail.thread_viewer', {
-            compute: '_computeThreadViewer',
+            related: 'threadViewerContainer.threadViewer',
+        }),
+        /**
+         * Container for the thread viewer of this chat window. Useful to keep
+         * scroll positions saved even when the thread viewer is deleted.
+         */
+        threadViewerContainer: one2one('mail.thread_viewer_container', {
+            compute: '_computeThreadViewerContainer',
+            default: [['create']],
             dependencies: [
-                'isVisible',
+                'hasThreadViewer',
                 'thread',
-                'threadViewer',
             ],
-            inverse: 'chatWindow',
             isCausal: true,
         }),
         /**

@@ -108,6 +108,17 @@ function factory(dependencies) {
 
         /**
          * @private
+         * @returns{mail.thread_viewer|undefined}
+         */
+        _computeHasThreadViewer() {
+            if (!this.thread || !this.hasMessageList) {
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * @private
          * @returns {boolean}
          */
         _computeIsDisabled() {
@@ -124,16 +135,14 @@ function factory(dependencies) {
 
         /**
          * @private
-         * @returns{mail.thread_viewer|undefined}
+         * @returns{mail.thread_viewer_container}
          */
-        _computeThreadViewer() {
-            if (!this.thread || !this.hasThreadViewer) {
-                return [['unlink']];
-            }
-            if (this.threadViewer) {
-                return [];
-            }
-            return [['create']];
+        _computeThreadViewerContainer() {
+            this.threadViewerContainer.update({
+                hasThreadViewer: this.hasThreadViewer,
+                thread: this.thread ? [['link', this.thread]] : [['unlink']],
+            });
+            return [];
         }
 
         /**
@@ -295,6 +304,12 @@ function factory(dependencies) {
             default: true,
         }),
         /**
+         * Determine whether to display a message list for this chatter.
+         */
+        hasMessageList: attr({
+            default: true,
+        }),
+        /**
          * Whether the message list should manage its scroll.
          * In particular, when the chatter is on the form view's side,
          * then the scroll is managed by the message list.
@@ -305,10 +320,14 @@ function factory(dependencies) {
             default: false,
         }),
         /**
-         * Determine whether to display a thread viewer for this chatter.
+         * Determine if this chatter has a thread viewer.
          */
         hasThreadViewer: attr({
-            default: true,
+            compute: '_computeHasThreadViewer',
+            dependencies: [
+                'hasMessageList',
+                'thread',
+            ],
         }),
         hasTopbarCloseButton: attr({
             default: false,
@@ -347,13 +366,19 @@ function factory(dependencies) {
          * Viewer that displays the current thread of this chatter.
          */
         threadViewer: one2one('mail.thread_viewer', {
-            compute: '_computeThreadViewer',
+            related: 'threadViewerContainer.threadViewer',
+        }),
+        /**
+         * Container for the thread viewer of this chatter. Useful to keep
+         * scroll positions saved even when the thread viewer is deleted.
+         */
+        threadViewerContainer: one2one('mail.thread_viewer_container', {
+            compute: '_computeThreadViewerContainer',
+            default: [['create']],
             dependencies: [
                 'hasThreadViewer',
                 'thread',
-                'threadViewer',
             ],
-            inverse: 'chatter',
             isCausal: true,
         }),
         todayActivities: one2many('mail.activity', {

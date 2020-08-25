@@ -540,6 +540,9 @@ class MessageList extends Component {
             // could be unmounted in the meantime (due to throttled behavior)
             return;
         }
+        if (!this.threadViewer) {
+            return;
+        }
         this.threadViewer.saveThreadCacheScrollPositionsAsInitial(this.el.scrollTop);
         if (!this._isAutoLoadOnScrollActive) {
             return;

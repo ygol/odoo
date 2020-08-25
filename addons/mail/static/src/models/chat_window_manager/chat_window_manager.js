@@ -101,7 +101,7 @@ function factory(dependencies) {
                     thread: [['link', thread]],
                 });
             }
-            if (mode === 'last_visible' && !chatWindow.isVisible) {
+            if (mode === 'last_visible') {
                 chatWindow.makeVisible();
                 chatWindow.unfold();
                 chatWindow.focus();
