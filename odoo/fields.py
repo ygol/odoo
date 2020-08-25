@@ -2198,12 +2198,15 @@ class Selection(Field):
         # determine selection (applying 'selection_add' extensions)
         values = None
         labels = {}
+        previous = None
 
         for field in reversed(resolve_mro(model, name, self._can_setup_from)):
             # We cannot use field.selection or field.selection_add here
             # because those attributes are overridden by ``_setup_attrs``.
             if 'selection' in field.args:
-                if self.related:
+                if previous and 'related' in previous.args:
+                    # Only log 'useless' selection attribute when it is defined AFTER
+                    # the field was defined as compute related, not before ...
                     _logger.warning("%s: selection attribute will be ignored as the field is related", self)
                 selection = field.args['selection']
                 if isinstance(selection, list):
@@ -2219,7 +2222,9 @@ class Selection(Field):
                     self.ondelete = None
 
             if 'selection_add' in field.args:
-                if self.related:
+                if previous and 'related' in previous.args:
+                    # Only log 'useless' selection attribute when it is defined AFTER
+                    # the field was defined as compute related, not before ...
                     _logger.warning("%s: selection_add attribute will be ignored as the field is related", self)
                 selection_add = field.args['selection_add']
                 assert isinstance(selection_add, list), \
@@ -2262,6 +2267,7 @@ class Selection(Field):
                 labels.update(kv for kv in selection_add if len(kv) == 2)
                 self.ondelete.update(ondelete)
 
+            previous = field
         if values is not None:
             self.selection = [(value, labels[value]) for value in values]
 
