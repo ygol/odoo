@@ -92,7 +92,7 @@ const AttendeeCalendarPopover = CalendarPopover.extend({
             self.event.extendedProps.record.attendee_status = selectedStatus;  // FIXEME: Maybe we have to reload view
             self.$('.o-calendar-attendee-status-text').text(self.statusInfo[selectedStatus].text);
             self.$('.o-calendar-attendee-status-icon').removeClass(_.values(self.statusColors).join(' ')).addClass(self.statusInfo[selectedStatus].color);
-            self.$el.parent().hide();
+            //self.$el.parent().hide();
             self.trigger_up('render_event');
         });
     },

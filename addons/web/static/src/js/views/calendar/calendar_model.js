@@ -502,6 +502,15 @@ return AbstractModel.extend({
             .then(function (events) {
                 self._parseServerData(events);
                 self.data.data = _.map(events, self._recordToCalendarEvent.bind(self));
+                /* var data = [];
+                _.each(self.data.data, function (event) {
+                    _.each(event.record.partner_ids, function (attendee) {
+                        let e = JSON.parse(JSON.stringify(event));
+                        e.record.partner_ids = [attendee];
+                        data.push(e);
+                    });
+                });
+                self.data.data = data; */
                 return Promise.all([
                     self._loadColors(self.data, self.data.data),
                     self._loadRecordsToFilters(self.data, self.data.data)
@@ -518,9 +527,16 @@ return AbstractModel.extend({
     _loadColors: function (element, events) {
         if (this.fieldColor) {
             var fieldName = this.fieldColor;
+            var self = this;
             _.each(events, function (event) {
                 var value = event.record[fieldName];
-                event.color_index = _.isArray(value) ? value[0] : value;
+                var color = _.filter(value, function (v) {
+                    if (_.find(self.loadParams.filters[fieldName].filters, f => f.active && v === f.value)) {
+                        return v;
+                    }
+                });
+                color.sort(function(a, b){return a-b});
+                event.color_index = _.isArray(color) ? color[0] || "all" : color;
             });
             this.model_color = this.fields[fieldName].relation || element.model;
         }
