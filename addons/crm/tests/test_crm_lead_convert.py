@@ -253,7 +253,7 @@ class TestLeadConvert(crm_common.TestLeadConvertCommon):
         self.assertEqual(convert.user_id, self.lead_1.user_id)
         self.assertEqual(convert.team_id, self.lead_1.team_id)
         self.assertFalse(convert.partner_id)
-        self.assertEqual(convert.name, 'merge')
+        self.assertEqual(convert.name, 'convert')
         self.assertEqual(convert.action, 'create')
 
         convert.write({'user_id': self.user_sales_salesman.id})
@@ -309,7 +309,9 @@ class TestLeadConvert(crm_common.TestLeadConvertCommon):
             'active_model': 'crm.lead',
             'active_id': self.lead_1.id,
             'active_ids': self.lead_1.ids,
-        }).create({})
+        }).create({
+            'name': 'merge',
+        })
         self.assertEqual(convert.partner_id, self.customer)
         # TDE FIXME: should check for email_normalized -> lead_email_normalized not correctly found
         # self.assertEqual(convert.duplicated_lead_ids, self.lead_1 | lead_email_from | lead_email_normalized | lead_partner | opp_lost)
