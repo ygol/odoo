@@ -27,6 +27,12 @@ class AccountInvoice(models.Model):
 class AccountInvoiceLine(models.Model):
     _inherit = "account.invoice.line"
 
+    def _get_sale_move_owner(self):
+        self.ensure_one()
+        if self.invoice_id.type in ('out_invoice', 'out_refund'):
+            return self.sale_line_ids.move_ids.mapped('move_line_ids.owner_id')
+        return super(AccountInvoiceLine)._get_sale_move_owner()
+
     def _get_anglo_saxon_price_unit(self):
         price_unit = super(AccountInvoiceLine,self)._get_anglo_saxon_price_unit()
         # in case of anglo saxon with a product configured as invoiced based on delivery, with perpetual

@@ -151,3 +151,16 @@ class AccountInvoice(models.Model):
         for invoice in self.filtered(lambda x: x.type == 'in_refund'):
             rslt += invoice.mapped('invoice_line_ids.purchase_line_id.move_ids').filtered(lambda x: x.state == 'done' and x.location_dest_id.usage == 'supplier')
         return rslt
+
+
+class AccountInvoiceLine(models.Model):
+    _inherit = "account.invoice.line"
+
+    def get_invoice_line_account(self, type, product, fpos, company):
+        purchase_line = self._context.get('purchase_line_id')
+        owner = purchase_line and self.env['purchase.order.line'].browse(purchase_line).move_ids.mapped('move_line_ids.owner_id')
+        if company.anglo_saxon_accounting and type in ('in_invoice', 'in_refund') and product and (product.type == 'product' or product.type == 'consu' and product._is_phantom_bom()) and owner:
+            accounts = product.product_tmpl_id.get_product_accounts(fiscal_pos=fpos)
+            if accounts['expense']:
+                return accounts['expense']
+        return super(AccountInvoiceLine, self).get_invoice_line_account(type, product, fpos, company)

@@ -16,7 +16,8 @@ class AccountInvoice(models.Model):
         res = super(AccountInvoice, self).invoice_line_move_line_get()
         if self.company_id.anglo_saxon_accounting and self.type in ('out_invoice', 'out_refund'):
             for i_line in self.invoice_line_ids:
-                res.extend(self._anglo_saxon_sale_move_lines(i_line))
+                if not i_line._get_sale_move_owner():
+                    res.extend(self._anglo_saxon_sale_move_lines(i_line))
         return res
 
     @api.model
@@ -92,6 +93,10 @@ class AccountInvoice(models.Model):
 
 class AccountInvoiceLine(models.Model):
     _inherit = "account.invoice.line"
+
+    def _get_sale_move_owner(self):
+        self.ensure_one()
+        return False
 
     def _get_anglo_saxon_price_unit(self):
         self.ensure_one()
