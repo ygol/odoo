@@ -270,6 +270,14 @@
                                     <field name="signature"/>
                                 </group>
                             </page>
+                            <page string="Calendar" name="Calendar" groups="base.group_system">
+                                <group>
+                                    <group  name="Google Calendar">
+                                    </group>
+                                    <group  name="Microsoft Calendar">
+                                    </group>
+                                </group>
+                            </page>
                         </notebook>
                     </sheet>
                 </form>
