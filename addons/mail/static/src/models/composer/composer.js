@@ -186,7 +186,7 @@ function factory(dependencies) {
                 thread.loadNewMessages();
             }
             for (const threadViewer of this.thread.viewers) {
-                threadViewer.addComponentHint('current-partner-just-posted-message', messageId);
+                threadViewer.addComponentHint('current-partner-just-posted-message', { messageId });
             }
             this._reset();
         }
