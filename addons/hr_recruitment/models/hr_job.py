@@ -71,7 +71,7 @@ class Job(models.Model):
                 result[attachment.res_id] |= attachment
 
         for job in self:
-            job.attachment_count = len(result[job.id])
+            job.attachment_count = len(result[job.id]) if result else False
 
     def _compute_all_application_count(self):
         read_group_result = self.env['hr.applicant'].with_context(active_test=False).read_group([('job_id', 'in', self.ids)], ['job_id'], ['job_id'])
